@@ -1,6 +1,21 @@
 [package]
-name = "turingmachine"
+name    = "turingmachine"
 version = "0.1.0"
 edition = "2024"
+description = "MIDI-domain Turing Machine Mk2. Applies shift-register randomisation and looping to MIDI note, velocity, gate, and CC streams."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/oxur/oxurack"
 
 [dependencies]
+rand       = "0.9"
+midir      = { version = "0.10", optional = true }
+serde      = { version = "1", features = ["derive"], optional = true }
+thiserror  = "2"
+
+[features]
+default    = []
+midi-io    = ["midir"]
+serde      = ["dep:serde"]
+
+[dev-dependencies]
+pretty_assertions = "1"

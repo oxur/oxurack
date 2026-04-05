@@ -1,14 +1,18 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+mod clock;
+mod engine;
+mod error;
+mod length;
+mod outputs;
+mod quantizer;
+mod shift_register;
+mod write_knob;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+// Re-export the public API at crate root.
+pub use clock::ClockDivider;
+pub use engine::TuringMachine;
+pub use error::Error;
+pub use length::LengthSelector;
+pub use outputs::StepOutputs;
+pub use quantizer::{Quantizer, Scale};
+pub use shift_register::ShiftRegister;
+pub use write_knob::WriteKnob;
