@@ -20,7 +20,7 @@ The system is organized in four layers:
 |  - holds modules, routes cables, drives clock                    |
 +------------------------------------------------------------------+
 |  Module Crates                             [ standalone ]        |
-|  - turingmachine, clock, noise, lfo, sequencer, ...             |
+|  - turingmachine, clock, noise, lfo, sequencer, ...              |
 |  - each implements the Module trait                              |
 |  - each is independently usable without the rack                 |
 +------------------------------------------------------------------+
