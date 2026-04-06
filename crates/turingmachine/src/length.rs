@@ -18,7 +18,9 @@ impl LengthSelector {
     /// Creates a new `LengthSelector` at position 8 (length 16).
     #[must_use]
     pub fn new() -> Self {
-        Self { position: Self::MAX_POSITION }
+        Self {
+            position: Self::MAX_POSITION,
+        }
     }
 
     /// Sets the rotary-switch position, clamping to 0..=8.

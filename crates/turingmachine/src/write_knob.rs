@@ -1,3 +1,5 @@
+use rand::RngExt;
+
 /// Models the WRITE knob on a MIDI Turing Machine.
 ///
 /// The knob controls the probability of keeping the existing feedback bit

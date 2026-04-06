@@ -38,6 +38,8 @@ impl std::error::Error for Error {
 #[cfg(feature = "midi-io")]
 impl From<midir::SendError> for Error {
     fn from(e: midir::SendError) -> Self {
-        Self { kind: ErrorKind::Midi(e) }
+        Self {
+            kind: ErrorKind::Midi(e),
+        }
     }
 }

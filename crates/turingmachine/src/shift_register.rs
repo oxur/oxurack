@@ -8,7 +8,7 @@
 //! On each clock pulse the register shifts left by one position and
 //! the incoming bit is inserted at position 0.
 
-use rand::Rng;
+use rand::{Rng, RngExt};
 
 /// A 16-bit shift register modelling four chained CD4015 ICs.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -78,8 +78,8 @@ impl ShiftRegister {
     #[must_use]
     pub fn to_bools(&self) -> [bool; 16] {
         let mut out = [false; 16];
-        for i in 0..16 {
-            out[i] = (self.bits >> (15 - i)) & 1 == 1;
+        for (i, slot) in out.iter_mut().enumerate() {
+            *slot = (self.bits >> (15 - i)) & 1 == 1;
         }
         out
     }

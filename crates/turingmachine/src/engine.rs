@@ -10,9 +10,8 @@ use std::fmt;
 use std::num::NonZeroU32;
 use std::ops::RangeInclusive;
 
-use rand::Rng;
-use rand::SeedableRng;
 use rand::rngs::SmallRng;
+use rand::{RngExt, SeedableRng};
 
 use crate::clock::ClockDivider;
 use crate::length::LengthSelector;
@@ -51,7 +50,7 @@ impl TuringMachine {
     /// - RNG seeded from the operating system
     #[must_use]
     pub fn new() -> Self {
-        Self::build(SmallRng::from_os_rng())
+        Self::build(SmallRng::from_rng(&mut rand::rng()))
     }
 
     /// Creates a new `TuringMachine` with a deterministic seed.
@@ -209,18 +208,17 @@ impl TuringMachine {
         let dac = self.register.dac_byte(len);
 
         // Per-bit gate outputs (low 8 bits of the register).
-        let bit =
-            |pos: usize| -> bool { (self.register.bits() >> pos) & 1 == 1 };
+        let bit = |pos: usize| -> bool { (self.register.bits() >> pos) & 1 == 1 };
 
         let mut gates = [false; 8];
-        for n in 0..8 {
-            gates[n] = bit(n);
+        for (n, gate) in gates.iter_mut().enumerate() {
+            *gate = bit(n);
         }
 
         // AND-gate pulse outputs: pulse[n] = bit(n) && bit(n+1).
         let mut pulses = [false; 6];
-        for n in 0..6 {
-            pulses[n] = bit(n) && bit(n + 1);
+        for (n, pulse) in pulses.iter_mut().enumerate() {
+            *pulse = bit(n) && bit(n + 1);
         }
 
         let (d2, d4) = if advance_clock {
@@ -296,15 +294,18 @@ mod tests {
         // length.  We compare notes because clock-divider state differs.
         for i in 0..8 {
             assert_eq!(
-                outputs[i].note, outputs[i + 8].note,
+                outputs[i].note,
+                outputs[i + 8].note,
                 "note mismatch at step {i}"
             );
             assert_eq!(
-                outputs[i].velocity, outputs[i + 8].velocity,
+                outputs[i].velocity,
+                outputs[i + 8].velocity,
                 "velocity mismatch at step {i}"
             );
             assert_eq!(
-                outputs[i].gate, outputs[i + 8].gate,
+                outputs[i].gate,
+                outputs[i + 8].gate,
                 "gate mismatch at step {i}"
             );
         }

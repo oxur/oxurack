@@ -52,11 +52,7 @@ impl MidiTuringMachine {
     /// routing options start disabled and `gate_note` defaults to 60
     /// (middle C).
     #[must_use]
-    pub fn new(
-        engine: TuringMachine,
-        conn_out: MidiOutputConnection,
-        channel: u8,
-    ) -> Self {
+    pub fn new(engine: TuringMachine, conn_out: MidiOutputConnection, channel: u8) -> Self {
         Self {
             engine,
             conn_out,
@@ -89,16 +85,14 @@ impl MidiTuringMachine {
 
         // Note Off for the previous note.
         if let Some(prev) = self.last_note {
-            self.conn_out
-                .send(&[0x80 | self.channel, prev, 0])?;
+            self.conn_out.send(&[0x80 | self.channel, prev, 0])?;
         }
 
         // Note On / gate tracking.
         if outputs.gate {
             if let Some(note) = outputs.note {
                 let velocity = outputs.velocity.unwrap_or(64);
-                self.conn_out
-                    .send(&[0x90 | self.channel, note, velocity])?;
+                self.conn_out.send(&[0x90 | self.channel, note, velocity])?;
                 self.last_note = Some(note);
             }
         } else {
@@ -110,17 +104,16 @@ impl MidiTuringMachine {
             self.conn_out
                 .send(&[0xB0 | self.channel, cc_num, outputs.noise_cc])?;
         }
-        if let Some(cc_num) = self.note_cc {
-            if let Some(note) = outputs.note {
-                self.conn_out
-                    .send(&[0xB0 | self.channel, cc_num, note])?;
-            }
+        if let Some(cc_num) = self.note_cc
+            && let Some(note) = outputs.note
+        {
+            self.conn_out.send(&[0xB0 | self.channel, cc_num, note])?;
         }
-        if let Some(cc_num) = self.velocity_cc {
-            if let Some(velocity) = outputs.velocity {
-                self.conn_out
-                    .send(&[0xB0 | self.channel, cc_num, velocity])?;
-            }
+        if let Some(cc_num) = self.velocity_cc
+            && let Some(velocity) = outputs.velocity
+        {
+            self.conn_out
+                .send(&[0xB0 | self.channel, cc_num, velocity])?;
         }
 
         Ok(outputs)
@@ -134,8 +127,7 @@ impl MidiTuringMachine {
     /// Returns [`Error`] if the MIDI send operation fails.
     pub fn all_notes_off(&mut self) -> Result<(), Error> {
         if let Some(note) = self.last_note.take() {
-            self.conn_out
-                .send(&[0x80 | self.channel, note, 0])?;
+            self.conn_out.send(&[0x80 | self.channel, note, 0])?;
         }
         Ok(())
     }
