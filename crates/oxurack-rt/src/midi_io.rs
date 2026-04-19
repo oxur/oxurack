@@ -8,15 +8,20 @@
 /// Manages open MIDI output port connections.
 ///
 /// Holds the `midir` connection handles and provides methods for
-/// sending raw MIDI bytes to connected output ports.
+/// sending raw MIDI bytes to connected output ports. Tracks port
+/// health via `port_lost` flags: once a send fails on a port, it is
+/// marked as lost and all subsequent sends to that port are skipped.
 pub(crate) struct MidiPorts {
     outputs: Vec<midir::MidiOutputConnection>,
+    /// Per-port lost flag. When `true`, sends to that port are skipped.
+    port_lost: Vec<bool>,
 }
 
 impl std::fmt::Debug for MidiPorts {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("MidiPorts")
             .field("output_count", &self.outputs.len())
+            .field("ports_lost", &self.port_lost.iter().filter(|&&v| v).count())
             .finish()
     }
 }
@@ -38,6 +43,7 @@ impl MidiPorts {
         if configs.is_empty() {
             return Ok(Self {
                 outputs: Vec::new(),
+                port_lost: Vec::new(),
             });
         }
 
@@ -75,25 +81,57 @@ impl MidiPorts {
             outputs.push(connection);
         }
 
-        Ok(Self { outputs })
+        let port_lost = vec![false; outputs.len()];
+        Ok(Self { outputs, port_lost })
     }
 
     /// Sends raw MIDI bytes to the port at the given index.
     ///
+    /// If the port was previously marked as lost (due to a prior send
+    /// failure), the send is silently skipped and the same error is
+    /// returned. Once a port is lost, it remains lost until the
+    /// runtime is restarted (future versions will support
+    /// re-enumeration).
+    ///
     /// # Errors
     ///
     /// Returns [`crate::Error::PortNotFound`] if `port_index` is out of
-    /// bounds, or [`crate::Error::MidiInit`] if the send fails (e.g. the
-    /// port has been disconnected).
+    /// bounds or the port has been marked as lost, or
+    /// [`crate::Error::MidiInit`] if the send fails (e.g. the port has
+    /// been disconnected).
     pub(crate) fn send(&mut self, port_index: u8, bytes: &[u8]) -> Result<(), crate::Error> {
-        let port = self
-            .outputs
-            .get_mut(port_index as usize)
-            .ok_or(crate::Error::PortNotFound {
+        let idx = port_index as usize;
+
+        // Check bounds.
+        if idx >= self.outputs.len() {
+            return Err(crate::Error::PortNotFound {
                 name: format!("index {port_index}"),
-            })?;
-        port.send(bytes)
-            .map_err(|e| crate::Error::MidiInit(e.to_string()))
+            });
+        }
+
+        // Skip sends to lost ports.
+        if self.port_lost[idx] {
+            return Err(crate::Error::PortNotFound {
+                name: format!("index {port_index} (lost)"),
+            });
+        }
+
+        if let Err(e) = self.outputs[idx].send(bytes) {
+            self.port_lost[idx] = true;
+            return Err(crate::Error::MidiInit(e.to_string()));
+        }
+
+        Ok(())
+    }
+
+    /// Returns `true` if the port at the given index has been marked as
+    /// lost due to a prior send failure.
+    #[cfg(test)]
+    pub(crate) fn is_port_lost(&self, port_index: u8) -> bool {
+        self.port_lost
+            .get(port_index as usize)
+            .copied()
+            .unwrap_or(true)
     }
 }
 
@@ -286,6 +324,7 @@ mod tests {
         assert!(result.is_ok(), "opening with no configs should succeed");
         let ports = result.unwrap();
         assert!(ports.outputs.is_empty());
+        assert!(ports.port_lost.is_empty());
     }
 
     #[test]
@@ -336,6 +375,26 @@ mod tests {
         let mut ports = result.unwrap();
         // drain_all on an empty set of consumers yields nothing.
         assert_eq!(ports.drain_all().count(), 0);
+    }
+
+    #[test]
+    fn test_send_out_of_bounds_returns_port_not_found() {
+        let mut ports = MidiPorts::open_outputs(&[]).unwrap();
+        let result = ports.send(0, &[0xF8]);
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            crate::Error::PortNotFound { name } => {
+                assert!(name.contains("index 0"), "expected index in name: {name}");
+            }
+            other => panic!("expected PortNotFound, got: {other}"),
+        }
+    }
+
+    #[test]
+    fn test_port_lost_tracked_on_empty() {
+        let ports = MidiPorts::open_outputs(&[]).unwrap();
+        // No ports exist, so is_port_lost should return true (out of bounds).
+        assert!(ports.is_port_lost(0));
     }
 
     #[test]

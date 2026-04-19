@@ -1,6 +1,3 @@
-// TODO: remove once scaffold is wired up (Milestone 2.4)
-#![allow(dead_code)]
-
 //! Real-time MIDI clock and I/O thread for oxurack.
 //!
 //! `oxurack-rt` runs on a dedicated OS thread elevated to real-time
@@ -48,6 +45,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread::JoinHandle;
 
 /// Configuration for a MIDI output port connection.
+///
+/// The `name` field is matched case-insensitively as a substring
+/// against the system's available MIDI output port names.
 #[derive(Debug, Clone)]
 pub struct MidiOutputConfig {
     /// Human-readable name (or substring) used to match an available port.
@@ -55,6 +55,9 @@ pub struct MidiOutputConfig {
 }
 
 /// Configuration for a MIDI input port connection.
+///
+/// The `name` field is matched case-insensitively as a substring
+/// against the system's available MIDI input port names.
 #[derive(Debug, Clone)]
 pub struct MidiInputConfig {
     /// Human-readable name (or substring) used to match an available port.
@@ -88,6 +91,9 @@ pub enum ClockMode {
 }
 
 /// Full configuration for starting the RT runtime.
+///
+/// Specifies the clock mode (master or slave), which MIDI ports to
+/// open, and the capacity of the lock-free communication queues.
 #[derive(Debug, Clone)]
 pub struct RuntimeConfig {
     /// Clock mode selection (master or slave).

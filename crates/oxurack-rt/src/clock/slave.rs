@@ -214,12 +214,6 @@ pub(crate) struct SlaveOscillator {
     phase_gain: f64,
 }
 
-impl Default for SlaveOscillator {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl SlaveOscillator {
     /// Creates a new slave oscillator in the stopped state.
     pub(crate) fn new() -> Self {
@@ -482,6 +476,7 @@ impl SlaveClock {
     }
 
     /// Returns `true` if the estimator has locked onto the external clock.
+    #[cfg(test)]
     pub(crate) fn is_locked(&self) -> bool {
         self.estimator.is_locked()
     }

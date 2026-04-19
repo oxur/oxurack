@@ -112,11 +112,13 @@ impl MasterClock {
     }
 
     /// Returns the current beat count.
+    #[cfg(test)]
     pub(crate) fn beat(&self) -> u64 {
         self.beat
     }
 
     /// Returns the current subdivision within the beat (0..23).
+    #[cfg(test)]
     pub(crate) fn subdivision(&self) -> u8 {
         self.subdivision
     }

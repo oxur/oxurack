@@ -11,7 +11,7 @@ use crate::messages::{EcsCommand, RtEvent};
 
 /// The ECS-side handles for communicating with the RT thread.
 ///
-/// Obtained from [`create_queues`] and returned by `Runtime::start()`.
+/// Returned by [`Runtime::start()`](crate::Runtime::start).
 /// The ECS world uses these to receive events from the RT thread and
 /// send commands to it.
 pub struct RtHandles {

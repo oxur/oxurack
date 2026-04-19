@@ -9,6 +9,10 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::queues::RtSideQueues;
 
+/// Number of consecutive queue push failures before a
+/// [`crate::RtErrorCode::QueueOverflow`] event is emitted.
+const OVERFLOW_REPORT_THRESHOLD: u32 = 100;
+
 /// Runs the RT thread main loop.
 ///
 /// This function is the entry point for the spawned real-time thread.
@@ -71,9 +75,17 @@ pub(crate) fn rt_thread_main(
     // 5. Create clock and timing infrastructure.
     let clock = crate::timing::MonotonicClock::new();
 
+    // Track consecutive queue overflow failures across both modes.
+    let mut consecutive_overflows: u32 = 0;
+
     match &config.clock_mode {
-        crate::ClockMode::Master { tempo_bpm, .. } => {
+        crate::ClockMode::Master {
+            tempo_bpm,
+            send_transport,
+        } => {
+            let send_transport = *send_transport;
             let mut master = crate::clock::master::MasterClock::new(*tempo_bpm, clock.now());
+            let mut is_running = true;
 
             // Master mode loop.
             loop {
@@ -100,9 +112,54 @@ pub(crate) fn rt_thread_main(
                             let len = message.length as usize;
                             let _ = midi_ports.send(output_port_index, &bytes[..len]);
                         }
-                        crate::EcsCommand::SendTransport(_)
-                        | crate::EcsCommand::SendSongPosition { .. } => {
-                            // Transport and SPP will be handled in a future phase.
+                        crate::EcsCommand::SendTransport(transport) => {
+                            match transport {
+                                crate::TransportEvent::Start => {
+                                    if send_transport {
+                                        for i in 0..config.outputs.len() {
+                                            let _ = midi_ports.send(i as u8, &[0xFA]);
+                                        }
+                                    }
+                                    master.reset();
+                                    is_running = true;
+                                }
+                                crate::TransportEvent::Stop => {
+                                    if send_transport {
+                                        for i in 0..config.outputs.len() {
+                                            let _ = midi_ports.send(i as u8, &[0xFC]);
+                                        }
+                                    }
+                                    is_running = false;
+                                }
+                                crate::TransportEvent::Continue => {
+                                    if send_transport {
+                                        for i in 0..config.outputs.len() {
+                                            let _ = midi_ports.send(i as u8, &[0xFB]);
+                                        }
+                                    }
+                                    is_running = true;
+                                }
+                            }
+                            push_event(
+                                &mut queues,
+                                crate::RtEvent::Transport(transport),
+                                &mut consecutive_overflows,
+                            );
+                        }
+                        crate::EcsCommand::SendSongPosition { position } => {
+                            if send_transport {
+                                let lsb = (position & 0x7F) as u8;
+                                let msb = ((position >> 7) & 0x7F) as u8;
+                                for i in 0..config.outputs.len() {
+                                    let _ = midi_ports.send(i as u8, &[0xF2, lsb, msb]);
+                                }
+                            }
+                            master.set_position_from_spp(position);
+                            push_event(
+                                &mut queues,
+                                crate::RtEvent::SongPosition { position },
+                                &mut consecutive_overflows,
+                            );
                         }
                     }
                 }
@@ -111,26 +168,31 @@ pub(crate) fn rt_thread_main(
                     break;
                 }
 
-                // Sleep until the next tick.
-                let schedule = master.next_tick();
-                crate::timing::precision_sleep(schedule.next_tick_ns, &clock);
+                if is_running {
+                    // Sleep until the next tick.
+                    let schedule = master.next_tick();
+                    crate::timing::precision_sleep(schedule.next_tick_ns, &clock);
 
-                // Emit MIDI Clock (0xF8) on all output ports.
-                for i in 0..config.outputs.len() {
-                    let _ = midi_ports.send(i as u8, &[0xF8]);
+                    // Emit MIDI Clock (0xF8) on all output ports.
+                    for i in 0..config.outputs.len() {
+                        let _ = midi_ports.send(i as u8, &[0xF8]);
+                    }
+
+                    // Push ClockTick event to ECS.
+                    let tick_event = crate::RtEvent::ClockTick {
+                        subdivision: schedule.subdivision,
+                        beat: schedule.beat,
+                        tempo_bpm: master.tempo(),
+                        timestamp_ns: clock.now(),
+                    };
+                    push_event(&mut queues, tick_event, &mut consecutive_overflows);
+
+                    // Advance to the next tick position.
+                    master.advance();
+                } else {
+                    // When stopped, sleep briefly to avoid busy-waiting.
+                    std::thread::sleep(std::time::Duration::from_millis(1));
                 }
-
-                // Push ClockTick event to ECS.
-                let tick_event = crate::RtEvent::ClockTick {
-                    subdivision: schedule.subdivision,
-                    beat: schedule.beat,
-                    tempo_bpm: master.tempo(),
-                    timestamp_ns: clock.now(),
-                };
-                let _ = queues.events.push(tick_event);
-
-                // Advance to the next tick position.
-                master.advance();
 
                 // Drain MIDI input events and classify them.
                 drain_midi_input(&mut midi_input_ports, &mut queues);
@@ -170,10 +232,21 @@ pub(crate) fn rt_thread_main(
                             // In slave mode, tempo is determined by the
                             // external clock source. Ignore SetTempo.
                         }
-                        crate::EcsCommand::SendTransport(_)
-                        | crate::EcsCommand::SendSongPosition { .. } => {
-                            // Transport and SPP sending will be handled
-                            // in a future phase.
+                        crate::EcsCommand::SendTransport(transport) => {
+                            slave_clock.feed_transport(transport, clock.now());
+                            push_event(
+                                &mut queues,
+                                crate::RtEvent::Transport(transport),
+                                &mut consecutive_overflows,
+                            );
+                        }
+                        crate::EcsCommand::SendSongPosition { position } => {
+                            slave_clock.feed_spp(position);
+                            push_event(
+                                &mut queues,
+                                crate::RtEvent::SongPosition { position },
+                                &mut consecutive_overflows,
+                            );
                         }
                     }
                 }
@@ -283,6 +356,31 @@ pub(crate) fn rt_thread_main(
     }
 }
 
+/// Pushes an event to the ECS event queue with overflow tracking.
+///
+/// If the push fails, increments `consecutive_overflows`. When the
+/// counter reaches the reporting threshold (100), attempts to push a
+/// [`crate::RtEvent::NonFatalError`] with [`crate::RtErrorCode::QueueOverflow`].
+/// On a successful push, the counter is reset to zero.
+fn push_event(
+    queues: &mut RtSideQueues,
+    event: crate::RtEvent,
+    consecutive_overflows: &mut u32,
+) {
+    if queues.events.push(event).is_ok() {
+        *consecutive_overflows = 0;
+    } else {
+        *consecutive_overflows = consecutive_overflows.saturating_add(1);
+        if *consecutive_overflows >= OVERFLOW_REPORT_THRESHOLD {
+            // Try to push a QueueOverflow error (which may itself fail).
+            let _ = queues
+                .events
+                .push(crate::RtEvent::NonFatalError(crate::RtErrorCode::QueueOverflow));
+            *consecutive_overflows = 0;
+        }
+    }
+}
+
 /// Drains all pending raw MIDI events from the input ports, classifies
 /// them, and pushes the appropriate [`crate::RtEvent`]s to the ECS
 /// event queue.
@@ -362,6 +460,7 @@ fn drain_midi_input(
 ///
 /// A vector of `iterations` measured intervals (in nanoseconds) between
 /// consecutive actual wake-up timestamps.
+#[cfg(test)]
 pub(crate) fn run_timing_test(iterations: u32, interval_ns: u64) -> Vec<u64> {
     use crate::timing::{MonotonicClock, precision_sleep};
 
@@ -612,6 +711,304 @@ mod tests {
 
         // Drop the runtime -- should not hang or panic.
         drop(runtime);
+    }
+
+    // ── Transport tests (M5.1) ───────────────────────────────────────
+
+    #[test]
+    fn test_master_transport_start_resets_position() {
+        let config = test_config(120.0);
+        let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
+
+        // Let ticks accumulate for 100ms.
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        // Send Transport Start to reset position.
+        let cmd = crate::EcsCommand::SendTransport(crate::TransportEvent::Start);
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+
+        // Let a few more ticks happen.
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        runtime.stop().unwrap();
+
+        // Drain events and check for Transport(Start) and that beat
+        // reset to 0 in subsequent ticks.
+        let mut saw_start = false;
+        let mut beat_after_start = None;
+        while let Ok(event) = handles.events.pop() {
+            match event {
+                crate::RtEvent::Transport(crate::TransportEvent::Start) => {
+                    saw_start = true;
+                }
+                crate::RtEvent::ClockTick { beat, .. } if saw_start && beat_after_start.is_none() => {
+                    beat_after_start = Some(beat);
+                }
+                _ => {}
+            }
+        }
+
+        assert!(saw_start, "expected Transport(Start) event");
+        // After a Start, the beat counter resets. The first tick
+        // after Start should be at beat 0 (or very close to 0 due
+        // to timing of when the command is processed).
+        if let Some(beat) = beat_after_start {
+            assert!(
+                beat <= 1,
+                "expected beat near 0 after Start, got {beat}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_master_transport_stop_halts_ticks() {
+        let config = test_config(120.0);
+        let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
+
+        // Let ticks accumulate for 100ms.
+        let mut ticks_before_stop = 0u64;
+        let deadline = std::time::Instant::now() + std::time::Duration::from_millis(100);
+        while std::time::Instant::now() < deadline {
+            while let Ok(event) = handles.events.pop() {
+                if matches!(event, crate::RtEvent::ClockTick { .. }) {
+                    ticks_before_stop += 1;
+                }
+            }
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+
+        // Send Transport Stop.
+        let cmd = crate::EcsCommand::SendTransport(crate::TransportEvent::Stop);
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+
+        // Wait for the Stop to be processed.
+        std::thread::sleep(std::time::Duration::from_millis(50));
+
+        // Drain any events that arrived around the Stop boundary.
+        let mut saw_stop = false;
+        while let Ok(event) = handles.events.pop() {
+            if matches!(event, crate::RtEvent::Transport(crate::TransportEvent::Stop)) {
+                saw_stop = true;
+            }
+        }
+
+        // Now wait 200ms and count any new ticks.
+        let mut ticks_after_stop = 0u64;
+        let deadline = std::time::Instant::now() + std::time::Duration::from_millis(200);
+        while std::time::Instant::now() < deadline {
+            while let Ok(event) = handles.events.pop() {
+                if matches!(event, crate::RtEvent::ClockTick { .. }) {
+                    ticks_after_stop += 1;
+                }
+            }
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+
+        assert!(saw_stop, "expected Transport(Stop) event");
+        assert_eq!(
+            ticks_after_stop, 0,
+            "expected no ticks after Stop, got {ticks_after_stop}"
+        );
+
+        // Send Transport Continue and verify ticks resume.
+        let cmd = crate::EcsCommand::SendTransport(crate::TransportEvent::Continue);
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+
+        let mut ticks_after_continue = 0u64;
+        let deadline = std::time::Instant::now() + std::time::Duration::from_millis(150);
+        while std::time::Instant::now() < deadline {
+            while let Ok(event) = handles.events.pop() {
+                if matches!(event, crate::RtEvent::ClockTick { .. }) {
+                    ticks_after_continue += 1;
+                }
+            }
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+
+        runtime.stop().unwrap();
+
+        eprintln!(
+            "ticks before={ticks_before_stop}, after_stop={ticks_after_stop}, after_continue={ticks_after_continue}"
+        );
+        assert!(
+            ticks_after_continue >= 2,
+            "expected ticks after Continue, got {ticks_after_continue}"
+        );
+    }
+
+    #[test]
+    fn test_master_transport_continue_preserves_position() {
+        let config = test_config(120.0);
+        let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
+
+        // Let ticks accumulate for 200ms to advance the beat counter.
+        let mut last_beat = 0u64;
+        let deadline = std::time::Instant::now() + std::time::Duration::from_millis(200);
+        while std::time::Instant::now() < deadline {
+            while let Ok(event) = handles.events.pop() {
+                if let crate::RtEvent::ClockTick { beat, .. } = event {
+                    last_beat = beat;
+                }
+            }
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+
+        // Stop.
+        let cmd = crate::EcsCommand::SendTransport(crate::TransportEvent::Stop);
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+        // Drain stop event.
+        while handles.events.pop().is_ok() {}
+
+        // Continue (should NOT reset beat).
+        let cmd = crate::EcsCommand::SendTransport(crate::TransportEvent::Continue);
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+
+        // Collect a few ticks and check beat wasn't reset.
+        let mut beat_after_continue = None;
+        let deadline = std::time::Instant::now() + std::time::Duration::from_millis(150);
+        while std::time::Instant::now() < deadline {
+            while let Ok(event) = handles.events.pop() {
+                if let crate::RtEvent::ClockTick { beat, .. } = event {
+                    if beat_after_continue.is_none() {
+                        beat_after_continue = Some(beat);
+                    }
+                }
+            }
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+
+        runtime.stop().unwrap();
+
+        let beat = beat_after_continue.expect("expected ticks after Continue");
+        eprintln!("last_beat before stop = {last_beat}, beat after continue = {beat}");
+        // Continue preserves position, so beat should be >= where we left off.
+        // (It may have advanced a few ticks between stop command and processing.)
+        assert!(
+            beat >= last_beat,
+            "expected beat ({beat}) >= last_beat ({last_beat}) after Continue (not Start)"
+        );
+    }
+
+    // ── SPP test (M5.2) ────────────────────────────────────────────────
+
+    #[test]
+    fn test_master_spp_sets_position() {
+        let config = test_config(120.0);
+        let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
+
+        // Send SPP command.
+        let cmd = crate::EcsCommand::SendSongPosition { position: 96 };
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+
+        // Wait for it to be processed.
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        runtime.stop().unwrap();
+
+        // Drain events and look for SongPosition.
+        let mut saw_spp = false;
+        while let Ok(event) = handles.events.pop() {
+            if let crate::RtEvent::SongPosition { position } = event {
+                assert_eq!(position, 96);
+                saw_spp = true;
+            }
+        }
+
+        assert!(saw_spp, "expected SongPosition event with position=96");
+    }
+
+    // ── Slave transport test (M5.3) ────────────────────────────────────
+
+    #[test]
+    fn test_slave_transport_via_command() {
+        let config = crate::RuntimeConfig {
+            clock_mode: crate::ClockMode::Slave {
+                clock_input_port: String::new(),
+                timeout_ns: 1_000_000_000,
+            },
+            outputs: Vec::new(),
+            inputs: Vec::new(),
+            event_queue_capacity: 1024,
+            command_queue_capacity: 1024,
+        };
+        let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
+
+        // Send Transport Start.
+        let cmd = crate::EcsCommand::SendTransport(crate::TransportEvent::Start);
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+
+        // Wait for it to be processed.
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        runtime.stop().unwrap();
+
+        // Drain events.
+        let mut saw_start = false;
+        while let Ok(event) = handles.events.pop() {
+            if matches!(event, crate::RtEvent::Transport(crate::TransportEvent::Start)) {
+                saw_start = true;
+            }
+        }
+
+        assert!(saw_start, "expected Transport(Start) event in slave mode");
+    }
+
+    // ── Error handling tests (M5.4) ───────────────────────────────────
+
+    #[test]
+    fn test_push_event_overflow_tracking() {
+        // Create a tiny queue that fills up quickly.
+        let (mut rt_side, _ecs_side) = crate::queues::create_queues(4, 4);
+        let mut overflows: u32 = 0;
+
+        let tick = crate::RtEvent::ClockTick {
+            subdivision: 0,
+            beat: 0,
+            tempo_bpm: 120.0,
+            timestamp_ns: 0,
+        };
+
+        // Fill the queue.
+        for _ in 0..4 {
+            push_event(&mut rt_side, tick, &mut overflows);
+        }
+        assert_eq!(overflows, 0, "no overflows while queue has space");
+
+        // Now pushes should fail and increment the counter.
+        push_event(&mut rt_side, tick, &mut overflows);
+        assert_eq!(overflows, 1);
+
+        // Push enough to reach the threshold (already at 1, need 99 more).
+        for _ in 0..99 {
+            push_event(&mut rt_side, tick, &mut overflows);
+        }
+        // After reaching 100, the counter should reset (push_event tries
+        // to push a QueueOverflow error, which may also fail, but the
+        // counter resets either way).
+        assert_eq!(overflows, 0, "counter should reset after threshold");
+    }
+
+    #[test]
+    fn test_port_lost_send_returns_error() {
+        let mut ports = crate::midi_io::MidiPorts::open_outputs(&[]).unwrap();
+        // Sending to a nonexistent port should return PortNotFound.
+        let result = ports.send(0, &[0xF8]);
+        assert!(result.is_err());
     }
 
     // ── Input integration tests (M3.3) ──────────────────────────────

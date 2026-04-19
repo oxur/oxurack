@@ -64,6 +64,7 @@ impl MonotonicClock {
     /// # Arguments
     ///
     /// * `start` - A timestamp previously obtained from [`Self::now`].
+    #[cfg(test)]
     pub(crate) fn elapsed_since(&self, start: u64) -> u64 {
         self.now().saturating_sub(start)
     }

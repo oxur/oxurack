@@ -40,6 +40,7 @@ pub struct TickSchedule {
 /// let interval = interval_ns_from_bpm(120.0);
 /// assert_eq!(interval, 20_833_333);
 /// ```
+#[must_use]
 pub fn interval_ns_from_bpm(bpm: f64) -> u64 {
     (60.0 / (bpm * 24.0) * 1_000_000_000.0) as u64
 }
