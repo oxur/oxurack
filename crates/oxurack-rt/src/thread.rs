@@ -136,19 +136,45 @@ pub(crate) fn rt_thread_main(
                 drain_midi_input(&mut midi_input_ports, &mut queues);
             }
         }
-        crate::ClockMode::Slave { .. } => {
-            // Slave mode: placeholder loop that checks for shutdown.
-            // Full PLL-based slave implementation is deferred to Phase 4.
+        crate::ClockMode::Slave { timeout_ns, .. } => {
+            let mut slave_clock = crate::clock::slave::SlaveClock::new(*timeout_ns);
+
+            // Track when we last emitted a "not locked" warning to
+            // avoid flooding the ECS queue (limit to ~1 per second).
+            let mut last_not_locked_ns: u64 = 0;
+            const NOT_LOCKED_INTERVAL_NS: u64 = 1_000_000_000; // 1 second
+
+            // Slave mode loop.
             loop {
                 if shutdown.load(Ordering::Relaxed) {
                     break;
                 }
 
-                // Drain commands (mainly looking for Shutdown).
+                // Drain commands from ECS.
                 while let Ok(cmd) = queues.commands.pop() {
-                    if matches!(cmd, crate::EcsCommand::Shutdown) {
-                        shutdown.store(true, Ordering::Relaxed);
-                        break;
+                    match cmd {
+                        crate::EcsCommand::Shutdown => {
+                            shutdown.store(true, Ordering::Relaxed);
+                            break;
+                        }
+                        crate::EcsCommand::SendMidi {
+                            output_port_index,
+                            message,
+                            ..
+                        } => {
+                            let bytes = message.to_bytes();
+                            let len = message.length as usize;
+                            let _ = midi_ports.send(output_port_index, &bytes[..len]);
+                        }
+                        crate::EcsCommand::SetTempo { .. } => {
+                            // In slave mode, tempo is determined by the
+                            // external clock source. Ignore SetTempo.
+                        }
+                        crate::EcsCommand::SendTransport(_)
+                        | crate::EcsCommand::SendSongPosition { .. } => {
+                            // Transport and SPP sending will be handled
+                            // in a future phase.
+                        }
                     }
                 }
 
@@ -156,11 +182,102 @@ pub(crate) fn rt_thread_main(
                     break;
                 }
 
-                // Drain MIDI input events (needed for Phase 4 slave clock).
-                drain_midi_input(&mut midi_input_ports, &mut queues);
+                // Drain MIDI input events, routing clock/transport to
+                // the SlaveClock and forwarding everything else to ECS.
+                let now = clock.now();
+                for raw_event in midi_input_ports.drain_all() {
+                    let Some(classification) = crate::messages::classify_midi(
+                        &raw_event.bytes[..raw_event.length as usize],
+                    ) else {
+                        continue;
+                    };
 
-                // Sleep briefly to avoid busy-waiting.
-                std::thread::sleep(std::time::Duration::from_millis(1));
+                    match classification {
+                        crate::messages::MidiClassification::Clock => {
+                            slave_clock.feed_clock_byte(raw_event.timestamp_ns);
+                        }
+                        crate::messages::MidiClassification::Start => {
+                            slave_clock.feed_transport(
+                                crate::TransportEvent::Start,
+                                raw_event.timestamp_ns,
+                            );
+                            let _ = queues.events.push(crate::RtEvent::Transport(
+                                crate::TransportEvent::Start,
+                            ));
+                        }
+                        crate::messages::MidiClassification::Stop => {
+                            slave_clock.feed_transport(
+                                crate::TransportEvent::Stop,
+                                raw_event.timestamp_ns,
+                            );
+                            let _ = queues.events.push(crate::RtEvent::Transport(
+                                crate::TransportEvent::Stop,
+                            ));
+                        }
+                        crate::messages::MidiClassification::Continue => {
+                            slave_clock.feed_transport(
+                                crate::TransportEvent::Continue,
+                                raw_event.timestamp_ns,
+                            );
+                            let _ = queues.events.push(crate::RtEvent::Transport(
+                                crate::TransportEvent::Continue,
+                            ));
+                        }
+                        crate::messages::MidiClassification::SongPosition { position } => {
+                            slave_clock.feed_spp(position);
+                            let _ = queues
+                                .events
+                                .push(crate::RtEvent::SongPosition { position });
+                        }
+                        crate::messages::MidiClassification::Channel(msg) => {
+                            let event = crate::RtEvent::MidiInput {
+                                input_port_index: raw_event.port_index,
+                                timestamp_ns: raw_event.timestamp_ns,
+                                message: msg,
+                            };
+                            let _ = queues.events.push(event);
+                        }
+                        crate::messages::MidiClassification::ActiveSensing
+                        | crate::messages::MidiClassification::SystemReset => {
+                            // Ignored system messages.
+                        }
+                    }
+                }
+
+                // Check for clock dropout.
+                if slave_clock.check_dropout(now) {
+                    let _ = queues
+                        .events
+                        .push(crate::RtEvent::NonFatalError(crate::RtErrorCode::ClockDropout));
+                }
+
+                // If the slave clock has a tick ready, sleep until it
+                // and emit a ClockTick event.
+                if let Some(schedule) = slave_clock.next_tick() {
+                    crate::timing::precision_sleep(schedule.next_tick_ns, &clock);
+
+                    let tempo_bpm = slave_clock.estimated_bpm().unwrap_or(0.0);
+                    let tick_event = crate::RtEvent::ClockTick {
+                        subdivision: schedule.subdivision,
+                        beat: schedule.beat,
+                        tempo_bpm,
+                        timestamp_ns: clock.now(),
+                    };
+                    let _ = queues.events.push(tick_event);
+
+                    slave_clock.advance();
+                } else {
+                    // Not locked: emit a periodic warning.
+                    if now.saturating_sub(last_not_locked_ns) >= NOT_LOCKED_INTERVAL_NS {
+                        let _ = queues.events.push(crate::RtEvent::NonFatalError(
+                            crate::RtErrorCode::ClockNotLocked,
+                        ));
+                        last_not_locked_ns = now;
+                    }
+
+                    // Sleep briefly to avoid busy-waiting when unlocked.
+                    std::thread::sleep(std::time::Duration::from_millis(1));
+                }
             }
         }
     }
@@ -504,23 +621,23 @@ mod tests {
         let config = test_config(120.0);
         let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
 
-        // Let the thread run briefly with input draining active but
-        // no input ports configured.
-        std::thread::sleep(std::time::Duration::from_millis(100));
-
-        runtime.stop().unwrap();
-
-        // Drain all events — should contain only ClockTick events,
-        // no MidiInput events.
+        // Drain events while running to avoid the race between stop
+        // and queue draining.
         let mut tick_count = 0u64;
         let mut midi_input_count = 0u64;
-        while let Ok(event) = handles.events.pop() {
-            match event {
-                crate::RtEvent::ClockTick { .. } => tick_count += 1,
-                crate::RtEvent::MidiInput { .. } => midi_input_count += 1,
-                _ => {}
+        let deadline = std::time::Instant::now() + std::time::Duration::from_millis(200);
+        while std::time::Instant::now() < deadline {
+            while let Ok(event) = handles.events.pop() {
+                match event {
+                    crate::RtEvent::ClockTick { .. } => tick_count += 1,
+                    crate::RtEvent::MidiInput { .. } => midi_input_count += 1,
+                    _ => {}
+                }
             }
+            std::thread::sleep(std::time::Duration::from_millis(5));
         }
+
+        runtime.stop().unwrap();
 
         eprintln!("Ticks: {tick_count}, MidiInputs: {midi_input_count}");
         assert!(tick_count > 0, "expected clock ticks to be produced");
