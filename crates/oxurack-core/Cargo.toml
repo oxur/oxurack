@@ -1,0 +1,21 @@
+[package]
+name        = "oxurack-core"
+version     = "0.1.0"
+edition     = "2024"
+description = "ECS world, values, ports, and cables for oxurack."
+license     = "MIT OR Apache-2.0"
+repository  = "https://github.com/oxur/oxurack"
+
+[dependencies]
+bevy_ecs     = { version = "0.18", default-features = false }
+bevy_app     = { version = "0.18", default-features = false }
+bevy_reflect = { version = "0.18", default-features = false }
+smallvec     = "1"
+serde        = { version = "1", features = ["derive"] }
+ron          = "0.12"
+thiserror    = "2"
+ahash        = "0.8"
+rand         = { version = "0.10", default-features = false }
+
+[dev-dependencies]
+pretty_assertions = "1"
