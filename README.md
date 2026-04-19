@@ -1,147 +1,101 @@
 # oxurack
 
-Rust crates built with [midir](https://crates.io/crates/midir), inspired by
-Eurorack modules for use with hardware and software MIDI devices.
+Modular MIDI generation for people who want the feel of a patch-cable
+session and the reproducibility of a saved file.
 
-Oxurack reimagines classic analog module designs in the MIDI domain. Instead
-of control voltages and audio signals, these crates generate and transform
-MIDI note, velocity, gate, and CC streams -- suitable for driving
-synthesizers, DAW plugins, or live-coding sessions.
+oxurack borrows the mental model of Eurorack — small modules, patch cables,
+unified signals — and applies it to MIDI. Nothing here generates audio.
+Instead, modules produce and transform streams of notes, gates,
+velocities, and control values, routed through virtual cables to your
+synthesizers, samplers, and DAW.
 
-## Architecture
+## Why
 
-The system is organized in four layers:
+Generative and modular music-making tools tend to live on opposite ends of
+a spectrum. On one end: live-coding environments that are expressive but
+ephemeral — the performance and the patch are the same artifact, and
+recalling what you did last Tuesday is a matter of guessing your own
+past. On the other end: GUI-based modular racks like VCV Rack that are
+beautifully reproducible but expensive to run next to a DAW, and where
+capturing a live performance for later editing means bouncing audio
+rather than keeping the structure.
 
-```
-+------------------------------------------------------------------+
-|  Application / REPL / DAW Plugin                                 |
-+------------------------------------------------------------------+
-|  Rack Orchestration (oxurack)              [ optional ]          |
-|  - holds modules, routes cables, drives clock                    |
-+------------------------------------------------------------------+
-|  Module Crates                             [ standalone ]        |
-|  - turingmachine, clock, noise, lfo, sequencer, ...              |
-|  - each implements the Module trait                              |
-|  - each is independently usable without the rack                 |
-+------------------------------------------------------------------+
-|  Core (oxurack-core)                                             |
-|  - Module trait, Value types, Scale/quantization                 |
-|  - BatchGenerator, routing primitives                            |
-+------------------------------------------------------------------+
-```
+oxurack aims for the middle:
 
-Every module crate stands alone -- you can use the Turing Machine without
-the rack, the clock without the noise module, etc. The rack is an optional
-orchestration layer that wires modules together through a cable routing
-system, driving them from a shared clock.
+- **Patches are files.** A patch is a declarative description of
+  modules, parameters, and cable connections. It loads the same way every
+  time, ticks deterministically from a known seed, and lives in git
+  alongside the rest of your music.
+- **The output is MIDI, not audio.** That means every performance — every
+  parameter tweak, every patch change — can be recorded directly into a
+  DAW as editable notes and controllers. Your generative session becomes
+  a starting point, not a print.
+- **CPU footprint is small.** oxurack isn't synthesizing sound, so it
+  leaves room for your DAW and your soft synths on the same machine —
+  the thing that drove the original motivation away from VCV Rack for
+  live recording.
+- **The ontology is constrained, on purpose.** Eurorack's uniform-voltage,
+  single-signal-per-cable design is its strength: one vocabulary, reused
+  across thousands of modules. oxurack aims for the same feel in the MIDI
+  domain.
 
-Design documents live in
-[docs/design/](docs/design/) and cover the
-[system architecture](docs/design/01-draft/0002-oxurack-system-architecture.md),
-[module catalog](docs/design/01-draft/0003-initial-module-catalog-and-build-order.md), and
-[core infrastructure](docs/design/01-draft/0004-oxurack-rack-module-infrastructure.md).
+## What it lets you do
 
-## Modules
+- Build a generative rhythm section from a Euclidean module, a noise
+  source, and a Turing Machine; record the result into Logic Pro (or any
+  DAW) as MIDI you can edit, quantize, and remix afterward.
+- Put a scale quantizer, sample-and-hold, and LFO in front of a hardware
+  synth and drive its pitch with self-similar melodies shaped by the
+  instruments' physical controls.
+- Save a patch you built during a late-night experiment, come back in a
+  week, load it with the same seed, and pick up exactly where you were.
+- Map a nanoKONTROL2 (or any MIDI controller) to module parameters and
+  play oxurack like an instrument while it plays your synth.
+- Sync to your DAW as a clock slave so your generative performance
+  records cleanly into an existing session — or run oxurack as the
+  master clock when you want it to drive everything else.
+- Embed a single module — just the Turing Machine, say — inside a Rust
+  project that has nothing to do with oxurack itself. Every module crate
+  stands alone.
 
-### Available
+## Shape of the project
 
-| Crate | Inspired by | Description |
-|-------|-------------|-------------|
-| [turingmachine](crates/turingmachine/) | Music Thing Modular Turing Machine Mk2 | Shift-register randomisation and looping applied to MIDI note/velocity/gate/CC streams. 14 built-in scales, clock dividers, pulse and gate expander outputs. |
+oxurack is a Cargo workspace with four kinds of crate:
 
-### Planned -- Timing
+- `oxurack-core` — the shared vocabulary: values, ports, cables, the
+  tick cycle, and the patch file format.
+- `oxurack-rt` — the real-time thread: MIDI I/O and clocking, as
+  master or slave.
+- `oxurack-mod-*` — one crate per module. Each depends only on
+  `oxurack-core` and can be used on its own.
+- `oxurack` — the umbrella: REPL, patch CLI, rack assembly.
 
-| Crate | Inspired by | Description |
-|-------|-------------|-------------|
-| clock | Various | Master clock with configurable BPM, swing, division (div2/4/8) and multiplication (x2/x3) outputs. |
-| euclidean | Euclidean rhythm generators | Bjorklund's algorithm mapped to MIDI triggers and gates. |
+Modules are Bevy plugins over the core crate. Adding one to a rack looks
+like `app.add_plugins(TuringMachineModule)`. The rack loads patches from
+RON files, drives them from its clock, and routes values between
+modules every tick.
 
-### Planned -- Modulation
+See the documents under [docs/design/](docs/design/) for the full
+architecture: the ECS world, the RT thread, the module-authoring
+interface, and the build roadmap.
 
-| Crate | Inspired by | Description |
-|-------|-------------|-------------|
-| noise | Noise / S&H modules | Random value generation: uniform, Gaussian, Perlin, and Simplex noise algorithms. |
-| lfo | LFO modules | Low-frequency oscillator with sine, triangle, square, saw, and random waveforms. Free-running or tempo-synced. |
+## Current state
 
-### Planned -- Transformation
+oxurack is in early development. The Turing Machine Mk2 port
+(`crates/turingmachine/`) is the first working module; the core
+infrastructure, RT thread, and additional modules are being built out
+against the v1 roadmap. APIs will change until v1.0 is tagged.
 
-| Crate | Inspired by | Description |
-|-------|-------------|-------------|
-| quantizer | Pitch quantizers | Standalone scale quantizer for external MIDI streams. |
-| range | Attenuverters / scalers | Maps values from one range to another (e.g., noise 0--127 to velocity 60--100). |
-| sample-hold | Sample & Hold modules | Captures input value on trigger, holds until next trigger. |
+If you want to follow along or try the Turing Machine in isolation, its
+crate has its own README with examples.
 
-### Planned -- Sequencing
+## Lineage
 
-| Crate | Inspired by | Description |
-|-------|-------------|-------------|
-| sequencer | Classic step sequencers | Step sequencer with per-step note, velocity, gate length, probability, and ratcheting. |
-| arpeggiator | Arp modules | MIDI arpeggiator with classic modes (up, down, up-down, random, order) and octave range. |
-
-### Planned -- Output
-
-| Crate | Inspired by | Description |
-|-------|-------------|-------------|
-| midi-output | Eurorack output modules | Generic MIDI output module: converts value streams to Note On/Off and CC messages. |
-
-### Planned -- Infrastructure
-
-| Crate | Description |
-|-------|-------------|
-| oxurack-core | Module trait, Value types, Scale/quantization, BatchGenerator, routing primitives. |
-| oxurack | Rack orchestration: holds modules, manages cables, drives the tick cycle. |
-
-## Quick start
-
-```rust
-use turingmachine::{TuringMachine, Scale};
-
-let mut tm = TuringMachine::with_seed(42);
-tm.set_scale(Scale::pentatonic_minor());
-tm.set_length(8);
-tm.set_write(0.8);
-
-for _ in 0..16 {
-    let out = tm.tick();
-    if out.gate {
-        println!("note={} vel={}", out.note.unwrap(), out.velocity.unwrap());
-    }
-}
-```
-
-See the [turingmachine README](crates/turingmachine/README.md) for the full
-API, signal chain diagram, and MIDI I/O examples.
-
-## Workspace layout
-
-```
-oxurack/
-├── Cargo.toml              # Workspace root
-├── crates/
-│   ├── oxurack-core/       # Core traits and types (planned)
-│   ├── turingmachine/      # MIDI Turing Machine Mk2
-│   └── ...                 # Future module crates
-└── docs/
-    └── design/             # Architecture and module design documents
-```
-
-## Features
-
-Each crate may expose optional Cargo features:
-
-| Feature   | Description |
-|-----------|-------------|
-| `midi-io` | Real-time MIDI port I/O via `midir`. |
-| `serde`   | `Serialize` / `Deserialize` on public types. |
-
-## Building
-
-```sh
-make build          # debug build
-make test           # run all tests
-make check          # build + lint + test
-make docs           # generate API docs
-```
+oxurack is the Rust successor to
+[underack](https://github.com/ut-proj/underack), an LFE/Erlang project
+that explored the same design space. The modular-MIDI stance and the
+rough shape of the module catalog carry forward; the architecture is new,
+built on Bevy ECS as the runtime substrate.
 
 ## License
 
