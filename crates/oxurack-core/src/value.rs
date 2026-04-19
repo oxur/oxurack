@@ -4,6 +4,8 @@
 //! speaks in terms of `Value`. The [`ValueKind`] discriminant enables
 //! type-aware routing and merge policies without matching every variant.
 
+use bevy_reflect::Reflect;
+
 /// Structured MIDI message for the ECS world.
 ///
 /// Distinct from `oxurack_rt::MidiMessage`, which is a compact 4-byte
@@ -11,7 +13,7 @@
 /// intended for ECS-side processing where ergonomics matter more than
 /// byte packing.
 #[non_exhaustive]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Reflect)]
 pub enum MidiMessage {
     /// Note-on event.
     NoteOn {
@@ -94,7 +96,7 @@ pub enum MidiMessage {
 /// `Value` is kept at 16 bytes or fewer so it can be cheaply copied
 /// through the ECS without heap allocation.
 #[non_exhaustive]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Reflect)]
 pub enum Value {
     /// Unipolar float in the range 0.0..=1.0 (by convention).
     Float(f32),
@@ -113,7 +115,7 @@ pub enum Value {
 /// Useful for port declarations, merge-policy checks, and coercion
 /// tables where only the *kind* of signal matters, not its data.
 #[non_exhaustive]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
 pub enum ValueKind {
     /// Corresponds to [`Value::Float`].
     Float,

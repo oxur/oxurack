@@ -5,6 +5,12 @@
 //! type-aware: each variant only works on specific [`Value`](crate::Value)
 //! kinds and returns `None` for incompatible inputs.
 
+use std::collections::HashMap;
+
+use bevy_ecs::prelude::{Component, Entity, Resource};
+use bevy_reflect::Reflect;
+use smallvec::SmallVec;
+
 use crate::Value;
 
 /// A signal transform applied inline on a cable.
@@ -13,7 +19,7 @@ use crate::Value;
 /// kinds. [`CableTransform::apply`] returns `None` when the input kind
 /// is not supported by the transform.
 #[non_exhaustive]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Reflect)]
 pub enum CableTransform {
     /// Linear transform: `out = in * factor + offset`.
     ///
@@ -117,6 +123,75 @@ impl CableTransform {
             // ── Everything else is unsupported ─────────────────
             _ => None,
         }
+    }
+}
+
+// ── ECS component and resource types ───────────────────────────────
+
+/// A cable connecting two port entities.
+///
+/// Cables live as their own entities in the ECS world, referencing the
+/// source and target port entities. An optional [`CableTransform`]
+/// modifies the signal in transit.
+#[derive(Component, Debug, Clone, Reflect)]
+pub struct Cable {
+    /// The output port entity this cable reads from.
+    pub source_port: Entity,
+    /// The input port entity this cable writes to.
+    pub target_port: Entity,
+    /// Optional inline signal transform.
+    pub transform: Option<CableTransform>,
+    /// Whether this cable is currently active.
+    pub enabled: bool,
+}
+
+/// Index for fast cable lookup by source or target port.
+///
+/// This resource maintains two hash maps so that cable queries by port
+/// entity are O(1) amortised instead of requiring a full scan.
+#[derive(Resource, Default, Debug)]
+pub struct CableIndex {
+    by_target: HashMap<Entity, SmallVec<[Entity; 4]>>,
+    by_source: HashMap<Entity, SmallVec<[Entity; 4]>>,
+}
+
+impl CableIndex {
+    /// Returns the cable entities whose target is `port`.
+    pub fn cables_targeting(&self, port: Entity) -> &[Entity] {
+        self.by_target.get(&port).map_or(&[], |v| v.as_slice())
+    }
+
+    /// Returns the cable entities whose source is `port`.
+    pub fn cables_from(&self, port: Entity) -> &[Entity] {
+        self.by_source.get(&port).map_or(&[], |v| v.as_slice())
+    }
+
+    /// Register a cable entity in the index.
+    pub fn add_cable(&mut self, cable_entity: Entity, cable: &Cable) {
+        self.by_target
+            .entry(cable.target_port)
+            .or_default()
+            .push(cable_entity);
+        self.by_source
+            .entry(cable.source_port)
+            .or_default()
+            .push(cable_entity);
+    }
+
+    /// Remove a cable entity from the index.
+    pub fn remove_cable(&mut self, cable_entity: Entity, cable: &Cable) {
+        if let Some(v) = self.by_target.get_mut(&cable.target_port) {
+            v.retain(|e| *e != cable_entity);
+        }
+        if let Some(v) = self.by_source.get_mut(&cable.source_port) {
+            v.retain(|e| *e != cable_entity);
+        }
+    }
+
+    /// Clear the entire index.
+    pub fn clear(&mut self) {
+        self.by_target.clear();
+        self.by_source.clear();
     }
 }
 
@@ -491,5 +566,175 @@ mod tests {
         let a = CableTransform::Invert;
         let b = a;
         assert_eq!(a, b);
+    }
+
+    // ── Cable component tests ─────────────────────────────────────
+
+    #[test]
+    fn test_cable_component_roundtrip() {
+        use bevy_ecs::world::World;
+
+        let mut world = World::new();
+
+        let src = world.spawn_empty().id();
+        let tgt = world.spawn_empty().id();
+
+        let cable_entity = world
+            .spawn(Cable {
+                source_port: src,
+                target_port: tgt,
+                transform: Some(CableTransform::Invert),
+                enabled: true,
+            })
+            .id();
+
+        let cable = world.entity(cable_entity).get::<Cable>().unwrap();
+        assert_eq!(cable.source_port, src);
+        assert_eq!(cable.target_port, tgt);
+        assert_eq!(cable.transform, Some(CableTransform::Invert));
+        assert!(cable.enabled);
+    }
+
+    #[test]
+    fn test_cable_component_no_transform() {
+        use bevy_ecs::world::World;
+
+        let mut world = World::new();
+
+        let src = world.spawn_empty().id();
+        let tgt = world.spawn_empty().id();
+
+        let cable_entity = world
+            .spawn(Cable {
+                source_port: src,
+                target_port: tgt,
+                transform: None,
+                enabled: false,
+            })
+            .id();
+
+        let cable = world.entity(cable_entity).get::<Cable>().unwrap();
+        assert!(cable.transform.is_none());
+        assert!(!cable.enabled);
+    }
+
+    // ── CableIndex tests ──────────────────────────────────────────
+
+    #[test]
+    fn test_cable_index_add_and_lookup() {
+        use bevy_ecs::world::World;
+
+        let mut world = World::new();
+        let src_a = world.spawn_empty().id();
+        let tgt_a = world.spawn_empty().id();
+        let src_b = world.spawn_empty().id();
+
+        let cable_1 = world.spawn_empty().id();
+        let cable_2 = world.spawn_empty().id();
+        let cable_3 = world.spawn_empty().id();
+
+        let c1 = Cable {
+            source_port: src_a,
+            target_port: tgt_a,
+            transform: None,
+            enabled: true,
+        };
+        let c2 = Cable {
+            source_port: src_b,
+            target_port: tgt_a,
+            transform: None,
+            enabled: true,
+        };
+        let c3 = Cable {
+            source_port: src_a,
+            target_port: world.spawn_empty().id(),
+            transform: None,
+            enabled: true,
+        };
+
+        let mut index = CableIndex::default();
+        index.add_cable(cable_1, &c1);
+        index.add_cable(cable_2, &c2);
+        index.add_cable(cable_3, &c3);
+
+        // Two cables target tgt_a.
+        let targeting = index.cables_targeting(tgt_a);
+        assert_eq!(targeting.len(), 2);
+        assert!(targeting.contains(&cable_1));
+        assert!(targeting.contains(&cable_2));
+
+        // Two cables originate from src_a.
+        let from_a = index.cables_from(src_a);
+        assert_eq!(from_a.len(), 2);
+        assert!(from_a.contains(&cable_1));
+        assert!(from_a.contains(&cable_3));
+
+        // One cable from src_b.
+        let from_b = index.cables_from(src_b);
+        assert_eq!(from_b.len(), 1);
+        assert!(from_b.contains(&cable_2));
+    }
+
+    #[test]
+    fn test_cable_index_remove() {
+        use bevy_ecs::world::World;
+
+        let mut world = World::new();
+        let src = world.spawn_empty().id();
+        let tgt = world.spawn_empty().id();
+        let cable_entity = world.spawn_empty().id();
+
+        let cable = Cable {
+            source_port: src,
+            target_port: tgt,
+            transform: None,
+            enabled: true,
+        };
+
+        let mut index = CableIndex::default();
+        index.add_cable(cable_entity, &cable);
+        assert_eq!(index.cables_targeting(tgt).len(), 1);
+        assert_eq!(index.cables_from(src).len(), 1);
+
+        index.remove_cable(cable_entity, &cable);
+        assert!(index.cables_targeting(tgt).is_empty());
+        assert!(index.cables_from(src).is_empty());
+    }
+
+    #[test]
+    fn test_cable_index_unknown_port_returns_empty() {
+        use bevy_ecs::world::World;
+
+        let mut world = World::new();
+        let unknown = world.spawn_empty().id();
+
+        let index = CableIndex::default();
+        assert!(index.cables_targeting(unknown).is_empty());
+        assert!(index.cables_from(unknown).is_empty());
+    }
+
+    #[test]
+    fn test_cable_index_clear() {
+        use bevy_ecs::world::World;
+
+        let mut world = World::new();
+        let src = world.spawn_empty().id();
+        let tgt = world.spawn_empty().id();
+        let cable_entity = world.spawn_empty().id();
+
+        let cable = Cable {
+            source_port: src,
+            target_port: tgt,
+            transform: None,
+            enabled: true,
+        };
+
+        let mut index = CableIndex::default();
+        index.add_cable(cable_entity, &cable);
+        assert!(!index.cables_targeting(tgt).is_empty());
+
+        index.clear();
+        assert!(index.cables_targeting(tgt).is_empty());
+        assert!(index.cables_from(src).is_empty());
     }
 }

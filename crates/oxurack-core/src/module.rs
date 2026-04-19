@@ -6,11 +6,15 @@
 
 use std::fmt;
 
+use bevy_ecs::prelude::{Component, Entity};
+use bevy_ecs::world::World;
+use bevy_reflect::Reflect;
+
 /// The class name of a module (e.g. `"vco"`, `"adsr"`, `"mixer"`).
 ///
 /// This is a string newtype that identifies what *kind* of module
 /// something is, as opposed to which *instance* it is.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect)]
 pub struct ModuleKind(String);
 
 impl From<&str> for ModuleKind {
@@ -41,13 +45,56 @@ impl AsRef<str> for ModuleKind {
 ///
 /// Module IDs are cheap to copy and compare. They are ordered so they
 /// can be used as sort keys for deterministic processing order.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Reflect)]
 pub struct ModuleId(pub u64);
+
+impl ModuleId {
+    /// Derive a deterministic [`ModuleId`] from an instance name.
+    ///
+    /// Uses a hash-based derivation so that the same instance name
+    /// always produces the same ID.
+    pub fn from_instance_name(instance_name: &str) -> Self {
+        Self(crate::rng::derive_seed(0, instance_name))
+    }
+}
 
 impl fmt::Display for ModuleId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "ModuleId({})", self.0)
     }
+}
+
+// ── ECS component types ────────────────────────────────────────────
+
+/// Identifies a module entity in the ECS world.
+///
+/// Every module entity carries a [`Module`] component (describing what
+/// it is) and a [`ModuleId`] component (providing a deterministic
+/// identity).
+#[derive(Component, Debug, Clone, Reflect)]
+pub struct Module {
+    /// The class of module (e.g. `"vco"`, `"filter"`).
+    pub kind: ModuleKind,
+    /// The unique instance name within the patch.
+    pub instance_name: String,
+}
+
+// ── Spawn helpers ──────────────────────────────────────────────────
+
+/// Spawn a module entity with [`Module`] and [`ModuleId`] components.
+///
+/// The [`ModuleId`] is deterministically derived from `instance_name`.
+pub fn spawn_module_entity(world: &mut World, kind: &str, instance_name: &str) -> Entity {
+    let module_id = ModuleId::from_instance_name(instance_name);
+    world
+        .spawn((
+            Module {
+                kind: ModuleKind::from(kind),
+                instance_name: instance_name.to_string(),
+            },
+            module_id,
+        ))
+        .id()
 }
 
 #[cfg(test)]
@@ -163,5 +210,73 @@ mod tests {
         let id = ModuleId(99);
         let copied = id; // Copy, not move
         assert_eq!(id, copied);
+    }
+
+    // ── ModuleId::from_instance_name ───────────────────────────────
+
+    #[test]
+    fn test_module_id_from_instance_name_deterministic() {
+        let a = ModuleId::from_instance_name("vco_1");
+        let b = ModuleId::from_instance_name("vco_1");
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_module_id_from_instance_name_differs_for_different_names() {
+        let a = ModuleId::from_instance_name("vco_1");
+        let b = ModuleId::from_instance_name("vco_2");
+        assert_ne!(a, b);
+    }
+
+    // ── Module component tests ─────────────────────────────────────
+
+    #[test]
+    fn test_module_component_roundtrip() {
+        let mut world = World::new();
+
+        let entity = world
+            .spawn((
+                Module {
+                    kind: ModuleKind::from("vco"),
+                    instance_name: "vco_1".into(),
+                },
+                ModuleId(42),
+            ))
+            .id();
+
+        let module = world.entity(entity).get::<Module>().unwrap();
+        assert_eq!(module.kind, ModuleKind::from("vco"));
+        assert_eq!(module.instance_name, "vco_1");
+
+        let id = world.entity(entity).get::<ModuleId>().unwrap();
+        assert_eq!(*id, ModuleId(42));
+    }
+
+    // ── spawn_module_entity tests ──────────────────────────────────
+
+    #[test]
+    fn test_spawn_module_entity_creates_module_and_id() {
+        let mut world = World::new();
+
+        let entity = spawn_module_entity(&mut world, "filter", "lpf_1");
+
+        let module = world.entity(entity).get::<Module>().unwrap();
+        assert_eq!(module.kind, ModuleKind::from("filter"));
+        assert_eq!(module.instance_name, "lpf_1");
+
+        let id = world.entity(entity).get::<ModuleId>().unwrap();
+        assert_eq!(*id, ModuleId::from_instance_name("lpf_1"));
+    }
+
+    #[test]
+    fn test_spawn_module_entity_deterministic_id() {
+        let mut world = World::new();
+
+        let e1 = spawn_module_entity(&mut world, "vco", "osc_1");
+        let e2 = spawn_module_entity(&mut world, "vco", "osc_1");
+
+        let id1 = *world.entity(e1).get::<ModuleId>().unwrap();
+        let id2 = *world.entity(e2).get::<ModuleId>().unwrap();
+        assert_eq!(id1, id2);
     }
 }
