@@ -5,8 +5,8 @@ author: "one position"
 component: All
 tags: [change-me]
 created: 2026-04-04
-updated: 2026-04-04
-state: Draft
+updated: 2026-04-18
+state: Final
 supersedes: null
 superseded-by: null
 version: 1.0

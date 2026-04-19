@@ -5,10 +5,10 @@ author: "functional category"
 component: All
 tags: [change-me]
 created: 2026-04-06
-updated: 2026-04-06
-state: Draft
+updated: 2026-04-18
+state: Superseded
 supersedes: null
-superseded-by: null
+superseded-by: 9
 version: 1.0
 ---
 
