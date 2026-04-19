@@ -1,5 +1,13 @@
 # oxurack
 
+[![][build-badge]][build]
+[![][tag-badge]][tag]
+[![Crates.io](https://img.shields.io/crates/v/oxurack)](https://crates.io/crates/oxurack)
+[![Docs.rs](https://img.shields.io/docsrs/oxurack)](https://docs.rs/oxurack)
+[![MIT / Apache-2.0](https://img.shields.io/crates/l/oxurack?v=2)](LICENSE)
+
+[![][logo]][logo-large]
+
 Modular MIDI generation for people who want the feel of a patch-cable
 session and the reproducibility of a saved file.
 
@@ -100,3 +108,12 @@ built on Bevy ECS as the runtime substrate.
 ## License
 
 MIT
+
+[//]: ---Named-Links---
+
+[logo]: assets/images/logo-v1-small.png
+[logo-large]: assets/images/logo-v1.png
+[build]: https://github.com/oxur/oxurack/actions/workflows/ci.yml
+[build-badge]: https://github.com/oxur/oxurack/actions/workflows/ci.yml/badge.svg
+[tag-badge]: https://img.shields.io/github/tag/oxur/oxurack.svg
+[tag]: https://github.com/oxur/oxurack/tags
