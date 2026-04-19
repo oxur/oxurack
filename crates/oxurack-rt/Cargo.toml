@@ -1,0 +1,18 @@
+[package]
+name        = "oxurack-rt"
+version     = "0.1.0"
+edition     = "2024"
+description = "Real-time MIDI clock and I/O thread for oxurack."
+license     = "MIT OR Apache-2.0"
+repository  = "https://github.com/oxur/oxurack"
+
+[dependencies]
+midir                 = "0.10"
+rtrb                  = "0.3"
+spin_sleep            = "1"
+quanta                = "0.12"
+audio_thread_priority = "0.34"
+thiserror             = "2"
+
+[dev-dependencies]
+pretty_assertions = "1"

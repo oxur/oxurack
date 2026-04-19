@@ -75,7 +75,7 @@ like `app.add_plugins(TuringMachineModule)`. The rack loads patches from
 RON files, drives them from its clock, and routes values between
 modules every tick.
 
-See the documents under [docs/design/](docs/design/) for the full
+See the documents under [docs/design/](docs/design/index.md) for the full
 architecture: the ECS world, the RT thread, the module-authoring
 interface, and the build roadmap.
 
