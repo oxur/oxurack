@@ -24,9 +24,10 @@
 //! - [`scale`] -- musical scales and quantisation helpers
 //! - [`event`] -- ECS messages for transport, MIDI input, and commands
 //!
-//! # Phase 2+ stubs
+//! # Phase 5 modules
 //!
-//! - `patch` -- patch graph
+//! - [`patch`] -- patch persistence: data structures, validation, RON
+//!   serialisation, and file I/O
 
 pub mod cable;
 pub mod error;
@@ -39,8 +40,7 @@ pub mod scale;
 pub mod tick;
 pub mod value;
 
-// Phase 2+ stubs.
-mod patch;
+pub mod patch;
 
 // ── Re-exports ──────────────────────────────────────────────────────
 
@@ -59,6 +59,10 @@ pub use tick::{compute_tick_order, MergeBuffers, TickNow, TickOrder, TickPhase};
 pub use event::{CoreCommand, MidiInReceived, PatchLoaded, TransportChanged, TransportState};
 pub use module::{ModuleRegistration, ModuleRegistry, OxurackModule, PortSchema};
 pub use parameter::{ParameterName, ParameterRegistry, ParameterSchema, ParameterValue};
+pub use patch::{
+    deserialize_patch, load_patch_from_file, save_patch_to_file, serialize_patch, validate_patch,
+    CableConfig, ModuleConfig, Patch,
+};
 pub use scale::Scale;
 
 // ── CorePlugin ──────────────────────────────────────────────────────

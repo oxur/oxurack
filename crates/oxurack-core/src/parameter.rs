@@ -14,6 +14,7 @@ use std::fmt;
 
 use bevy_ecs::prelude::{Entity, Resource, World};
 use bevy_reflect::Reflect;
+use serde::{Deserialize, Serialize};
 
 /// Name of a module parameter (e.g. `"write_probability"`, `"scale"`).
 ///
@@ -52,7 +53,7 @@ impl AsRef<str> for ParameterName {
 /// enabling scale parameters to be set via the same registry mechanism
 /// as simple numeric or boolean parameters.
 #[non_exhaustive]
-#[derive(Debug, Clone, PartialEq, Reflect)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Reflect)]
 pub enum ParameterValue {
     /// A floating-point parameter.
     Float(f32),

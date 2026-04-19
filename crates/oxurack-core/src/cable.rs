@@ -9,6 +9,7 @@ use std::collections::HashMap;
 
 use bevy_ecs::prelude::{Component, Entity, Resource};
 use bevy_reflect::Reflect;
+use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
 use crate::Value;
@@ -19,7 +20,7 @@ use crate::Value;
 /// kinds. [`CableTransform::apply`] returns `None` when the input kind
 /// is not supported by the transform.
 #[non_exhaustive]
-#[derive(Debug, Clone, Copy, PartialEq, Reflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Reflect)]
 pub enum CableTransform {
     /// Linear transform: `out = in * factor + offset`.
     ///
