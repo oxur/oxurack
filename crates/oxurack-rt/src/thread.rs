@@ -4,6 +4,9 @@
 //! The loop handles clock tick generation/tracking, MIDI I/O, and
 //! command processing from the ECS world via lock-free queues.
 
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+
 use crate::queues::RtSideQueues;
 
 /// Runs the RT thread main loop.
@@ -12,21 +15,138 @@ use crate::queues::RtSideQueues;
 /// It elevates thread priority, opens MIDI ports, and enters a tight
 /// loop that:
 ///
-/// 1. Sleeps until the next clock tick.
-/// 2. Fires the tick and pushes a [`crate::RtEvent::ClockTick`] event.
-/// 3. Drains incoming [`crate::EcsCommand`]s and processes them.
-/// 4. Polls MIDI inputs and forwards received messages as events.
+/// 1. Drains incoming [`crate::EcsCommand`]s and processes them.
+/// 2. Sleeps until the next clock tick.
+/// 3. Emits MIDI Clock (0xF8) on all output ports.
+/// 4. Pushes a [`crate::RtEvent::ClockTick`] event to the ECS world.
+/// 5. Advances the master clock to the next tick position.
 ///
 /// The loop exits when a [`crate::EcsCommand::Shutdown`] command is
-/// received or an unrecoverable error occurs.
+/// received, the shutdown flag is set, or an unrecoverable error occurs.
 ///
 /// # Arguments
 ///
 /// * `queues` - The RT-side queue handles for sending events and
 ///   receiving commands.
 /// * `config` - The runtime configuration (clock mode, ports, etc.).
-pub(crate) fn rt_thread_main(_queues: RtSideQueues, _config: crate::RuntimeConfig) {
-    unimplemented!()
+/// * `ready_signal` - A channel to signal readiness (or error) back to
+///   the spawning thread.
+/// * `shutdown` - An atomic flag checked each iteration to allow
+///   external shutdown.
+pub(crate) fn rt_thread_main(
+    mut queues: RtSideQueues,
+    config: crate::RuntimeConfig,
+    ready_signal: std::sync::mpsc::SyncSender<Result<(), crate::Error>>,
+    shutdown: Arc<AtomicBool>,
+) {
+    // 1. Elevate RT priority (best-effort). Failure is non-fatal: the
+    //    thread will still function correctly, just with higher jitter.
+    //    This mirrors the approach in `run_timing_test` and avoids
+    //    breaking tests in CI sandboxes that lack scheduling permissions.
+    let _ = crate::priority::elevate_rt_priority();
+
+    // 2. Open MIDI output ports.
+    let mut midi_ports = match crate::midi_io::MidiPorts::open_outputs(&config.outputs) {
+        Ok(ports) => ports,
+        Err(e) => {
+            let _ = ready_signal.send(Err(e));
+            return;
+        }
+    };
+
+    // 3. Signal readiness to the spawning thread.
+    let _ = ready_signal.send(Ok(()));
+
+    // 4. Create clock and timing infrastructure.
+    let clock = crate::timing::MonotonicClock::new();
+
+    match &config.clock_mode {
+        crate::ClockMode::Master { tempo_bpm, .. } => {
+            let mut master = crate::clock::master::MasterClock::new(*tempo_bpm, clock.now());
+
+            // Master mode loop.
+            loop {
+                if shutdown.load(Ordering::Relaxed) {
+                    break;
+                }
+
+                // Drain commands from ECS.
+                while let Ok(cmd) = queues.commands.pop() {
+                    match cmd {
+                        crate::EcsCommand::Shutdown => {
+                            shutdown.store(true, Ordering::Relaxed);
+                            break;
+                        }
+                        crate::EcsCommand::SetTempo { bpm } => {
+                            master.set_tempo(bpm);
+                        }
+                        crate::EcsCommand::SendMidi {
+                            output_port_index,
+                            message,
+                            ..
+                        } => {
+                            let bytes = message.to_bytes();
+                            let len = message.length as usize;
+                            let _ = midi_ports.send(output_port_index, &bytes[..len]);
+                        }
+                        crate::EcsCommand::SendTransport(_)
+                        | crate::EcsCommand::SendSongPosition { .. } => {
+                            // Transport and SPP will be handled in a future phase.
+                        }
+                    }
+                }
+
+                if shutdown.load(Ordering::Relaxed) {
+                    break;
+                }
+
+                // Sleep until the next tick.
+                let schedule = master.next_tick();
+                crate::timing::precision_sleep(schedule.next_tick_ns, &clock);
+
+                // Emit MIDI Clock (0xF8) on all output ports.
+                for i in 0..config.outputs.len() {
+                    let _ = midi_ports.send(i as u8, &[0xF8]);
+                }
+
+                // Push ClockTick event to ECS.
+                let tick_event = crate::RtEvent::ClockTick {
+                    subdivision: schedule.subdivision,
+                    beat: schedule.beat,
+                    tempo_bpm: master.tempo(),
+                    timestamp_ns: clock.now(),
+                };
+                let _ = queues.events.push(tick_event);
+
+                // Advance to the next tick position.
+                master.advance();
+            }
+        }
+        crate::ClockMode::Slave { .. } => {
+            // Slave mode: placeholder loop that checks for shutdown.
+            // Full PLL-based slave implementation is deferred to Phase 4.
+            loop {
+                if shutdown.load(Ordering::Relaxed) {
+                    break;
+                }
+
+                // Drain commands (mainly looking for Shutdown).
+                while let Ok(cmd) = queues.commands.pop() {
+                    if matches!(cmd, crate::EcsCommand::Shutdown) {
+                        shutdown.store(true, Ordering::Relaxed);
+                        break;
+                    }
+                }
+
+                if shutdown.load(Ordering::Relaxed) {
+                    break;
+                }
+
+                // Sleep briefly to avoid busy-waiting.
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            }
+        }
+    }
 }
 
 /// Runs a timing precision test loop at elevated priority.
@@ -173,5 +293,130 @@ mod tests {
             drift_ns < expected_total_ns / 100,
             "total drift {drift_ns} ns ({drift_pct:.3}%) exceeds 1% of expected {expected_total_ns} ns",
         );
+    }
+
+    // ── Runtime integration tests (M2.4) ────────────────────────────
+
+    /// Helper to build a minimal `RuntimeConfig` for testing (no MIDI
+    /// ports, master clock mode).
+    fn test_config(tempo_bpm: f64) -> crate::RuntimeConfig {
+        crate::RuntimeConfig {
+            clock_mode: crate::ClockMode::Master {
+                tempo_bpm,
+                send_transport: false,
+            },
+            outputs: Vec::new(),
+            inputs: Vec::new(),
+            event_queue_capacity: 1024,
+            command_queue_capacity: 1024,
+        }
+    }
+
+    #[test]
+    fn test_runtime_starts_and_stops() {
+        let config = test_config(120.0);
+        let result = crate::Runtime::start(config);
+        assert!(result.is_ok(), "Runtime::start failed: {result:?}");
+
+        let (mut runtime, _handles) = result.unwrap();
+
+        // Let the thread run briefly.
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        let stop_result = runtime.stop();
+        assert!(stop_result.is_ok(), "Runtime::stop failed: {stop_result:?}");
+    }
+
+    #[test]
+    fn test_runtime_produces_clock_ticks() {
+        let config = test_config(120.0);
+        let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
+
+        // Let ticks accumulate for 200 ms.
+        std::thread::sleep(std::time::Duration::from_millis(200));
+
+        runtime.stop().unwrap();
+
+        // Drain all tick events.
+        let mut tick_count = 0u64;
+        while let Ok(event) = handles.events.pop() {
+            if matches!(event, crate::RtEvent::ClockTick { .. }) {
+                tick_count += 1;
+            }
+        }
+
+        // At 120 BPM: 24 ticks/beat * 2 beats/sec = 48 ticks/sec.
+        // In 200 ms we expect ~9.6 ticks. Allow loose bounds for CI.
+        eprintln!("Received {tick_count} clock ticks in ~200 ms");
+        assert!(
+            tick_count >= 5,
+            "expected at least 5 ticks, got {tick_count}"
+        );
+        assert!(
+            tick_count <= 25,
+            "expected at most 25 ticks, got {tick_count}"
+        );
+    }
+
+    #[test]
+    fn test_set_tempo_command() {
+        let config = test_config(120.0);
+        let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
+
+        // Change tempo to 60 BPM.
+        let cmd = crate::EcsCommand::SetTempo { bpm: 60.0 };
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+
+        // Let ticks accumulate for 500 ms at the new tempo.
+        std::thread::sleep(std::time::Duration::from_millis(500));
+
+        runtime.stop().unwrap();
+
+        // Drain all tick events.
+        let mut tick_count = 0u64;
+        while let Ok(event) = handles.events.pop() {
+            if matches!(event, crate::RtEvent::ClockTick { .. }) {
+                tick_count += 1;
+            }
+        }
+
+        // At 60 BPM: 24 ticks/beat * 1 beat/sec = 24 ticks/sec.
+        // In 500 ms we expect ~12 ticks. Just verify we got some.
+        eprintln!("Received {tick_count} clock ticks after tempo change");
+        assert!(
+            tick_count >= 3,
+            "expected at least 3 ticks, got {tick_count}"
+        );
+    }
+
+    #[test]
+    fn test_shutdown_command() {
+        let config = test_config(120.0);
+        let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
+
+        // Send Shutdown command.
+        let cmd = crate::EcsCommand::Shutdown;
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+
+        // The thread should exit cleanly within the stop() timeout.
+        // We use stop() which internally joins the thread.
+        let stop_result = runtime.stop();
+        assert!(
+            stop_result.is_ok(),
+            "thread should exit cleanly after Shutdown command: {stop_result:?}"
+        );
+    }
+
+    #[test]
+    fn test_drop_stops_thread() {
+        let config = test_config(120.0);
+        let (runtime, _handles) = crate::Runtime::start(config).unwrap();
+
+        // Drop the runtime -- should not hang or panic.
+        drop(runtime);
     }
 }

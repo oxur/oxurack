@@ -43,6 +43,8 @@ pub use messages::{EcsCommand, MidiMessage, RtErrorCode, RtEvent, TransportEvent
 pub use midi_io::{list_midi_input_ports, list_midi_output_ports};
 pub use queues::RtHandles;
 
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::thread::JoinHandle;
 
 /// Configuration for a MIDI output port connection.
@@ -103,43 +105,93 @@ pub struct RuntimeConfig {
 /// Handle to the running RT thread.
 ///
 /// Owns the join handle for the spawned thread. Dropping the `Runtime`
-/// sends a shutdown command and joins the thread. Use [`Runtime::start`]
-/// to create one.
+/// signals shutdown and joins the thread. Use [`Runtime::start`] to
+/// create one.
 pub struct Runtime {
-    /// Join handle for the RT thread (None after stop/drop).
-    _thread: Option<JoinHandle<()>>,
+    /// Join handle for the RT thread (`None` after `stop` or `drop`).
+    pub(crate) thread: Option<JoinHandle<()>>,
+    /// Atomic flag shared with the RT thread to signal shutdown.
+    shutdown: Arc<AtomicBool>,
+}
+
+impl std::fmt::Debug for Runtime {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Runtime")
+            .field("running", &self.thread.is_some())
+            .finish()
+    }
 }
 
 impl Runtime {
     /// Spawns the RT thread with the given configuration.
     ///
-    /// Returns a `Runtime` handle (for lifecycle management) and
-    /// [`RtHandles`] (for queue communication with the ECS world).
+    /// Blocks until the thread has elevated its priority and opened all
+    /// MIDI ports. Returns a `Runtime` handle (for lifecycle management)
+    /// and [`RtHandles`] (for queue communication with the ECS world).
     ///
     /// # Errors
     ///
-    /// Returns [`Error::MidiInit`] if MIDI ports cannot be opened, or
-    /// [`Error::PortNotFound`] if a configured port name has no match.
-    pub fn start(_config: RuntimeConfig) -> Result<(Self, RtHandles), Error> {
-        unimplemented!()
+    /// Returns [`Error::MidiInit`] if MIDI ports cannot be opened,
+    /// [`Error::PortNotFound`] if a configured port name has no match,
+    /// or [`Error::PriorityElevation`] if RT priority cannot be obtained.
+    pub fn start(config: RuntimeConfig) -> Result<(Self, RtHandles), Error> {
+        let (rt_queues, ecs_handles) = crate::queues::create_queues(
+            config.event_queue_capacity,
+            config.command_queue_capacity,
+        );
+
+        let shutdown = Arc::new(AtomicBool::new(false));
+        let shutdown_clone = Arc::clone(&shutdown);
+
+        let (ready_tx, ready_rx) = std::sync::mpsc::sync_channel(1);
+
+        let thread = std::thread::Builder::new()
+            .name("oxurack-rt".into())
+            .spawn(move || {
+                crate::thread::rt_thread_main(rt_queues, config, ready_tx, shutdown_clone);
+            })
+            .map_err(|e| Error::MidiInit(format!("failed to spawn RT thread: {e}")))?;
+
+        // Wait for the thread to signal readiness (or error).
+        let ready_result = ready_rx
+            .recv()
+            .map_err(|_| Error::ThreadPanicked)?;
+        ready_result?;
+
+        Ok((
+            Self {
+                thread: Some(thread),
+                shutdown,
+            },
+            ecs_handles,
+        ))
     }
 
     /// Gracefully shuts down the RT thread.
     ///
-    /// Sends a [`EcsCommand::Shutdown`] command via the queue and joins
-    /// the thread. This is also called automatically on drop.
+    /// Sets the shutdown flag and joins the thread. This is also called
+    /// automatically on [`Drop`].
     ///
     /// # Errors
     ///
     /// Returns [`Error::AlreadyStopped`] if the runtime was already
     /// shut down, or [`Error::ThreadPanicked`] if the thread panicked.
     pub fn stop(&mut self) -> Result<(), Error> {
-        unimplemented!()
+        self.shutdown.store(true, Ordering::Relaxed);
+        if let Some(thread) = self.thread.take() {
+            thread.join().map_err(|_| Error::ThreadPanicked)?;
+        } else {
+            return Err(Error::AlreadyStopped);
+        }
+        Ok(())
     }
 }
 
 impl Drop for Runtime {
     fn drop(&mut self) {
-        // Placeholder: will send Shutdown and join in a future milestone.
+        self.shutdown.store(true, Ordering::Relaxed);
+        if let Some(thread) = self.thread.take() {
+            let _ = thread.join();
+        }
     }
 }

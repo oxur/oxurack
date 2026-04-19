@@ -1,12 +1,9 @@
 //! Clock subsystem: master clock generation, slave clock tracking, and
 //! shared scheduling types.
 
-mod master;
+pub(crate) mod master;
 mod passthrough;
-mod slave;
-
-pub use master::MasterClock;
-pub use slave::{SlaveClock, SlaveOscillator, TempoEstimator};
+pub(crate) mod slave;
 
 /// Scheduling state for the next clock tick.
 ///
