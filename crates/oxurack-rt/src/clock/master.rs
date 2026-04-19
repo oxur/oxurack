@@ -5,7 +5,7 @@
 //! pure state tracking, with the RT loop responsible for sleeping until
 //! the scheduled time and then calling [`MasterClock::advance`].
 
-use super::{interval_ns_from_bpm, TickSchedule};
+use super::{TickSchedule, interval_ns_from_bpm};
 
 /// A master MIDI clock that generates ticks at a configurable tempo.
 ///

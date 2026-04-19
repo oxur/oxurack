@@ -207,6 +207,88 @@ impl MidiMessage {
     }
 }
 
+/// Classification of a raw MIDI byte sequence.
+///
+/// Separates system real-time messages (clock, transport) and system
+/// common messages (song position) from channel voice/mode messages.
+/// This is used internally to route incoming MIDI bytes to the
+/// appropriate handler in the RT thread.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(crate) enum MidiClassification {
+    /// MIDI Clock byte (0xF8).
+    Clock,
+    /// Transport Start (0xFA).
+    Start,
+    /// Transport Stop (0xFC).
+    Stop,
+    /// Transport Continue (0xFB).
+    Continue,
+    /// Song Position Pointer (0xF2) with 14-bit position.
+    SongPosition {
+        /// 14-bit song position in MIDI beats (6 clocks per beat).
+        position: u16,
+    },
+    /// Active Sensing (0xFE) — ignored by the system.
+    ActiveSensing,
+    /// System Reset (0xFF) — ignored by the system.
+    SystemReset,
+    /// A channel voice or mode message.
+    Channel(MidiMessage),
+}
+
+/// Classifies a raw MIDI byte sequence.
+///
+/// Returns `None` if the input is empty, the first byte is not a valid
+/// status byte (< 0x80), or the message type is not handled (e.g. SysEx).
+///
+/// # System Real-Time Messages
+///
+/// Single-byte messages that can appear at any time:
+/// - `0xF8` → [`MidiClassification::Clock`]
+/// - `0xFA` → [`MidiClassification::Start`]
+/// - `0xFB` → [`MidiClassification::Continue`]
+/// - `0xFC` → [`MidiClassification::Stop`]
+/// - `0xFE` → [`MidiClassification::ActiveSensing`]
+/// - `0xFF` → [`MidiClassification::SystemReset`]
+///
+/// # System Common Messages
+///
+/// - `0xF2` → [`MidiClassification::SongPosition`] (2 data bytes, 7 bits
+///   each, LSB first)
+///
+/// # Channel Messages
+///
+/// Status bytes `0x80..=0xEF` are delegated to [`MidiMessage::from_bytes`].
+pub(crate) fn classify_midi(bytes: &[u8]) -> Option<MidiClassification> {
+    let &status = bytes.first()?;
+
+    if status < 0x80 {
+        return None; // Data byte without status — running status not handled here
+    }
+
+    match status {
+        0xF8 => Some(MidiClassification::Clock),
+        0xFA => Some(MidiClassification::Start),
+        0xFB => Some(MidiClassification::Continue),
+        0xFC => Some(MidiClassification::Stop),
+        0xFE => Some(MidiClassification::ActiveSensing),
+        0xFF => Some(MidiClassification::SystemReset),
+        0xF2 => {
+            // Song Position Pointer: 2 data bytes, 7 bits each, LSB first.
+            let lsb = *bytes.get(1).unwrap_or(&0);
+            let msb = *bytes.get(2).unwrap_or(&0);
+            let position = (lsb as u16) | ((msb as u16) << 7);
+            Some(MidiClassification::SongPosition { position })
+        }
+        0x80..=0xEF => {
+            // Channel messages: delegate to MidiMessage::from_bytes.
+            let msg = MidiMessage::from_bytes(bytes)?;
+            Some(MidiClassification::Channel(msg))
+        }
+        _ => None, // Other system messages (0xF0 SysEx, 0xF1 MTC, 0xF3 Song Select, etc.)
+    }
+}
+
 /// Error codes for non-fatal conditions reported by the RT thread.
 #[non_exhaustive]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -346,5 +428,93 @@ mod tests {
         let msg = MidiMessage::program_change(0, 5);
         let bytes = msg.to_bytes();
         assert_eq!(bytes, [0xC0, 5, 0]);
+    }
+
+    // ── Classification tests ────────────────────────────────────────
+
+    #[test]
+    fn test_classify_clock() {
+        assert_eq!(classify_midi(&[0xF8]), Some(MidiClassification::Clock));
+    }
+
+    #[test]
+    fn test_classify_start() {
+        assert_eq!(classify_midi(&[0xFA]), Some(MidiClassification::Start));
+    }
+
+    #[test]
+    fn test_classify_stop() {
+        assert_eq!(classify_midi(&[0xFC]), Some(MidiClassification::Stop));
+    }
+
+    #[test]
+    fn test_classify_continue() {
+        assert_eq!(classify_midi(&[0xFB]), Some(MidiClassification::Continue));
+    }
+
+    #[test]
+    fn test_classify_active_sensing() {
+        assert_eq!(
+            classify_midi(&[0xFE]),
+            Some(MidiClassification::ActiveSensing)
+        );
+    }
+
+    #[test]
+    fn test_classify_system_reset() {
+        assert_eq!(
+            classify_midi(&[0xFF]),
+            Some(MidiClassification::SystemReset)
+        );
+    }
+
+    #[test]
+    fn test_classify_note_on() {
+        assert_eq!(
+            classify_midi(&[0x90, 60, 100]),
+            Some(MidiClassification::Channel(MidiMessage {
+                status: 0x90,
+                data1: 60,
+                data2: 100,
+                length: 3,
+            }))
+        );
+    }
+
+    #[test]
+    fn test_classify_program_change() {
+        assert_eq!(
+            classify_midi(&[0xC0, 42]),
+            Some(MidiClassification::Channel(MidiMessage {
+                status: 0xC0,
+                data1: 42,
+                data2: 0,
+                length: 2,
+            }))
+        );
+    }
+
+    #[test]
+    fn test_classify_song_position() {
+        // LSB = 0x10, MSB = 0x02 → position = 0x10 | (0x02 << 7) = 16 + 256 = 272
+        assert_eq!(
+            classify_midi(&[0xF2, 0x10, 0x02]),
+            Some(MidiClassification::SongPosition { position: 272 })
+        );
+    }
+
+    #[test]
+    fn test_classify_empty_returns_none() {
+        assert_eq!(classify_midi(&[]), None);
+    }
+
+    #[test]
+    fn test_classify_data_byte_returns_none() {
+        assert_eq!(classify_midi(&[0x60]), None);
+    }
+
+    #[test]
+    fn test_classify_sysex_returns_none() {
+        assert_eq!(classify_midi(&[0xF0, 0x7E, 0xF7]), None);
     }
 }

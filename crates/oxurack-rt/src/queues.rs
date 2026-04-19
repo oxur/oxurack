@@ -125,10 +125,16 @@ mod tests {
         let (mut rt_side, mut ecs_side) = create_queues(16, 16);
 
         let event_result = ecs_side.events.pop();
-        assert!(event_result.is_err(), "pop from empty event queue should return Err");
+        assert!(
+            event_result.is_err(),
+            "pop from empty event queue should return Err"
+        );
 
         let command_result = rt_side.commands.pop();
-        assert!(command_result.is_err(), "pop from empty command queue should return Err");
+        assert!(
+            command_result.is_err(),
+            "pop from empty command queue should return Err"
+        );
     }
 
     #[test]

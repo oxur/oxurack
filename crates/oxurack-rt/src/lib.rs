@@ -43,8 +43,8 @@ pub use messages::{EcsCommand, MidiMessage, RtErrorCode, RtEvent, TransportEvent
 pub use midi_io::{list_midi_input_ports, list_midi_output_ports};
 pub use queues::RtHandles;
 
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread::JoinHandle;
 
 /// Configuration for a MIDI output port connection.
@@ -153,9 +153,7 @@ impl Runtime {
             .map_err(|e| Error::MidiInit(format!("failed to spawn RT thread: {e}")))?;
 
         // Wait for the thread to signal readiness (or error).
-        let ready_result = ready_rx
-            .recv()
-            .map_err(|_| Error::ThreadPanicked)?;
+        let ready_result = ready_rx.recv().map_err(|_| Error::ThreadPanicked)?;
         ready_result?;
 
         Ok((

@@ -4,22 +4,24 @@
 //! The loop handles clock tick generation/tracking, MIDI I/O, and
 //! command processing from the ECS world via lock-free queues.
 
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::queues::RtSideQueues;
 
 /// Runs the RT thread main loop.
 ///
 /// This function is the entry point for the spawned real-time thread.
-/// It elevates thread priority, opens MIDI ports, and enters a tight
-/// loop that:
+/// It elevates thread priority, opens MIDI ports (both output and
+/// input), and enters a tight loop that:
 ///
 /// 1. Drains incoming [`crate::EcsCommand`]s and processes them.
 /// 2. Sleeps until the next clock tick.
 /// 3. Emits MIDI Clock (0xF8) on all output ports.
 /// 4. Pushes a [`crate::RtEvent::ClockTick`] event to the ECS world.
 /// 5. Advances the master clock to the next tick position.
+/// 6. Drains MIDI input events, classifies them, and pushes the
+///    appropriate [`crate::RtEvent`]s to the ECS world.
 ///
 /// The loop exits when a [`crate::EcsCommand::Shutdown`] command is
 /// received, the shutdown flag is set, or an unrecoverable error occurs.
@@ -54,10 +56,19 @@ pub(crate) fn rt_thread_main(
         }
     };
 
-    // 3. Signal readiness to the spawning thread.
+    // 3. Open MIDI input ports.
+    let mut midi_input_ports = match crate::midi_io::MidiInputPorts::open(&config.inputs) {
+        Ok(ports) => ports,
+        Err(e) => {
+            let _ = ready_signal.send(Err(e));
+            return;
+        }
+    };
+
+    // 4. Signal readiness to the spawning thread.
     let _ = ready_signal.send(Ok(()));
 
-    // 4. Create clock and timing infrastructure.
+    // 5. Create clock and timing infrastructure.
     let clock = crate::timing::MonotonicClock::new();
 
     match &config.clock_mode {
@@ -120,6 +131,9 @@ pub(crate) fn rt_thread_main(
 
                 // Advance to the next tick position.
                 master.advance();
+
+                // Drain MIDI input events and classify them.
+                drain_midi_input(&mut midi_input_ports, &mut queues);
             }
         }
         crate::ClockMode::Slave { .. } => {
@@ -142,8 +156,69 @@ pub(crate) fn rt_thread_main(
                     break;
                 }
 
+                // Drain MIDI input events (needed for Phase 4 slave clock).
+                drain_midi_input(&mut midi_input_ports, &mut queues);
+
                 // Sleep briefly to avoid busy-waiting.
                 std::thread::sleep(std::time::Duration::from_millis(1));
+            }
+        }
+    }
+}
+
+/// Drains all pending raw MIDI events from the input ports, classifies
+/// them, and pushes the appropriate [`crate::RtEvent`]s to the ECS
+/// event queue.
+///
+/// Called once per RT loop iteration. This function is allocation-free
+/// on the hot path.
+fn drain_midi_input(
+    midi_input_ports: &mut crate::midi_io::MidiInputPorts,
+    queues: &mut RtSideQueues,
+) {
+    for raw_event in midi_input_ports.drain_all() {
+        let Some(classification) =
+            crate::messages::classify_midi(&raw_event.bytes[..raw_event.length as usize])
+        else {
+            continue;
+        };
+
+        match classification {
+            crate::messages::MidiClassification::Channel(msg) => {
+                let event = crate::RtEvent::MidiInput {
+                    input_port_index: raw_event.port_index,
+                    timestamp_ns: raw_event.timestamp_ns,
+                    message: msg,
+                };
+                let _ = queues.events.push(event);
+            }
+            crate::messages::MidiClassification::Start => {
+                let _ = queues
+                    .events
+                    .push(crate::RtEvent::Transport(crate::TransportEvent::Start));
+            }
+            crate::messages::MidiClassification::Stop => {
+                let _ = queues
+                    .events
+                    .push(crate::RtEvent::Transport(crate::TransportEvent::Stop));
+            }
+            crate::messages::MidiClassification::Continue => {
+                let _ = queues
+                    .events
+                    .push(crate::RtEvent::Transport(crate::TransportEvent::Continue));
+            }
+            crate::messages::MidiClassification::SongPosition { position } => {
+                let _ = queues
+                    .events
+                    .push(crate::RtEvent::SongPosition { position });
+            }
+            crate::messages::MidiClassification::Clock => {
+                // In master mode, external clock bytes are ignored.
+                // In slave mode (Phase 4), these will feed the PLL.
+            }
+            crate::messages::MidiClassification::ActiveSensing
+            | crate::messages::MidiClassification::SystemReset => {
+                // Ignored system messages.
             }
         }
     }
@@ -171,7 +246,7 @@ pub(crate) fn rt_thread_main(
 /// A vector of `iterations` measured intervals (in nanoseconds) between
 /// consecutive actual wake-up timestamps.
 pub(crate) fn run_timing_test(iterations: u32, interval_ns: u64) -> Vec<u64> {
-    use crate::timing::{precision_sleep, MonotonicClock};
+    use crate::timing::{MonotonicClock, precision_sleep};
 
     let clock = MonotonicClock::new();
 
@@ -332,29 +407,31 @@ mod tests {
         let config = test_config(120.0);
         let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
 
-        // Let ticks accumulate for 200 ms.
-        std::thread::sleep(std::time::Duration::from_millis(200));
+        // Drain events while the runtime is still running to avoid
+        // losing ticks between stop() and the drain loop.
+        let mut tick_count = 0u64;
+        let deadline = std::time::Instant::now() + std::time::Duration::from_millis(300);
+        while std::time::Instant::now() < deadline {
+            while let Ok(event) = handles.events.pop() {
+                if matches!(event, crate::RtEvent::ClockTick { .. }) {
+                    tick_count += 1;
+                }
+            }
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
 
         runtime.stop().unwrap();
 
-        // Drain all tick events.
-        let mut tick_count = 0u64;
-        while let Ok(event) = handles.events.pop() {
-            if matches!(event, crate::RtEvent::ClockTick { .. }) {
-                tick_count += 1;
-            }
-        }
-
         // At 120 BPM: 24 ticks/beat * 2 beats/sec = 48 ticks/sec.
-        // In 200 ms we expect ~9.6 ticks. Allow loose bounds for CI.
-        eprintln!("Received {tick_count} clock ticks in ~200 ms");
+        // In 300 ms we expect ~14 ticks. Allow loose bounds for loaded machines.
+        eprintln!("Received {tick_count} clock ticks in ~300 ms");
         assert!(
             tick_count >= 5,
             "expected at least 5 ticks, got {tick_count}"
         );
         assert!(
-            tick_count <= 25,
-            "expected at most 25 ticks, got {tick_count}"
+            tick_count <= 30,
+            "expected at most 30 ticks, got {tick_count}"
         );
     }
 
@@ -418,5 +495,38 @@ mod tests {
 
         // Drop the runtime -- should not hang or panic.
         drop(runtime);
+    }
+
+    // ── Input integration tests (M3.3) ──────────────────────────────
+
+    #[test]
+    fn test_runtime_with_no_inputs_still_works() {
+        let config = test_config(120.0);
+        let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
+
+        // Let the thread run briefly with input draining active but
+        // no input ports configured.
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        runtime.stop().unwrap();
+
+        // Drain all events — should contain only ClockTick events,
+        // no MidiInput events.
+        let mut tick_count = 0u64;
+        let mut midi_input_count = 0u64;
+        while let Ok(event) = handles.events.pop() {
+            match event {
+                crate::RtEvent::ClockTick { .. } => tick_count += 1,
+                crate::RtEvent::MidiInput { .. } => midi_input_count += 1,
+                _ => {}
+            }
+        }
+
+        eprintln!("Ticks: {tick_count}, MidiInputs: {midi_input_count}");
+        assert!(tick_count > 0, "expected clock ticks to be produced");
+        assert_eq!(
+            midi_input_count, 0,
+            "expected no MidiInput events with no input ports"
+        );
     }
 }

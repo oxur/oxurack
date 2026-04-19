@@ -105,10 +105,7 @@ mod tests {
         // Spin briefly to ensure the clock advances.
         std::hint::spin_loop();
         let t2 = clock.now();
-        assert!(
-            t2 > t1,
-            "expected clock to advance: t1={t1}, t2={t2}"
-        );
+        assert!(t2 > t1, "expected clock to advance: t1={t1}, t2={t2}");
     }
 
     #[test]
@@ -118,10 +115,7 @@ mod tests {
         // Burn some time so elapsed is measurably positive.
         std::thread::sleep(Duration::from_millis(1));
         let elapsed = clock.elapsed_since(start);
-        assert!(
-            elapsed > 0,
-            "expected positive elapsed time, got {elapsed}"
-        );
+        assert!(elapsed > 0, "expected positive elapsed time, got {elapsed}");
     }
 
     #[test]

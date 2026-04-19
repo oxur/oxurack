@@ -1,7 +1,9 @@
 //! MIDI port discovery and I/O using `midir`.
 //!
-//! Manages connections to physical and virtual MIDI output ports.
-//! All port operations run on the RT thread.
+//! Manages connections to physical and virtual MIDI input and output
+//! ports. Output port operations run directly on the RT thread; input
+//! ports use `midir`'s callback threads to capture events into per-port
+//! `rtrb` queues, which the RT thread drains each iteration.
 
 /// Manages open MIDI output port connections.
 ///
@@ -132,6 +134,148 @@ pub fn list_midi_input_ports() -> Result<Vec<String>, crate::Error> {
     Ok(names)
 }
 
+/// Raw MIDI event from the `midir` callback, before classification.
+///
+/// Transferred from the callback thread to the RT thread via an
+/// internal per-port SPSC queue. Kept deliberately small and `Copy`
+/// to minimise overhead in the callback.
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct RawMidiEvent {
+    /// Index of the input port that received this event.
+    pub(crate) port_index: u8,
+    /// Monotonic timestamp in nanoseconds (from [`crate::timing::MonotonicClock`])
+    /// captured at the moment the callback fires.
+    pub(crate) timestamp_ns: u64,
+    /// Raw MIDI bytes (up to 3; zero-padded if shorter).
+    pub(crate) bytes: [u8; 3],
+    /// Number of valid bytes in `bytes` (1, 2, or 3).
+    pub(crate) length: u8,
+}
+
+/// Manages open MIDI input port connections.
+///
+/// Each configured input port gets its own `midir::MidiInputConnection`
+/// and a dedicated `rtrb` queue. The `midir` callback writes
+/// [`RawMidiEvent`]s into the producer end; the RT thread drains from
+/// the consumer end via [`MidiInputPorts::drain_all`].
+///
+/// Dropping this struct closes all input connections.
+pub(crate) struct MidiInputPorts {
+    /// Kept alive to hold the connections open; dropping closes the port.
+    _connections: Vec<midir::MidiInputConnection<()>>,
+    /// One consumer per input port, polled by the RT thread.
+    consumers: Vec<rtrb::Consumer<RawMidiEvent>>,
+}
+
+impl std::fmt::Debug for MidiInputPorts {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MidiInputPorts")
+            .field("input_count", &self._connections.len())
+            .finish()
+    }
+}
+
+impl MidiInputPorts {
+    /// Opens MIDI input connections matching the given configs.
+    ///
+    /// Each config's `name` is matched by case-insensitive substring
+    /// against available system MIDI input port names. A dedicated
+    /// per-port `rtrb` queue (capacity 256) is created so that the
+    /// `midir` callback can push events without contention.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`crate::Error::MidiInit`] if the MIDI subsystem cannot be
+    /// initialized, or [`crate::Error::PortNotFound`] if a configured port
+    /// name does not match any available port.
+    pub(crate) fn open(configs: &[crate::MidiInputConfig]) -> Result<Self, crate::Error> {
+        if configs.is_empty() {
+            return Ok(Self {
+                _connections: Vec::new(),
+                consumers: Vec::new(),
+            });
+        }
+
+        let mut connections = Vec::with_capacity(configs.len());
+        let mut consumers = Vec::with_capacity(configs.len());
+
+        for (port_index, config) in configs.iter().enumerate() {
+            // Create a per-port queue (256 slots is plenty for MIDI rates).
+            let (mut producer, consumer) = rtrb::RingBuffer::new(256);
+            consumers.push(consumer);
+
+            // Create a MidiInput to enumerate available ports.
+            let midi_in = midir::MidiInput::new("oxurack-rt-in-enum")
+                .map_err(|e| crate::Error::MidiInit(e.to_string()))?;
+
+            let ports = midi_in.ports();
+            let target_lower = config.name.to_lowercase();
+
+            let port = ports
+                .iter()
+                .find(|p| {
+                    midi_in
+                        .port_name(p)
+                        .map(|name| name.to_lowercase().contains(&target_lower))
+                        .unwrap_or(false)
+                })
+                .ok_or_else(|| crate::Error::PortNotFound {
+                    name: config.name.clone(),
+                })?
+                .clone();
+
+            // Create a fresh MidiInput for the connection (connect consumes it).
+            let conn_in = midir::MidiInput::new("oxurack-rt-in")
+                .map_err(|e| crate::Error::MidiInit(e.to_string()))?;
+
+            let idx = port_index as u8;
+            // Each callback gets its own MonotonicClock for consistent timestamping.
+            let callback_clock = crate::timing::MonotonicClock::new();
+
+            let connection = conn_in
+                .connect(
+                    &port,
+                    &config.name,
+                    move |_timestamp_us, data, _| {
+                        // Minimal work in callback: timestamp + copy bytes + push.
+                        let mut bytes = [0u8; 3];
+                        let len = data.len().min(3);
+                        bytes[..len].copy_from_slice(&data[..len]);
+
+                        let event = RawMidiEvent {
+                            port_index: idx,
+                            timestamp_ns: callback_clock.now(),
+                            bytes,
+                            length: len as u8,
+                        };
+                        // Drop on overflow — better to lose a message than block.
+                        let _ = producer.push(event);
+                    },
+                    (),
+                )
+                .map_err(|e| crate::Error::MidiInit(e.to_string()))?;
+
+            connections.push(connection);
+        }
+
+        Ok(Self {
+            _connections: connections,
+            consumers,
+        })
+    }
+
+    /// Drains all pending raw MIDI events from all input port queues.
+    ///
+    /// Call this from the RT thread loop each iteration. The returned
+    /// iterator is allocation-free: it pops directly from the ring
+    /// buffers.
+    pub(crate) fn drain_all(&mut self) -> impl Iterator<Item = RawMidiEvent> + '_ {
+        self.consumers
+            .iter_mut()
+            .flat_map(|consumer| std::iter::from_fn(move || consumer.pop().ok()))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -178,5 +322,38 @@ mod tests {
             result.is_ok(),
             "listing input ports should succeed: {result:?}"
         );
+    }
+
+    // ── Input port tests ────────────────────────────────────────────
+
+    #[test]
+    fn test_open_input_no_ports_succeeds() {
+        let result = MidiInputPorts::open(&[]);
+        assert!(
+            result.is_ok(),
+            "opening with no input configs should succeed"
+        );
+        let mut ports = result.unwrap();
+        // drain_all on an empty set of consumers yields nothing.
+        assert_eq!(ports.drain_all().count(), 0);
+    }
+
+    #[test]
+    fn test_open_input_nonexistent_returns_error() {
+        let configs = vec![crate::MidiInputConfig {
+            name: "__nonexistent_test_port__".to_string(),
+        }];
+        let result = MidiInputPorts::open(&configs);
+        assert!(
+            result.is_err(),
+            "opening a nonexistent input port should fail"
+        );
+        let err = result.unwrap_err();
+        match &err {
+            crate::Error::PortNotFound { name } => {
+                assert_eq!(name, "__nonexistent_test_port__");
+            }
+            other => panic!("expected PortNotFound, got: {other}"),
+        }
     }
 }
