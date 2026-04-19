@@ -8,8 +8,7 @@
 
 [![][logo]][logo-large]
 
-Modular MIDI generation for people who want the feel of a patch-cable
-session and the reproducibility of a saved file.
+*Modular MIDI generation for electronic musicians/live coders who want the feel of a patch-cable session and the reproducibility of a saved file*
 
 oxurack borrows the mental model of Eurorack — small modules, patch cables,
 unified signals — and applies it to MIDI. Nothing here generates audio.

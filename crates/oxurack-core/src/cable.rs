@@ -2,7 +2,7 @@
 //!
 //! A [`CableTransform`] sits on a cable and modifies the signal as it
 //! flows from an output port to an input port. Transforms are
-//! type-aware: each variant only works on specific [`Value`](crate::Value)
+//! type-aware: each variant only works on specific [`Value`]
 //! kinds and returns `None` for incompatible inputs.
 
 use std::collections::HashMap;
@@ -16,7 +16,7 @@ use crate::Value;
 
 /// A signal transform applied inline on a cable.
 ///
-/// Each variant operates on a specific subset of [`Value`](crate::Value)
+/// Each variant operates on a specific subset of [`Value`]
 /// kinds. [`CableTransform::apply`] returns `None` when the input kind
 /// is not supported by the transform.
 #[non_exhaustive]
@@ -24,8 +24,8 @@ use crate::Value;
 pub enum CableTransform {
     /// Linear transform: `out = in * factor + offset`.
     ///
-    /// Works on [`Value::Float`](crate::Value::Float) and
-    /// [`Value::Bipolar`](crate::Value::Bipolar).
+    /// Works on [`Value::Float`] and
+    /// [`Value::Bipolar`].
     Affine {
         /// Multiplicative scale factor.
         factor: f32,
@@ -41,8 +41,8 @@ pub enum CableTransform {
 
     /// Clamp the signal to `[min, max]`.
     ///
-    /// Works on [`Value::Float`](crate::Value::Float) and
-    /// [`Value::Bipolar`](crate::Value::Bipolar).
+    /// Works on [`Value::Float`] and
+    /// [`Value::Bipolar`].
     Clamp {
         /// Lower bound.
         min: f32,
@@ -52,7 +52,7 @@ pub enum CableTransform {
 
     /// Convert a float to a gate by thresholding.
     ///
-    /// Works on [`Value::Float`](crate::Value::Float).
+    /// Works on [`Value::Float`].
     /// `out = Gate(in >= threshold)`
     Threshold {
         /// Threshold value.
@@ -61,19 +61,19 @@ pub enum CableTransform {
 
     /// Convert a gate to a float.
     ///
-    /// Works on [`Value::Gate`](crate::Value::Gate).
+    /// Works on [`Value::Gate`].
     /// `out = Float(if gate { 1.0 } else { 0.0 })`
     GateToFloat,
 
     /// Convert unipolar float (0..1) to bipolar (-1..1).
     ///
-    /// Works on [`Value::Float`](crate::Value::Float).
+    /// Works on [`Value::Float`].
     /// `out = Bipolar(in * 2.0 - 1.0)`
     Unipolar,
 
     /// Convert bipolar (-1..1) to unipolar float (0..1).
     ///
-    /// Works on [`Value::Bipolar`](crate::Value::Bipolar).
+    /// Works on [`Value::Bipolar`].
     /// `out = Float((in + 1.0) / 2.0)`
     Bipolarize,
 }
@@ -83,6 +83,7 @@ impl CableTransform {
     ///
     /// Returns `Some(output)` if the transform is applicable to the
     /// input's kind, or `None` if the combination is unsupported.
+    #[must_use]
     pub fn apply(&self, input: Value) -> Option<Value> {
         match (self, input) {
             // ── Affine ──────────────────────────────────────────

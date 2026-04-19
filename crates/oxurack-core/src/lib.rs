@@ -28,6 +28,12 @@
 //!
 //! - [`patch`] -- patch persistence: data structures, validation, RON
 //!   serialisation, and file I/O
+//!
+//! # Phase 6 modules (feature-gated)
+//!
+//! - `bridge` -- RT bridge for converting real-time MIDI messages to
+//!   ECS messages and flushing outbound commands (requires the
+//!   `rt-bridge` feature)
 
 pub mod cable;
 pub mod error;
@@ -41,6 +47,9 @@ pub mod tick;
 pub mod value;
 
 pub mod patch;
+
+#[cfg(feature = "rt-bridge")]
+pub mod bridge;
 
 // ── Re-exports ──────────────────────────────────────────────────────
 
@@ -57,6 +66,7 @@ pub use tick::{compute_tick_order, MergeBuffers, TickNow, TickOrder, TickPhase};
 
 // Phase 4
 pub use event::{CoreCommand, MidiInReceived, PatchLoaded, TransportChanged, TransportState};
+pub use event::dispatch_core_command;
 pub use module::{ModuleRegistration, ModuleRegistry, OxurackModule, PortSchema};
 pub use parameter::{ParameterName, ParameterRegistry, ParameterSchema, ParameterValue};
 pub use patch::{
@@ -65,9 +75,18 @@ pub use patch::{
 };
 pub use scale::Scale;
 
+// Phase 6 (rt-bridge feature)
+#[cfg(feature = "rt-bridge")]
+pub use bridge::{
+    convert_core_midi, convert_rt_midi, drain_rt_events_system, flush_midi_output_system,
+    MidiOutputQueue, RtBridge,
+};
+
 // ── CorePlugin ──────────────────────────────────────────────────────
 
 use bevy_app::prelude::{App, Plugin, Update};
+#[cfg(feature = "rt-bridge")]
+use bevy_app::prelude::{PostUpdate, PreUpdate};
 use bevy_ecs::schedule::IntoScheduleConfigs;
 
 /// Bevy plugin that registers core resources and system-set ordering.
@@ -80,10 +99,16 @@ use bevy_ecs::schedule::IntoScheduleConfigs;
 ///   [`CoreCommand`], and [`PatchLoaded`] messages.
 /// - Configures the [`TickPhase`] system sets in the [`Update`] schedule
 ///   as a strict chain: `Produce -> Propagate -> Consume`.
-/// - Adds the [`propagate_cables_system`](tick::propagate_cables_system)
-///   to [`TickPhase::Propagate`] and
-///   [`consume_ports_system`](tick::consume_ports_system) to
-///   [`TickPhase::Consume`].
+/// - Adds the propagate and consume systems to [`TickPhase::Propagate`]
+///   and [`TickPhase::Consume`] respectively.
+///
+/// # `rt-bridge` feature
+///
+/// When the `rt-bridge` feature is enabled, the plugin also:
+///
+/// - Initialises the `MidiOutputQueue` resource.
+/// - Adds `drain_rt_events_system` to `PreUpdate`.
+/// - Adds `flush_midi_output_system` to `PostUpdate`.
 pub struct CorePlugin;
 
 impl Plugin for CorePlugin {
@@ -114,6 +139,13 @@ impl Plugin for CorePlugin {
                     tick::consume_ports_system.in_set(TickPhase::Consume),
                 ),
             );
+
+        #[cfg(feature = "rt-bridge")]
+        {
+            app.init_resource::<bridge::MidiOutputQueue>()
+                .add_systems(PreUpdate, bridge::drain_rt_events_system)
+                .add_systems(PostUpdate, bridge::flush_midi_output_system);
+        }
     }
 }
 
@@ -193,6 +225,20 @@ mod tests {
         assert!(
             world.get_resource::<ModuleRegistry>().is_some(),
             "ModuleRegistry resource should be present after adding CorePlugin"
+        );
+    }
+
+    #[cfg(feature = "rt-bridge")]
+    #[test]
+    fn test_core_plugin_registers_midi_output_queue() {
+        let mut app = App::new();
+        app.add_plugins(CorePlugin);
+        app.update();
+
+        let world = app.world();
+        assert!(
+            world.get_resource::<MidiOutputQueue>().is_some(),
+            "MidiOutputQueue resource should be present after adding CorePlugin with rt-bridge"
         );
     }
 }

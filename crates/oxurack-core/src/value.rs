@@ -131,6 +131,7 @@ pub enum ValueKind {
 
 impl Value {
     /// Returns the [`ValueKind`] discriminant for this value.
+    #[must_use]
     pub fn kind(&self) -> ValueKind {
         match self {
             Self::Float(_) => ValueKind::Float,
@@ -161,6 +162,7 @@ impl Value {
     /// | Bipolar  | Gate     | `v > 0.0`                          |
     /// | Midi/Raw | *other*  | `None`                              |
     /// | *other*  | Midi/Raw | `None`                              |
+    #[must_use]
     pub fn try_coerce(&self, target: ValueKind) -> Option<Value> {
         // Identity: same kind always succeeds.
         if self.kind() == target {
@@ -193,6 +195,7 @@ impl Value {
     }
 
     /// Returns a sensible default value for the given kind.
+    #[must_use]
     pub fn default_for_kind(kind: ValueKind) -> Self {
         match kind {
             ValueKind::Float => Self::Float(0.0),

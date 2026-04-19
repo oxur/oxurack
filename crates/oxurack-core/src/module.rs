@@ -196,11 +196,13 @@ impl ModuleRegistry {
     }
 
     /// Look up a module registration by kind.
+    #[must_use]
     pub fn get(&self, kind: &ModuleKind) -> Option<&ModuleRegistration> {
         self.registrations.get(kind)
     }
 
     /// Returns `true` if the given kind is registered.
+    #[must_use]
     pub fn contains(&self, kind: &ModuleKind) -> bool {
         self.registrations.contains_key(kind)
     }

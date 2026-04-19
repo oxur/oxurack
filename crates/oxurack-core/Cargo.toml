@@ -6,6 +6,10 @@ description = "ECS world, values, ports, and cables for oxurack."
 license     = "MIT OR Apache-2.0"
 repository  = "https://github.com/oxur/oxurack"
 
+[features]
+default = []
+rt-bridge = ["dep:oxurack-rt", "dep:rtrb"]
+
 [dependencies]
 bevy_ecs     = { version = "0.18", default-features = false, features = ["std", "bevy_reflect"] }
 bevy_app     = { version = "0.18", default-features = false, features = ["std", "bevy_reflect"] }
@@ -16,6 +20,8 @@ ron          = "0.12"
 thiserror    = "2"
 ahash        = "0.8"
 rand         = { version = "0.10", default-features = false }
+oxurack-rt   = { path = "../oxurack-rt", optional = true }
+rtrb         = { version = "0.3", optional = true }
 
 [dev-dependencies]
 pretty_assertions = "1"

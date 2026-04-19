@@ -1,7 +1,7 @@
 //! Port types for module inputs and outputs.
 //!
 //! Every module exposes a set of named ports, each carrying signals of a
-//! particular [`ValueKind`](crate::ValueKind). Input ports additionally
+//! particular [`ValueKind`]. Input ports additionally
 //! declare a [`MergePolicy`] that governs how multiple incoming cables
 //! are combined.
 
@@ -90,6 +90,7 @@ impl MergePolicy {
     /// | Max          | yes   | yes  | yes     | no    | no    |
     /// | Interleave   | no    | no   | no      | yes   | no    |
     /// | LastWins     | yes   | yes  | yes     | yes   | yes   |
+    #[must_use]
     pub fn is_valid_for(&self, kind: ValueKind) -> bool {
         match self {
             Self::Reject | Self::LastWins => true,

@@ -14,8 +14,8 @@
 //! - [`TickOrder`] -- cached topological ordering of module entities
 //!   for the Produce phase.
 //! - [`TickNow`] -- event signalling that a tick should execute.
-//! - [`propagate_cables_system`] -- propagates values through cables.
-//! - [`consume_ports_system`] -- merges buffered values into input ports.
+//! - `propagate_cables_system` -- propagates values through cables.
+//! - `consume_ports_system` -- merges buffered values into input ports.
 //! - [`compute_tick_order`] -- topological sort of the module graph.
 
 use std::cmp::Reverse;

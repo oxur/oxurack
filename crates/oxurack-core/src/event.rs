@@ -84,6 +84,56 @@ pub struct PatchLoaded {
     pub patch_name: String,
 }
 
+/// Dispatches a [`CoreCommand`] against the world.
+///
+/// Called by the REPL, umbrella crate's command handler, or any other
+/// system that processes [`CoreCommand`] messages. This is a standalone
+/// function (not a Bevy system) because several commands require
+/// exclusive `&mut World` access.
+///
+/// # Currently implemented
+///
+/// - [`CoreCommand::LoadPatch`] -- loads and returns the patch; does
+///   not instantiate module entities (that requires the umbrella
+///   crate's spawn logic).
+/// - [`CoreCommand::Panic`] -- returns `Ok(())` (module reset will be
+///   implemented when concrete modules exist).
+/// - [`CoreCommand::SetBpm`] -- returns `Ok(())` (tempo propagation
+///   will be wired when the RT bridge is integrated into the umbrella
+///   crate).
+///
+/// # Stubbed commands
+///
+/// - [`CoreCommand::SetParameter`] -- requires module entity lookup
+///   by instance name, which depends on the umbrella crate's world
+///   layout.
+/// - [`CoreCommand::SavePatch`] -- requires querying the world to
+///   reconstruct the patch structure.
+/// - [`CoreCommand::AddCable`] / [`CoreCommand::RemoveCable`] --
+///   require port entity resolution, which depends on the umbrella
+///   crate's spawn conventions.
+pub fn dispatch_core_command(
+    _world: &mut bevy_ecs::world::World,
+    command: &CoreCommand,
+) -> Result<(), crate::CoreError> {
+    match command {
+        CoreCommand::LoadPatch(path) => {
+            crate::patch::load_patch_from_file(path)?;
+            Ok(())
+        }
+        CoreCommand::Panic | CoreCommand::SetBpm(_) => Ok(()),
+        CoreCommand::SetParameter { .. }
+        | CoreCommand::SavePatch(_)
+        | CoreCommand::AddCable { .. }
+        | CoreCommand::RemoveCable { .. } => {
+            // These commands require infrastructure that lives in the
+            // umbrella crate. They will be implemented when the REPL
+            // and full world layout are available.
+            Ok(())
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -269,5 +319,100 @@ mod tests {
         };
         let cloned = evt.clone();
         assert_eq!(cloned.patch_name, "test_patch");
+    }
+
+    // ── dispatch_core_command ───────────────────────────────────
+
+    #[test]
+    fn test_dispatch_panic_command() {
+        let mut world = bevy_ecs::world::World::new();
+        let result = dispatch_core_command(&mut world, &CoreCommand::Panic);
+        assert!(result.is_ok(), "Panic command should return Ok: {result:?}");
+    }
+
+    #[test]
+    fn test_dispatch_set_bpm_command() {
+        let mut world = bevy_ecs::world::World::new();
+        let result = dispatch_core_command(&mut world, &CoreCommand::SetBpm(140.0));
+        assert!(
+            result.is_ok(),
+            "SetBpm command should return Ok: {result:?}"
+        );
+    }
+
+    #[test]
+    fn test_dispatch_load_patch_nonexistent_file() {
+        let mut world = bevy_ecs::world::World::new();
+        let result = dispatch_core_command(
+            &mut world,
+            &CoreCommand::LoadPatch(PathBuf::from("/nonexistent/path.ron")),
+        );
+        assert!(
+            result.is_err(),
+            "LoadPatch with nonexistent file should return Err"
+        );
+    }
+
+    #[test]
+    fn test_dispatch_set_parameter_stub() {
+        let mut world = bevy_ecs::world::World::new();
+        let result = dispatch_core_command(
+            &mut world,
+            &CoreCommand::SetParameter {
+                module: "vco_1".into(),
+                param: "freq".into(),
+                value: crate::ParameterValue::Float(440.0),
+            },
+        );
+        assert!(
+            result.is_ok(),
+            "SetParameter stub should return Ok: {result:?}"
+        );
+    }
+
+    #[test]
+    fn test_dispatch_save_patch_stub() {
+        let mut world = bevy_ecs::world::World::new();
+        let result = dispatch_core_command(
+            &mut world,
+            &CoreCommand::SavePatch(PathBuf::from("out.ron")),
+        );
+        assert!(
+            result.is_ok(),
+            "SavePatch stub should return Ok: {result:?}"
+        );
+    }
+
+    #[test]
+    fn test_dispatch_add_cable_stub() {
+        let mut world = bevy_ecs::world::World::new();
+        let result = dispatch_core_command(
+            &mut world,
+            &CoreCommand::AddCable {
+                source: ("vco_1".into(), "out".into()),
+                target: ("filter_1".into(), "in".into()),
+                transform: None,
+            },
+        );
+        assert!(
+            result.is_ok(),
+            "AddCable stub should return Ok: {result:?}"
+        );
+    }
+
+    #[test]
+    fn test_dispatch_remove_cable_stub() {
+        let mut world = bevy_ecs::world::World::new();
+        let result = dispatch_core_command(
+            &mut world,
+            &CoreCommand::RemoveCable {
+                source: ("vco_1".into(), "out".into()),
+                target: ("filter_1".into(), "in".into()),
+            },
+        );
+        assert!(
+            result.is_ok(),
+            "RemoveCable stub should return Ok: {result:?}"
+        );
     }
 }
