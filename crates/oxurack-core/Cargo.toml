@@ -10,7 +10,7 @@ repository  = "https://github.com/oxur/oxurack"
 bevy_ecs     = { version = "0.18", default-features = false, features = ["std", "bevy_reflect"] }
 bevy_app     = { version = "0.18", default-features = false, features = ["std", "bevy_reflect"] }
 bevy_reflect = { version = "0.18", default-features = false, features = ["std"] }
-smallvec     = "1"
+smallvec     = { version = "1", features = ["serde"] }
 serde        = { version = "1", features = ["derive"] }
 ron          = "0.12"
 thiserror    = "2"

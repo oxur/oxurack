@@ -16,38 +16,50 @@
 //!
 //! - [`tick`] -- frame-tick scheduling phases ([`TickPhase`]), merge
 //!   buffers, topological ordering, and tick systems
-//! - [`rng`] -- deterministic seed derivation
+//! - [`rng`] -- deterministic seed derivation and module-local RNG
+//!
+//! # Phase 4 modules
+//!
+//! - [`parameter`] -- module parameter descriptors, values, and registry
+//! - [`scale`] -- musical scales and quantisation helpers
+//! - [`event`] -- ECS messages for transport, MIDI input, and commands
 //!
 //! # Phase 2+ stubs
 //!
-//! - `parameter` -- module parameter descriptors
 //! - `patch` -- patch graph
-//! - `scale` -- musical scales
-//! - `event` -- ECS events
 
 pub mod cable;
 pub mod error;
+pub mod event;
 pub mod module;
+pub mod parameter;
 pub mod port;
 pub mod rng;
+pub mod scale;
 pub mod tick;
 pub mod value;
 
 // Phase 2+ stubs.
-mod event;
-mod parameter;
 mod patch;
-mod scale;
 
 // ── Re-exports ──────────────────────────────────────────────────────
 
+// Phase 1
 pub use cable::{Cable, CableIndex, CableTransform};
 pub use error::{CoreError, PatchError, TickError};
 pub use module::{spawn_module_entity, Module, ModuleId, ModuleKind};
 pub use port::{spawn_port_on_module, CurrentValue, MergePolicy, Port, PortDirection, PortName};
-pub use rng::derive_seed;
-pub use tick::{compute_tick_order, MergeBuffers, TickNow, TickOrder, TickPhase};
 pub use value::{MidiMessage, Value, ValueKind};
+
+// Phase 2
+pub use rng::{derive_module_rng, derive_seed};
+pub use tick::{compute_tick_order, MergeBuffers, TickNow, TickOrder, TickPhase};
+
+// Phase 4
+pub use event::{CoreCommand, MidiInReceived, PatchLoaded, TransportChanged, TransportState};
+pub use module::{ModuleRegistration, ModuleRegistry, OxurackModule, PortSchema};
+pub use parameter::{ParameterName, ParameterRegistry, ParameterSchema, ParameterValue};
+pub use scale::Scale;
 
 // ── CorePlugin ──────────────────────────────────────────────────────
 
@@ -58,9 +70,10 @@ use bevy_ecs::schedule::IntoScheduleConfigs;
 ///
 /// # What it does
 ///
-/// - Initialises the [`CableIndex`], [`MergeBuffers`], and [`TickOrder`]
-///   resources.
-/// - Registers the [`TickNow`] event.
+/// - Initialises the [`CableIndex`], [`MergeBuffers`], [`TickOrder`],
+///   [`ParameterRegistry`], and [`ModuleRegistry`] resources.
+/// - Registers the [`TickNow`], [`TransportChanged`], [`MidiInReceived`],
+///   [`CoreCommand`], and [`PatchLoaded`] messages.
 /// - Configures the [`TickPhase`] system sets in the [`Update`] schedule
 ///   as a strict chain: `Produce -> Propagate -> Consume`.
 /// - Adds the [`propagate_cables_system`](tick::propagate_cables_system)
@@ -74,7 +87,13 @@ impl Plugin for CorePlugin {
         app.init_resource::<CableIndex>()
             .init_resource::<tick::MergeBuffers>()
             .init_resource::<tick::TickOrder>()
+            .init_resource::<ParameterRegistry>()
+            .init_resource::<ModuleRegistry>()
             .add_message::<tick::TickNow>()
+            .add_message::<TransportChanged>()
+            .add_message::<MidiInReceived>()
+            .add_message::<CoreCommand>()
+            .add_message::<PatchLoaded>()
             .configure_sets(
                 Update,
                 (
@@ -144,6 +163,32 @@ mod tests {
         assert!(
             world.get_resource::<TickOrder>().is_some(),
             "TickOrder resource should be present after adding CorePlugin"
+        );
+    }
+
+    #[test]
+    fn test_core_plugin_registers_parameter_registry() {
+        let mut app = App::new();
+        app.add_plugins(CorePlugin);
+        app.update();
+
+        let world = app.world();
+        assert!(
+            world.get_resource::<ParameterRegistry>().is_some(),
+            "ParameterRegistry resource should be present after adding CorePlugin"
+        );
+    }
+
+    #[test]
+    fn test_core_plugin_registers_module_registry() {
+        let mut app = App::new();
+        app.add_plugins(CorePlugin);
+        app.update();
+
+        let world = app.world();
+        assert!(
+            world.get_resource::<ModuleRegistry>().is_some(),
+            "ModuleRegistry resource should be present after adding CorePlugin"
         );
     }
 }

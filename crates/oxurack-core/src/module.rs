@@ -1,12 +1,18 @@
-//! Module identity types.
+//! Module identity types and the module registry.
 //!
 //! Every module in the rack has a [`ModuleKind`] (e.g. `"vco"`,
 //! `"filter"`, `"lfo"`) that names its class, and a [`ModuleId`] that
 //! uniquely identifies a specific instance within the patch.
+//!
+//! The [`OxurackModule`] trait is implemented by every concrete module
+//! type and provides static metadata (kind, ports, parameters). The
+//! [`ModuleRegistry`] collects these registrations so that the patch
+//! loader can instantiate modules by name.
 
+use std::collections::HashMap;
 use std::fmt;
 
-use bevy_ecs::prelude::{Component, Entity};
+use bevy_ecs::prelude::{Component, Entity, Resource};
 use bevy_ecs::world::World;
 use bevy_reflect::Reflect;
 
@@ -95,6 +101,114 @@ pub fn spawn_module_entity(world: &mut World, kind: &str, instance_name: &str) -
             module_id,
         ))
         .id()
+}
+
+// ── Port schema ──────────────────────────────────────────────────
+
+/// Static metadata describing a port that a module exposes.
+///
+/// Used at registration time to declare the ports a module type
+/// provides, before any instances are spawned.
+#[derive(Debug, Clone)]
+pub struct PortSchema {
+    /// Machine-readable port name.
+    pub name: &'static str,
+    /// Whether this port is an input or output.
+    pub direction: crate::PortDirection,
+    /// The kind of signal this port carries.
+    pub value_kind: crate::ValueKind,
+    /// How multiple incoming cables are merged (only relevant for inputs).
+    pub merge_policy: crate::MergePolicy,
+    /// Human-readable description.
+    pub description: &'static str,
+}
+
+// ── OxurackModule trait ──────────────────────────────────────────
+
+/// Trait implemented by all oxurack modules.
+///
+/// Provides static metadata that is collected by the
+/// [`ModuleRegistry`] at app build time. Concrete module types
+/// (e.g. `TuringMachine`, `Vco`, `Filter`) implement this trait
+/// and register themselves via `ModuleRegistry::register::<M>()`.
+pub trait OxurackModule: Send + Sync + 'static {
+    /// The machine-readable kind name (e.g. `"turing_machine"`, `"vco"`).
+    const KIND: &'static str;
+    /// A human-readable display name (e.g. `"Turing Machine"`, `"VCO"`).
+    const DISPLAY_NAME: &'static str;
+    /// An optional description of what this module does.
+    const DESCRIPTION: &'static str = "";
+
+    /// Returns the static port schema for this module type.
+    fn port_schema() -> &'static [PortSchema];
+
+    /// Returns the static parameter schema for this module type.
+    fn parameter_schema() -> &'static [crate::ParameterSchema];
+}
+
+// ── ModuleRegistration ───────────────────────────────────────────
+
+/// Registration entry for a module kind in the [`ModuleRegistry`].
+///
+/// Stores a snapshot of the static metadata from an
+/// [`OxurackModule`] implementation.
+#[derive(Debug, Clone)]
+pub struct ModuleRegistration {
+    /// The module kind.
+    pub kind: ModuleKind,
+    /// Human-readable display name.
+    pub display_name: String,
+    /// Description of the module.
+    pub description: String,
+    /// Declared port schemas.
+    pub port_schemas: Vec<PortSchema>,
+    /// Declared parameter schemas.
+    pub parameter_schemas: Vec<crate::ParameterSchema>,
+}
+
+// ── ModuleRegistry ───────────────────────────────────────────────
+
+/// Registry of available module types.
+///
+/// Module plugins call [`register`](ModuleRegistry::register) during
+/// app build. The patch loader uses the registry to look up module
+/// metadata by [`ModuleKind`].
+#[derive(Resource, Default, Debug)]
+pub struct ModuleRegistry {
+    registrations: HashMap<ModuleKind, ModuleRegistration>,
+}
+
+impl ModuleRegistry {
+    /// Register a module type in the registry.
+    ///
+    /// Collects the static metadata from the [`OxurackModule`]
+    /// implementation and stores it keyed by [`ModuleKind`].
+    pub fn register<M: OxurackModule>(&mut self) {
+        let kind = ModuleKind::from(M::KIND);
+        let reg = ModuleRegistration {
+            kind: kind.clone(),
+            display_name: M::DISPLAY_NAME.to_string(),
+            description: M::DESCRIPTION.to_string(),
+            port_schemas: M::port_schema().to_vec(),
+            parameter_schemas: M::parameter_schema().to_vec(),
+        };
+        self.registrations.insert(kind, reg);
+    }
+
+    /// Look up a module registration by kind.
+    pub fn get(&self, kind: &ModuleKind) -> Option<&ModuleRegistration> {
+        self.registrations.get(kind)
+    }
+
+    /// Returns `true` if the given kind is registered.
+    pub fn contains(&self, kind: &ModuleKind) -> bool {
+        self.registrations.contains_key(kind)
+    }
+
+    /// Returns an iterator over all registered module kinds.
+    pub fn kinds(&self) -> impl Iterator<Item = &ModuleKind> {
+        self.registrations.keys()
+    }
 }
 
 #[cfg(test)]
@@ -278,5 +392,190 @@ mod tests {
         let id1 = *world.entity(e1).get::<ModuleId>().unwrap();
         let id2 = *world.entity(e2).get::<ModuleId>().unwrap();
         assert_eq!(id1, id2);
+    }
+
+    // ── PortSchema tests ──────────────────────────────────────────
+
+    #[test]
+    fn test_port_schema_debug() {
+        let schema = PortSchema {
+            name: "pitch",
+            direction: crate::PortDirection::Input,
+            value_kind: crate::ValueKind::Float,
+            merge_policy: crate::MergePolicy::LastWins,
+            description: "Pitch CV input",
+        };
+        let debug = format!("{schema:?}");
+        assert!(debug.contains("pitch"), "expected 'pitch' in: {debug}");
+    }
+
+    #[test]
+    fn test_port_schema_clone() {
+        let schema = PortSchema {
+            name: "out",
+            direction: crate::PortDirection::Output,
+            value_kind: crate::ValueKind::Bipolar,
+            merge_policy: crate::MergePolicy::Reject,
+            description: "Audio output",
+        };
+        let cloned = schema.clone();
+        assert_eq!(cloned.name, "out");
+        assert_eq!(cloned.direction, crate::PortDirection::Output);
+    }
+
+    // ── OxurackModule / ModuleRegistry tests ──────────────────────
+
+    /// A dummy module for testing the registry.
+    struct DummyVco;
+
+    impl OxurackModule for DummyVco {
+        const KIND: &'static str = "dummy_vco";
+        const DISPLAY_NAME: &'static str = "Dummy VCO";
+        const DESCRIPTION: &'static str = "A test oscillator module";
+
+        fn port_schema() -> &'static [PortSchema] {
+            &[
+                PortSchema {
+                    name: "pitch",
+                    direction: crate::PortDirection::Input,
+                    value_kind: crate::ValueKind::Float,
+                    merge_policy: crate::MergePolicy::LastWins,
+                    description: "Pitch CV input",
+                },
+                PortSchema {
+                    name: "out",
+                    direction: crate::PortDirection::Output,
+                    value_kind: crate::ValueKind::Bipolar,
+                    merge_policy: crate::MergePolicy::Reject,
+                    description: "Audio output",
+                },
+            ]
+        }
+
+        fn parameter_schema() -> &'static [crate::ParameterSchema] {
+            &[crate::ParameterSchema {
+                name: "waveform",
+                description: "Oscillator waveform",
+                default: crate::ParameterValue::Int(0),
+            }]
+        }
+    }
+
+    /// A second dummy module to verify multiple registrations.
+    struct DummyFilter;
+
+    impl OxurackModule for DummyFilter {
+        const KIND: &'static str = "dummy_filter";
+        const DISPLAY_NAME: &'static str = "Dummy Filter";
+
+        fn port_schema() -> &'static [PortSchema] {
+            &[]
+        }
+
+        fn parameter_schema() -> &'static [crate::ParameterSchema] {
+            &[]
+        }
+    }
+
+    #[test]
+    fn test_module_registry_register_and_get() {
+        let mut registry = ModuleRegistry::default();
+        registry.register::<DummyVco>();
+
+        let kind = ModuleKind::from("dummy_vco");
+        let reg = registry.get(&kind).expect("should be registered");
+        assert_eq!(reg.display_name, "Dummy VCO");
+        assert_eq!(reg.description, "A test oscillator module");
+        assert_eq!(reg.port_schemas.len(), 2);
+        assert_eq!(reg.parameter_schemas.len(), 1);
+    }
+
+    #[test]
+    fn test_module_registry_contains() {
+        let mut registry = ModuleRegistry::default();
+        registry.register::<DummyVco>();
+
+        assert!(registry.contains(&ModuleKind::from("dummy_vco")));
+        assert!(!registry.contains(&ModuleKind::from("unknown")));
+    }
+
+    #[test]
+    fn test_module_registry_kinds() {
+        let mut registry = ModuleRegistry::default();
+        registry.register::<DummyVco>();
+        registry.register::<DummyFilter>();
+
+        let mut kinds: Vec<String> = registry.kinds().map(|k| k.to_string()).collect();
+        kinds.sort();
+        assert_eq!(kinds, vec!["dummy_filter", "dummy_vco"]);
+    }
+
+    #[test]
+    fn test_module_registry_get_unknown() {
+        let registry = ModuleRegistry::default();
+        assert!(registry.get(&ModuleKind::from("nope")).is_none());
+    }
+
+    #[test]
+    fn test_module_registry_port_schema_accessible() {
+        let mut registry = ModuleRegistry::default();
+        registry.register::<DummyVco>();
+
+        let kind = ModuleKind::from("dummy_vco");
+        let reg = registry.get(&kind).unwrap();
+
+        assert_eq!(reg.port_schemas[0].name, "pitch");
+        assert_eq!(reg.port_schemas[0].direction, crate::PortDirection::Input);
+        assert_eq!(reg.port_schemas[1].name, "out");
+        assert_eq!(reg.port_schemas[1].direction, crate::PortDirection::Output);
+    }
+
+    #[test]
+    fn test_module_registry_parameter_schema_accessible() {
+        let mut registry = ModuleRegistry::default();
+        registry.register::<DummyVco>();
+
+        let kind = ModuleKind::from("dummy_vco");
+        let reg = registry.get(&kind).unwrap();
+
+        assert_eq!(reg.parameter_schemas[0].name, "waveform");
+        assert_eq!(
+            reg.parameter_schemas[0].default,
+            crate::ParameterValue::Int(0)
+        );
+    }
+
+    #[test]
+    fn test_module_registry_default_description() {
+        let mut registry = ModuleRegistry::default();
+        registry.register::<DummyFilter>();
+
+        let kind = ModuleKind::from("dummy_filter");
+        let reg = registry.get(&kind).unwrap();
+        // Default description is empty string.
+        assert_eq!(reg.description, "");
+    }
+
+    #[test]
+    fn test_module_registry_debug() {
+        let mut registry = ModuleRegistry::default();
+        registry.register::<DummyVco>();
+        let debug = format!("{registry:?}");
+        assert!(
+            debug.contains("ModuleRegistry"),
+            "expected 'ModuleRegistry' in: {debug}"
+        );
+    }
+
+    #[test]
+    fn test_module_registration_clone() {
+        let mut registry = ModuleRegistry::default();
+        registry.register::<DummyVco>();
+
+        let kind = ModuleKind::from("dummy_vco");
+        let reg = registry.get(&kind).unwrap();
+        let cloned = reg.clone();
+        assert_eq!(cloned.kind, kind);
+        assert_eq!(cloned.display_name, reg.display_name);
     }
 }
