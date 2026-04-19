@@ -14,7 +14,8 @@
 //!
 //! # Phase 2 modules
 //!
-//! - [`tick`] -- frame-tick scheduling phases ([`TickPhase`])
+//! - [`tick`] -- frame-tick scheduling phases ([`TickPhase`]), merge
+//!   buffers, topological ordering, and tick systems
 //! - [`rng`] -- deterministic seed derivation
 //!
 //! # Phase 2+ stubs
@@ -45,7 +46,7 @@ pub use error::{CoreError, PatchError, TickError};
 pub use module::{spawn_module_entity, Module, ModuleId, ModuleKind};
 pub use port::{spawn_port_on_module, CurrentValue, MergePolicy, Port, PortDirection, PortName};
 pub use rng::derive_seed;
-pub use tick::TickPhase;
+pub use tick::{compute_tick_order, MergeBuffers, TickNow, TickOrder, TickPhase};
 pub use value::{MidiMessage, Value, ValueKind};
 
 // ── CorePlugin ──────────────────────────────────────────────────────
@@ -57,22 +58,39 @@ use bevy_ecs::schedule::IntoScheduleConfigs;
 ///
 /// # What it does
 ///
-/// - Initialises the [`CableIndex`] resource.
+/// - Initialises the [`CableIndex`], [`MergeBuffers`], and [`TickOrder`]
+///   resources.
+/// - Registers the [`TickNow`] event.
 /// - Configures the [`TickPhase`] system sets in the [`Update`] schedule
 ///   as a strict chain: `Produce -> Propagate -> Consume`.
+/// - Adds the [`propagate_cables_system`](tick::propagate_cables_system)
+///   to [`TickPhase::Propagate`] and
+///   [`consume_ports_system`](tick::consume_ports_system) to
+///   [`TickPhase::Consume`].
 pub struct CorePlugin;
 
 impl Plugin for CorePlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<CableIndex>().configure_sets(
-            Update,
-            (
-                TickPhase::Produce,
-                TickPhase::Propagate,
-                TickPhase::Consume,
+        app.init_resource::<CableIndex>()
+            .init_resource::<tick::MergeBuffers>()
+            .init_resource::<tick::TickOrder>()
+            .add_message::<tick::TickNow>()
+            .configure_sets(
+                Update,
+                (
+                    TickPhase::Produce,
+                    TickPhase::Propagate,
+                    TickPhase::Consume,
+                )
+                    .chain(),
             )
-                .chain(),
-        );
+            .add_systems(
+                Update,
+                (
+                    tick::propagate_cables_system.in_set(TickPhase::Propagate),
+                    tick::consume_ports_system.in_set(TickPhase::Consume),
+                ),
+            );
     }
 }
 
@@ -100,6 +118,32 @@ mod tests {
         assert!(
             world.get_resource::<CableIndex>().is_some(),
             "CableIndex resource should be present after adding CorePlugin"
+        );
+    }
+
+    #[test]
+    fn test_core_plugin_registers_merge_buffers() {
+        let mut app = App::new();
+        app.add_plugins(CorePlugin);
+        app.update();
+
+        let world = app.world();
+        assert!(
+            world.get_resource::<MergeBuffers>().is_some(),
+            "MergeBuffers resource should be present after adding CorePlugin"
+        );
+    }
+
+    #[test]
+    fn test_core_plugin_registers_tick_order() {
+        let mut app = App::new();
+        app.add_plugins(CorePlugin);
+        app.update();
+
+        let world = app.world();
+        assert!(
+            world.get_resource::<TickOrder>().is_some(),
+            "TickOrder resource should be present after adding CorePlugin"
         );
     }
 }

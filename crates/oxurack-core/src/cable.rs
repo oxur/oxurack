@@ -188,6 +188,12 @@ impl CableIndex {
         }
     }
 
+    /// Returns an iterator over all target port entities that have at
+    /// least one cable connected.
+    pub fn target_ports(&self) -> impl Iterator<Item = Entity> + '_ {
+        self.by_target.keys().copied()
+    }
+
     /// Clear the entire index.
     pub fn clear(&mut self) {
         self.by_target.clear();
@@ -736,5 +742,48 @@ mod tests {
         index.clear();
         assert!(index.cables_targeting(tgt).is_empty());
         assert!(index.cables_from(src).is_empty());
+    }
+
+    #[test]
+    fn test_cable_index_target_ports() {
+        use bevy_ecs::world::World;
+
+        let mut world = World::new();
+        let src_a = world.spawn_empty().id();
+        let tgt_a = world.spawn_empty().id();
+        let tgt_b = world.spawn_empty().id();
+
+        let cable_1 = world.spawn_empty().id();
+        let cable_2 = world.spawn_empty().id();
+
+        let c1 = Cable {
+            source_port: src_a,
+            target_port: tgt_a,
+            transform: None,
+            enabled: true,
+        };
+        let c2 = Cable {
+            source_port: src_a,
+            target_port: tgt_b,
+            transform: None,
+            enabled: true,
+        };
+
+        let mut index = CableIndex::default();
+        index.add_cable(cable_1, &c1);
+        index.add_cable(cable_2, &c2);
+
+        let mut targets: Vec<Entity> = index.target_ports().collect();
+        targets.sort();
+
+        assert_eq!(targets.len(), 2);
+        assert!(targets.contains(&tgt_a));
+        assert!(targets.contains(&tgt_b));
+    }
+
+    #[test]
+    fn test_cable_index_target_ports_empty() {
+        let index = CableIndex::default();
+        assert_eq!(index.target_ports().count(), 0);
     }
 }
