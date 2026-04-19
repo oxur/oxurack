@@ -379,4 +379,392 @@ mod tests {
             );
         }
     }
+
+    // -- move_step tests ------------------------------------------------------
+
+    #[test]
+    fn test_move_step_advances_register() {
+        let mut tm = TuringMachine::with_seed(42);
+        let bits_before = tm.register_bits();
+
+        let outputs = tm.move_step();
+
+        // The register should have shifted.
+        assert_ne!(
+            tm.register_bits(),
+            bits_before,
+            "move_step should advance the shift register"
+        );
+        // step_count must NOT increment.
+        assert_eq!(
+            tm.step_count(),
+            0,
+            "move_step should not increment step_count"
+        );
+        // Clock dividers must not fire.
+        assert!(!outputs.div2, "move_step should not tick div2");
+        assert!(!outputs.div4, "move_step should not tick div4");
+    }
+
+    #[test]
+    fn test_move_step_vs_tick() {
+        let mut tm_move = TuringMachine::with_seed(42);
+        let mut tm_tick = TuringMachine::with_seed(42);
+
+        let out_move = tm_move.move_step();
+        let out_tick = tm_tick.tick();
+
+        // Notes and register state should be identical — same seed, same
+        // register mutation path.
+        assert_eq!(out_move.note, out_tick.note);
+        assert_eq!(out_move.register_bits, out_tick.register_bits);
+
+        // Clock divider outputs differ: move_step always reports false,
+        // tick reports the actual divider state.
+        assert!(!out_move.div2);
+        assert!(!out_move.div4);
+        // After one tick, div2 is false (fires on tick 2), div4 is false.
+        // But the key difference is that move_step skips divider advancement
+        // entirely, so after a second call the states diverge.
+        let _out_move2 = tm_move.move_step();
+        let out_tick2 = tm_tick.tick();
+        assert!(
+            out_tick2.div2,
+            "tick should fire div2 on the second tick"
+        );
+        assert!(!out_move.div2, "move_step should never fire div2");
+    }
+
+    // -- set_length_position test --------------------------------------------
+
+    #[test]
+    fn test_set_length_position() {
+        let mut tm = TuringMachine::with_seed(42);
+        tm.set_length_position(3);
+
+        // Position 3 in VALID_LENGTHS = [2, 3, 4, 5, 6, 8, 10, 12, 16]
+        // corresponds to length 5.
+        assert_eq!(
+            tm.current_length(),
+            5,
+            "set_length_position(3) should select length 5"
+        );
+    }
+
+    // -- modulate_write test -------------------------------------------------
+
+    #[test]
+    fn test_modulate_write() {
+        let mut tm = TuringMachine::with_seed(42);
+        tm.set_write(0.5);
+        assert!((tm.write_probability() - 0.5).abs() < f32::EPSILON);
+
+        tm.modulate_write(0.2);
+        assert!(
+            (tm.write_probability() - 0.7).abs() < f32::EPSILON,
+            "write probability should be 0.7 after modulating +0.2, got {}",
+            tm.write_probability()
+        );
+    }
+
+    // -- new() (unseeded) test -----------------------------------------------
+
+    #[test]
+    fn test_new_produces_output() {
+        let mut tm = TuringMachine::new();
+        let outputs = tm.tick();
+
+        // We cannot predict exact values but can verify the structural
+        // invariants hold.
+        assert!(outputs.note.is_some(), "note should be Some");
+        assert!(outputs.velocity.is_some(), "velocity should be Some");
+        assert!(outputs.note.unwrap() >= 1, "MIDI note must be >= 1");
+        assert!(outputs.velocity.unwrap() >= 1, "velocity must be >= 1");
+        assert!(outputs.velocity.unwrap() <= 127, "velocity must be <= 127");
+        assert_eq!(outputs.length, 16, "default length should be 16");
+    }
+
+    // -- Display edge cases --------------------------------------------------
+
+    #[test]
+    fn test_display_default_length() {
+        let tm = TuringMachine::with_seed(42);
+        let display = tm.to_string();
+
+        // With default length 16, the bracket opens at position 0:
+        // "[" + 16 bits + "]" = 18 chars total.
+        assert_eq!(
+            display.len(),
+            18,
+            "display with length 16 should be 18 chars: {display}"
+        );
+        assert!(display.starts_with('['), "should start with '[': {display}");
+        assert!(display.ends_with(']'), "should end with ']': {display}");
+    }
+
+    #[test]
+    fn test_display_short_length() {
+        let mut tm = TuringMachine::with_seed(42);
+        // Position 0 corresponds to length 2 (the shortest valid length).
+        tm.set_length_position(0);
+
+        let display = tm.to_string();
+
+        // 14 non-loop bits + "[" + 2 loop bits + "]" = 18 chars.
+        assert_eq!(display.len(), 18, "display should always be 18 chars: {display}");
+
+        let open = display.find('[').unwrap();
+        let close = display.find(']').unwrap();
+        let between = close - open - 1;
+        assert_eq!(
+            between, 2,
+            "expected 2 chars between brackets for length-2, got {between}: {display}"
+        );
+    }
+
+    // -- Register-state edge cases -------------------------------------------
+
+    #[test]
+    fn test_all_ones_register() {
+        // Lock the loop and tick enough times for the register to stabilize
+        // into a repeating pattern, then verify the pulse-output invariant
+        // against the actual register bits.
+        let mut tm = TuringMachine::with_seed(0);
+        tm.set_write(1.0);
+        tm.set_length(16);
+
+        for _ in 0..32 {
+            tm.tick();
+        }
+
+        let outputs = tm.tick();
+        let bits = outputs.register_bits;
+
+        // Verify the AND-gate pulse relationship holds regardless of content.
+        for n in 0..6 {
+            let expected = ((bits >> n) & 1 == 1) && ((bits >> (n + 1)) & 1 == 1);
+            assert_eq!(
+                outputs.pulses[n], expected,
+                "pulse[{n}] should be AND of bits {n} and {}",
+                n + 1
+            );
+        }
+    }
+
+    #[test]
+    fn test_all_zeros_register() {
+        let mut tm = TuringMachine::with_seed(42);
+        tm.reset(); // register = 0x0000
+
+        // With a zeroed register and write=1.0, feedback bit is 0, so
+        // clocking preserves zeros.
+        tm.set_write(1.0);
+        let outputs = tm.tick();
+
+        assert_eq!(
+            outputs.register_bits & 0xFF,
+            0,
+            "lower 8 bits should be zero after reset with write=1.0 (feedback is 0)"
+        );
+        // All pulse outputs should be false (0 AND 0 = 0).
+        for (n, &pulse) in outputs.pulses.iter().enumerate() {
+            assert!(
+                !pulse,
+                "pulse[{n}] should be false when register is all zeros"
+            );
+        }
+        // All gate outputs should be false.
+        for (n, &gate) in outputs.gates.iter().enumerate() {
+            assert!(
+                !gate,
+                "gate[{n}] should be false when register is all zeros"
+            );
+        }
+    }
+
+    // -- Default impl ---------------------------------------------------------
+
+    #[test]
+    fn test_default_impl() {
+        let tm = TuringMachine::default();
+        assert_eq!(tm.step_count(), 0);
+        assert_eq!(tm.current_length(), 16);
+        assert!((tm.write_probability() - 0.5).abs() < f32::EPSILON);
+    }
+
+    // -- set_scale / set_root / set_note_range --------------------------------
+
+    #[test]
+    fn test_set_scale_changes_output() {
+        let mut tm_chromatic = TuringMachine::with_seed(42);
+        let mut tm_penta = TuringMachine::with_seed(42);
+        tm_penta.set_scale(Scale::pentatonic_major());
+
+        // Collect notes from both engines with identical register state
+        // but different scales.
+        let notes_chromatic: Vec<Option<u8>> =
+            (0..16).map(|_| tm_chromatic.tick().note).collect();
+        let notes_penta: Vec<Option<u8>> =
+            (0..16).map(|_| tm_penta.tick().note).collect();
+
+        // The note sequences should differ because pentatonic quantizes
+        // differently from chromatic.
+        assert_ne!(
+            notes_chromatic, notes_penta,
+            "switching scale should change the note output"
+        );
+    }
+
+    #[test]
+    fn test_set_root_changes_output() {
+        let mut tm_c = TuringMachine::with_seed(42);
+        tm_c.set_scale(Scale::major());
+
+        let mut tm_e = TuringMachine::with_seed(42);
+        tm_e.set_scale(Scale::major());
+        tm_e.set_root(4); // E major
+
+        let notes_c: Vec<Option<u8>> =
+            (0..16).map(|_| tm_c.tick().note).collect();
+        let notes_e: Vec<Option<u8>> =
+            (0..16).map(|_| tm_e.tick().note).collect();
+
+        assert_ne!(
+            notes_c, notes_e,
+            "changing root should shift quantized notes"
+        );
+    }
+
+    #[test]
+    fn test_set_note_range() {
+        let mut tm = TuringMachine::with_seed(42);
+        tm.set_note_range(60..=72);
+
+        for _ in 0..32 {
+            let outputs = tm.tick();
+            let note = outputs.note.unwrap();
+            assert!(
+                (60..=72).contains(&note),
+                "note {note} should be within 60..=72"
+            );
+        }
+    }
+
+    // -- set_scale_output_scale / set_scale_output_root -----------------------
+
+    #[test]
+    fn test_set_scale_output_scale() {
+        let mut tm = TuringMachine::with_seed(42);
+        tm.set_scale_output_scale(Scale::blues());
+
+        let outputs = tm.tick();
+        assert!(
+            outputs.scale_note.is_some(),
+            "scale_note should be Some after setting scale output"
+        );
+    }
+
+    #[test]
+    fn test_set_scale_output_root() {
+        let mut tm = TuringMachine::with_seed(42);
+        tm.set_scale_output_root(7); // G
+
+        let outputs = tm.tick();
+        assert!(
+            outputs.scale_note.is_some(),
+            "scale_note should be Some after setting scale output root"
+        );
+    }
+
+    #[test]
+    fn test_scale_note_independent_of_main_note() {
+        let mut tm = TuringMachine::with_seed(42);
+        tm.set_scale(Scale::major());
+        tm.set_scale_output_scale(Scale::pentatonic_minor());
+        tm.set_write(1.0);
+
+        // Collect both outputs and verify they can differ.
+        let mut any_differ = false;
+        for _ in 0..32 {
+            let outputs = tm.tick();
+            if outputs.note != outputs.scale_note {
+                any_differ = true;
+                break;
+            }
+        }
+        assert!(
+            any_differ,
+            "main note and scale_note should differ when using different scales"
+        );
+    }
+
+    // -- reset clears step_count and dividers ---------------------------------
+
+    #[test]
+    fn test_reset_clears_step_count() {
+        let mut tm = TuringMachine::with_seed(42);
+        for _ in 0..10 {
+            tm.tick();
+        }
+        assert_eq!(tm.step_count(), 10);
+        tm.reset();
+        assert_eq!(
+            tm.step_count(),
+            0,
+            "step_count should be 0 after reset"
+        );
+    }
+
+    #[test]
+    fn test_reset_clears_dividers() {
+        let mut tm = TuringMachine::with_seed(42);
+        // Tick once so div counters advance.
+        tm.tick();
+        tm.reset();
+
+        // After reset, the next two ticks should behave as if starting
+        // fresh: tick 1 = no div2, tick 2 = div2.
+        let out1 = tm.tick();
+        assert!(!out1.div2, "div2 should not fire on first tick after reset");
+        let out2 = tm.tick();
+        assert!(out2.div2, "div2 should fire on second tick after reset");
+    }
+
+    // -- outputs field coverage -----------------------------------------------
+
+    #[test]
+    fn test_noise_cc_range() {
+        let mut tm = TuringMachine::with_seed(42);
+        for _ in 0..100 {
+            let outputs = tm.tick();
+            assert!(
+                outputs.noise_cc <= 127,
+                "noise_cc must be <= 127, got {}",
+                outputs.noise_cc
+            );
+        }
+    }
+
+    #[test]
+    fn test_write_probability_in_outputs() {
+        let mut tm = TuringMachine::with_seed(42);
+        tm.set_write(0.75);
+        let outputs = tm.tick();
+        assert!(
+            (outputs.write_probability - 0.75).abs() < f32::EPSILON,
+            "outputs.write_probability should reflect set_write value, got {}",
+            outputs.write_probability
+        );
+    }
+
+    #[test]
+    fn test_length_in_outputs() {
+        let mut tm = TuringMachine::with_seed(42);
+        tm.set_length(5);
+        let outputs = tm.tick();
+        assert_eq!(
+            outputs.length, 5,
+            "outputs.length should reflect set_length value"
+        );
+    }
 }

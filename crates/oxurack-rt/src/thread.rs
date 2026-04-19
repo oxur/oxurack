@@ -1042,4 +1042,221 @@ mod tests {
             "expected no MidiInput events with no input ports"
         );
     }
+
+    // ── Transport with send_transport enabled (coverage) ────────────
+
+    /// Helper to build a config with `send_transport: true`.
+    fn test_config_with_transport(bpm: f64) -> crate::RuntimeConfig {
+        crate::RuntimeConfig {
+            clock_mode: crate::ClockMode::Master {
+                tempo_bpm: bpm,
+                send_transport: true,
+            },
+            outputs: Vec::new(),
+            inputs: Vec::new(),
+            event_queue_capacity: 1024,
+            command_queue_capacity: 1024,
+        }
+    }
+
+    #[test]
+    fn test_master_transport_with_send_enabled() {
+        let config = test_config_with_transport(120.0);
+        let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
+
+        // Let ticks accumulate briefly.
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        // Send Transport Start.
+        let cmd = crate::EcsCommand::SendTransport(crate::TransportEvent::Start);
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+
+        // Send Transport Stop.
+        let cmd = crate::EcsCommand::SendTransport(crate::TransportEvent::Stop);
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+
+        // Send Transport Continue.
+        let cmd = crate::EcsCommand::SendTransport(crate::TransportEvent::Continue);
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+
+        // Send SPP with send_transport enabled.
+        let cmd = crate::EcsCommand::SendSongPosition { position: 48 };
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+
+        runtime.stop().unwrap();
+
+        // Drain all events and verify transport events appeared.
+        let mut saw_start = false;
+        let mut saw_stop = false;
+        let mut saw_continue = false;
+        let mut saw_spp = false;
+
+        while let Ok(event) = handles.events.pop() {
+            match event {
+                crate::RtEvent::Transport(crate::TransportEvent::Start) => saw_start = true,
+                crate::RtEvent::Transport(crate::TransportEvent::Stop) => saw_stop = true,
+                crate::RtEvent::Transport(crate::TransportEvent::Continue) => {
+                    saw_continue = true;
+                }
+                crate::RtEvent::SongPosition { position } => {
+                    assert_eq!(position, 48);
+                    saw_spp = true;
+                }
+                _ => {}
+            }
+        }
+
+        assert!(saw_start, "expected Transport(Start) event");
+        assert!(saw_stop, "expected Transport(Stop) event");
+        assert!(saw_continue, "expected Transport(Continue) event");
+        assert!(saw_spp, "expected SongPosition event");
+    }
+
+    // ── Double-stop returns AlreadyStopped ──────────────────────────
+
+    #[test]
+    fn test_double_stop_returns_already_stopped() {
+        let config = test_config(120.0);
+        let (mut runtime, _handles) = crate::Runtime::start(config).unwrap();
+
+        std::thread::sleep(std::time::Duration::from_millis(50));
+
+        let first_stop = runtime.stop();
+        assert!(first_stop.is_ok(), "first stop should succeed");
+
+        let second_stop = runtime.stop();
+        assert!(
+            second_stop.is_err(),
+            "second stop should return an error"
+        );
+        match second_stop.unwrap_err() {
+            crate::Error::AlreadyStopped => {} // expected
+            other => panic!("expected AlreadyStopped, got: {other}"),
+        }
+    }
+
+    // ── Push-event overflow emits NonFatalError (expanded) ──────────
+
+    #[test]
+    fn test_push_event_overflow_emits_error() {
+        // Create a queue with capacity 2 so it fills up quickly.
+        let (mut rt_side, _ecs_side) = crate::queues::create_queues(2, 4);
+        let mut overflows: u32 = 0;
+
+        let tick = crate::RtEvent::ClockTick {
+            subdivision: 0,
+            beat: 0,
+            tempo_bpm: 120.0,
+            timestamp_ns: 0,
+        };
+
+        // Fill the queue.
+        for _ in 0..2 {
+            push_event(&mut rt_side, tick, &mut overflows);
+        }
+        assert_eq!(overflows, 0, "no overflows while queue has space");
+
+        // Push 101 more times to exceed the threshold.
+        // The 100th failure should trigger the overflow reporting path.
+        for _ in 0..101 {
+            push_event(&mut rt_side, tick, &mut overflows);
+        }
+
+        // After the 100th overflow, the counter should reset to 0.
+        // Then the 101st push fails and sets overflows to 1.
+        assert_eq!(
+            overflows, 1,
+            "counter should have reset after threshold and then incremented once"
+        );
+    }
+
+    // ── SendMidi command in master mode ─────────────────────────────
+
+    #[test]
+    fn test_send_midi_command_exercises_path() {
+        let config = test_config(120.0);
+        let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
+
+        // Send a MIDI note-on via the command queue. Since there are
+        // no output ports, the send will fail silently, but the code
+        // path is exercised.
+        let msg = crate::MidiMessage::note_on(0, 60, 100);
+        let cmd = crate::EcsCommand::SendMidi {
+            output_port_index: 0,
+            timestamp_ns: 0,
+            message: msg,
+        };
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+
+        std::thread::sleep(std::time::Duration::from_millis(100));
+        runtime.stop().unwrap();
+    }
+
+    // ── Slave mode: SetTempo ignored, SPP, SendMidi ────────────────
+
+    #[test]
+    fn test_slave_mode_ignores_set_tempo() {
+        let config = crate::RuntimeConfig {
+            clock_mode: crate::ClockMode::Slave {
+                clock_input_port: String::new(),
+                timeout_ns: 1_000_000_000,
+            },
+            outputs: Vec::new(),
+            inputs: Vec::new(),
+            event_queue_capacity: 1024,
+            command_queue_capacity: 1024,
+        };
+        let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
+
+        // SetTempo should be silently ignored in slave mode.
+        let cmd = crate::EcsCommand::SetTempo { bpm: 200.0 };
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+
+        // SendMidi should exercise the slave-mode SendMidi path.
+        let msg = crate::MidiMessage::note_on(0, 60, 100);
+        let cmd = crate::EcsCommand::SendMidi {
+            output_port_index: 0,
+            timestamp_ns: 0,
+            message: msg,
+        };
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+
+        // SendSongPosition in slave mode.
+        let cmd = crate::EcsCommand::SendSongPosition { position: 64 };
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+
+        std::thread::sleep(std::time::Duration::from_millis(200));
+
+        runtime.stop().unwrap();
+
+        // Drain and verify SPP event appeared.
+        let mut saw_spp = false;
+        while let Ok(event) = handles.events.pop() {
+            if let crate::RtEvent::SongPosition { position } = event {
+                assert_eq!(position, 64);
+                saw_spp = true;
+            }
+        }
+        assert!(saw_spp, "expected SongPosition event in slave mode");
+    }
 }

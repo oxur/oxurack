@@ -146,14 +146,14 @@ format:
 .PHONY: coverage
 coverage:
 	@echo "$(BLUE)Generating test coverage report...$(RESET)"
-	@cargo llvm-cov --lib
+	@cargo llvm-cov --lib --all-features
 	@echo "$(GREEN)✓ Coverage report generated$(RESET)"
 	@echo "$(YELLOW)→ For detailed HTML report, run: make coverage-html$(RESET)"
 
 .PHONY: coverage-html
 coverage-html:
 	@echo "$(BLUE)Generating HTML coverage report...$(RESET)"
-	@cargo llvm-cov --html --lib
+	@cargo llvm-cov --html --lib --all-features
 	@echo "$(GREEN)✓ HTML coverage report generated$(RESET)"
 	@echo "$(CYAN)→ Report: target/llvm-cov/html/index.html$(RESET)"
 

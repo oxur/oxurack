@@ -517,4 +517,141 @@ mod tests {
     fn test_classify_sysex_returns_none() {
         assert_eq!(classify_midi(&[0xF0, 0x7E, 0xF7]), None);
     }
+
+    // ── Additional system message classification tests ──────────────
+
+    #[test]
+    fn test_classify_mtc_quarter_frame() {
+        // MTC Quarter Frame (0xF1) is not handled; returns None.
+        assert_eq!(classify_midi(&[0xF1, 0x00]), None);
+    }
+
+    #[test]
+    fn test_classify_song_select() {
+        // Song Select (0xF3) is not handled; returns None.
+        assert_eq!(classify_midi(&[0xF3, 0x00]), None);
+    }
+
+    #[test]
+    fn test_classify_tune_request() {
+        // Tune Request (0xF6) is not handled; returns None.
+        assert_eq!(classify_midi(&[0xF6]), None);
+    }
+
+    // ── from_bytes edge cases ──────────────────────────────────────
+
+    #[test]
+    fn test_from_bytes_note_on_missing_data2() {
+        // Note On with only status + data1 (no velocity byte).
+        // Should still return Some, padding data2 with 0.
+        let msg = MidiMessage::from_bytes(&[0x90, 60]);
+        assert!(msg.is_some(), "should parse partial Note On");
+        let msg = msg.unwrap();
+        assert_eq!(msg.status, 0x90);
+        assert_eq!(msg.data1, 60);
+        assert_eq!(msg.data2, 0);
+        assert_eq!(msg.length, 3);
+    }
+
+    #[test]
+    fn test_from_bytes_single_status_byte() {
+        // Note On with only the status byte (no data bytes at all).
+        // Should still return Some, padding both data bytes with 0.
+        let msg = MidiMessage::from_bytes(&[0x90]);
+        assert!(msg.is_some(), "should parse status-only Note On");
+        let msg = msg.unwrap();
+        assert_eq!(msg.status, 0x90);
+        assert_eq!(msg.data1, 0);
+        assert_eq!(msg.data2, 0);
+        assert_eq!(msg.length, 3);
+    }
+
+    #[test]
+    fn test_from_bytes_program_change_single_byte() {
+        // Program Change with only the status byte.
+        let msg = MidiMessage::from_bytes(&[0xC0]);
+        assert!(msg.is_some(), "should parse status-only Program Change");
+        let msg = msg.unwrap();
+        assert_eq!(msg.status, 0xC0);
+        assert_eq!(msg.data1, 0);
+        assert_eq!(msg.data2, 0);
+        assert_eq!(msg.length, 2);
+    }
+
+    // ── to_bytes for all message types ─────────────────────────────
+
+    #[test]
+    fn test_to_bytes_note_on() {
+        let msg = MidiMessage::note_on(0, 60, 100);
+        assert_eq!(msg.to_bytes(), [0x90, 60, 100]);
+    }
+
+    #[test]
+    fn test_to_bytes_note_off() {
+        let msg = MidiMessage::note_off(1, 64, 0);
+        assert_eq!(msg.to_bytes(), [0x81, 64, 0]);
+    }
+
+    #[test]
+    fn test_to_bytes_cc() {
+        let msg = MidiMessage::cc(2, 74, 127);
+        assert_eq!(msg.to_bytes(), [0xB2, 74, 127]);
+    }
+
+    #[test]
+    fn test_to_bytes_program_change() {
+        let msg = MidiMessage::program_change(5, 42);
+        assert_eq!(msg.to_bytes(), [0xC5, 42, 0]);
+    }
+
+    #[test]
+    fn test_to_bytes_pitch_bend() {
+        let msg = MidiMessage::pitch_bend(0, 0, 64);
+        assert_eq!(msg.to_bytes(), [0xE0, 0, 64]);
+    }
+
+    // ── Song Position edge cases ───────────────────────────────────
+
+    #[test]
+    fn test_classify_song_position_zero() {
+        assert_eq!(
+            classify_midi(&[0xF2, 0x00, 0x00]),
+            Some(MidiClassification::SongPosition { position: 0 })
+        );
+    }
+
+    #[test]
+    fn test_classify_song_position_max() {
+        // Maximum 14-bit value: LSB=0x7F, MSB=0x7F → 0x3FFF = 16383
+        assert_eq!(
+            classify_midi(&[0xF2, 0x7F, 0x7F]),
+            Some(MidiClassification::SongPosition { position: 16383 })
+        );
+    }
+
+    #[test]
+    fn test_classify_song_position_missing_bytes() {
+        // SPP with no data bytes: should default to position 0.
+        assert_eq!(
+            classify_midi(&[0xF2]),
+            Some(MidiClassification::SongPosition { position: 0 })
+        );
+    }
+
+    // ── Channel Pressure (0xD0) ────────────────────────────────────
+
+    #[test]
+    fn test_classify_channel_pressure() {
+        // Channel Pressure is a 2-byte channel message (0xD0..0xDF).
+        let result = classify_midi(&[0xD0, 100]);
+        assert_eq!(
+            result,
+            Some(MidiClassification::Channel(MidiMessage {
+                status: 0xD0,
+                data1: 100,
+                data2: 0,
+                length: 2,
+            }))
+        );
+    }
 }

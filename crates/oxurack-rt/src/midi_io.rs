@@ -344,7 +344,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_list_output_ports() {
         let result = list_midi_output_ports();
         assert!(
@@ -354,7 +353,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_list_input_ports() {
         let result = list_midi_input_ports();
         assert!(
@@ -414,5 +412,37 @@ mod tests {
             }
             other => panic!("expected PortNotFound, got: {other}"),
         }
+    }
+
+    // ── Debug impl tests ───────────────────────────────────────────
+
+    #[test]
+    fn test_midi_ports_debug() {
+        let ports = MidiPorts::open_outputs(&[]).unwrap();
+        let debug = format!("{ports:?}");
+        assert!(
+            debug.contains("output_count: 0"),
+            "expected 'output_count: 0' in debug output, got: {debug}"
+        );
+    }
+
+    #[test]
+    fn test_midi_input_ports_debug() {
+        let ports = MidiInputPorts::open(&[]).unwrap();
+        let debug = format!("{ports:?}");
+        assert!(
+            debug.contains("input_count: 0"),
+            "expected 'input_count: 0' in debug output, got: {debug}"
+        );
+    }
+
+    // ── Port-lost tracking ─────────────────────────────────────────
+
+    #[test]
+    fn test_port_lost_out_of_bounds_returns_true() {
+        let ports = MidiPorts::open_outputs(&[]).unwrap();
+        // Out-of-bounds index should return true (treated as lost).
+        assert!(ports.is_port_lost(0));
+        assert!(ports.is_port_lost(255));
     }
 }

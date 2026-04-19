@@ -417,4 +417,447 @@ mod tests {
         // dist 1 each way, prefer lower → 59
         assert_eq!(scale.quantize(60, 2), 59);
     }
+
+    // -- set_root clamping ---------------------------------------------------
+
+    #[test]
+    fn test_quantizer_set_root_wraps_or_clamps() {
+        let mut q = Quantizer::new(Scale::chromatic(), 0);
+        q.set_root(12);
+        assert_eq!(q.root, 11, "root 12 should be clamped to 11");
+        q.set_root(255);
+        assert_eq!(q.root, 11, "root 255 should be clamped to 11");
+    }
+
+    // -- root-only scale -----------------------------------------------------
+
+    #[test]
+    fn test_scale_root_only() {
+        // Scale with only interval 0: only root notes (multiples of 12
+        // relative to root) are valid.
+        let scale = Scale::new(vec![0], "Root Only");
+
+        // With root = 0, valid notes are 0, 12, 24, 36, …
+        // Quantize 5 → nearest root note is 0 (dist 5) vs 12 (dist 7) → 0.
+        assert_eq!(scale.quantize(5, 0), 0);
+        // Quantize 7 → nearest is 12 (dist 5) vs 0 (dist 7).
+        // But tie-break: below first. 0 is dist 7, 12 is dist 5 → 12 wins.
+        assert_eq!(scale.quantize(7, 0), 12);
+        // Quantize 6 → 0 is dist 6, 12 is dist 6 → tie, prefer lower → 0.
+        assert_eq!(scale.quantize(6, 0), 0);
+        // Quantize 60 → exactly on a root note → stays.
+        assert_eq!(scale.quantize(60, 0), 60);
+    }
+
+    // -- zero-width range (start == end) -------------------------------------
+
+    #[test]
+    fn test_note_from_dac_zero_range() {
+        let q = Quantizer {
+            scale: Scale::chromatic(),
+            root: 0,
+            range: 60..=60,
+        };
+        // Any DAC value should produce note 60.
+        assert_eq!(q.note_from_dac(0), 60);
+        assert_eq!(q.note_from_dac(128), 60);
+        assert_eq!(q.note_from_dac(255), 60);
+    }
+
+    // -- exact match in quantize ---------------------------------------------
+
+    #[test]
+    fn test_quantize_exact_match() {
+        let scale = Scale::major();
+        // C major: C(0), D(2), E(4), F(5), G(7), A(9), B(11)
+        // C4 = 60 → (60-0)%12 = 0 → in scale → returned unchanged.
+        assert_eq!(scale.quantize(60, 0), 60);
+        // G4 = 67 → (67-0)%12 = 7 → in scale → returned unchanged.
+        assert_eq!(scale.quantize(67, 0), 67);
+        // B4 = 71 → (71-0)%12 = 11 → in scale → returned unchanged.
+        assert_eq!(scale.quantize(71, 0), 71);
+    }
+
+    // -- velocity_from_dac edge cases ----------------------------------------
+
+    #[test]
+    fn test_velocity_from_dac_zero() {
+        let q = Quantizer::new(Scale::chromatic(), 0);
+        // DAC 0: lower 7 bits = 0, clamped to minimum velocity 1.
+        assert_eq!(q.velocity_from_dac(0), 1);
+    }
+
+    #[test]
+    fn test_velocity_from_dac_max() {
+        let q = Quantizer::new(Scale::chromatic(), 0);
+        // DAC 255: lower 7 bits = 127.
+        assert_eq!(q.velocity_from_dac(255), 127);
+    }
+
+    // -- note_from_dac with different range widths ---------------------------
+
+    #[test]
+    fn test_note_from_dac_full_range() {
+        let q = Quantizer {
+            scale: Scale::chromatic(),
+            root: 0,
+            range: 0..=127,
+        };
+        // Verify that low DAC maps near the bottom and high DAC maps near
+        // the top.
+        let low = q.note_from_dac(0);
+        let high = q.note_from_dac(255);
+        assert!(low >= 1, "note must be >= 1, got {low}");
+        assert!(high <= 127, "note must be <= 127, got {high}");
+        // The full range should produce meaningful spread.
+        assert!(
+            high - low > 100,
+            "full range should span at least 100 notes, got {}",
+            high - low
+        );
+    }
+
+    #[test]
+    fn test_note_from_dac_narrow_range() {
+        let q = Quantizer {
+            scale: Scale::chromatic(),
+            root: 0,
+            range: 60..=72,
+        };
+        // Every DAC value should produce a note within 60..=72.
+        for dac in 0..=255u8 {
+            let note = q.note_from_dac(dac);
+            assert!(
+                (60..=72).contains(&note),
+                "note {note} out of range 60..=72 for dac={dac}"
+            );
+        }
+    }
+
+    // -- Quantizer::set_scale -------------------------------------------------
+
+    #[test]
+    fn test_quantizer_set_scale() {
+        let mut q = Quantizer::new(Scale::chromatic(), 0);
+        q.set_scale(Scale::major());
+
+        // After switching to major, quantize should snap to major scale
+        // notes. C#4 (61) is not in C major, so it should snap.
+        let note = q.note_from_dac(128);
+        // The note should be in C major: degree (note % 12) in [0,2,4,5,7,9,11].
+        let degree = note % 12;
+        assert!(
+            [0, 2, 4, 5, 7, 9, 11].contains(&degree),
+            "note {note} (degree {degree}) should be in C major after set_scale"
+        );
+    }
+
+    // -- Quantizer::set_range -------------------------------------------------
+
+    #[test]
+    fn test_quantizer_set_range() {
+        let mut q = Quantizer::new(Scale::chromatic(), 0);
+        q.set_range(48..=72);
+
+        for dac in 0..=255u8 {
+            let note = q.note_from_dac(dac);
+            assert!(
+                (48..=72).contains(&note),
+                "note {note} should be within 48..=72 for dac={dac}"
+            );
+        }
+    }
+
+    // -- quantize: above branch (near note 0) ---------------------------------
+
+    #[test]
+    fn test_quantize_near_zero_finds_above() {
+        // Pentatonic major with root 0: intervals [0, 2, 4, 7, 9].
+        // Note 1 is out of scale. Below: 0 (dist 1, in scale). Above: 2 (dist 1).
+        // Tie -> prefer lower -> 0.
+        let scale = Scale::pentatonic_major();
+        assert_eq!(scale.quantize(1, 0), 0);
+
+        // With root = 2: in-scale notes at 2, 4, 6, 9, 11, 14, ...
+        // Note 0: below is negative, only above works. Nearest above: 2 (dist 2).
+        assert_eq!(scale.quantize(0, 2), 2);
+
+        // Note 1: below = 0 (not in scale with root=2, (0-2)%12 = 10, not in
+        // [0,2,4,7,9]). Above = 2 (in scale, (2-2)%12=0). dist = 1.
+        // Check below: note 0, (0-2) rem_euclid 12 = 10, not in scale.
+        // So above = 2 is the nearest at dist 1.
+        assert_eq!(scale.quantize(1, 2), 2);
+    }
+
+    #[test]
+    fn test_quantize_note_zero_not_in_scale() {
+        // Root-only scale with root = 5 (F): in-scale notes are 5, 17, 29, ...
+        // Note 0: below < 0 so only above branch works. Nearest: 5 (dist 5).
+        let scale = Scale::new(vec![0], "Root Only");
+        assert_eq!(scale.quantize(0, 5), 5);
+    }
+
+    // -- quantize: below branch only (near note 127) --------------------------
+
+    #[test]
+    fn test_quantize_near_127_finds_below() {
+        // Root-only scale with root = 0: in-scale notes are 0, 12, 24, ..., 120.
+        // Note 127: (127-0)%12 = 7, not in scale.
+        // Above: 128, 129, ... all > 127, so above branch never matches.
+        // Below: 126 (not in scale), ..., 120 ((120-0)%12=0, in scale). dist = 7.
+        let scale = Scale::new(vec![0], "Root Only");
+        assert_eq!(scale.quantize(127, 0), 120);
+    }
+
+    #[test]
+    fn test_quantize_note_126_root_only() {
+        // Note 126: (126-0)%12 = 6, not in scale [0].
+        // Below: 125(5), 124(4), 123(3), 122(2), 121(1), 120(0) -> 120 at dist 6.
+        // Above: 127(7) not in scale, 128+ out of range.
+        let scale = Scale::new(vec![0], "Root Only");
+        assert_eq!(scale.quantize(126, 0), 120);
+    }
+
+    // -- Built-in scale constructors ------------------------------------------
+
+    #[test]
+    fn test_natural_minor_intervals() {
+        let scale = Scale::natural_minor();
+        assert_eq!(scale.intervals(), &[0, 2, 3, 5, 7, 8, 10]);
+        assert_eq!(scale.name(), "Natural Minor");
+    }
+
+    #[test]
+    fn test_harmonic_minor_intervals() {
+        let scale = Scale::harmonic_minor();
+        assert_eq!(scale.intervals(), &[0, 2, 3, 5, 7, 8, 11]);
+        assert_eq!(scale.name(), "Harmonic Minor");
+    }
+
+    #[test]
+    fn test_pentatonic_minor_intervals() {
+        let scale = Scale::pentatonic_minor();
+        assert_eq!(scale.intervals(), &[0, 3, 5, 7, 10]);
+        assert_eq!(scale.name(), "Pentatonic Minor");
+    }
+
+    #[test]
+    fn test_dorian_intervals() {
+        let scale = Scale::dorian();
+        assert_eq!(scale.intervals(), &[0, 2, 3, 5, 7, 9, 10]);
+        assert_eq!(scale.name(), "Dorian");
+    }
+
+    #[test]
+    fn test_phrygian_intervals() {
+        let scale = Scale::phrygian();
+        assert_eq!(scale.intervals(), &[0, 1, 3, 5, 7, 8, 10]);
+        assert_eq!(scale.name(), "Phrygian");
+    }
+
+    #[test]
+    fn test_lydian_intervals() {
+        let scale = Scale::lydian();
+        assert_eq!(scale.intervals(), &[0, 2, 4, 6, 7, 9, 11]);
+        assert_eq!(scale.name(), "Lydian");
+    }
+
+    #[test]
+    fn test_mixolydian_intervals() {
+        let scale = Scale::mixolydian();
+        assert_eq!(scale.intervals(), &[0, 2, 4, 5, 7, 9, 10]);
+        assert_eq!(scale.name(), "Mixolydian");
+    }
+
+    #[test]
+    fn test_whole_tone_intervals() {
+        let scale = Scale::whole_tone();
+        assert_eq!(scale.intervals(), &[0, 2, 4, 6, 8, 10]);
+        assert_eq!(scale.name(), "Whole Tone");
+    }
+
+    #[test]
+    fn test_diminished_intervals() {
+        let scale = Scale::diminished();
+        assert_eq!(scale.intervals(), &[0, 2, 3, 5, 6, 8, 9, 11]);
+        assert_eq!(scale.name(), "Diminished");
+    }
+
+    #[test]
+    fn test_augmented_intervals() {
+        let scale = Scale::augmented();
+        assert_eq!(scale.intervals(), &[0, 3, 4, 7, 8, 11]);
+        assert_eq!(scale.name(), "Augmented");
+    }
+
+    // -- quantize with various built-in scales --------------------------------
+
+    #[test]
+    fn test_quantize_harmonic_minor() {
+        let scale = Scale::harmonic_minor();
+        // A harmonic minor (root = 9): A B C D E F G#
+        // In-scale degrees: [0,2,3,5,7,8,11].
+        // Note 70 (Bb4): (70-9)%12 = 1, not in scale.
+        // Below: 69 ((69-9)%12=0, in scale) dist 1. -> 69.
+        assert_eq!(scale.quantize(70, 9), 69);
+    }
+
+    #[test]
+    fn test_quantize_blues() {
+        let scale = Scale::blues();
+        // C blues: C Eb F F# G Bb -> [0, 3, 5, 6, 7, 10].
+        // Note 62 (D4): (62-0)%12 = 2, not in scale.
+        // Below: 61 (1, not in scale), 60 (0, in scale) dist 2.
+        // Above: 63 (3, in scale) dist 1. -> 63.
+        assert_eq!(scale.quantize(62, 0), 63);
+    }
+
+    #[test]
+    fn test_quantize_whole_tone() {
+        let scale = Scale::whole_tone();
+        // C whole tone: C D E F# G# A# -> [0, 2, 4, 6, 8, 10].
+        // Note 61 (C#4): (61-0)%12 = 1, not in scale.
+        // Below: 60 (0, in scale) dist 1. Above: 62 (2, in scale) dist 1.
+        // Tie -> prefer lower -> 60.
+        assert_eq!(scale.quantize(61, 0), 60);
+    }
+
+    // -- note_from_dac with non-chromatic scale -------------------------------
+
+    #[test]
+    fn test_note_from_dac_with_major_scale() {
+        let q = Quantizer::new(Scale::major(), 0);
+        // All DAC values should produce notes in C major within the
+        // default range 36..=84.
+        for dac in 0..=255u8 {
+            let note = q.note_from_dac(dac);
+            assert!(
+                (36..=84).contains(&note),
+                "note {note} out of range 36..=84 for dac={dac}"
+            );
+            let degree = note % 12;
+            assert!(
+                [0, 2, 4, 5, 7, 9, 11].contains(&degree),
+                "note {note} (degree {degree}) should be in C major for dac={dac}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_note_from_dac_with_pentatonic_and_root() {
+        let q = Quantizer {
+            scale: Scale::pentatonic_major(),
+            root: 7, // G pentatonic: G A B D E -> degrees [0,2,4,7,9] relative to G
+            range: 48..=84,
+        };
+        for dac in 0..=255u8 {
+            let note = q.note_from_dac(dac);
+            assert!(
+                (48..=84).contains(&note),
+                "note {note} out of range for dac={dac}"
+            );
+        }
+    }
+
+    // -- note_from_dac range-start at 1 (minimum MIDI note) -------------------
+
+    #[test]
+    fn test_note_from_dac_low_range_start() {
+        let q = Quantizer {
+            scale: Scale::chromatic(),
+            root: 0,
+            range: 1..=12,
+        };
+        let note = q.note_from_dac(0);
+        assert!(note >= 1, "note must be >= 1, got {note}");
+        assert!(note <= 12, "note must be <= 12, got {note}");
+    }
+
+    // -- Quantizer with high range end ----------------------------------------
+
+    #[test]
+    fn test_note_from_dac_high_range() {
+        let q = Quantizer {
+            scale: Scale::chromatic(),
+            root: 0,
+            range: 100..=127,
+        };
+        for dac in 0..=255u8 {
+            let note = q.note_from_dac(dac);
+            assert!(
+                (100..=127).contains(&note),
+                "note {note} out of range 100..=127 for dac={dac}"
+            );
+        }
+    }
+
+    // -- Scale equality -------------------------------------------------------
+
+    #[test]
+    fn test_scale_eq() {
+        let a = Scale::major();
+        let b = Scale::new(vec![0, 2, 4, 5, 7, 9, 11], "Major");
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_scale_ne() {
+        assert_ne!(Scale::major(), Scale::natural_minor());
+    }
+
+    // -- Scale clone ----------------------------------------------------------
+
+    #[test]
+    fn test_scale_clone() {
+        let original = Scale::major();
+        let cloned = original.clone();
+        assert_eq!(original, cloned);
+    }
+
+    // -- Quantizer clone and eq -----------------------------------------------
+
+    #[test]
+    fn test_quantizer_clone_eq() {
+        let q = Quantizer::new(Scale::major(), 5);
+        let cloned = q.clone();
+        assert_eq!(q, cloned);
+    }
+
+    // -- Quantizer debug output -----------------------------------------------
+
+    #[test]
+    fn test_quantizer_debug() {
+        let q = Quantizer::new(Scale::chromatic(), 0);
+        let debug = format!("{q:?}");
+        assert!(
+            debug.contains("Quantizer"),
+            "debug output should contain 'Quantizer': {debug}"
+        );
+        assert!(
+            debug.contains("Chromatic"),
+            "debug output should contain scale name: {debug}"
+        );
+    }
+
+    // -- Scale debug output ---------------------------------------------------
+
+    #[test]
+    fn test_scale_debug() {
+        let scale = Scale::major();
+        let debug = format!("{scale:?}");
+        assert!(
+            debug.contains("Major"),
+            "debug output should contain 'Major': {debug}"
+        );
+    }
+
+    // -- new with all out-of-range intervals ----------------------------------
+
+    #[test]
+    fn test_scale_new_all_out_of_range() {
+        let scale = Scale::new(vec![12, 13, 255], "AllBad");
+        // All filtered out, so root (0) should be inserted.
+        assert_eq!(scale.intervals(), &[0]);
+        assert_eq!(scale.name(), "AllBad");
+    }
 }

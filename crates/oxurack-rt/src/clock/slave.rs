@@ -161,8 +161,7 @@ impl TempoEstimator {
     ///
     /// * `now_ns` - Current monotonic timestamp in nanoseconds.
     pub(crate) fn check_dropout(&mut self, now_ns: u64) -> bool {
-        let (Some(last), Some(interval_ns)) = (self.last_tick_ns, self.filtered_interval_ns)
-        else {
+        let (Some(last), Some(interval_ns)) = (self.last_tick_ns, self.filtered_interval_ns) else {
             return false;
         };
 
@@ -253,8 +252,7 @@ impl SlaveOscillator {
                 if correction >= 0 {
                     self.next_tick_ns = Some(expected + correction as u64);
                 } else {
-                    self.next_tick_ns =
-                        Some(expected.saturating_sub(correction.unsigned_abs()));
+                    self.next_tick_ns = Some(expected.saturating_sub(correction.unsigned_abs()));
                 }
             }
         }
@@ -681,7 +679,10 @@ mod tests {
         let mut osc = SlaveOscillator::new();
         osc.sync_to_external(1000, INTERVAL_120_BPM_NS);
         let schedule = osc.next_tick(INTERVAL_120_BPM_NS);
-        assert!(schedule.is_some(), "oscillator should produce a tick after sync");
+        assert!(
+            schedule.is_some(),
+            "oscillator should produce a tick after sync"
+        );
         let s = schedule.expect("already checked");
         assert_eq!(s.next_tick_ns, 1000 + INTERVAL_120_BPM_NS);
         assert_eq!(s.subdivision, 0);
@@ -871,7 +872,9 @@ mod tests {
         // Parameters from Numerical Recipes.
         let mut rng_state: u64 = 42;
         let lcg_next = |state: &mut u64| -> i64 {
-            *state = state.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
+            *state = state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1);
             // Map to range [-1_500_000, +1_500_000] (1.5 ms).
             let raw = (*state >> 33) as i64; // 0..2^31
             (raw % 3_000_001) - 1_500_000
@@ -943,6 +946,213 @@ mod tests {
         assert!(
             p99_us < 2000,
             "P99 jitter {p99_us}us exceeds 2000us threshold"
+        );
+    }
+
+    // ── Additional TempoEstimator edge cases ───────────────────────
+
+    #[test]
+    fn test_estimator_not_locked_with_3_ticks() {
+        let mut estimator = TempoEstimator::new(8);
+
+        // Feed exactly 3 ticks: should NOT be locked (needs 4).
+        for i in 0..3 {
+            estimator.feed_tick(i * INTERVAL_120_BPM_NS);
+        }
+
+        assert!(!estimator.is_locked(), "3 ticks should not lock the estimator");
+        assert_eq!(estimator.estimated_bpm(), None);
+        assert_eq!(estimator.estimated_interval_ns(), None);
+    }
+
+    #[test]
+    fn test_estimator_zero_interval_returns_none_bpm() {
+        let mut estimator = TempoEstimator::new(8);
+
+        // Feed 4 ticks all at the same timestamp (degenerate case).
+        // This produces intervals of 0, which after filtering gives 0.
+        for _ in 0..4 {
+            estimator.feed_tick(1_000_000);
+        }
+
+        // The estimator considers itself locked (count >= 4), but
+        // estimated_bpm should return None since the interval is 0.
+        if estimator.is_locked() {
+            let bpm = estimator.estimated_bpm();
+            assert_eq!(bpm, None, "zero interval should yield None BPM");
+        }
+    }
+
+    #[test]
+    fn test_estimator_raw_filtered_interval() {
+        let mut estimator = TempoEstimator::new(8);
+
+        // Before any ticks: no raw interval.
+        assert_eq!(estimator.raw_filtered_interval_ns(), None);
+
+        // After 2 ticks: raw interval should be available even though
+        // the estimator is not yet locked.
+        estimator.feed_tick(0);
+        estimator.feed_tick(INTERVAL_120_BPM_NS);
+        assert!(!estimator.is_locked());
+        let raw = estimator.raw_filtered_interval_ns();
+        assert!(
+            raw.is_some(),
+            "should have raw interval after 2 ticks"
+        );
+        let raw = raw.unwrap();
+        let error = (raw - INTERVAL_120_BPM_NS as f64).abs();
+        assert!(
+            error < 1.0,
+            "raw interval should be close to the tick interval"
+        );
+    }
+
+    #[test]
+    fn test_estimator_no_dropout_before_ticks() {
+        let mut estimator = TempoEstimator::new(8);
+        // No ticks fed: check_dropout should return false.
+        assert!(!estimator.check_dropout(1_000_000_000));
+    }
+
+    #[test]
+    fn test_estimator_no_dropout_within_window() {
+        let mut estimator = TempoEstimator::new(8);
+
+        for i in 0..8 {
+            estimator.feed_tick(i * INTERVAL_120_BPM_NS);
+        }
+        assert!(estimator.is_locked());
+
+        // Check at a time within the 4x window: should NOT be a dropout.
+        let last_tick = 7 * INTERVAL_120_BPM_NS;
+        let within_window = last_tick + 2 * INTERVAL_120_BPM_NS;
+        assert!(!estimator.check_dropout(within_window));
+    }
+
+    // ── Additional SlaveClock edge cases ────────────────────────────
+
+    #[test]
+    fn test_slave_clock_advance_when_not_locked() {
+        let mut clock = SlaveClock::new(1_000_000_000);
+        // Advancing before locking should be a no-op (no panic).
+        clock.advance();
+        assert!(!clock.is_locked());
+    }
+
+    #[test]
+    fn test_slave_clock_feed_spp() {
+        let mut clock = SlaveClock::new(1_000_000_000);
+
+        // Feed ticks to lock.
+        for i in 0..8 {
+            clock.feed_clock_byte(i * INTERVAL_120_BPM_NS);
+        }
+        assert!(clock.is_locked());
+
+        // Set SPP and verify via next_tick schedule.
+        clock.feed_spp(8); // 8 MIDI beats = 2 quarter-note beats, sub 0
+        let schedule = clock.next_tick().expect("should be locked and running");
+        assert_eq!(schedule.beat, 2);
+        assert_eq!(schedule.subdivision, 0);
+    }
+
+    #[test]
+    fn test_slave_clock_continue_before_locked() {
+        let mut clock = SlaveClock::new(1_000_000_000);
+
+        // Feed only 2 ticks (not locked).
+        clock.feed_clock_byte(0);
+        clock.feed_clock_byte(INTERVAL_120_BPM_NS);
+        assert!(!clock.is_locked());
+
+        // Stop and Continue before the estimator is locked.
+        // Continue should use the raw filtered interval to resume.
+        let now = 2 * INTERVAL_120_BPM_NS;
+        clock.feed_transport(TransportEvent::Stop, now);
+        clock.feed_transport(TransportEvent::Continue, now + INTERVAL_120_BPM_NS);
+
+        // Even though not locked, the oscillator should have been
+        // resumed via the raw interval path.
+        // (next_tick still returns None because is_locked() is false,
+        // but the oscillator state has been set.)
+        assert!(!clock.is_locked());
+    }
+
+    #[test]
+    fn test_slave_clock_dropout_resets_oscillator() {
+        let mut clock = SlaveClock::new(500_000_000);
+
+        // Feed ticks to lock.
+        for i in 0..8 {
+            clock.feed_clock_byte(i * INTERVAL_120_BPM_NS);
+        }
+        assert!(clock.is_locked());
+        assert!(clock.next_tick().is_some());
+
+        // Simulate dropout.
+        let last_tick = 7 * INTERVAL_120_BPM_NS;
+        let dropout_time = last_tick + 500_000_001; // Just past the timeout.
+        assert!(clock.check_dropout(dropout_time));
+
+        // After dropout, the oscillator should be stopped.
+        assert!(!clock.is_locked());
+        assert_eq!(clock.next_tick(), None);
+    }
+
+    // ── SlaveOscillator phase correction ───────────────────────────
+
+    #[test]
+    fn test_oscillator_phase_correction() {
+        let mut osc = SlaveOscillator::new();
+        // First sync starts the oscillator.
+        osc.sync_to_external(1_000_000, INTERVAL_120_BPM_NS);
+
+        let schedule_before = osc.next_tick(INTERVAL_120_BPM_NS).unwrap();
+        let expected_first = 1_000_000 + INTERVAL_120_BPM_NS;
+        assert_eq!(schedule_before.next_tick_ns, expected_first);
+
+        // Second sync: external tick arrives a bit late (positive phase error).
+        let late_tick = expected_first + 500_000; // 500us late
+        osc.sync_to_external(late_tick, INTERVAL_120_BPM_NS);
+
+        let schedule_after = osc.next_tick(INTERVAL_120_BPM_NS).unwrap();
+        // With phase_gain = 0.2, the correction should push the next
+        // tick slightly later than expected_first.
+        assert!(
+            schedule_after.next_tick_ns > expected_first,
+            "phase correction should shift next tick later for a late external tick"
+        );
+    }
+
+    #[test]
+    fn test_oscillator_resume_does_nothing_if_already_running() {
+        let mut osc = SlaveOscillator::new();
+        osc.sync_to_external(0, INTERVAL_120_BPM_NS);
+
+        let before = osc.next_tick(INTERVAL_120_BPM_NS).unwrap().next_tick_ns;
+
+        // Resume when already running should be a no-op.
+        osc.resume(1_000_000_000, INTERVAL_120_BPM_NS);
+
+        let after = osc.next_tick(INTERVAL_120_BPM_NS).unwrap().next_tick_ns;
+        assert_eq!(before, after, "resume should not change next_tick_ns if already running");
+    }
+
+    // ── Estimator window_size minimum clamp ────────────────────────
+
+    #[test]
+    fn test_estimator_minimum_window_size() {
+        // Window size 1 should be clamped to 2.
+        let mut estimator = TempoEstimator::new(1);
+
+        for i in 0..4 {
+            estimator.feed_tick(i * INTERVAL_120_BPM_NS);
+        }
+
+        assert!(
+            estimator.is_locked(),
+            "estimator with window_size=1 (clamped to 2) should still lock"
         );
     }
 }

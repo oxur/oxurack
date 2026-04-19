@@ -101,4 +101,26 @@ mod tests {
             assert!(clk.tick());
         }
     }
+
+    #[test]
+    fn test_division_getter() {
+        let clk2 = ClockDivider::new(nz(2));
+        assert_eq!(clk2.division(), nz(2));
+
+        let clk4 = ClockDivider::new(nz(4));
+        assert_eq!(clk4.division(), nz(4));
+
+        let clk1 = ClockDivider::new(nz(1));
+        assert_eq!(clk1.division(), nz(1));
+    }
+
+    #[test]
+    fn test_div2_many_ticks() {
+        let mut clk = ClockDivider::new(nz(2));
+        let fire_count: usize = (0..100).filter(|_| clk.tick()).count();
+        assert_eq!(
+            fire_count, 50,
+            "div2 should fire exactly 50 times in 100 ticks"
+        );
+    }
 }

@@ -199,3 +199,126 @@ impl Drop for Runtime {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_runtime_debug() {
+        let config = RuntimeConfig {
+            clock_mode: ClockMode::Master {
+                tempo_bpm: 120.0,
+                send_transport: false,
+            },
+            outputs: Vec::new(),
+            inputs: Vec::new(),
+            event_queue_capacity: 1024,
+            command_queue_capacity: 1024,
+        };
+        let (mut runtime, _handles) = Runtime::start(config).unwrap();
+
+        let debug_running = format!("{runtime:?}");
+        assert!(
+            debug_running.contains("running: true"),
+            "expected 'running: true' in debug output, got: {debug_running}"
+        );
+
+        runtime.stop().unwrap();
+
+        let debug_stopped = format!("{runtime:?}");
+        assert!(
+            debug_stopped.contains("running: false"),
+            "expected 'running: false' in debug output, got: {debug_stopped}"
+        );
+    }
+
+    #[test]
+    fn test_rt_handles_debug() {
+        let config = RuntimeConfig {
+            clock_mode: ClockMode::Master {
+                tempo_bpm: 120.0,
+                send_transport: false,
+            },
+            outputs: Vec::new(),
+            inputs: Vec::new(),
+            event_queue_capacity: 1024,
+            command_queue_capacity: 1024,
+        };
+        let (mut runtime, handles) = Runtime::start(config).unwrap();
+
+        let debug = format!("{handles:?}");
+        assert!(
+            debug.contains("RtHandles"),
+            "expected 'RtHandles' in debug output, got: {debug}"
+        );
+
+        runtime.stop().unwrap();
+    }
+
+    #[test]
+    fn test_runtime_config_debug() {
+        let config = RuntimeConfig {
+            clock_mode: ClockMode::Master {
+                tempo_bpm: 120.0,
+                send_transport: false,
+            },
+            outputs: Vec::new(),
+            inputs: Vec::new(),
+            event_queue_capacity: 1024,
+            command_queue_capacity: 1024,
+        };
+        let debug = format!("{config:?}");
+        assert!(
+            debug.contains("RuntimeConfig"),
+            "expected 'RuntimeConfig' in debug output, got: {debug}"
+        );
+    }
+
+    #[test]
+    fn test_clock_mode_debug() {
+        let master = ClockMode::Master {
+            tempo_bpm: 120.0,
+            send_transport: true,
+        };
+        let debug = format!("{master:?}");
+        assert!(
+            debug.contains("Master"),
+            "expected 'Master' in debug output, got: {debug}"
+        );
+
+        let slave = ClockMode::Slave {
+            clock_input_port: "test".to_string(),
+            timeout_ns: 1_000_000_000,
+        };
+        let debug = format!("{slave:?}");
+        assert!(
+            debug.contains("Slave"),
+            "expected 'Slave' in debug output, got: {debug}"
+        );
+    }
+
+    #[test]
+    fn test_midi_output_config_debug() {
+        let config = MidiOutputConfig {
+            name: "test-port".to_string(),
+        };
+        let debug = format!("{config:?}");
+        assert!(
+            debug.contains("test-port"),
+            "expected port name in debug output, got: {debug}"
+        );
+    }
+
+    #[test]
+    fn test_midi_input_config_debug() {
+        let config = MidiInputConfig {
+            name: "test-input".to_string(),
+        };
+        let debug = format!("{config:?}");
+        assert!(
+            debug.contains("test-input"),
+            "expected port name in debug output, got: {debug}"
+        );
+    }
+}

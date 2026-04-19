@@ -42,11 +42,10 @@ mod tests {
 
     /// Verifies that RT priority elevation succeeds on the current platform.
     ///
-    /// This test is ignored by default because it may require elevated
-    /// permissions (e.g., `CAP_SYS_NICE` on Linux) or behave differently
-    /// in CI sandboxes.
+    /// On macOS, RT priority elevation succeeds without special privileges.
+    /// On Linux CI, `CAP_SYS_NICE` may be required; if elevation is
+    /// not available the test documents a non-fatal warning.
     #[test]
-    #[ignore]
     fn test_elevation_succeeds() {
         let result = std::thread::spawn(elevate_rt_priority)
             .join()
