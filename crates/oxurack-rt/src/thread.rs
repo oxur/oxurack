@@ -3,6 +3,13 @@
 //! This module contains the entry point for the dedicated RT thread.
 //! The loop handles clock tick generation/tracking, MIDI I/O, and
 //! command processing from the ECS world via lock-free queues.
+//!
+//! # Event-push discipline
+//!
+//! Every push into `queues.events` in this file goes through
+//! [`push_event`]. The one exception is the raw push inside
+//! `push_event` itself, which emits the overflow warning as a
+//! last resort and must not recurse. Anything else is a bug.
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -45,6 +52,9 @@ pub(crate) fn rt_thread_main(
     ready_signal: std::sync::mpsc::SyncSender<Result<(), crate::Error>>,
     shutdown: Arc<AtomicBool>,
 ) {
+    // Track consecutive queue overflow failures across all modes.
+    let mut consecutive_overflows: u32 = 0;
+
     // 1. Elevate RT priority. If `allow_normal_priority` is false,
     //    failure is fatal and the thread reports the error to the
     //    spawning thread via the ready signal. When allowed, a failure
@@ -56,10 +66,11 @@ pub(crate) fn rt_thread_main(
                 let _ = ready_signal.send(Err(e));
                 return;
             }
-            // Report as non-fatal error via queue (queue is available here).
-            let _ = queues.events.push(crate::RtEvent::NonFatalError(
-                crate::RtErrorCode::PriorityElevationFailed,
-            ));
+            push_event(
+                &mut queues,
+                crate::RtEvent::NonFatalError(crate::RtErrorCode::PriorityElevationFailed),
+                &mut consecutive_overflows,
+            );
             None
         }
     };
@@ -87,9 +98,6 @@ pub(crate) fn rt_thread_main(
 
     // 5. Create clock and timing infrastructure.
     let clock = crate::timing::MonotonicClock::new();
-
-    // Track consecutive queue overflow failures across both modes.
-    let mut consecutive_overflows: u32 = 0;
 
     match &config.clock_mode {
         crate::ClockMode::Master {
@@ -211,7 +219,11 @@ pub(crate) fn rt_thread_main(
                 }
 
                 // Drain MIDI input events and classify them.
-                drain_midi_input(&mut midi_input_ports, &mut queues);
+                drain_midi_input(
+                    &mut midi_input_ports,
+                    &mut queues,
+                    &mut consecutive_overflows,
+                );
             }
         }
         crate::ClockMode::Passthrough {
@@ -386,7 +398,7 @@ pub(crate) fn rt_thread_main(
                                 timestamp_ns: raw_event.timestamp_ns,
                                 message: msg,
                             };
-                            let _ = queues.events.push(event);
+                            push_event(&mut queues, event, &mut consecutive_overflows);
                         }
                         crate::messages::MidiClassification::ActiveSensing
                         | crate::messages::MidiClassification::SystemReset => {
@@ -397,9 +409,11 @@ pub(crate) fn rt_thread_main(
 
                 // Check for clock dropout.
                 if pt_clock.check_dropout(now) {
-                    let _ = queues.events.push(crate::RtEvent::NonFatalError(
-                        crate::RtErrorCode::ClockDropout,
-                    ));
+                    push_event(
+                        &mut queues,
+                        crate::RtEvent::NonFatalError(crate::RtErrorCode::ClockDropout),
+                        &mut consecutive_overflows,
+                    );
                 }
 
                 // If no tick was produced this iteration, sleep briefly
@@ -484,33 +498,41 @@ pub(crate) fn rt_thread_main(
                                 crate::TransportEvent::Start,
                                 raw_event.timestamp_ns,
                             );
-                            let _ = queues
-                                .events
-                                .push(crate::RtEvent::Transport(crate::TransportEvent::Start));
+                            push_event(
+                                &mut queues,
+                                crate::RtEvent::Transport(crate::TransportEvent::Start),
+                                &mut consecutive_overflows,
+                            );
                         }
                         crate::messages::MidiClassification::Stop => {
                             slave_clock.feed_transport(
                                 crate::TransportEvent::Stop,
                                 raw_event.timestamp_ns,
                             );
-                            let _ = queues
-                                .events
-                                .push(crate::RtEvent::Transport(crate::TransportEvent::Stop));
+                            push_event(
+                                &mut queues,
+                                crate::RtEvent::Transport(crate::TransportEvent::Stop),
+                                &mut consecutive_overflows,
+                            );
                         }
                         crate::messages::MidiClassification::Continue => {
                             slave_clock.feed_transport(
                                 crate::TransportEvent::Continue,
                                 raw_event.timestamp_ns,
                             );
-                            let _ = queues
-                                .events
-                                .push(crate::RtEvent::Transport(crate::TransportEvent::Continue));
+                            push_event(
+                                &mut queues,
+                                crate::RtEvent::Transport(crate::TransportEvent::Continue),
+                                &mut consecutive_overflows,
+                            );
                         }
                         crate::messages::MidiClassification::SongPosition { position } => {
                             slave_clock.feed_spp(position);
-                            let _ = queues
-                                .events
-                                .push(crate::RtEvent::SongPosition { position });
+                            push_event(
+                                &mut queues,
+                                crate::RtEvent::SongPosition { position },
+                                &mut consecutive_overflows,
+                            );
                         }
                         crate::messages::MidiClassification::Channel(msg) => {
                             let event = crate::RtEvent::MidiInput {
@@ -518,7 +540,7 @@ pub(crate) fn rt_thread_main(
                                 timestamp_ns: raw_event.timestamp_ns,
                                 message: msg,
                             };
-                            let _ = queues.events.push(event);
+                            push_event(&mut queues, event, &mut consecutive_overflows);
                         }
                         crate::messages::MidiClassification::ActiveSensing
                         | crate::messages::MidiClassification::SystemReset => {
@@ -529,9 +551,11 @@ pub(crate) fn rt_thread_main(
 
                 // Check for clock dropout.
                 if slave_clock.check_dropout(now) {
-                    let _ = queues.events.push(crate::RtEvent::NonFatalError(
-                        crate::RtErrorCode::ClockDropout,
-                    ));
+                    push_event(
+                        &mut queues,
+                        crate::RtEvent::NonFatalError(crate::RtErrorCode::ClockDropout),
+                        &mut consecutive_overflows,
+                    );
                 }
 
                 // If the slave clock has a tick ready, sleep until it
@@ -546,15 +570,17 @@ pub(crate) fn rt_thread_main(
                         tempo_bpm,
                         timestamp_ns: clock.now(),
                     };
-                    let _ = queues.events.push(tick_event);
+                    push_event(&mut queues, tick_event, &mut consecutive_overflows);
 
                     slave_clock.advance();
                 } else {
                     // Not locked: emit a periodic warning.
                     if now.saturating_sub(last_not_locked_ns) >= NOT_LOCKED_INTERVAL_NS {
-                        let _ = queues.events.push(crate::RtEvent::NonFatalError(
-                            crate::RtErrorCode::ClockNotLocked,
-                        ));
+                        push_event(
+                            &mut queues,
+                            crate::RtEvent::NonFatalError(crate::RtErrorCode::ClockNotLocked),
+                            &mut consecutive_overflows,
+                        );
                         last_not_locked_ns = now;
                     }
 
@@ -578,7 +604,9 @@ fn push_event(queues: &mut RtSideQueues, event: crate::RtEvent, consecutive_over
     } else {
         *consecutive_overflows = consecutive_overflows.saturating_add(1);
         if *consecutive_overflows >= OVERFLOW_REPORT_THRESHOLD {
-            // Try to push a QueueOverflow error (which may itself fail).
+            // Intentional raw push: the overflow warning itself must not recurse into
+            // push_event. Last-resort; if this also fails, the bookkeeping resets and
+            // the next threshold hit will try again.
             let _ = queues.events.push(crate::RtEvent::NonFatalError(
                 crate::RtErrorCode::QueueOverflow,
             ));
@@ -596,6 +624,7 @@ fn push_event(queues: &mut RtSideQueues, event: crate::RtEvent, consecutive_over
 fn drain_midi_input(
     midi_input_ports: &mut crate::midi_io::MidiInputPorts,
     queues: &mut RtSideQueues,
+    consecutive_overflows: &mut u32,
 ) {
     for raw_event in midi_input_ports.drain_all() {
         let Some(classification) =
@@ -611,31 +640,39 @@ fn drain_midi_input(
                     timestamp_ns: raw_event.timestamp_ns,
                     message: msg,
                 };
-                let _ = queues.events.push(event);
+                push_event(queues, event, consecutive_overflows);
             }
             crate::messages::MidiClassification::Start => {
-                let _ = queues
-                    .events
-                    .push(crate::RtEvent::Transport(crate::TransportEvent::Start));
+                push_event(
+                    queues,
+                    crate::RtEvent::Transport(crate::TransportEvent::Start),
+                    consecutive_overflows,
+                );
             }
             crate::messages::MidiClassification::Stop => {
-                let _ = queues
-                    .events
-                    .push(crate::RtEvent::Transport(crate::TransportEvent::Stop));
+                push_event(
+                    queues,
+                    crate::RtEvent::Transport(crate::TransportEvent::Stop),
+                    consecutive_overflows,
+                );
             }
             crate::messages::MidiClassification::Continue => {
-                let _ = queues
-                    .events
-                    .push(crate::RtEvent::Transport(crate::TransportEvent::Continue));
+                push_event(
+                    queues,
+                    crate::RtEvent::Transport(crate::TransportEvent::Continue),
+                    consecutive_overflows,
+                );
             }
             crate::messages::MidiClassification::SongPosition { position } => {
-                let _ = queues
-                    .events
-                    .push(crate::RtEvent::SongPosition { position });
+                push_event(
+                    queues,
+                    crate::RtEvent::SongPosition { position },
+                    consecutive_overflows,
+                );
             }
             crate::messages::MidiClassification::Clock => {
                 // In master mode, external clock bytes are ignored.
-                // In slave mode (Phase 4), these will feed the PLL.
+                // Slave mode handles clock bytes in its own loop.
             }
             crate::messages::MidiClassification::ActiveSensing
             | crate::messages::MidiClassification::SystemReset => {
@@ -1633,5 +1670,95 @@ mod tests {
             }
         }
         assert!(saw_spp, "expected SongPosition event in slave mode");
+    }
+
+    // ── Task C: push_event coverage for newly-routed paths ─────────
+
+    #[test]
+    fn test_midi_input_event_uses_push_event() {
+        let (mut rt_side, _ecs_side) = crate::queues::create_queues(4, 4);
+        let mut overflows: u32 = 0;
+
+        // Fill the queue.
+        let filler = crate::RtEvent::ClockTick {
+            subdivision: 0,
+            beat: 0,
+            tempo_bpm: 120.0,
+            timestamp_ns: 0,
+        };
+        for _ in 0..4 {
+            push_event(&mut rt_side, filler, &mut overflows);
+        }
+        assert_eq!(overflows, 0);
+
+        // Push a MidiInput event when the queue is full.
+        let midi_event = crate::RtEvent::MidiInput {
+            input_port_index: 0,
+            timestamp_ns: 1000,
+            message: crate::MidiMessage::note_on(0, 60, 100),
+        };
+        push_event(&mut rt_side, midi_event, &mut overflows);
+        assert_eq!(
+            overflows, 1,
+            "MidiInput push to full queue should increment consecutive_overflows"
+        );
+    }
+
+    #[test]
+    fn test_non_fatal_error_uses_push_event() {
+        let (mut rt_side, _ecs_side) = crate::queues::create_queues(4, 4);
+        let mut overflows: u32 = 0;
+
+        // Fill the queue.
+        let filler = crate::RtEvent::ClockTick {
+            subdivision: 0,
+            beat: 0,
+            tempo_bpm: 120.0,
+            timestamp_ns: 0,
+        };
+        for _ in 0..4 {
+            push_event(&mut rt_side, filler, &mut overflows);
+        }
+        assert_eq!(overflows, 0);
+
+        // Push a NonFatalError event when the queue is full.
+        let error_event =
+            crate::RtEvent::NonFatalError(crate::RtErrorCode::PriorityElevationFailed);
+        push_event(&mut rt_side, error_event, &mut overflows);
+        assert_eq!(
+            overflows, 1,
+            "NonFatalError push to full queue should increment consecutive_overflows"
+        );
+    }
+
+    #[test]
+    fn test_slave_mode_clock_tick_uses_push_event() {
+        let (mut rt_side, _ecs_side) = crate::queues::create_queues(4, 4);
+        let mut overflows: u32 = 0;
+
+        // Fill the queue.
+        let filler = crate::RtEvent::ClockTick {
+            subdivision: 0,
+            beat: 0,
+            tempo_bpm: 120.0,
+            timestamp_ns: 0,
+        };
+        for _ in 0..4 {
+            push_event(&mut rt_side, filler, &mut overflows);
+        }
+        assert_eq!(overflows, 0);
+
+        // Push a ClockTick (the type emitted in slave mode) when full.
+        let tick = crate::RtEvent::ClockTick {
+            subdivision: 12,
+            beat: 42,
+            tempo_bpm: 118.5,
+            timestamp_ns: 999_999,
+        };
+        push_event(&mut rt_side, tick, &mut overflows);
+        assert_eq!(
+            overflows, 1,
+            "slave-mode ClockTick push to full queue should increment consecutive_overflows"
+        );
     }
 }

@@ -87,6 +87,25 @@ pub fn validate_patch(
     patch: &Patch,
     registry: &crate::ModuleRegistry,
 ) -> Result<(), crate::PatchError> {
+    // 0a. Reject non-finite BPM.
+    if !(patch.bpm > 0.0 && patch.bpm.is_finite()) {
+        return Err(crate::PatchError::InvalidBpm(patch.bpm));
+    }
+
+    // 0b. Reject non-finite float parameter values.
+    for module in &patch.modules {
+        for (param_name, value) in &module.parameters {
+            if let crate::ParameterValue::Float(f) = value
+                && !f.is_finite()
+            {
+                return Err(crate::PatchError::NonFiniteFloat {
+                    module: module.instance_name.clone(),
+                    parameter: param_name.clone(),
+                });
+            }
+        }
+    }
+
     // 1. Check all module kinds are registered.
     for module in &patch.modules {
         let kind = crate::ModuleKind::from(module.kind.as_str());
@@ -1242,6 +1261,159 @@ mod tests {
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
         assert!(result.is_ok(), "empty patch should be valid: {result:?}");
+    }
+
+    // ── Non-finite float validation tests ──────────────────────
+
+    #[test]
+    fn test_validate_patch_rejects_nan_parameter() {
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![ModuleConfig {
+                kind: "vco".to_string(),
+                instance_name: "vco_1".to_string(),
+                parameters: HashMap::from([("gain".to_string(), ParameterValue::Float(f32::NAN))]),
+            }],
+            cables: vec![],
+        };
+        let registry = test_registry();
+        let result = validate_patch(&patch, &registry);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(
+            matches!(err, crate::PatchError::NonFiniteFloat { ref parameter, .. } if parameter == "gain"),
+            "expected NonFiniteFloat for 'gain', got: {err:?}"
+        );
+    }
+
+    #[test]
+    fn test_validate_patch_rejects_infinity_parameter() {
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![ModuleConfig {
+                kind: "vco".to_string(),
+                instance_name: "vco_1".to_string(),
+                parameters: HashMap::from([(
+                    "freq".to_string(),
+                    ParameterValue::Float(f32::INFINITY),
+                )]),
+            }],
+            cables: vec![],
+        };
+        let registry = test_registry();
+        let result = validate_patch(&patch, &registry);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(
+            matches!(err, crate::PatchError::NonFiniteFloat { ref parameter, .. } if parameter == "freq"),
+            "expected NonFiniteFloat for 'freq', got: {err:?}"
+        );
+    }
+
+    #[test]
+    fn test_validate_patch_rejects_negative_infinity_parameter() {
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![ModuleConfig {
+                kind: "vco".to_string(),
+                instance_name: "vco_1".to_string(),
+                parameters: HashMap::from([(
+                    "detune".to_string(),
+                    ParameterValue::Float(f32::NEG_INFINITY),
+                )]),
+            }],
+            cables: vec![],
+        };
+        let registry = test_registry();
+        let result = validate_patch(&patch, &registry);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(
+            matches!(err, crate::PatchError::NonFiniteFloat { ref parameter, .. } if parameter == "detune"),
+            "expected NonFiniteFloat for 'detune', got: {err:?}"
+        );
+    }
+
+    #[test]
+    fn test_validate_patch_rejects_zero_bpm() {
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 0.0,
+            modules: vec![],
+            cables: vec![],
+        };
+        let registry = test_registry();
+        let result = validate_patch(&patch, &registry);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(
+            matches!(err, crate::PatchError::InvalidBpm(bpm) if bpm == 0.0),
+            "expected InvalidBpm(0.0), got: {err:?}"
+        );
+    }
+
+    #[test]
+    fn test_validate_patch_rejects_negative_bpm() {
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: -120.0,
+            modules: vec![],
+            cables: vec![],
+        };
+        let registry = test_registry();
+        let result = validate_patch(&patch, &registry);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(
+            matches!(err, crate::PatchError::InvalidBpm(bpm) if bpm == -120.0),
+            "expected InvalidBpm(-120.0), got: {err:?}"
+        );
+    }
+
+    #[test]
+    fn test_validate_patch_rejects_infinite_bpm() {
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: f32::INFINITY,
+            modules: vec![],
+            cables: vec![],
+        };
+        let registry = test_registry();
+        let result = validate_patch(&patch, &registry);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(
+            matches!(err, crate::PatchError::InvalidBpm(_)),
+            "expected InvalidBpm, got: {err:?}"
+        );
+    }
+
+    #[test]
+    fn test_validate_patch_rejects_nan_bpm() {
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: f32::NAN,
+            modules: vec![],
+            cables: vec![],
+        };
+        let registry = test_registry();
+        let result = validate_patch(&patch, &registry);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(
+            matches!(err, crate::PatchError::InvalidBpm(_)),
+            "expected InvalidBpm, got: {err:?}"
+        );
     }
 
     // ── Milestone 5.4: File I/O tests ───────────────────────────

@@ -1,46 +1,31 @@
 use std::fmt;
 
 /// Crate-level error type.
+///
+/// Only available when the `midi-io` feature is enabled, since the only
+/// fallible operations in this crate are MIDI send calls.
+#[cfg(feature = "midi-io")]
 #[derive(Debug)]
-pub struct Error {
-    kind: ErrorKind,
-}
+pub struct Error(midir::SendError);
 
-#[derive(Debug)]
-enum ErrorKind {
-    #[cfg(feature = "midi-io")]
-    Midi(midir::SendError),
-    // Hidden variant ensures the enum is never empty regardless of features.
-    #[doc(hidden)]
-    _NonExhaustive,
-}
-
+#[cfg(feature = "midi-io")]
 impl fmt::Display for Error {
-    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self.kind {
-            #[cfg(feature = "midi-io")]
-            ErrorKind::Midi(e) => write!(_f, "MIDI send error: {e}"),
-            ErrorKind::_NonExhaustive => unreachable!(),
-        }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "MIDI send error: {}", self.0)
     }
 }
 
+#[cfg(feature = "midi-io")]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match &self.kind {
-            #[cfg(feature = "midi-io")]
-            ErrorKind::Midi(e) => Some(e),
-            ErrorKind::_NonExhaustive => unreachable!(),
-        }
+        Some(&self.0)
     }
 }
 
 #[cfg(feature = "midi-io")]
 impl From<midir::SendError> for Error {
     fn from(e: midir::SendError) -> Self {
-        Self {
-            kind: ErrorKind::Midi(e),
-        }
+        Self(e)
     }
 }
 
@@ -80,8 +65,8 @@ mod tests {
         let error: Error = send_err.into();
         let debug = format!("{error:?}");
         assert!(
-            debug.contains("Midi"),
-            "debug output should contain variant name: {debug}"
+            debug.contains("Error"),
+            "debug output should contain type name: {debug}"
         );
     }
 
@@ -92,7 +77,7 @@ mod tests {
         let send_err = midir::SendError::InvalidData("test");
         let error: Error = send_err.into();
         let source = error.source();
-        assert!(source.is_some(), "source should be Some for Midi variant");
+        assert!(source.is_some(), "source should be Some");
         let source_display = format!("{}", source.unwrap());
         assert!(
             source_display.contains("test"),
@@ -102,7 +87,6 @@ mod tests {
 
     #[test]
     fn test_error_from_send_error() {
-        // Verify the From impl works for both SendError variants.
         let _err1: Error = midir::SendError::InvalidData("invalid").into();
         let _err2: Error = midir::SendError::Other("other").into();
     }

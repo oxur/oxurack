@@ -90,6 +90,19 @@ pub enum PatchError {
         target_kind: ValueKind,
     },
 
+    /// The patch's BPM value is invalid (zero, negative, or non-finite).
+    #[error("invalid BPM: {0}")]
+    InvalidBpm(f32),
+
+    /// A module parameter contains a non-finite float (NaN or ±infinity).
+    #[error("non-finite float in parameter '{parameter}' on module '{module}'")]
+    NonFiniteFloat {
+        /// Module instance name.
+        module: String,
+        /// Parameter name.
+        parameter: String,
+    },
+
     /// Failed to deserialize a RON patch description.
     #[error("RON parse error: {0}")]
     Deserialize(String),
@@ -268,6 +281,32 @@ mod tests {
             msg.contains("failed to serialize"),
             "expected detail in: {msg}"
         );
+    }
+
+    #[test]
+    fn test_patch_error_invalid_bpm() {
+        let err = PatchError::InvalidBpm(0.0);
+        let msg = format!("{err}");
+        assert!(
+            msg.contains("invalid BPM"),
+            "expected 'invalid BPM' in: {msg}"
+        );
+        assert!(msg.contains("0"), "expected value in: {msg}");
+    }
+
+    #[test]
+    fn test_patch_error_non_finite_float() {
+        let err = PatchError::NonFiniteFloat {
+            module: "vco_1".into(),
+            parameter: "cutoff".into(),
+        };
+        let msg = format!("{err}");
+        assert!(
+            msg.contains("non-finite float"),
+            "expected 'non-finite float' in: {msg}"
+        );
+        assert!(msg.contains("cutoff"), "expected 'cutoff' in: {msg}");
+        assert!(msg.contains("vco_1"), "expected 'vco_1' in: {msg}");
     }
 
     #[test]

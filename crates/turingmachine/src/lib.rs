@@ -1,5 +1,6 @@
 mod clock;
 mod engine;
+#[cfg(feature = "midi-io")]
 mod error;
 mod length;
 #[cfg(feature = "midi-io")]
@@ -12,6 +13,7 @@ mod write_knob;
 // Re-export the public API at crate root.
 pub use clock::ClockDivider;
 pub use engine::TuringMachine;
+#[cfg(feature = "midi-io")]
 pub use error::Error;
 pub use length::LengthSelector;
 #[cfg(feature = "midi-io")]
