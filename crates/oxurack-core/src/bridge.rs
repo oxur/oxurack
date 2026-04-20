@@ -170,7 +170,7 @@ pub fn convert_core_midi(msg: &crate::MidiMessage) -> Option<oxurack_rt::MidiMes
 ///
 /// Runs in `PreUpdate`. Converts:
 ///
-/// - `ClockTick` (subdivision 0) into [`TickNow`](crate::TickNow)
+/// - `ClockTick` into [`TickNow`](crate::TickNow) (every tick, not just subdivision 0)
 /// - `Transport` into [`TransportChanged`](crate::TransportChanged)
 /// - `MidiInput` into [`MidiInReceived`](crate::MidiInReceived)
 ///
@@ -187,9 +187,8 @@ pub fn drain_rt_events_system(
             oxurack_rt::RtEvent::ClockTick {
                 beat, subdivision, ..
             } => {
-                if subdivision == 0 {
-                    tick_writer.write(crate::TickNow { frame: beat });
-                }
+                let frame = beat.wrapping_mul(24).wrapping_add(subdivision as u64);
+                tick_writer.write(crate::TickNow { frame });
             }
             oxurack_rt::RtEvent::Transport(t) => {
                 let state = match t {
