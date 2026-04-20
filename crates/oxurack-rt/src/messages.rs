@@ -5,7 +5,6 @@
 //! transfer across the queue.
 
 /// An event produced by the RT thread for consumption by the ECS world.
-#[non_exhaustive]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum RtEvent {
     /// A clock tick occurred at the given subdivision of a beat.
@@ -44,7 +43,6 @@ pub enum RtEvent {
 }
 
 /// Transport state change events.
-#[non_exhaustive]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TransportEvent {
     /// Playback started from the beginning.
@@ -63,7 +61,6 @@ pub enum TransportEvent {
 pub type MidiMessage = oxurack_midi::MidiWire;
 
 /// A command sent from the ECS world to the RT thread.
-#[non_exhaustive]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum EcsCommand {
     /// Send a MIDI message out on an output port.
@@ -180,7 +177,6 @@ pub(crate) fn classify_midi(bytes: &[u8]) -> Option<MidiClassification> {
 }
 
 /// Error codes for non-fatal conditions reported by the RT thread.
-#[non_exhaustive]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RtErrorCode {
     /// A MIDI output port was disconnected or became unavailable.

@@ -348,14 +348,17 @@ fn test_full_cycle_propagation() {
         "accumulator output should be > 0 after 1000 ticks, got {final_value}"
     );
 
-    // The counter writes 1/100 on tick 1, 2/100 on tick 2, etc.
-    // Due to the Produce -> Propagate -> Consume phase ordering, the
-    // accumulator reads the previous tick's propagated value. Over
-    // 1000 ticks, the exact sum depends on pipeline timing. Accept a
-    // reasonable range rather than an exact value.
+    // The counter writes N/100 on tick N. Due to the
+    // Produce -> Propagate -> Consume phase ordering, the accumulator
+    // reads the previous tick's consumed value, so on tick N it adds
+    // (N-1)/100 to its sum. After 1000 ticks:
+    //   sum = Σ(N=1..=1000) (N-1)/100
+    //       = (1/100) · (999 · 1000 / 2)
+    //       = 4995.0
+    let expected = 4995.0_f32;
     assert!(
-        final_value > 4000.0 && final_value < 5100.0,
-        "accumulator output should be between 4000 and 5100, got {final_value}"
+        (final_value - expected).abs() < 1e-3,
+        "accumulator output after 1000 ticks should be {expected}, got {final_value}"
     );
 }
 
