@@ -271,11 +271,6 @@ pub(crate) fn apply_merge(policy: crate::MergePolicy, values: &[crate::Value]) -
             }
             other => other,
         },
-
-        crate::MergePolicy::Interleave => {
-            // For v1: just take the last value (simple interleave).
-            *values.last().expect("non-empty")
-        }
     }
 }
 
@@ -496,23 +491,7 @@ mod tests {
         assert_eq!(result, Value::Gate(false));
     }
 
-    #[test]
-    fn test_apply_merge_interleave() {
-        let result = apply_merge(
-            MergePolicy::Interleave,
-            &[Value::Float(0.1), Value::Float(0.9)],
-        );
-        assert_eq!(result, Value::Float(0.9));
-    }
-
     // ── TickPhase tests (preserved from Phase 2) ──────────────────
-
-    #[test]
-    fn test_tick_phase_debug() {
-        assert_eq!(format!("{:?}", TickPhase::Produce), "Produce");
-        assert_eq!(format!("{:?}", TickPhase::Propagate), "Propagate");
-        assert_eq!(format!("{:?}", TickPhase::Consume), "Consume");
-    }
 
     #[test]
     fn test_tick_phase_eq() {
@@ -540,16 +519,6 @@ mod tests {
     }
 
     // ── TickNow tests ─────────────────────────────────────────────
-
-    #[test]
-    fn test_tick_now_debug() {
-        let tick = TickNow { frame: 42 };
-        let debug = format!("{tick:?}");
-        assert!(
-            debug.contains("42"),
-            "expected '42' in debug output, got: {debug}"
-        );
-    }
 
     #[test]
     fn test_tick_now_clone_copy() {

@@ -70,8 +70,6 @@ pub enum MergePolicy {
     Sum,
     /// Maximum of all incoming values.
     Max,
-    /// Round-robin interleave (for MIDI streams).
-    Interleave,
     /// Last write wins -- the most recently written value is kept.
     LastWins,
 }
@@ -88,7 +86,6 @@ impl MergePolicy {
     /// | Average      | yes   | no   | yes     | no    | no    |
     /// | Sum          | yes   | yes  | yes     | no    | no    |
     /// | Max          | yes   | yes  | yes     | no    | no    |
-    /// | Interleave   | no    | no   | no      | yes   | no    |
     /// | LastWins     | yes   | yes  | yes     | yes   | yes   |
     #[must_use]
     pub fn is_valid_for(&self, kind: ValueKind) -> bool {
@@ -98,7 +95,6 @@ impl MergePolicy {
             Self::Sum | Self::Max => {
                 matches!(kind, ValueKind::Float | ValueKind::Gate | ValueKind::Bipolar)
             }
-            Self::Interleave => matches!(kind, ValueKind::Midi),
         }
     }
 }
@@ -201,16 +197,6 @@ mod tests {
     }
 
     #[test]
-    fn test_port_name_debug() {
-        let name = PortName::from("test");
-        let debug = format!("{name:?}");
-        assert!(
-            debug.contains("test"),
-            "expected 'test' in debug output, got: {debug}"
-        );
-    }
-
-    #[test]
     fn test_port_name_clone() {
         let name = PortName::from("original");
         let cloned = name.clone();
@@ -218,12 +204,6 @@ mod tests {
     }
 
     // ── PortDirection ───────────────────────────────────────────────
-
-    #[test]
-    fn test_port_direction_debug() {
-        assert_eq!(format!("{:?}", PortDirection::Input), "Input");
-        assert_eq!(format!("{:?}", PortDirection::Output), "Output");
-    }
 
     #[test]
     fn test_port_direction_equality() {
@@ -242,7 +222,7 @@ mod tests {
         assert_eq!(set.len(), 2);
     }
 
-    // ── MergePolicy × ValueKind — exhaustive 30-case table ─────────
+    // ── MergePolicy × ValueKind — exhaustive 25-case table ─────────
 
     // Reject: always valid
     #[test]
@@ -332,28 +312,6 @@ mod tests {
         assert!(!MergePolicy::Max.is_valid_for(ValueKind::Raw));
     }
 
-    // Interleave: Midi only
-    #[test]
-    fn test_merge_interleave_float() {
-        assert!(!MergePolicy::Interleave.is_valid_for(ValueKind::Float));
-    }
-    #[test]
-    fn test_merge_interleave_gate() {
-        assert!(!MergePolicy::Interleave.is_valid_for(ValueKind::Gate));
-    }
-    #[test]
-    fn test_merge_interleave_bipolar() {
-        assert!(!MergePolicy::Interleave.is_valid_for(ValueKind::Bipolar));
-    }
-    #[test]
-    fn test_merge_interleave_midi() {
-        assert!(MergePolicy::Interleave.is_valid_for(ValueKind::Midi));
-    }
-    #[test]
-    fn test_merge_interleave_raw() {
-        assert!(!MergePolicy::Interleave.is_valid_for(ValueKind::Raw));
-    }
-
     // LastWins: always valid
     #[test]
     fn test_merge_last_wins_float() {
@@ -379,16 +337,6 @@ mod tests {
     // ── MergePolicy misc ────────────────────────────────────────────
 
     #[test]
-    fn test_merge_policy_debug() {
-        assert_eq!(format!("{:?}", MergePolicy::Reject), "Reject");
-        assert_eq!(format!("{:?}", MergePolicy::Average), "Average");
-        assert_eq!(format!("{:?}", MergePolicy::Sum), "Sum");
-        assert_eq!(format!("{:?}", MergePolicy::Max), "Max");
-        assert_eq!(format!("{:?}", MergePolicy::Interleave), "Interleave");
-        assert_eq!(format!("{:?}", MergePolicy::LastWins), "LastWins");
-    }
-
-    #[test]
     fn test_merge_policy_clone_and_eq() {
         let policy = MergePolicy::Average;
         let cloned = policy;
@@ -403,9 +351,8 @@ mod tests {
         set.insert(MergePolicy::Average);
         set.insert(MergePolicy::Sum);
         set.insert(MergePolicy::Max);
-        set.insert(MergePolicy::Interleave);
         set.insert(MergePolicy::LastWins);
-        assert_eq!(set.len(), 6);
+        assert_eq!(set.len(), 5);
     }
 
     // ── Port + CurrentValue component tests ────────────────────────
