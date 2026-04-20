@@ -254,7 +254,7 @@ push:
 	done
 
 # Crates in dependency order (leaf crates first, dependent crates later)
-PUBLISH_ORDER := turingmachine
+PUBLISH_ORDER := oxurack-midi turingmachine oxurack-rt oxurack-core
 # crates.io rate limit delay (seconds)
 PUBLISH_DELAY := 372
 .PHONY: publish
