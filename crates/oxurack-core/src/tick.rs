@@ -97,54 +97,109 @@ pub struct TickNow {
     pub frame: u64,
 }
 
+// ── PropagationOrder ─────────────────────────────────────────────
+
+/// Cached ordering of cable entities for deterministic propagation.
+///
+/// Cables are ordered by (target_module_id, target_port_name,
+/// source_module_id, source_port_name) so that propagation is
+/// deterministic across runs even if entity IDs change.
+#[derive(Resource, Default, Debug)]
+pub struct PropagationOrder {
+    /// Ordered list of cable entities to process during propagation.
+    pub cables: Vec<Entity>,
+}
+
+/// Rebuilds the propagation order from the current cable graph.
+///
+/// Orders cables by (target_module_id, target_port_name,
+/// source_module_id, source_port_name) for cross-run determinism.
+fn rebuild_propagation_order(
+    cable_q: &Query<(Entity, &crate::Cable)>,
+    port_q: &Query<(&crate::Port, &bevy_ecs::hierarchy::ChildOf)>,
+    module_q: &Query<&crate::ModuleId>,
+) -> Vec<Entity> {
+    let mut entries: Vec<(Entity, crate::ModuleId, String, crate::ModuleId, String)> = cable_q
+        .iter()
+        .filter_map(|(cable_entity, cable)| {
+            let (target_port, target_child_of) = port_q.get(cable.target_port).ok()?;
+            let target_module_id = *module_q.get(target_child_of.0).ok()?;
+            let target_port_name = target_port.name.as_ref().to_string();
+
+            let (source_port, source_child_of) = port_q.get(cable.source_port).ok()?;
+            let source_module_id = *module_q.get(source_child_of.0).ok()?;
+            let source_port_name = source_port.name.as_ref().to_string();
+
+            Some((
+                cable_entity,
+                target_module_id,
+                target_port_name,
+                source_module_id,
+                source_port_name,
+            ))
+        })
+        .collect();
+
+    entries.sort_by(|a, b| {
+        a.1.cmp(&b.1)
+            .then_with(|| a.2.cmp(&b.2))
+            .then_with(|| a.3.cmp(&b.3))
+            .then_with(|| a.4.cmp(&b.4))
+    });
+
+    entries.into_iter().map(|(e, ..)| e).collect()
+}
+
 // ── propagate_cables_system ───────────────────────────────────────
 
 /// Propagates values through all enabled cables.
 ///
 /// Runs in [`TickPhase::Propagate`]. For each cable (in stable order
-/// via [`CableIndex`](crate::CableIndex)):
+/// via [`PropagationOrder`]):
 ///
 /// 1. Read the source port's [`CurrentValue`](crate::CurrentValue).
 /// 2. Apply the cable's [`CableTransform`](crate::CableTransform) (if any).
 /// 3. Contribute the result to the target port's [`MergeBuffers`] entry.
+///
+/// The propagation order is rebuilt each tick from the cable graph for
+/// cross-run determinism. The cost is O(C log C) where C is the cable
+/// count, which is fast for small C.
 pub(crate) fn propagate_cables_system(
-    cable_q: Query<&crate::Cable>,
-    cable_index: Res<crate::CableIndex>,
+    cable_q: Query<(Entity, &crate::Cable)>,
+    port_q: Query<(&crate::Port, &bevy_ecs::hierarchy::ChildOf)>,
+    module_q: Query<&crate::ModuleId>,
     port_values: Query<&crate::CurrentValue>,
     mut merge_buffers: ResMut<MergeBuffers>,
 ) {
     // Clear buffers from previous tick.
     merge_buffers.clear();
 
-    // Sort target ports for deterministic iteration order.
-    let mut target_ports: Vec<Entity> = cable_index.target_ports().collect();
-    target_ports.sort();
+    // Rebuild propagation order each tick for determinism.
+    let ordered_cables = rebuild_propagation_order(&cable_q, &port_q, &module_q);
 
-    for target_port in target_ports {
-        for &cable_entity in cable_index.cables_targeting(target_port) {
-            let Ok(cable) = cable_q.get(cable_entity) else {
-                continue;
-            };
-            if !cable.enabled {
-                continue;
-            }
-
-            let Ok(source_value) = port_values.get(cable.source_port) else {
-                continue;
-            };
-
-            // Apply transform if present.
-            let value = if let Some(ref transform) = cable.transform {
-                match transform.apply(source_value.0) {
-                    Some(v) => v,
-                    None => continue, // incompatible transform, skip silently
-                }
-            } else {
-                source_value.0
-            };
-
-            merge_buffers.contribute(target_port, value);
+    for cable_entity in ordered_cables {
+        let Ok((_, cable)) = cable_q.get(cable_entity) else {
+            continue;
+        };
+        if !cable.enabled {
+            continue;
         }
+
+        let Ok(source_value) = port_values.get(cable.source_port) else {
+            continue;
+        };
+
+        // Apply transform if present.
+        let value = if let Some(ref transform) = cable.transform {
+            match transform.apply(source_value.0) {
+                Some(v) => v,
+                None => continue, // incompatible transform, skip silently
+            }
+        } else {
+            source_value.0
+        };
+
+        merge_buffers.contribute(cable.target_port, value);
     }
 }
 
@@ -351,16 +406,116 @@ pub fn compute_tick_order(
     }
 
     if result.len() != modules.len() {
-        // Cycle detected -- find the modules involved.
-        let in_cycle: Vec<String> = modules
+        // Cycle detected -- use Tarjan's SCC to find modules that are
+        // actually in cycles (SCCs of size > 1), not just downstream.
+        let resolved: HashSet<Entity> = result.iter().copied().collect();
+        let unresolved: HashSet<Entity> = module_set
             .iter()
-            .filter(|(e, _, _)| !result.contains(e))
-            .map(|(_, m, _)| m.instance_name.clone())
+            .filter(|e| !resolved.contains(e))
+            .copied()
             .collect();
-        return Err(crate::PatchError::FeedbackCycle(in_cycle));
+
+        let module_names: HashMap<Entity, String> = modules
+            .iter()
+            .map(|(e, m, _)| (*e, m.instance_name.clone()))
+            .collect();
+
+        let cycle_members =
+            find_cycle_members(&unresolved, &dependents, &module_names);
+        return Err(crate::PatchError::FeedbackCycle(cycle_members));
     }
 
     Ok(result)
+}
+
+/// Uses Tarjan's SCC algorithm on the unresolved subgraph to find
+/// entities that are actually in cycles (SCCs of size > 1).
+/// Returns sorted instance names of those modules.
+fn find_cycle_members(
+    unresolved: &HashSet<Entity>,
+    dependents: &HashMap<Entity, Vec<Entity>>,
+    module_names: &HashMap<Entity, String>,
+) -> Vec<String> {
+    struct TarjanState<'a> {
+        unresolved: &'a HashSet<Entity>,
+        dependents: &'a HashMap<Entity, Vec<Entity>>,
+        index_counter: usize,
+        stack: Vec<Entity>,
+        on_stack: HashSet<Entity>,
+        indices: HashMap<Entity, usize>,
+        lowlinks: HashMap<Entity, usize>,
+        sccs: Vec<Vec<Entity>>,
+    }
+
+    impl TarjanState<'_> {
+        fn visit(&mut self, node: Entity) {
+            self.indices.insert(node, self.index_counter);
+            self.lowlinks.insert(node, self.index_counter);
+            self.index_counter += 1;
+            self.stack.push(node);
+            self.on_stack.insert(node);
+
+            if let Some(deps) = self.dependents.get(&node) {
+                for &dep in deps {
+                    if !self.unresolved.contains(&dep) {
+                        continue;
+                    }
+                    if !self.indices.contains_key(&dep) {
+                        self.visit(dep);
+                        let dep_low = self.lowlinks[&dep];
+                        let node_low = self.lowlinks.get_mut(&node).expect("just inserted");
+                        *node_low = (*node_low).min(dep_low);
+                    } else if self.on_stack.contains(&dep) {
+                        let dep_idx = self.indices[&dep];
+                        let node_low = self.lowlinks.get_mut(&node).expect("just inserted");
+                        *node_low = (*node_low).min(dep_idx);
+                    }
+                }
+            }
+
+            if self.lowlinks[&node] == self.indices[&node] {
+                let mut scc = Vec::new();
+                loop {
+                    let w = self.stack.pop().expect("stack non-empty");
+                    self.on_stack.remove(&w);
+                    scc.push(w);
+                    if w == node {
+                        break;
+                    }
+                }
+                self.sccs.push(scc);
+            }
+        }
+    }
+
+    let mut state = TarjanState {
+        unresolved,
+        dependents,
+        index_counter: 0,
+        stack: Vec::new(),
+        on_stack: HashSet::new(),
+        indices: HashMap::new(),
+        lowlinks: HashMap::new(),
+        sccs: Vec::new(),
+    };
+
+    let mut sorted_unresolved: Vec<Entity> = unresolved.iter().copied().collect();
+    sorted_unresolved.sort();
+    for node in sorted_unresolved {
+        if !state.indices.contains_key(&node) {
+            state.visit(node);
+        }
+    }
+
+    let mut result: Vec<String> = state
+        .sccs
+        .iter()
+        .filter(|scc| scc.len() > 1)
+        .flatten()
+        .filter_map(|e| module_names.get(e).cloned())
+        .collect();
+    result.sort();
+    result
 }
 
 #[cfg(test)]

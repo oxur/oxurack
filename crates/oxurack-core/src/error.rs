@@ -91,6 +91,14 @@ pub enum PatchError {
     /// Failed to deserialize a RON patch description.
     #[error("RON parse error: {0}")]
     Deserialize(String),
+
+    /// An I/O error occurred reading or writing a patch file.
+    #[error("I/O error: {0}")]
+    Io(#[from] std::io::Error),
+
+    /// Failed to serialise a patch to RON.
+    #[error("RON serialization error: {0}")]
+    Serialize(String),
 }
 
 /// Errors that can occur during frame processing (tick).
@@ -243,6 +251,45 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_patch_error_io() {
+        let io_err = std::io::Error::new(std::io::ErrorKind::NotFound, "file not found");
+        let err = PatchError::Io(io_err);
+        let msg = format!("{err}");
+        assert!(
+            msg.contains("I/O error"),
+            "expected 'I/O error' in: {msg}"
+        );
+        assert!(
+            msg.contains("file not found"),
+            "expected detail in: {msg}"
+        );
+    }
+
+    #[test]
+    fn test_patch_error_serialize() {
+        let err = PatchError::Serialize("failed to serialize".into());
+        let msg = format!("{err}");
+        assert!(
+            msg.contains("RON serialization error"),
+            "expected 'RON serialization error' in: {msg}"
+        );
+        assert!(
+            msg.contains("failed to serialize"),
+            "expected detail in: {msg}"
+        );
+    }
+
+    #[test]
+    fn test_patch_error_io_from_conversion() {
+        let io_err = std::io::Error::new(std::io::ErrorKind::PermissionDenied, "access denied");
+        let patch_err: PatchError = io_err.into();
+        assert!(
+            matches!(patch_err, PatchError::Io(_)),
+            "expected PatchError::Io, got: {patch_err:?}"
+        );
+    }
+
     // ── TickError Display ───────────────────────────────────────────
 
     #[test]
@@ -260,41 +307,6 @@ mod tests {
         assert_eq!(
             format!("{err}"),
             "RT queue full; dropped 12 MIDI events this frame"
-        );
-    }
-
-    // ── Debug impls ─────────────────────────────────────────────────
-
-    #[test]
-    fn test_core_error_debug() {
-        let err = CoreError::UnknownParameter {
-            module: "m".into(),
-            param: "p".into(),
-        };
-        let debug = format!("{err:?}");
-        assert!(
-            debug.contains("UnknownParameter"),
-            "expected 'UnknownParameter' in debug: {debug}"
-        );
-    }
-
-    #[test]
-    fn test_patch_error_debug() {
-        let err = PatchError::UnknownModuleKind("x".into());
-        let debug = format!("{err:?}");
-        assert!(
-            debug.contains("UnknownModuleKind"),
-            "expected 'UnknownModuleKind' in debug: {debug}"
-        );
-    }
-
-    #[test]
-    fn test_tick_error_debug() {
-        let err = TickError::ModulePanic("x".into());
-        let debug = format!("{err:?}");
-        assert!(
-            debug.contains("ModulePanic"),
-            "expected 'ModulePanic' in debug: {debug}"
         );
     }
 

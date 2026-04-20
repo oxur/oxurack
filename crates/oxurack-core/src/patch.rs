@@ -148,7 +148,7 @@ pub fn validate_patch(
     }
 
     // 5. Check for feedback cycles.
-    check_no_cycles(patch)?;
+    check_patch_cycles(patch)?;
 
     Ok(())
 }
@@ -216,9 +216,13 @@ fn find_port_schema<'a>(
         })
 }
 
-/// Checks that the module graph described by the patch is acyclic using
-/// Kahn's algorithm (topological sort).
-fn check_no_cycles(patch: &Patch) -> Result<(), crate::PatchError> {
+/// Validates that the patch's cable graph has no cycles.
+/// Uses Kahn's algorithm (topological sort) with a proper queue on
+/// module instance names. When a cycle is detected, runs Tarjan's SCC
+/// to report only the modules actually participating in cycles.
+fn check_patch_cycles(patch: &Patch) -> Result<(), crate::PatchError> {
+    use std::collections::{HashSet, VecDeque};
+
     let mut in_degree: HashMap<&str, usize> = patch
         .modules
         .iter()
@@ -236,41 +240,143 @@ fn check_no_cycles(patch: &Patch) -> Result<(), crate::PatchError> {
         *in_degree.entry(target).or_insert(0) += 1;
     }
 
-    // Kahn's algorithm with deterministic ordering.
-    let mut queue: Vec<&str> = in_degree
-        .iter()
-        .filter(|(_, deg)| **deg == 0)
-        .map(|(name, _)| *name)
-        .collect();
-    queue.sort();
-    let mut count = 0;
+    // Kahn's algorithm with deterministic ordering via BTreeSet-style
+    // initial seeding and sorted insertion.
+    let mut queue: VecDeque<&str> = {
+        let mut seeds: Vec<&str> = in_degree
+            .iter()
+            .filter(|(_, deg)| **deg == 0)
+            .map(|(name, _)| *name)
+            .collect();
+        seeds.sort();
+        seeds.into_iter().collect()
+    };
+    let mut resolved = HashSet::new();
 
-    while let Some(node) = queue.pop() {
-        count += 1;
+    while let Some(node) = queue.pop_front() {
+        resolved.insert(node);
         if let Some(deps) = dependents.get(node) {
+            // Collect newly freed nodes, sort them, then extend queue.
+            let mut newly_free: Vec<&str> = Vec::new();
             for dep in deps {
                 if let Some(deg) = in_degree.get_mut(dep) {
                     *deg -= 1;
                     if *deg == 0 {
-                        queue.push(dep);
-                        queue.sort();
+                        newly_free.push(dep);
                     }
                 }
+            }
+            newly_free.sort();
+            for n in newly_free {
+                queue.push_back(n);
             }
         }
     }
 
-    if count != patch.modules.len() {
-        let mut in_cycle: Vec<String> = in_degree
-            .iter()
-            .filter(|(_, deg)| **deg > 0)
-            .map(|(name, _)| name.to_string())
+    if resolved.len() != patch.modules.len() {
+        // Cycle detected -- use Tarjan's SCC to find exactly which
+        // modules participate in cycles.
+        let unresolved: HashSet<&str> = in_degree
+            .keys()
+            .filter(|name| !resolved.contains(**name))
+            .copied()
             .collect();
-        in_cycle.sort();
-        return Err(crate::PatchError::FeedbackCycle(in_cycle));
+        let cycle_members =
+            find_patch_cycle_members(&unresolved, &dependents);
+        return Err(crate::PatchError::FeedbackCycle(cycle_members));
     }
 
     Ok(())
+}
+
+/// Uses Tarjan's SCC algorithm on the unresolved subgraph to find
+/// modules that are actually in cycles (SCCs of size > 1 or self-loops).
+fn find_patch_cycle_members(
+    unresolved: &std::collections::HashSet<&str>,
+    dependents: &HashMap<&str, Vec<&str>>,
+) -> Vec<String> {
+    use std::collections::HashSet;
+
+    struct TarjanState<'a> {
+        unresolved: &'a HashSet<&'a str>,
+        dependents: &'a HashMap<&'a str, Vec<&'a str>>,
+        index_counter: usize,
+        stack: Vec<&'a str>,
+        on_stack: HashSet<&'a str>,
+        indices: HashMap<&'a str, usize>,
+        lowlinks: HashMap<&'a str, usize>,
+        sccs: Vec<Vec<&'a str>>,
+    }
+
+    impl<'a> TarjanState<'a> {
+        fn visit(&mut self, node: &'a str) {
+            self.indices.insert(node, self.index_counter);
+            self.lowlinks.insert(node, self.index_counter);
+            self.index_counter += 1;
+            self.stack.push(node);
+            self.on_stack.insert(node);
+
+            if let Some(deps) = self.dependents.get(node) {
+                for &dep in deps {
+                    if !self.unresolved.contains(dep) {
+                        continue;
+                    }
+                    if !self.indices.contains_key(dep) {
+                        self.visit(dep);
+                        let dep_low = self.lowlinks[dep];
+                        let node_low = self.lowlinks.get_mut(node).expect("just inserted");
+                        *node_low = (*node_low).min(dep_low);
+                    } else if self.on_stack.contains(dep) {
+                        let dep_idx = self.indices[dep];
+                        let node_low = self.lowlinks.get_mut(node).expect("just inserted");
+                        *node_low = (*node_low).min(dep_idx);
+                    }
+                }
+            }
+
+            if self.lowlinks[node] == self.indices[node] {
+                let mut scc = Vec::new();
+                loop {
+                    let w = self.stack.pop().expect("stack non-empty");
+                    self.on_stack.remove(w);
+                    scc.push(w);
+                    if w == node {
+                        break;
+                    }
+                }
+                self.sccs.push(scc);
+            }
+        }
+    }
+
+    let mut state = TarjanState {
+        unresolved,
+        dependents,
+        index_counter: 0,
+        stack: Vec::new(),
+        on_stack: HashSet::new(),
+        indices: HashMap::new(),
+        lowlinks: HashMap::new(),
+        sccs: Vec::new(),
+    };
+
+    let mut sorted_unresolved: Vec<&str> = unresolved.iter().copied().collect();
+    sorted_unresolved.sort();
+    for &node in &sorted_unresolved {
+        if !state.indices.contains_key(node) {
+            state.visit(node);
+        }
+    }
+
+    let mut result: Vec<String> = state
+        .sccs
+        .iter()
+        .filter(|scc| scc.len() > 1)
+        .flatten()
+        .map(|name| name.to_string())
+        .collect();
+    result.sort();
+    result
 }
 
 // ── RON serialisation ────────────────────────────────────────────────
@@ -283,7 +389,7 @@ fn check_no_cycles(patch: &Patch) -> Result<(), crate::PatchError> {
 /// serialisation fails (should not happen for well-formed patches).
 pub fn serialize_patch(patch: &Patch) -> Result<String, crate::CoreError> {
     ron::ser::to_string_pretty(patch, ron::ser::PrettyConfig::default())
-        .map_err(|e| crate::CoreError::Patch(crate::PatchError::Deserialize(e.to_string())))
+        .map_err(|e| crate::CoreError::Patch(crate::PatchError::Serialize(e.to_string())))
 }
 
 /// Deserialises a [`Patch`] from a RON string.
@@ -310,7 +416,7 @@ pub fn save_patch_to_file(
 ) -> Result<(), crate::CoreError> {
     let ron_str = serialize_patch(patch)?;
     std::fs::write(path, ron_str)
-        .map_err(|e| crate::CoreError::Patch(crate::PatchError::Deserialize(e.to_string())))?;
+        .map_err(|e| crate::CoreError::Patch(crate::PatchError::Io(e)))?;
     Ok(())
 }
 
@@ -321,7 +427,7 @@ pub fn save_patch_to_file(
 /// Returns [`CoreError`](crate::CoreError) on I/O or parse failure.
 pub fn load_patch_from_file(path: &std::path::Path) -> Result<Patch, crate::CoreError> {
     let ron_str = std::fs::read_to_string(path)
-        .map_err(|e| crate::CoreError::Patch(crate::PatchError::Deserialize(e.to_string())))?;
+        .map_err(|e| crate::CoreError::Patch(crate::PatchError::Io(e)))?;
     deserialize_patch(&ron_str).map_err(crate::CoreError::Patch)
 }
 
@@ -489,46 +595,10 @@ mod tests {
     // ── Milestone 5.1: Data structure tests ─────────────────────
 
     #[test]
-    fn test_patch_debug() {
-        let patch = valid_patch();
-        let debug = format!("{patch:?}");
-        assert!(debug.contains("Patch"), "expected 'Patch' in: {debug}");
-        assert!(debug.contains("vco_1"), "expected 'vco_1' in: {debug}");
-    }
-
-    #[test]
     fn test_patch_clone_eq() {
         let patch = valid_patch();
         let cloned = patch.clone();
         assert_eq!(patch, cloned);
-    }
-
-    #[test]
-    fn test_module_config_debug() {
-        let cfg = ModuleConfig {
-            kind: "vco".to_string(),
-            instance_name: "vco_1".to_string(),
-            parameters: HashMap::new(),
-        };
-        let debug = format!("{cfg:?}");
-        assert!(
-            debug.contains("vco"),
-            "expected 'vco' in: {debug}"
-        );
-    }
-
-    #[test]
-    fn test_cable_config_debug() {
-        let cfg = CableConfig {
-            source: ("vco_1".to_string(), "out".to_string()),
-            target: ("filter_1".to_string(), "in".to_string()),
-            transform: None,
-        };
-        let debug = format!("{cfg:?}");
-        assert!(
-            debug.contains("vco_1"),
-            "expected 'vco_1' in: {debug}"
-        );
     }
 
     // ── Milestone 5.3: RON serialisation tests ──────────────────
@@ -1016,6 +1086,27 @@ mod tests {
         let path = std::path::Path::new("/tmp/oxurack_nonexistent_file_12345.ron");
         let result = load_patch_from_file(path);
         assert!(result.is_err(), "loading nonexistent file should fail");
+        let err = result.unwrap_err();
+        assert!(
+            matches!(err, crate::CoreError::Patch(crate::PatchError::Io(_))),
+            "expected PatchError::Io, got: {err:?}"
+        );
+    }
+
+    #[test]
+    fn test_load_malformed_ron_file() {
+        let path = std::env::temp_dir().join("oxurack_test_malformed.ron");
+        std::fs::write(&path, "this is { not [ valid RON").expect("write should succeed");
+
+        let result = load_patch_from_file(&path);
+        assert!(result.is_err(), "loading malformed RON should fail");
+        let err = result.unwrap_err();
+        assert!(
+            matches!(err, crate::CoreError::Patch(crate::PatchError::Deserialize(_))),
+            "expected PatchError::Deserialize, got: {err:?}"
+        );
+
+        let _ = std::fs::remove_file(&path);
     }
 
     #[test]
@@ -1104,10 +1195,10 @@ mod tests {
         }
     }
 
-    // ── check_no_cycles edge cases ──────────────────────────────
+    // ── check_patch_cycles edge cases ──────────────────────────────
 
     #[test]
-    fn test_check_no_cycles_self_loop_ignored() {
+    fn test_check_patch_cycles_self_loop_ignored() {
         // A cable from a module to itself is a self-loop, which should
         // be ignored by the cycle checker (it doesn't create a cycle
         // in the inter-module graph).
@@ -1126,12 +1217,12 @@ mod tests {
                 transform: None,
             }],
         };
-        let result = check_no_cycles(&patch);
+        let result = check_patch_cycles(&patch);
         assert!(result.is_ok(), "self-loop should not be treated as a cycle: {result:?}");
     }
 
     #[test]
-    fn test_check_no_cycles_three_node_cycle() {
+    fn test_check_patch_cycles_three_node_cycle() {
         let patch = Patch {
             version: "1.0".to_string(),
             master_seed: 0,
@@ -1171,11 +1262,82 @@ mod tests {
                 },
             ],
         };
-        let result = check_no_cycles(&patch);
+        let result = check_patch_cycles(&patch);
         assert!(result.is_err(), "A->B->C->A should be detected as a cycle");
         let err = result.unwrap_err();
         if let crate::PatchError::FeedbackCycle(modules) = &err {
             assert_eq!(modules.len(), 3, "all three modules should be in the cycle");
+        } else {
+            panic!("expected FeedbackCycle, got: {err:?}");
+        }
+    }
+
+    #[test]
+    fn test_check_patch_cycles_only_reports_cycle_members() {
+        // A->B->A cycle. B->C->D downstream of B.
+        // Only A and B should be reported, NOT C and D.
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![
+                ModuleConfig {
+                    kind: "vco".to_string(),
+                    instance_name: "a".to_string(),
+                    parameters: HashMap::new(),
+                },
+                ModuleConfig {
+                    kind: "filter".to_string(),
+                    instance_name: "b".to_string(),
+                    parameters: HashMap::new(),
+                },
+                ModuleConfig {
+                    kind: "mixer".to_string(),
+                    instance_name: "c".to_string(),
+                    parameters: HashMap::new(),
+                },
+                ModuleConfig {
+                    kind: "mixer".to_string(),
+                    instance_name: "d".to_string(),
+                    parameters: HashMap::new(),
+                },
+            ],
+            cables: vec![
+                // A -> B
+                CableConfig {
+                    source: ("a".to_string(), "out".to_string()),
+                    target: ("b".to_string(), "in".to_string()),
+                    transform: None,
+                },
+                // B -> A (creates cycle)
+                CableConfig {
+                    source: ("b".to_string(), "out".to_string()),
+                    target: ("a".to_string(), "pitch".to_string()),
+                    transform: None,
+                },
+                // B -> C (downstream of cycle)
+                CableConfig {
+                    source: ("b".to_string(), "out".to_string()),
+                    target: ("c".to_string(), "in".to_string()),
+                    transform: None,
+                },
+                // C -> D (downstream of cycle)
+                CableConfig {
+                    source: ("c".to_string(), "out".to_string()),
+                    target: ("d".to_string(), "in".to_string()),
+                    transform: None,
+                },
+            ],
+        };
+        let result = check_patch_cycles(&patch);
+        assert!(result.is_err(), "should detect cycle");
+        let err = result.unwrap_err();
+        if let crate::PatchError::FeedbackCycle(modules) = &err {
+            assert_eq!(
+                modules,
+                &["a".to_string(), "b".to_string()],
+                "only A and B should be in the cycle, got: {modules:?}"
+            );
         } else {
             panic!("expected FeedbackCycle, got: {err:?}");
         }

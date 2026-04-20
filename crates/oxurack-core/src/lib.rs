@@ -62,7 +62,7 @@ pub use value::{MidiMessage, Value, ValueKind};
 
 // Phase 2
 pub use rng::{derive_module_rng, derive_seed};
-pub use tick::{compute_tick_order, MergeBuffers, TickNow, TickOrder, TickPhase};
+pub use tick::{compute_tick_order, MergeBuffers, PropagationOrder, TickNow, TickOrder, TickPhase};
 
 // Phase 4
 pub use event::{CoreCommand, MidiInReceived, PatchLoaded, TransportChanged, TransportState};
@@ -116,6 +116,7 @@ impl Plugin for CorePlugin {
         app.init_resource::<CableIndex>()
             .init_resource::<tick::MergeBuffers>()
             .init_resource::<tick::TickOrder>()
+            .init_resource::<tick::PropagationOrder>()
             .init_resource::<ParameterRegistry>()
             .init_resource::<ModuleRegistry>()
             .add_message::<tick::TickNow>()
@@ -199,6 +200,19 @@ mod tests {
         assert!(
             world.get_resource::<TickOrder>().is_some(),
             "TickOrder resource should be present after adding CorePlugin"
+        );
+    }
+
+    #[test]
+    fn test_core_plugin_registers_propagation_order() {
+        let mut app = App::new();
+        app.add_plugins(CorePlugin);
+        app.update();
+
+        let world = app.world();
+        assert!(
+            world.get_resource::<PropagationOrder>().is_some(),
+            "PropagationOrder resource should be present after adding CorePlugin"
         );
     }
 

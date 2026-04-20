@@ -18,14 +18,16 @@
 //!   structured [`MidiMessage`](crate::MidiMessage).
 
 use bevy_ecs::prelude::{MessageWriter, ResMut, Resource};
+use bevy_ecs::change_detection::NonSendMut;
 
 // ── Resources ───────────────────────────────────────────────────────
 
-/// Resource wrapping the RT thread's queue handles.
+/// Non-send resource wrapping the RT thread's queue handles.
 ///
-/// Insert this resource into the Bevy app after calling
-/// [`Runtime::start`](oxurack_rt::Runtime::start). The bridge systems
-/// will use it to drain inbound events and flush outbound commands.
+/// Insert this as a non-send resource into the Bevy app after calling
+/// [`Runtime::start`](oxurack_rt::Runtime::start) via
+/// `world.insert_non_send_resource(bridge)`. The bridge systems use
+/// [`NonSendMut`] to access it, ensuring they run on the main thread.
 pub struct RtBridge {
     /// Consumer end of the RT-to-ECS event queue.
     pub events: rtrb::Consumer<oxurack_rt::RtEvent>,
@@ -33,13 +35,10 @@ pub struct RtBridge {
     pub commands: rtrb::Producer<oxurack_rt::EcsCommand>,
 }
 
-// SAFETY: RtBridge is only accessed from the main Bevy thread (via ResMut).
-// rtrb Consumer/Producer are Send but not Sync; since Bevy resources require
-// Send + Sync, we assert Sync manually. The resource is never shared across
-// threads — Bevy's scheduler accesses it exclusively.
-unsafe impl Sync for RtBridge {}
-
-impl Resource for RtBridge {}
+// RtBridge wraps rtrb Consumer/Producer which are Send but not Sync.
+// We use NonSend/NonSendMut system parameters instead of Resource to
+// avoid an unsafe Sync impl. Bevy's scheduler will ensure these
+// systems run on the main thread.
 
 /// Buffer for MIDI commands to be sent to the RT thread.
 ///
@@ -176,7 +175,7 @@ pub fn convert_core_midi(msg: &crate::MidiMessage) -> Option<oxurack_rt::MidiMes
 ///
 /// If the [`RtBridge`] resource is not present, this system is a no-op.
 pub fn drain_rt_events_system(
-    bridge: Option<ResMut<RtBridge>>,
+    bridge: Option<NonSendMut<RtBridge>>,
     mut tick_writer: MessageWriter<crate::TickNow>,
     mut transport_writer: MessageWriter<crate::TransportChanged>,
     mut midi_writer: MessageWriter<crate::MidiInReceived>,
@@ -226,7 +225,7 @@ pub fn drain_rt_events_system(
 /// to avoid blocking the game loop. If the [`RtBridge`] resource is
 /// not present, this system is a no-op.
 pub fn flush_midi_output_system(
-    bridge: Option<ResMut<RtBridge>>,
+    bridge: Option<NonSendMut<RtBridge>>,
     mut queue: ResMut<MidiOutputQueue>,
 ) {
     let Some(mut bridge) = bridge else { return };
