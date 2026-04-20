@@ -79,8 +79,6 @@ pub enum EcsCommand {
     SendMidi {
         /// Index of the output port to send on.
         output_port_index: u8,
-        /// Desired send timestamp in nanoseconds (0 = immediate).
-        timestamp_ns: u64,
         /// The MIDI message payload.
         message: MidiMessage,
     },
