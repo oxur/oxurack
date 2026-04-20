@@ -11,7 +11,7 @@ use crate::queues::RtSideQueues;
 
 /// Number of consecutive queue push failures before a
 /// [`crate::RtErrorCode::QueueOverflow`] event is emitted.
-const OVERFLOW_REPORT_THRESHOLD: u32 = 100;
+const OVERFLOW_REPORT_THRESHOLD: u32 = 10;
 
 /// Runs the RT thread main loop.
 ///
@@ -49,7 +49,7 @@ pub(crate) fn rt_thread_main(
     //    thread will still function correctly, just with higher jitter.
     //    This mirrors the approach in `run_timing_test` and avoids
     //    breaking tests in CI sandboxes that lack scheduling permissions.
-    let _ = crate::priority::elevate_rt_priority();
+    let _rt_priority_handle = crate::priority::elevate_rt_priority().ok();
 
     // 2. Open MIDI output ports.
     let mut midi_ports = match crate::midi_io::MidiPorts::open_outputs(&config.outputs) {
@@ -106,7 +106,6 @@ pub(crate) fn rt_thread_main(
                         crate::EcsCommand::SendMidi {
                             output_port_index,
                             message,
-                            ..
                         } => {
                             let bytes = message.to_bytes();
                             let len = message.length as usize;
@@ -222,7 +221,6 @@ pub(crate) fn rt_thread_main(
                         crate::EcsCommand::SendMidi {
                             output_port_index,
                             message,
-                            ..
                         } => {
                             let bytes = message.to_bytes();
                             let len = message.length as usize;
@@ -359,7 +357,7 @@ pub(crate) fn rt_thread_main(
 /// Pushes an event to the ECS event queue with overflow tracking.
 ///
 /// If the push fails, increments `consecutive_overflows`. When the
-/// counter reaches the reporting threshold (100), attempts to push a
+/// counter reaches the reporting threshold (10), attempts to push a
 /// [`crate::RtEvent::NonFatalError`] with [`crate::RtErrorCode::QueueOverflow`].
 /// On a successful push, the counter is reset to zero.
 fn push_event(queues: &mut RtSideQueues, event: crate::RtEvent, consecutive_overflows: &mut u32) {
@@ -464,7 +462,7 @@ pub(crate) fn run_timing_test(iterations: u32, interval_ns: u64) -> Vec<u64> {
 
     // Best-effort RT priority elevation; ignore failures (e.g. in CI
     // sandboxes where the calling thread may lack permissions).
-    let _ = crate::priority::elevate_rt_priority();
+    let _rt_priority_handle = crate::priority::elevate_rt_priority().ok();
 
     let mut intervals: Vec<u64> = Vec::with_capacity(iterations as usize);
 
@@ -993,11 +991,11 @@ mod tests {
         push_event(&mut rt_side, tick, &mut overflows);
         assert_eq!(overflows, 1);
 
-        // Push enough to reach the threshold (already at 1, need 99 more).
-        for _ in 0..99 {
+        // Push enough to reach the threshold (already at 1, need 9 more).
+        for _ in 0..9 {
             push_event(&mut rt_side, tick, &mut overflows);
         }
-        // After reaching 100, the counter should reset (push_event tries
+        // After reaching 10, the counter should reset (push_event tries
         // to push a QueueOverflow error, which may also fail, but the
         // counter resets either way).
         assert_eq!(overflows, 0, "counter should reset after threshold");
@@ -1168,14 +1166,14 @@ mod tests {
         }
         assert_eq!(overflows, 0, "no overflows while queue has space");
 
-        // Push 101 more times to exceed the threshold.
-        // The 100th failure should trigger the overflow reporting path.
-        for _ in 0..101 {
+        // Push 11 more times to exceed the threshold.
+        // The 10th failure should trigger the overflow reporting path.
+        for _ in 0..11 {
             push_event(&mut rt_side, tick, &mut overflows);
         }
 
-        // After the 100th overflow, the counter should reset to 0.
-        // Then the 101st push fails and sets overflows to 1.
+        // After the 10th overflow, the counter should reset to 0.
+        // Then the 11th push fails and sets overflows to 1.
         assert_eq!(
             overflows, 1,
             "counter should have reset after threshold and then incremented once"
@@ -1195,7 +1193,6 @@ mod tests {
         let msg = crate::MidiMessage::note_on(0, 60, 100);
         let cmd = crate::EcsCommand::SendMidi {
             output_port_index: 0,
-            timestamp_ns: 0,
             message: msg,
         };
         while handles.commands.push(cmd).is_err() {
@@ -1232,7 +1229,6 @@ mod tests {
         let msg = crate::MidiMessage::note_on(0, 60, 100);
         let cmd = crate::EcsCommand::SendMidi {
             output_port_index: 0,
-            timestamp_ns: 0,
             message: msg,
         };
         while handles.commands.push(cmd).is_err() {

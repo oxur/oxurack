@@ -26,14 +26,12 @@ const RT_SAMPLE_RATE_HZ: u32 = 48_000;
 ///
 /// Returns [`crate::Error::PriorityElevation`] if the OS refuses the
 /// priority elevation (e.g., insufficient permissions).
-pub(crate) fn elevate_rt_priority() -> Result<(), crate::Error> {
-    let _handle = audio_thread_priority::promote_current_thread_to_real_time(
+pub(crate) fn elevate_rt_priority() -> Result<audio_thread_priority::RtPriorityHandle, crate::Error> {
+    audio_thread_priority::promote_current_thread_to_real_time(
         RT_BUFFER_FRAMES,
         RT_SAMPLE_RATE_HZ,
     )
-    .map_err(|e| crate::Error::PriorityElevation(e.to_string()))?;
-
-    Ok(())
+    .map_err(|e| crate::Error::PriorityElevation(e.to_string()))
 }
 
 #[cfg(test)]
