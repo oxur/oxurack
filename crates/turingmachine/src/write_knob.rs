@@ -62,10 +62,10 @@ mod tests {
         let mut rng = SmallRng::seed_from_u64(42);
 
         for _ in 0..100 {
-            assert_eq!(knob.resolve(true, &mut rng), true);
+            assert!(knob.resolve(true, &mut rng));
         }
         for _ in 0..100 {
-            assert_eq!(knob.resolve(false, &mut rng), false);
+            assert!(!knob.resolve(false, &mut rng));
         }
     }
 
@@ -76,7 +76,7 @@ mod tests {
 
         let mut saw_different = false;
         for _ in 0..1000 {
-            if knob.resolve(true, &mut rng) != true {
+            if !knob.resolve(true, &mut rng) {
                 saw_different = true;
                 break;
             }

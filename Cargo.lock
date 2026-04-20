@@ -989,7 +989,6 @@ dependencies = [
  "ahash",
  "bevy_app",
  "bevy_ecs",
- "bevy_reflect",
  "oxurack-midi",
  "oxurack-rt",
  "pretty_assertions",
@@ -1016,6 +1015,7 @@ name = "oxurack-rt"
 version = "0.1.0"
 dependencies = [
  "audio_thread_priority",
+ "libc",
  "midir",
  "oxurack-midi",
  "pretty_assertions",

@@ -8,7 +8,6 @@
 use std::collections::HashMap;
 
 use bevy_ecs::prelude::{Component, Entity, Resource};
-use bevy_reflect::Reflect;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
@@ -20,7 +19,7 @@ use crate::Value;
 /// kinds. [`CableTransform::apply`] returns `None` when the input kind
 /// is not supported by the transform.
 #[non_exhaustive]
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Reflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum CableTransform {
     /// Linear transform: `out = in * factor + offset`.
     ///
@@ -99,22 +98,16 @@ impl CableTransform {
             (Self::Invert, Value::Bipolar(v)) => Some(Value::Bipolar(-v)),
 
             // ── Clamp ──────────────────────────────────────────
-            (Self::Clamp { min, max }, Value::Float(v)) => {
-                Some(Value::Float(v.clamp(*min, *max)))
-            }
+            (Self::Clamp { min, max }, Value::Float(v)) => Some(Value::Float(v.clamp(*min, *max))),
             (Self::Clamp { min, max }, Value::Bipolar(v)) => {
                 Some(Value::Bipolar(v.clamp(*min, *max)))
             }
 
             // ── Threshold ──────────────────────────────────────
-            (Self::Threshold { threshold }, Value::Float(v)) => {
-                Some(Value::Gate(v >= *threshold))
-            }
+            (Self::Threshold { threshold }, Value::Float(v)) => Some(Value::Gate(v >= *threshold)),
 
             // ── GateToFloat ────────────────────────────────────
-            (Self::GateToFloat, Value::Gate(b)) => {
-                Some(Value::Float(if b { 1.0 } else { 0.0 }))
-            }
+            (Self::GateToFloat, Value::Gate(b)) => Some(Value::Float(if b { 1.0 } else { 0.0 })),
 
             // ── Unipolar (Float -> Bipolar) ────────────────────
             (Self::Unipolar, Value::Float(v)) => Some(Value::Bipolar(v * 2.0 - 1.0)),
@@ -135,7 +128,7 @@ impl CableTransform {
 /// Cables live as their own entities in the ECS world, referencing the
 /// source and target port entities. An optional [`CableTransform`]
 /// modifies the signal in transit.
-#[derive(Component, Debug, Clone, Reflect)]
+#[derive(Component, Debug, Clone)]
 pub struct Cable {
     /// The output port entity this cable reads from.
     pub source_port: Entity,
@@ -245,10 +238,7 @@ mod tests {
             factor: 1.0,
             offset: 0.0,
         };
-        assert_eq!(
-            t.apply(Value::Midi(crate::value::MidiMessage::Clock)),
-            None
-        );
+        assert_eq!(t.apply(Value::Midi(crate::value::MidiMessage::Clock)), None);
     }
 
     #[test]
@@ -301,28 +291,19 @@ mod tests {
 
     #[test]
     fn test_clamp_float_within() {
-        let t = CableTransform::Clamp {
-            min: 0.2,
-            max: 0.8,
-        };
+        let t = CableTransform::Clamp { min: 0.2, max: 0.8 };
         assert_eq!(t.apply(Value::Float(0.5)), Some(Value::Float(0.5)));
     }
 
     #[test]
     fn test_clamp_float_below() {
-        let t = CableTransform::Clamp {
-            min: 0.2,
-            max: 0.8,
-        };
+        let t = CableTransform::Clamp { min: 0.2, max: 0.8 };
         assert_eq!(t.apply(Value::Float(0.1)), Some(Value::Float(0.2)));
     }
 
     #[test]
     fn test_clamp_float_above() {
-        let t = CableTransform::Clamp {
-            min: 0.2,
-            max: 0.8,
-        };
+        let t = CableTransform::Clamp { min: 0.2, max: 0.8 };
         assert_eq!(t.apply(Value::Float(0.9)), Some(Value::Float(0.8)));
     }
 
@@ -337,31 +318,19 @@ mod tests {
 
     #[test]
     fn test_clamp_gate_none() {
-        let t = CableTransform::Clamp {
-            min: 0.0,
-            max: 1.0,
-        };
+        let t = CableTransform::Clamp { min: 0.0, max: 1.0 };
         assert_eq!(t.apply(Value::Gate(true)), None);
     }
 
     #[test]
     fn test_clamp_midi_none() {
-        let t = CableTransform::Clamp {
-            min: 0.0,
-            max: 1.0,
-        };
-        assert_eq!(
-            t.apply(Value::Midi(crate::value::MidiMessage::Clock)),
-            None
-        );
+        let t = CableTransform::Clamp { min: 0.0, max: 1.0 };
+        assert_eq!(t.apply(Value::Midi(crate::value::MidiMessage::Clock)), None);
     }
 
     #[test]
     fn test_clamp_raw_none() {
-        let t = CableTransform::Clamp {
-            min: 0.0,
-            max: 1.0,
-        };
+        let t = CableTransform::Clamp { min: 0.0, max: 1.0 };
         assert_eq!(t.apply(Value::Raw(5)), None);
     }
 
@@ -400,10 +369,7 @@ mod tests {
     #[test]
     fn test_threshold_midi_none() {
         let t = CableTransform::Threshold { threshold: 0.5 };
-        assert_eq!(
-            t.apply(Value::Midi(crate::value::MidiMessage::Clock)),
-            None
-        );
+        assert_eq!(t.apply(Value::Midi(crate::value::MidiMessage::Clock)), None);
     }
 
     #[test]
@@ -437,10 +403,7 @@ mod tests {
 
     #[test]
     fn test_gate_to_float_bipolar_none() {
-        assert_eq!(
-            CableTransform::GateToFloat.apply(Value::Bipolar(0.5)),
-            None
-        );
+        assert_eq!(CableTransform::GateToFloat.apply(Value::Bipolar(0.5)), None);
     }
 
     #[test]

@@ -440,9 +440,7 @@ mod tests {
             data2: 0,
             length: 2,
         };
-        let msg = wire
-            .to_message()
-            .expect("should convert ChannelPressure");
+        let msg = wire.to_message().expect("should convert ChannelPressure");
         assert_eq!(
             msg,
             MidiMessage::ChannelPressure {
@@ -460,9 +458,7 @@ mod tests {
             data2: 80,
             length: 3,
         };
-        let msg = wire
-            .to_message()
-            .expect("should convert PolyKeyPressure");
+        let msg = wire.to_message().expect("should convert PolyKeyPressure");
         assert_eq!(
             msg,
             MidiMessage::PolyKeyPressure {

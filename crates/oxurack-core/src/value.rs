@@ -4,8 +4,6 @@
 //! speaks in terms of `Value`. The [`ValueKind`] discriminant enables
 //! type-aware routing and merge policies without matching every variant.
 
-use bevy_reflect::Reflect;
-
 /// Structured MIDI message for the ECS world.
 ///
 /// Re-exported from [`oxurack_midi::MidiMessage`]. For the compact
@@ -19,7 +17,7 @@ pub use oxurack_midi::MidiMessage;
 /// `Value` is kept at 16 bytes or fewer so it can be cheaply copied
 /// through the ECS without heap allocation.
 #[non_exhaustive]
-#[derive(Debug, Clone, Copy, PartialEq, Reflect)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Value {
     /// Unipolar float in the range 0.0..=1.0 (by convention).
     Float(f32),
@@ -38,7 +36,7 @@ pub enum Value {
 /// Useful for port declarations, merge-policy checks, and coercion
 /// tables where only the *kind* of signal matters, not its data.
 #[non_exhaustive]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ValueKind {
     /// Corresponds to [`Value::Float`].
     Float,
@@ -99,13 +97,9 @@ impl Value {
             (Self::Float(v), ValueKind::Bipolar) => Some(Self::Bipolar(*v * 2.0 - 1.0)),
 
             // Gate -> Float
-            (Self::Gate(b), ValueKind::Float) => {
-                Some(Self::Float(if *b { 1.0 } else { 0.0 }))
-            }
+            (Self::Gate(b), ValueKind::Float) => Some(Self::Float(if *b { 1.0 } else { 0.0 })),
             // Gate -> Bipolar
-            (Self::Gate(b), ValueKind::Bipolar) => {
-                Some(Self::Bipolar(if *b { 1.0 } else { -1.0 }))
-            }
+            (Self::Gate(b), ValueKind::Bipolar) => Some(Self::Bipolar(if *b { 1.0 } else { -1.0 })),
 
             // Bipolar -> Float
             (Self::Bipolar(v), ValueKind::Float) => Some(Self::Float((*v + 1.0) / 2.0)),
@@ -172,10 +166,7 @@ mod tests {
 
     #[test]
     fn test_default_for_kind_gate() {
-        assert_eq!(
-            Value::default_for_kind(ValueKind::Gate),
-            Value::Gate(false)
-        );
+        assert_eq!(Value::default_for_kind(ValueKind::Gate), Value::Gate(false));
     }
 
     #[test]

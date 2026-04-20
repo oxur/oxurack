@@ -56,31 +56,37 @@ pub mod bridge;
 // Phase 1
 pub use cable::{Cable, CableIndex, CableTransform};
 pub use error::{CoreError, PatchError, TickError};
-pub use module::{spawn_module_entity, Module, ModuleId, ModuleKind};
-pub use port::{spawn_port_on_module, CurrentValue, MergePolicy, Port, PortDirection, PortName};
+pub use module::{Module, ModuleId, ModuleKind, spawn_module_entity};
+pub use port::{CurrentValue, MergePolicy, Port, PortDirection, PortName, spawn_port_on_module};
 pub use value::{MidiMessage, Value, ValueKind};
 
 // Phase 2
 pub use rng::{derive_module_rng, derive_seed};
-pub use tick::{compute_tick_order, MergeBuffers, PropagationOrder, TickNow, TickOrder, TickPhase};
+pub use tick::{
+    MergeBuffers, PropagationOrder, PropagationOrderDirty, TickNow, TickOrder, TickPhase,
+    compute_tick_order, mark_propagation_order_dirty,
+};
 
 // Phase 4
-pub use event::{CoreCommand, MidiInReceived, PatchLoaded, TransportChanged, TransportState};
 pub use event::dispatch_core_command;
+pub use event::{
+    CoreCommand, MidiInReceived, PatchLoaded, RtWarning, RtWarningCode, SongPositionChanged,
+    TransportChanged, TransportState,
+};
 pub use module::{ModuleRegistration, ModuleRegistry, ModuleSpawner, OxurackModule, PortSchema};
 pub use parameter::{ParameterName, ParameterRegistry, ParameterSchema, ParameterValue};
 pub use patch::{
-    apply_patch_to_world, deserialize_patch, load_patch_from_file, load_patch_into_world,
-    save_patch_to_file, serialize_patch, validate_patch, CableConfig, ModuleConfig, Patch,
-    PatchHandle,
+    CableConfig, ModuleConfig, Patch, PatchHandle, apply_patch_to_world, deserialize_patch,
+    load_patch_from_file, load_patch_into_world, save_patch_to_file, serialize_patch,
+    validate_patch,
 };
 pub use scale::Scale;
 
 // Phase 6 (rt-bridge feature)
 #[cfg(feature = "rt-bridge")]
 pub use bridge::{
-    convert_core_midi, convert_rt_midi, drain_rt_events_system, flush_midi_output_system,
-    MidiOutputQueue, RtBridge,
+    MidiOutputQueue, RtBridge, convert_core_midi, convert_rt_midi, drain_rt_events_system,
+    flush_midi_output_system,
 };
 
 // ── CorePlugin ──────────────────────────────────────────────────────
@@ -118,6 +124,7 @@ impl Plugin for CorePlugin {
             .init_resource::<tick::MergeBuffers>()
             .init_resource::<tick::TickOrder>()
             .init_resource::<tick::PropagationOrder>()
+            .init_resource::<tick::PropagationOrderDirty>()
             .init_resource::<ParameterRegistry>()
             .init_resource::<ModuleRegistry>()
             .add_message::<tick::TickNow>()
@@ -125,18 +132,18 @@ impl Plugin for CorePlugin {
             .add_message::<MidiInReceived>()
             .add_message::<CoreCommand>()
             .add_message::<PatchLoaded>()
+            .add_message::<RtWarning>()
+            .add_message::<SongPositionChanged>()
             .configure_sets(
                 Update,
-                (
-                    TickPhase::Produce,
-                    TickPhase::Propagate,
-                    TickPhase::Consume,
-                )
-                    .chain(),
+                (TickPhase::Produce, TickPhase::Propagate, TickPhase::Consume).chain(),
             )
             .add_systems(
                 Update,
                 (
+                    tick::rebuild_propagation_order_system
+                        .in_set(TickPhase::Propagate)
+                        .before(tick::propagate_cables_system),
                     tick::propagate_cables_system.in_set(TickPhase::Propagate),
                     tick::consume_ports_system.in_set(TickPhase::Consume),
                 ),

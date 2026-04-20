@@ -201,8 +201,8 @@ mod tests {
         // Index 15 = bit 0 (newest) = true
         assert!(bools[15]);
         // Everything else is false
-        for i in 1..15 {
-            assert!(!bools[i], "expected false at index {i}");
+        for (i, val) in bools.iter().enumerate().skip(1).take(14) {
+            assert!(!val, "expected false at index {i}");
         }
     }
 

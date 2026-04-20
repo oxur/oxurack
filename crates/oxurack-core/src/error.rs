@@ -80,7 +80,9 @@ pub enum PatchError {
     FeedbackCycle(Vec<String>),
 
     /// Source and target ports have incompatible value kinds.
-    #[error("cable source and target value kinds are incompatible: {source_kind:?} -> {target_kind:?}")]
+    #[error(
+        "cable source and target value kinds are incompatible: {source_kind:?} -> {target_kind:?}"
+    )]
     KindMismatch {
         /// Value kind of the cable source port.
         source_kind: ValueKind,
@@ -166,10 +168,7 @@ mod tests {
         let msg = format!("{err}");
         assert!(msg.contains("filter"), "expected 'filter' in: {msg}");
         assert!(msg.contains("cutoff"), "expected 'cutoff' in: {msg}");
-        assert!(
-            msg.contains("must be between"),
-            "expected reason in: {msg}"
-        );
+        assert!(msg.contains("must be between"), "expected reason in: {msg}");
     }
 
     // ── PatchError Display ──────────────────────────────────────────
@@ -192,10 +191,7 @@ mod tests {
             module: "vco_1".into(),
             port: "freq".into(),
         };
-        assert_eq!(
-            format!("{err}"),
-            "unknown port 'freq' on module 'vco_1'"
-        );
+        assert_eq!(format!("{err}"), "unknown port 'freq' on module 'vco_1'");
     }
 
     #[test]
@@ -256,14 +252,8 @@ mod tests {
         let io_err = std::io::Error::new(std::io::ErrorKind::NotFound, "file not found");
         let err = PatchError::Io(io_err);
         let msg = format!("{err}");
-        assert!(
-            msg.contains("I/O error"),
-            "expected 'I/O error' in: {msg}"
-        );
-        assert!(
-            msg.contains("file not found"),
-            "expected detail in: {msg}"
-        );
+        assert!(msg.contains("I/O error"), "expected 'I/O error' in: {msg}");
+        assert!(msg.contains("file not found"), "expected detail in: {msg}");
     }
 
     #[test]
@@ -295,10 +285,7 @@ mod tests {
     #[test]
     fn test_tick_error_module_panic() {
         let err = TickError::ModulePanic("reverb_1".into());
-        assert_eq!(
-            format!("{err}"),
-            "module 'reverb_1' panicked during tick"
-        );
+        assert_eq!(format!("{err}"), "module 'reverb_1' panicked during tick");
     }
 
     #[test]

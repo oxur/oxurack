@@ -14,13 +14,12 @@ use std::fmt;
 
 use bevy_ecs::prelude::{Component, Entity, Resource};
 use bevy_ecs::world::World;
-use bevy_reflect::Reflect;
 
 /// The class name of a module (e.g. `"vco"`, `"adsr"`, `"mixer"`).
 ///
 /// This is a string newtype that identifies what *kind* of module
 /// something is, as opposed to which *instance* it is.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ModuleKind(String);
 
 impl From<&str> for ModuleKind {
@@ -51,7 +50,7 @@ impl AsRef<str> for ModuleKind {
 ///
 /// Module IDs are cheap to copy and compare. They are ordered so they
 /// can be used as sort keys for deterministic processing order.
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Reflect)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ModuleId(pub u64);
 
 impl ModuleId {
@@ -77,7 +76,7 @@ impl fmt::Display for ModuleId {
 /// Every module entity carries a [`Module`] component (describing what
 /// it is) and a [`ModuleId`] component (providing a deterministic
 /// identity).
-#[derive(Component, Debug, Clone, Reflect)]
+#[derive(Component, Debug, Clone)]
 pub struct Module {
     /// The class of module (e.g. `"vco"`, `"filter"`).
     pub kind: ModuleKind,
@@ -155,31 +154,16 @@ pub trait OxurackModule: Send + Sync + 'static {
     /// child port entities from the port schema, and applies the given
     /// parameter overrides.
     ///
-    /// The default implementation spawns a module entity via
-    /// [`spawn_module_entity`] and creates ports from
+    /// Implementors should spawn a module entity via
+    /// [`spawn_module_entity`] and create ports from
     /// [`port_schema`](OxurackModule::port_schema) via
     /// [`spawn_port_on_module`](crate::spawn_port_on_module).
-    /// Concrete modules can override this to add custom components.
+    /// Concrete modules can add custom components after spawning.
     fn spawn(
         world: &mut World,
         instance_name: &str,
-        _parameters: &HashMap<String, crate::ParameterValue>,
-    ) -> Result<Entity, crate::CoreError> {
-        let module_entity = spawn_module_entity(world, Self::KIND, instance_name);
-
-        for schema in Self::port_schema() {
-            crate::spawn_port_on_module(
-                world,
-                module_entity,
-                schema.name,
-                schema.direction,
-                schema.value_kind,
-                schema.merge_policy,
-            );
-        }
-
-        Ok(module_entity)
-    }
+        parameters: &HashMap<String, crate::ParameterValue>,
+    ) -> Result<Entity, crate::CoreError>;
 }
 
 // ── ModuleSpawner ────────────────────────────────────────────────
@@ -375,7 +359,10 @@ mod tests {
     fn test_module_id_sorting() {
         let mut ids = vec![ModuleId(5), ModuleId(1), ModuleId(3), ModuleId(2)];
         ids.sort();
-        assert_eq!(ids, vec![ModuleId(1), ModuleId(2), ModuleId(3), ModuleId(5)]);
+        assert_eq!(
+            ids,
+            vec![ModuleId(1), ModuleId(2), ModuleId(3), ModuleId(5)]
+        );
     }
 
     #[test]
@@ -542,6 +529,25 @@ mod tests {
                 default: crate::ParameterValue::Int(0),
             }]
         }
+
+        fn spawn(
+            world: &mut bevy_ecs::world::World,
+            instance_name: &str,
+            _parameters: &std::collections::HashMap<String, crate::ParameterValue>,
+        ) -> Result<bevy_ecs::prelude::Entity, crate::CoreError> {
+            let module_entity = crate::spawn_module_entity(world, Self::KIND, instance_name);
+            for schema in Self::port_schema() {
+                crate::spawn_port_on_module(
+                    world,
+                    module_entity,
+                    schema.name,
+                    schema.direction,
+                    schema.value_kind,
+                    schema.merge_policy,
+                );
+            }
+            Ok(module_entity)
+        }
     }
 
     /// A second dummy module to verify multiple registrations.
@@ -557,6 +563,25 @@ mod tests {
 
         fn parameter_schema() -> &'static [crate::ParameterSchema] {
             &[]
+        }
+
+        fn spawn(
+            world: &mut bevy_ecs::world::World,
+            instance_name: &str,
+            _parameters: &std::collections::HashMap<String, crate::ParameterValue>,
+        ) -> Result<bevy_ecs::prelude::Entity, crate::CoreError> {
+            let module_entity = crate::spawn_module_entity(world, Self::KIND, instance_name);
+            for schema in Self::port_schema() {
+                crate::spawn_port_on_module(
+                    world,
+                    module_entity,
+                    schema.name,
+                    schema.direction,
+                    schema.value_kind,
+                    schema.merge_policy,
+                );
+            }
+            Ok(module_entity)
         }
     }
 

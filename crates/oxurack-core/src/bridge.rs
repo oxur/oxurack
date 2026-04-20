@@ -17,8 +17,8 @@
 //!   functions between the compact RT MIDI format and core's
 //!   structured [`MidiMessage`](crate::MidiMessage).
 
-use bevy_ecs::prelude::{MessageWriter, ResMut, Resource};
 use bevy_ecs::change_detection::NonSendMut;
+use bevy_ecs::prelude::{MessageWriter, ResMut, Resource};
 
 // ── Resources ───────────────────────────────────────────────────────
 
@@ -77,6 +77,23 @@ pub fn convert_core_midi(msg: &crate::MidiMessage) -> Option<oxurack_rt::MidiMes
     msg.to_wire()
 }
 
+// ── RtErrorCode conversion ──────────────────────────────────────────
+
+impl From<oxurack_rt::RtErrorCode> for crate::RtWarningCode {
+    fn from(code: oxurack_rt::RtErrorCode) -> Self {
+        match code {
+            oxurack_rt::RtErrorCode::PriorityElevationFailed => Self::PriorityElevationFailed,
+            oxurack_rt::RtErrorCode::ClockDropout => Self::ClockDropout,
+            oxurack_rt::RtErrorCode::ClockNotLocked => Self::ClockNotLocked,
+            oxurack_rt::RtErrorCode::QueueOverflow => Self::QueueOverflow,
+            oxurack_rt::RtErrorCode::OutputPortLost => Self::OutputPortLost,
+            oxurack_rt::RtErrorCode::InputPortLost => Self::InputPortLost,
+            // RtErrorCode is #[non_exhaustive], so handle unknown future variants.
+            _ => Self::QueueOverflow, // fallback for unknown codes
+        }
+    }
+}
+
 // ── Systems ─────────────────────────────────────────────────────────
 
 /// Drains RT events from the queue and emits core ECS messages.
@@ -93,6 +110,8 @@ pub fn drain_rt_events_system(
     mut tick_writer: MessageWriter<crate::TickNow>,
     mut transport_writer: MessageWriter<crate::TransportChanged>,
     mut midi_writer: MessageWriter<crate::MidiInReceived>,
+    mut warning_writer: MessageWriter<crate::RtWarning>,
+    mut spp_writer: MessageWriter<crate::SongPositionChanged>,
 ) {
     let Some(mut bridge) = bridge else { return };
     while let Ok(event) = bridge.events.pop() {
@@ -108,6 +127,7 @@ pub fn drain_rt_events_system(
                     oxurack_rt::TransportEvent::Start => crate::TransportState::Started,
                     oxurack_rt::TransportEvent::Stop => crate::TransportState::Stopped,
                     oxurack_rt::TransportEvent::Continue => crate::TransportState::Continued,
+                    // TransportEvent is #[non_exhaustive]
                     _ => continue,
                 };
                 transport_writer.write(crate::TransportChanged(state));
@@ -125,7 +145,16 @@ pub fn drain_rt_events_system(
                     });
                 }
             }
-            _ => {} // SongPosition, NonFatalError -- ignored for now
+            oxurack_rt::RtEvent::NonFatalError(code) => {
+                warning_writer.write(crate::RtWarning {
+                    code: crate::RtWarningCode::from(code),
+                });
+            }
+            oxurack_rt::RtEvent::SongPosition { position } => {
+                spp_writer.write(crate::SongPositionChanged { position });
+            }
+            // RtEvent is #[non_exhaustive]; ignore unknown future variants.
+            _ => {}
         }
     }
 }
@@ -390,9 +419,7 @@ mod tests {
         assert!(convert_core_midi(&crate::MidiMessage::Start).is_none());
         assert!(convert_core_midi(&crate::MidiMessage::Stop).is_none());
         assert!(convert_core_midi(&crate::MidiMessage::Continue).is_none());
-        assert!(
-            convert_core_midi(&crate::MidiMessage::SongPosition { position: 0 }).is_none()
-        );
+        assert!(convert_core_midi(&crate::MidiMessage::SongPosition { position: 0 }).is_none());
         assert!(convert_core_midi(&crate::MidiMessage::SystemExclusive).is_none());
     }
 
@@ -442,7 +469,9 @@ mod tests {
     fn test_midi_output_queue_push_and_drain() {
         let mut queue = MidiOutputQueue::default();
 
-        queue.commands.push(oxurack_rt::EcsCommand::SetTempo { bpm: 120.0 });
+        queue
+            .commands
+            .push(oxurack_rt::EcsCommand::SetTempo { bpm: 120.0 });
         queue.commands.push(oxurack_rt::EcsCommand::Shutdown);
         assert_eq!(queue.commands.len(), 2);
 

@@ -9,7 +9,6 @@
 //! it easy to constrain random or continuous note sources to musically
 //! useful pitches.
 
-use bevy_reflect::Reflect;
 use serde::{Deserialize, Serialize};
 
 /// A musical scale defined by a root note and semitone intervals within
@@ -28,15 +27,13 @@ use serde::{Deserialize, Serialize};
 /// assert_eq!(scale.quantize(61), 60); // C#4 snaps down to C4
 /// assert!(scale.is_in_scale(60));      // C4 is in C major
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Reflect)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Scale {
     /// Root note of the scale (0 = C, 1 = C#, ..., 11 = B).
     /// Values > 11 are clamped to 11 during construction.
     pub root: u8,
 
     /// Semitone intervals within one octave, sorted and deduplicated.
-    /// Uses `Vec<u8>` for now; a future optimisation may switch to
-    /// `SmallVec<[u8; 12]>` once `Reflect` support is available.
     pub intervals: Vec<u8>,
 
     /// Optional display name (e.g. "Major", "Dorian").
@@ -137,11 +134,7 @@ impl Scale {
     /// Major (Ionian) scale.
     #[must_use]
     pub fn major(root: u8) -> Self {
-        Self::new(
-            vec![0, 2, 4, 5, 7, 9, 11],
-            root,
-            Some("Major".to_string()),
-        )
+        Self::new(vec![0, 2, 4, 5, 7, 9, 11], root, Some("Major".to_string()))
     }
 
     /// Natural minor (Aeolian) scale.
@@ -187,21 +180,13 @@ impl Scale {
     /// Blues scale.
     #[must_use]
     pub fn blues(root: u8) -> Self {
-        Self::new(
-            vec![0, 3, 5, 6, 7, 10],
-            root,
-            Some("Blues".to_string()),
-        )
+        Self::new(vec![0, 3, 5, 6, 7, 10], root, Some("Blues".to_string()))
     }
 
     /// Dorian mode.
     #[must_use]
     pub fn dorian(root: u8) -> Self {
-        Self::new(
-            vec![0, 2, 3, 5, 7, 9, 10],
-            root,
-            Some("Dorian".to_string()),
-        )
+        Self::new(vec![0, 2, 3, 5, 7, 9, 10], root, Some("Dorian".to_string()))
     }
 
     /// Phrygian mode.
@@ -217,11 +202,7 @@ impl Scale {
     /// Lydian mode.
     #[must_use]
     pub fn lydian(root: u8) -> Self {
-        Self::new(
-            vec![0, 2, 4, 6, 7, 9, 11],
-            root,
-            Some("Lydian".to_string()),
-        )
+        Self::new(vec![0, 2, 4, 6, 7, 9, 11], root, Some("Lydian".to_string()))
     }
 
     /// Mixolydian mode.
@@ -257,11 +238,14 @@ impl Scale {
     /// Augmented scale.
     #[must_use]
     pub fn augmented(root: u8) -> Self {
-        Self::new(
-            vec![0, 3, 4, 7, 8, 11],
-            root,
-            Some("Augmented".to_string()),
-        )
+        Self::new(vec![0, 3, 4, 7, 8, 11], root, Some("Augmented".to_string()))
+    }
+}
+
+#[cfg(test)]
+impl Scale {
+    fn minor_pentatonic_alias(root: u8) -> Self {
+        Self::pentatonic_minor(root)
     }
 }
 
@@ -325,10 +309,7 @@ mod tests {
     #[test]
     fn test_chromatic_intervals() {
         let scale = Scale::chromatic(0);
-        assert_eq!(
-            scale.intervals(),
-            &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-        );
+        assert_eq!(scale.intervals(), &[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
         assert_eq!(scale.name(), Some("Chromatic"));
     }
 
@@ -483,16 +464,16 @@ mod tests {
     fn test_is_in_scale_root_c() {
         let scale = Scale::major(0);
         // C major: C D E F G A B => notes 0,2,4,5,7,9,11 (+ octaves)
-        assert!(scale.is_in_scale(0));  // C
+        assert!(scale.is_in_scale(0)); // C
         assert!(!scale.is_in_scale(1)); // C#
-        assert!(scale.is_in_scale(2));  // D
+        assert!(scale.is_in_scale(2)); // D
         assert!(!scale.is_in_scale(3)); // D#
-        assert!(scale.is_in_scale(4));  // E
-        assert!(scale.is_in_scale(5));  // F
+        assert!(scale.is_in_scale(4)); // E
+        assert!(scale.is_in_scale(5)); // F
         assert!(!scale.is_in_scale(6)); // F#
-        assert!(scale.is_in_scale(7));  // G
+        assert!(scale.is_in_scale(7)); // G
         assert!(!scale.is_in_scale(8)); // G#
-        assert!(scale.is_in_scale(9));  // A
+        assert!(scale.is_in_scale(9)); // A
         assert!(!scale.is_in_scale(10)); // A#
         assert!(scale.is_in_scale(11)); // B
     }
@@ -502,18 +483,18 @@ mod tests {
         // D major (root=2): intervals 0,2,4,5,7,9,11
         // In absolute terms: D(2) E(4) F#(6) G(7) A(9) B(11) C#(1)
         let scale = Scale::major(2);
-        assert!(scale.is_in_scale(2));  // D
+        assert!(scale.is_in_scale(2)); // D
         assert!(!scale.is_in_scale(3)); // D#
-        assert!(scale.is_in_scale(4));  // E
+        assert!(scale.is_in_scale(4)); // E
         assert!(!scale.is_in_scale(5)); // F
-        assert!(scale.is_in_scale(6));  // F#
-        assert!(scale.is_in_scale(7));  // G
+        assert!(scale.is_in_scale(6)); // F#
+        assert!(scale.is_in_scale(7)); // G
         assert!(!scale.is_in_scale(8)); // G#
-        assert!(scale.is_in_scale(9));  // A
+        assert!(scale.is_in_scale(9)); // A
         assert!(!scale.is_in_scale(10)); // A#
         assert!(scale.is_in_scale(11)); // B
         assert!(!scale.is_in_scale(0)); // C
-        assert!(scale.is_in_scale(1));  // C#
+        assert!(scale.is_in_scale(1)); // C#
     }
 
     #[test]
@@ -565,14 +546,5 @@ mod tests {
         let a = Scale::major(0);
         let b = Scale::minor_pentatonic_alias(0);
         assert_ne!(a, b);
-    }
-}
-
-// Test-only helper (keep out of the main impl to avoid polluting the
-// public API).
-#[cfg(test)]
-impl Scale {
-    fn minor_pentatonic_alias(root: u8) -> Self {
-        Self::pentatonic_minor(root)
     }
 }

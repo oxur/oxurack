@@ -9,8 +9,8 @@
 use std::hash::{Hash, Hasher};
 
 use ahash::AHasher;
-use rand::rngs::SmallRng;
 use rand::SeedableRng;
+use rand::rngs::SmallRng;
 
 /// Derive a deterministic seed by hashing `master_seed` and
 /// `instance_name` together.

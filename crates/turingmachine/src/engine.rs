@@ -428,10 +428,7 @@ mod tests {
         // entirely, so after a second call the states diverge.
         let _out_move2 = tm_move.move_step();
         let out_tick2 = tm_tick.tick();
-        assert!(
-            out_tick2.div2,
-            "tick should fire div2 on the second tick"
-        );
+        assert!(out_tick2.div2, "tick should fire div2 on the second tick");
         assert!(!out_move.div2, "move_step should never fire div2");
     }
 
@@ -511,7 +508,11 @@ mod tests {
         let display = tm.to_string();
 
         // 14 non-loop bits + "[" + 2 loop bits + "]" = 18 chars.
-        assert_eq!(display.len(), 18, "display should always be 18 chars: {display}");
+        assert_eq!(
+            display.len(),
+            18,
+            "display should always be 18 chars: {display}"
+        );
 
         let open = display.find('[').unwrap();
         let close = display.find(']').unwrap();
@@ -544,7 +545,8 @@ mod tests {
         for n in 0..6 {
             let expected = ((bits >> n) & 1 == 1) && ((bits >> (n + 1)) & 1 == 1);
             assert_eq!(
-                outputs.pulses[n], expected,
+                outputs.pulses[n],
+                expected,
                 "pulse[{n}] should be AND of bits {n} and {}",
                 n + 1
             );
@@ -602,10 +604,8 @@ mod tests {
 
         // Collect notes from both engines with identical register state
         // but different scales.
-        let notes_chromatic: Vec<Option<u8>> =
-            (0..16).map(|_| tm_chromatic.tick().note).collect();
-        let notes_penta: Vec<Option<u8>> =
-            (0..16).map(|_| tm_penta.tick().note).collect();
+        let notes_chromatic: Vec<Option<u8>> = (0..16).map(|_| tm_chromatic.tick().note).collect();
+        let notes_penta: Vec<Option<u8>> = (0..16).map(|_| tm_penta.tick().note).collect();
 
         // The note sequences should differ because pentatonic quantizes
         // differently from chromatic.
@@ -624,10 +624,8 @@ mod tests {
         tm_e.set_scale(Scale::major());
         tm_e.set_root(4); // E major
 
-        let notes_c: Vec<Option<u8>> =
-            (0..16).map(|_| tm_c.tick().note).collect();
-        let notes_e: Vec<Option<u8>> =
-            (0..16).map(|_| tm_e.tick().note).collect();
+        let notes_c: Vec<Option<u8>> = (0..16).map(|_| tm_c.tick().note).collect();
+        let notes_e: Vec<Option<u8>> = (0..16).map(|_| tm_e.tick().note).collect();
 
         assert_ne!(
             notes_c, notes_e,
@@ -708,11 +706,7 @@ mod tests {
         }
         assert_eq!(tm.step_count(), 10);
         tm.reset();
-        assert_eq!(
-            tm.step_count(),
-            0,
-            "step_count should be 0 after reset"
-        );
+        assert_eq!(tm.step_count(), 0, "step_count should be 0 after reset");
     }
 
     #[test]

@@ -16,4 +16,5 @@ audio_thread_priority = "0.34"
 thiserror             = "2"
 
 [dev-dependencies]
+libc              = "0.2"
 pretty_assertions = "1"

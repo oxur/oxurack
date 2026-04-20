@@ -173,9 +173,9 @@ fn validate_port_ref(
         })?;
 
     let kind = crate::ModuleKind::from(module.kind.as_str());
-    let reg = registry.get(&kind).ok_or_else(|| {
-        crate::PatchError::UnknownModuleKind(module.kind.clone())
-    })?;
+    let reg = registry
+        .get(&kind)
+        .ok_or_else(|| crate::PatchError::UnknownModuleKind(module.kind.clone()))?;
 
     if !reg.port_schemas.iter().any(|p| p.name == port_name) {
         return Err(crate::PatchError::UnknownPort {
@@ -205,9 +205,9 @@ fn find_port_schema<'a>(
         })?;
 
     let kind = crate::ModuleKind::from(module.kind.as_str());
-    let reg = registry.get(&kind).ok_or_else(|| {
-        crate::PatchError::UnknownModuleKind(module.kind.clone())
-    })?;
+    let reg = registry
+        .get(&kind)
+        .ok_or_else(|| crate::PatchError::UnknownModuleKind(module.kind.clone()))?;
 
     reg.port_schemas
         .iter()
@@ -283,8 +283,7 @@ fn check_patch_cycles(patch: &Patch) -> Result<(), crate::PatchError> {
             .filter(|name| !resolved.contains(**name))
             .copied()
             .collect();
-        let cycle_members =
-            find_patch_cycle_members(&unresolved, &dependents);
+        let cycle_members = find_patch_cycle_members(&unresolved, &dependents);
         return Err(crate::PatchError::FeedbackCycle(cycle_members));
     }
 
@@ -412,13 +411,9 @@ pub fn deserialize_patch(ron_str: &str) -> Result<Patch, crate::PatchError> {
 ///
 /// Returns [`CoreError`](crate::CoreError) on serialisation or I/O
 /// failure.
-pub fn save_patch_to_file(
-    patch: &Patch,
-    path: &std::path::Path,
-) -> Result<(), crate::CoreError> {
+pub fn save_patch_to_file(patch: &Patch, path: &std::path::Path) -> Result<(), crate::CoreError> {
     let ron_str = serialize_patch(patch)?;
-    std::fs::write(path, ron_str)
-        .map_err(|e| crate::CoreError::Patch(crate::PatchError::Io(e)))?;
+    std::fs::write(path, ron_str).map_err(|e| crate::CoreError::Patch(crate::PatchError::Io(e)))?;
     Ok(())
 }
 
@@ -512,6 +507,9 @@ pub fn apply_patch_to_world(
             .add_cable(cable_entity, &cable);
     }
 
+    // Mark the propagation order dirty so it gets rebuilt on the next tick.
+    world.resource_mut::<crate::PropagationOrderDirty>().0 = true;
+
     Ok(PatchHandle {
         modules: module_entities,
     })
@@ -524,15 +522,13 @@ pub fn apply_patch_to_world(
 /// first whose parent is `module_entity` and whose port name matches.
 fn find_port_entity(world: &mut World, module_entity: Entity, port_name: &str) -> Option<Entity> {
     let mut query = world.query::<(Entity, &crate::Port, &bevy_ecs::hierarchy::ChildOf)>();
-    query
-        .iter(world)
-        .find_map(|(entity, port, child_of)| {
-            if child_of.0 == module_entity && port.name.as_ref() == port_name {
-                Some(entity)
-            } else {
-                None
-            }
-        })
+    query.iter(world).find_map(|(entity, port, child_of)| {
+        if child_of.0 == module_entity && port.name.as_ref() == port_name {
+            Some(entity)
+        } else {
+            None
+        }
+    })
 }
 
 /// Loads a patch from a RON file and applies it to the ECS world.
@@ -559,8 +555,8 @@ pub fn load_patch_into_world(
 mod tests {
     use super::*;
     use crate::{
-        MergePolicy, ModuleRegistry, OxurackModule, ParameterSchema, ParameterValue,
-        PortDirection, PortSchema, ValueKind,
+        MergePolicy, ModuleRegistry, OxurackModule, ParameterSchema, ParameterValue, PortDirection,
+        PortSchema, ValueKind,
     };
     use pretty_assertions::assert_eq;
 
@@ -599,6 +595,25 @@ mod tests {
                 description: "Oscillator waveform",
                 default: ParameterValue::Int(0),
             }]
+        }
+
+        fn spawn(
+            world: &mut bevy_ecs::world::World,
+            instance_name: &str,
+            _parameters: &std::collections::HashMap<String, crate::ParameterValue>,
+        ) -> Result<bevy_ecs::prelude::Entity, crate::CoreError> {
+            let module_entity = crate::spawn_module_entity(world, Self::KIND, instance_name);
+            for schema in Self::port_schema() {
+                crate::spawn_port_on_module(
+                    world,
+                    module_entity,
+                    schema.name,
+                    schema.direction,
+                    schema.value_kind,
+                    schema.merge_policy,
+                );
+            }
+            Ok(module_entity)
         }
     }
 
@@ -643,6 +658,25 @@ mod tests {
                 default: ParameterValue::Float(0.0),
             }]
         }
+
+        fn spawn(
+            world: &mut bevy_ecs::world::World,
+            instance_name: &str,
+            _parameters: &std::collections::HashMap<String, crate::ParameterValue>,
+        ) -> Result<bevy_ecs::prelude::Entity, crate::CoreError> {
+            let module_entity = crate::spawn_module_entity(world, Self::KIND, instance_name);
+            for schema in Self::port_schema() {
+                crate::spawn_port_on_module(
+                    world,
+                    module_entity,
+                    schema.name,
+                    schema.direction,
+                    schema.value_kind,
+                    schema.merge_policy,
+                );
+            }
+            Ok(module_entity)
+        }
     }
 
     /// A dummy mixer module with a Reject-merge input for testing.
@@ -674,6 +708,25 @@ mod tests {
         fn parameter_schema() -> &'static [ParameterSchema] {
             &[]
         }
+
+        fn spawn(
+            world: &mut bevy_ecs::world::World,
+            instance_name: &str,
+            _parameters: &std::collections::HashMap<String, crate::ParameterValue>,
+        ) -> Result<bevy_ecs::prelude::Entity, crate::CoreError> {
+            let module_entity = crate::spawn_module_entity(world, Self::KIND, instance_name);
+            for schema in Self::port_schema() {
+                crate::spawn_port_on_module(
+                    world,
+                    module_entity,
+                    schema.name,
+                    schema.direction,
+                    schema.value_kind,
+                    schema.merge_policy,
+                );
+            }
+            Ok(module_entity)
+        }
     }
 
     /// Helper: builds a [`ModuleRegistry`] with the test modules.
@@ -695,10 +748,7 @@ mod tests {
                 ModuleConfig {
                     kind: "vco".to_string(),
                     instance_name: "vco_1".to_string(),
-                    parameters: HashMap::from([(
-                        "waveform".to_string(),
-                        ParameterValue::Int(1),
-                    )]),
+                    parameters: HashMap::from([("waveform".to_string(), ParameterValue::Int(1))]),
                 },
                 ModuleConfig {
                     kind: "filter".to_string(),
@@ -993,7 +1043,10 @@ mod tests {
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
-        assert!(result.is_ok(), "mismatch with transform should pass: {result:?}");
+        assert!(
+            result.is_ok(),
+            "mismatch with transform should pass: {result:?}"
+        );
     }
 
     #[test]
@@ -1171,7 +1224,10 @@ mod tests {
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
-        assert!(result.is_ok(), "linear chain should not be a cycle: {result:?}");
+        assert!(
+            result.is_ok(),
+            "linear chain should not be a cycle: {result:?}"
+        );
     }
 
     #[test]
@@ -1224,7 +1280,10 @@ mod tests {
         assert!(result.is_err(), "loading malformed RON should fail");
         let err = result.unwrap_err();
         assert!(
-            matches!(err, crate::CoreError::Patch(crate::PatchError::Deserialize(_))),
+            matches!(
+                err,
+                crate::CoreError::Patch(crate::PatchError::Deserialize(_))
+            ),
             "expected PatchError::Deserialize, got: {err:?}"
         );
 
@@ -1274,10 +1333,7 @@ mod tests {
                 offset: 0.1,
             }),
             Some(crate::CableTransform::Invert),
-            Some(crate::CableTransform::Clamp {
-                min: 0.0,
-                max: 1.0,
-            }),
+            Some(crate::CableTransform::Clamp { min: 0.0, max: 1.0 }),
             Some(crate::CableTransform::Threshold { threshold: 0.5 }),
             Some(crate::CableTransform::GateToFloat),
             Some(crate::CableTransform::Unipolar),
@@ -1340,7 +1396,10 @@ mod tests {
             }],
         };
         let result = check_patch_cycles(&patch);
-        assert!(result.is_ok(), "self-loop should not be treated as a cycle: {result:?}");
+        assert!(
+            result.is_ok(),
+            "self-loop should not be treated as a cycle: {result:?}"
+        );
     }
 
     #[test]
@@ -1467,8 +1526,8 @@ mod tests {
 
     // ── apply_patch_to_world tests ──────────────────────────────
 
-    use bevy_app::App;
     use crate::{Cable, CableIndex, CorePlugin, CurrentValue, Module, ModuleId, Value};
+    use bevy_app::App;
 
     /// Helper: set up a minimal App with CorePlugin and return it.
     fn test_app() -> App {
@@ -1483,8 +1542,8 @@ mod tests {
         let registry = test_registry();
         let patch = valid_patch();
 
-        let handle = apply_patch_to_world(&patch, &registry, app.world_mut())
-            .expect("should succeed");
+        let handle =
+            apply_patch_to_world(&patch, &registry, app.world_mut()).expect("should succeed");
 
         // Both modules should be in the handle.
         assert_eq!(handle.modules.len(), 2);
@@ -1510,8 +1569,8 @@ mod tests {
         let registry = test_registry();
         let patch = valid_patch();
 
-        let handle = apply_patch_to_world(&patch, &registry, app.world_mut())
-            .expect("should succeed");
+        let handle =
+            apply_patch_to_world(&patch, &registry, app.world_mut()).expect("should succeed");
 
         // Find VCO ports.
         let world = app.world_mut();
@@ -1526,7 +1585,10 @@ mod tests {
         let in_port = find_port_entity(world, filter_entity, "in");
         assert!(in_port.is_some(), "filter_1 should have an 'in' port");
         let cutoff_port = find_port_entity(world, filter_entity, "cutoff");
-        assert!(cutoff_port.is_some(), "filter_1 should have a 'cutoff' port");
+        assert!(
+            cutoff_port.is_some(),
+            "filter_1 should have a 'cutoff' port"
+        );
     }
 
     #[test]
@@ -1535,8 +1597,8 @@ mod tests {
         let registry = test_registry();
         let patch = valid_patch();
 
-        let handle = apply_patch_to_world(&patch, &registry, app.world_mut())
-            .expect("should succeed");
+        let handle =
+            apply_patch_to_world(&patch, &registry, app.world_mut()).expect("should succeed");
 
         // Find the source and target port entities.
         let world = app.world_mut();
@@ -1550,7 +1612,11 @@ mod tests {
         let cable_entity = {
             let cable_index = world.resource::<CableIndex>();
             let cables_to_target = cable_index.cables_targeting(target_port);
-            assert_eq!(cables_to_target.len(), 1, "should have one cable targeting filter_1.in");
+            assert_eq!(
+                cables_to_target.len(),
+                1,
+                "should have one cable targeting filter_1.in"
+            );
             cables_to_target[0]
         };
 
@@ -1568,8 +1634,8 @@ mod tests {
         let registry = test_registry();
         let patch = valid_patch();
 
-        let handle = apply_patch_to_world(&patch, &registry, app.world_mut())
-            .expect("should succeed");
+        let handle =
+            apply_patch_to_world(&patch, &registry, app.world_mut()).expect("should succeed");
 
         let world = app.world();
         let vco_id = *world
@@ -1611,8 +1677,8 @@ mod tests {
         let registry = test_registry();
         let patch = valid_patch();
 
-        let handle = apply_patch_to_world(&patch, &registry, app.world_mut())
-            .expect("should succeed");
+        let handle =
+            apply_patch_to_world(&patch, &registry, app.world_mut()).expect("should succeed");
 
         // Set the VCO output port to a known value.
         let world = app.world_mut();
@@ -1664,8 +1730,8 @@ mod tests {
             }],
         };
 
-        let handle = apply_patch_to_world(&patch, &registry, app.world_mut())
-            .expect("should succeed");
+        let handle =
+            apply_patch_to_world(&patch, &registry, app.world_mut()).expect("should succeed");
 
         // Set VCO output to Bipolar(0.0) => Bipolarize => Float(0.5).
         let world = app.world_mut();
@@ -1722,8 +1788,8 @@ mod tests {
         let path = std::env::temp_dir().join("oxurack_test_load_into_world.ron");
         save_patch_to_file(&patch, &path).expect("save should succeed");
 
-        let handle = load_patch_into_world(&path, &registry, app.world_mut())
-            .expect("should succeed");
+        let handle =
+            load_patch_into_world(&path, &registry, app.world_mut()).expect("should succeed");
         assert_eq!(handle.modules.len(), 2);
         assert!(handle.modules.contains_key("vco_1"));
         assert!(handle.modules.contains_key("filter_1"));
@@ -1748,8 +1814,8 @@ mod tests {
             cables: vec![],
         };
 
-        let handle = apply_patch_to_world(&patch, &registry, app.world_mut())
-            .expect("should succeed");
+        let handle =
+            apply_patch_to_world(&patch, &registry, app.world_mut()).expect("should succeed");
 
         let world = app.world_mut();
         let vco_entity = handle.modules["vco_1"];

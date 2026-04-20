@@ -26,12 +26,10 @@ const RT_SAMPLE_RATE_HZ: u32 = 48_000;
 ///
 /// Returns [`crate::Error::PriorityElevation`] if the OS refuses the
 /// priority elevation (e.g., insufficient permissions).
-pub(crate) fn elevate_rt_priority() -> Result<audio_thread_priority::RtPriorityHandle, crate::Error> {
-    audio_thread_priority::promote_current_thread_to_real_time(
-        RT_BUFFER_FRAMES,
-        RT_SAMPLE_RATE_HZ,
-    )
-    .map_err(|e| crate::Error::PriorityElevation(e.to_string()))
+pub(crate) fn elevate_rt_priority() -> Result<audio_thread_priority::RtPriorityHandle, crate::Error>
+{
+    audio_thread_priority::promote_current_thread_to_real_time(RT_BUFFER_FRAMES, RT_SAMPLE_RATE_HZ)
+        .map_err(|e| crate::Error::PriorityElevation(e.to_string()))
 }
 
 #[cfg(test)]
@@ -63,5 +61,58 @@ mod tests {
             display.contains("test reason"),
             "expected Display output to contain 'test reason', got: {display}"
         );
+    }
+
+    #[cfg(unix)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    struct SchedulerState {
+        policy: libc::c_int,
+        priority: libc::c_int,
+    }
+
+    #[cfg(unix)]
+    fn current_scheduler_state() -> SchedulerState {
+        use std::mem::MaybeUninit;
+        unsafe {
+            let tid = libc::pthread_self();
+            let mut policy: libc::c_int = 0;
+            let mut param = MaybeUninit::<libc::sched_param>::zeroed();
+            let rc = libc::pthread_getschedparam(tid, &mut policy, param.as_mut_ptr());
+            assert_eq!(rc, 0, "pthread_getschedparam failed: {rc}");
+            let param = param.assume_init();
+            SchedulerState {
+                policy,
+                priority: param.sched_priority,
+            }
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    #[ignore = "requires RT scheduling permissions; run with `cargo test -- --ignored`"]
+    fn test_priority_elevation_effects_on_scheduler() {
+        let handle = std::thread::spawn(|| {
+            let before = current_scheduler_state();
+            let during = {
+                let _rt_handle = elevate_rt_priority().expect("elevation should succeed");
+                current_scheduler_state()
+                // _rt_handle dropped here at end of block
+            };
+            let after = current_scheduler_state();
+            (before, during, after)
+        });
+
+        let (before, during, after) = handle.join().expect("thread panicked");
+
+        // On macOS, audio_thread_priority uses THREAD_TIME_CONSTRAINT_POLICY
+        // which may not change the POSIX scheduling parameters. If before == during,
+        // the platform doesn't expose the change through pthread_getschedparam.
+        // In that case, just verify the function didn't error (already done by expect).
+        if before != during {
+            assert_eq!(
+                before, after,
+                "scheduler state not restored after handle drop"
+            );
+        }
     }
 }

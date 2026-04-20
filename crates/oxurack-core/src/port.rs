@@ -9,16 +9,15 @@ use std::fmt;
 
 use bevy_ecs::prelude::{Component, Entity};
 use bevy_ecs::world::World;
-use bevy_reflect::Reflect;
 
-use crate::value::Value;
 use crate::ValueKind;
+use crate::value::Value;
 
 /// Port name -- a lightweight string newtype.
 ///
 /// Port names are case-sensitive, non-empty identifiers like `"pitch"`,
 /// `"gate_in"`, or `"audio_out"`.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PortName(String);
 
 impl From<&str> for PortName {
@@ -47,7 +46,7 @@ impl AsRef<str> for PortName {
 
 /// Whether a port is an input or an output.
 #[non_exhaustive]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PortDirection {
     /// The port receives signals.
     Input,
@@ -60,7 +59,7 @@ pub enum PortDirection {
 /// Not every policy is valid for every [`ValueKind`]. Use
 /// [`MergePolicy::is_valid_for`] to check compatibility.
 #[non_exhaustive]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Reflect)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MergePolicy {
     /// Reject a second connection -- only one cable allowed.
     Reject,
@@ -93,7 +92,10 @@ impl MergePolicy {
             Self::Reject | Self::LastWins => true,
             Self::Average => matches!(kind, ValueKind::Float | ValueKind::Bipolar),
             Self::Sum | Self::Max => {
-                matches!(kind, ValueKind::Float | ValueKind::Gate | ValueKind::Bipolar)
+                matches!(
+                    kind,
+                    ValueKind::Float | ValueKind::Gate | ValueKind::Bipolar
+                )
             }
         }
     }
@@ -102,7 +104,7 @@ impl MergePolicy {
 // ── ECS component types ────────────────────────────────────────────
 
 /// A port on a module entity (child entity of the module).
-#[derive(Component, Debug, Clone, Reflect)]
+#[derive(Component, Debug, Clone)]
 pub struct Port {
     /// Human-readable port name.
     pub name: PortName,
@@ -115,7 +117,7 @@ pub struct Port {
 }
 
 /// The current value on a port, updated each tick.
-#[derive(Component, Debug, Clone, Copy, PartialEq, Reflect)]
+#[derive(Component, Debug, Clone, Copy, PartialEq)]
 pub struct CurrentValue(pub Value);
 
 // ── Spawn helpers ──────────────────────────────────────────────────

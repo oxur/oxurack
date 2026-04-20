@@ -110,6 +110,28 @@ pub struct PropagationOrder {
     pub cables: Vec<Entity>,
 }
 
+/// Dirty flag for [`PropagationOrder`].
+///
+/// When `true`, the propagation order will be rebuilt at the start of
+/// the next [`TickPhase::Propagate`] phase. Set this to `true` after
+/// adding or removing cables.
+#[derive(Resource, Debug)]
+pub struct PropagationOrderDirty(pub bool);
+
+impl Default for PropagationOrderDirty {
+    fn default() -> Self {
+        Self(true)
+    }
+}
+
+/// Sets the [`PropagationOrderDirty`] flag so that the propagation
+/// order is rebuilt on the next tick.
+///
+/// Call this after adding or removing cables from the world.
+pub fn mark_propagation_order_dirty(world: &mut bevy_ecs::world::World) {
+    world.resource_mut::<PropagationOrderDirty>().0 = true;
+}
+
 /// Rebuilds the propagation order from the current cable graph.
 ///
 /// Orders cables by (target_module_id, target_port_name,
@@ -150,34 +172,49 @@ fn rebuild_propagation_order(
     entries.into_iter().map(|(e, ..)| e).collect()
 }
 
+// ── rebuild_propagation_order_system ──────────────────────────────
+
+/// Rebuilds the cached [`PropagationOrder`] when the dirty flag is set.
+///
+/// Runs in [`TickPhase::Propagate`], scheduled before
+/// [`propagate_cables_system`]. Only performs the O(C log C) rebuild
+/// when [`PropagationOrderDirty`] is `true`; otherwise this system is
+/// a no-op.
+pub(crate) fn rebuild_propagation_order_system(
+    cable_q: Query<(Entity, &crate::Cable)>,
+    port_q: Query<(&crate::Port, &bevy_ecs::hierarchy::ChildOf)>,
+    module_q: Query<&crate::ModuleId>,
+    mut order: ResMut<PropagationOrder>,
+    mut dirty: ResMut<PropagationOrderDirty>,
+) {
+    if !dirty.0 {
+        return;
+    }
+    order.cables = rebuild_propagation_order(&cable_q, &port_q, &module_q);
+    dirty.0 = false;
+}
+
 // ── propagate_cables_system ───────────────────────────────────────
 
 /// Propagates values through all enabled cables.
 ///
-/// Runs in [`TickPhase::Propagate`]. For each cable (in stable order
-/// via [`PropagationOrder`]):
+/// Runs in [`TickPhase::Propagate`], after
+/// [`rebuild_propagation_order_system`]. For each cable (in the cached
+/// [`PropagationOrder`]):
 ///
 /// 1. Read the source port's [`CurrentValue`](crate::CurrentValue).
 /// 2. Apply the cable's [`CableTransform`](crate::CableTransform) (if any).
 /// 3. Contribute the result to the target port's [`MergeBuffers`] entry.
-///
-/// The propagation order is rebuilt each tick from the cable graph for
-/// cross-run determinism. The cost is O(C log C) where C is the cable
-/// count, which is fast for small C.
 pub(crate) fn propagate_cables_system(
     cable_q: Query<(Entity, &crate::Cable)>,
-    port_q: Query<(&crate::Port, &bevy_ecs::hierarchy::ChildOf)>,
-    module_q: Query<&crate::ModuleId>,
     port_values: Query<&crate::CurrentValue>,
+    order: Res<PropagationOrder>,
     mut merge_buffers: ResMut<MergeBuffers>,
 ) {
     // Clear buffers from previous tick.
     merge_buffers.clear();
 
-    // Rebuild propagation order each tick for determinism.
-    let ordered_cables = rebuild_propagation_order(&cable_q, &port_q, &module_q);
-
-    for cable_entity in ordered_cables {
+    for &cable_entity in &order.cables {
         let Ok((_, cable)) = cable_q.get(cable_entity) else {
             continue;
         };
@@ -378,10 +415,8 @@ pub fn compute_tick_order(
     }
 
     // Map entity -> ModuleId for tie-breaking.
-    let module_ids: HashMap<Entity, crate::ModuleId> = modules
-        .iter()
-        .map(|(e, _, id)| (*e, **id))
-        .collect();
+    let module_ids: HashMap<Entity, crate::ModuleId> =
+        modules.iter().map(|(e, _, id)| (*e, **id)).collect();
 
     // Kahn's algorithm with ModuleId tie-breaking via BinaryHeap<Reverse<...>>.
     let mut queue: BinaryHeap<Reverse<(crate::ModuleId, Entity)>> = in_degree
@@ -420,8 +455,7 @@ pub fn compute_tick_order(
             .map(|(e, m, _)| (*e, m.instance_name.clone()))
             .collect();
 
-        let cycle_members =
-            find_cycle_members(&unresolved, &dependents, &module_names);
+        let cycle_members = find_cycle_members(&unresolved, &dependents, &module_names);
         return Err(crate::PatchError::FeedbackCycle(cycle_members));
     }
 
@@ -603,10 +637,7 @@ mod tests {
 
     #[test]
     fn test_apply_merge_sum_float_clamped() {
-        let result = apply_merge(
-            MergePolicy::Sum,
-            &[Value::Float(0.75), Value::Float(0.75)],
-        );
+        let result = apply_merge(MergePolicy::Sum, &[Value::Float(0.75), Value::Float(0.75)]);
         assert_eq!(result, Value::Float(1.0));
     }
 
@@ -621,28 +652,19 @@ mod tests {
 
     #[test]
     fn test_apply_merge_sum_gate_or() {
-        let result = apply_merge(
-            MergePolicy::Sum,
-            &[Value::Gate(false), Value::Gate(true)],
-        );
+        let result = apply_merge(MergePolicy::Sum, &[Value::Gate(false), Value::Gate(true)]);
         assert_eq!(result, Value::Gate(true));
     }
 
     #[test]
     fn test_apply_merge_max_float() {
-        let result = apply_merge(
-            MergePolicy::Max,
-            &[Value::Float(0.25), Value::Float(0.75)],
-        );
+        let result = apply_merge(MergePolicy::Max, &[Value::Float(0.25), Value::Float(0.75)]);
         assert_eq!(result, Value::Float(0.75));
     }
 
     #[test]
     fn test_apply_merge_max_gate() {
-        let result = apply_merge(
-            MergePolicy::Max,
-            &[Value::Gate(false), Value::Gate(false)],
-        );
+        let result = apply_merge(MergePolicy::Max, &[Value::Gate(false), Value::Gate(false)]);
         assert_eq!(result, Value::Gate(false));
     }
 
@@ -751,17 +773,14 @@ mod tests {
             .id();
 
         let modules_data = collect_modules(&world, &[mod_a, mod_b, mod_c]);
-        let modules_ref: Vec<(Entity, &Module, &ModuleId)> = modules_data
-            .iter()
-            .map(|(e, m, id)| (*e, m, id))
-            .collect();
+        let modules_ref: Vec<(Entity, &Module, &ModuleId)> =
+            modules_data.iter().map(|(e, m, id)| (*e, m, id)).collect();
 
         let cable_ab_comp = world.entity(cable_ab).get::<Cable>().unwrap().clone();
         let cable_bc_comp = world.entity(cable_bc).get::<Cable>().unwrap().clone();
         let cables: Vec<(Entity, Cable)> =
             vec![(cable_ab, cable_ab_comp), (cable_bc, cable_bc_comp)];
-        let cables_ref: Vec<(Entity, &Cable)> =
-            cables.iter().map(|(e, c)| (*e, c)).collect();
+        let cables_ref: Vec<(Entity, &Cable)> = cables.iter().map(|(e, c)| (*e, c)).collect();
 
         let ports: Vec<(Entity, Port, Entity)> = vec![
             (
@@ -882,14 +901,11 @@ mod tests {
                 },
             ),
         ];
-        let cables_ref: Vec<(Entity, &Cable)> =
-            cables_raw.iter().map(|(e, c)| (*e, c)).collect();
+        let cables_ref: Vec<(Entity, &Cable)> = cables_raw.iter().map(|(e, c)| (*e, c)).collect();
 
         let modules_data = collect_modules(&world, &[mod_a, mod_b, mod_c, mod_d]);
-        let modules_ref: Vec<(Entity, &Module, &ModuleId)> = modules_data
-            .iter()
-            .map(|(e, m, id)| (*e, m, id))
-            .collect();
+        let modules_ref: Vec<(Entity, &Module, &ModuleId)> =
+            modules_data.iter().map(|(e, m, id)| (*e, m, id)).collect();
 
         let ports: Vec<(Entity, Port, Entity)> = [
             (out_a, mod_a),
@@ -929,10 +945,8 @@ mod tests {
         let mod_c = spawn_test_module(&mut world, "gen", "c");
 
         let modules_data = collect_modules(&world, &[mod_a, mod_b, mod_c]);
-        let modules_ref: Vec<(Entity, &Module, &ModuleId)> = modules_data
-            .iter()
-            .map(|(e, m, id)| (*e, m, id))
-            .collect();
+        let modules_ref: Vec<(Entity, &Module, &ModuleId)> =
+            modules_data.iter().map(|(e, m, id)| (*e, m, id)).collect();
 
         let cables_ref: Vec<(Entity, &Cable)> = vec![];
         let ports_ref: Vec<(Entity, &Port, Entity)> = vec![];
@@ -999,24 +1013,17 @@ mod tests {
                 },
             ),
         ];
-        let cables_ref: Vec<(Entity, &Cable)> =
-            cables_raw.iter().map(|(e, c)| (*e, c)).collect();
+        let cables_ref: Vec<(Entity, &Cable)> = cables_raw.iter().map(|(e, c)| (*e, c)).collect();
 
         let modules_data = collect_modules(&world, &[mod_a, mod_b]);
-        let modules_ref: Vec<(Entity, &Module, &ModuleId)> = modules_data
-            .iter()
-            .map(|(e, m, id)| (*e, m, id))
-            .collect();
+        let modules_ref: Vec<(Entity, &Module, &ModuleId)> =
+            modules_data.iter().map(|(e, m, id)| (*e, m, id)).collect();
 
-        let ports: Vec<(Entity, Port, Entity)> = [
-            (out_a, mod_a),
-            (in_a, mod_a),
-            (out_b, mod_b),
-            (in_b, mod_b),
-        ]
-        .iter()
-        .map(|&(pe, me)| (pe, world.entity(pe).get::<Port>().unwrap().clone(), me))
-        .collect();
+        let ports: Vec<(Entity, Port, Entity)> =
+            [(out_a, mod_a), (in_a, mod_a), (out_b, mod_b), (in_b, mod_b)]
+                .iter()
+                .map(|&(pe, me)| (pe, world.entity(pe).get::<Port>().unwrap().clone(), me))
+                .collect();
         let ports_ref: Vec<(Entity, &Port, Entity)> =
             ports.iter().map(|(e, p, m)| (*e, p, *m)).collect();
 
@@ -1077,24 +1084,17 @@ mod tests {
                 },
             ),
         ];
-        let cables_ref: Vec<(Entity, &Cable)> =
-            cables_raw.iter().map(|(e, c)| (*e, c)).collect();
+        let cables_ref: Vec<(Entity, &Cable)> = cables_raw.iter().map(|(e, c)| (*e, c)).collect();
 
         let modules_data = collect_modules(&world, &[mod_a, mod_b, mod_c]);
-        let modules_ref: Vec<(Entity, &Module, &ModuleId)> = modules_data
-            .iter()
-            .map(|(e, m, id)| (*e, m, id))
-            .collect();
+        let modules_ref: Vec<(Entity, &Module, &ModuleId)> =
+            modules_data.iter().map(|(e, m, id)| (*e, m, id)).collect();
 
-        let ports: Vec<(Entity, Port, Entity)> = [
-            (out_a, mod_a),
-            (in_b, mod_b),
-            (out_b, mod_b),
-            (in_c, mod_c),
-        ]
-        .iter()
-        .map(|&(pe, me)| (pe, world.entity(pe).get::<Port>().unwrap().clone(), me))
-        .collect();
+        let ports: Vec<(Entity, Port, Entity)> =
+            [(out_a, mod_a), (in_b, mod_b), (out_b, mod_b), (in_c, mod_c)]
+                .iter()
+                .map(|&(pe, me)| (pe, world.entity(pe).get::<Port>().unwrap().clone(), me))
+                .collect();
         let ports_ref: Vec<(Entity, &Port, Entity)> =
             ports.iter().map(|(e, p, m)| (*e, p, *m)).collect();
 
@@ -1105,8 +1105,8 @@ mod tests {
 
     // ── Integration tests (using App with CorePlugin) ─────────────
 
-    use bevy_app::App;
     use crate::{CableIndex, CableTransform, CorePlugin};
+    use bevy_app::App;
 
     /// Helper: set up a minimal App with CorePlugin and return it.
     fn test_app() -> App {
@@ -1128,11 +1128,7 @@ mod tests {
         let in_b = spawn_test_port(world, mod_b, "in", PortDirection::Input);
 
         // Set output value.
-        world
-            .entity_mut(out_a)
-            .get_mut::<CurrentValue>()
-            .unwrap()
-            .0 = Value::Float(0.5);
+        world.entity_mut(out_a).get_mut::<CurrentValue>().unwrap().0 = Value::Float(0.5);
 
         // Spawn cable.
         let cable = Cable {
@@ -1169,11 +1165,7 @@ mod tests {
         let in_b = spawn_test_port(world, mod_b, "in", PortDirection::Input);
 
         // Source: Float(0.25).
-        world
-            .entity_mut(out_a)
-            .get_mut::<CurrentValue>()
-            .unwrap()
-            .0 = Value::Float(0.25);
+        world.entity_mut(out_a).get_mut::<CurrentValue>().unwrap().0 = Value::Float(0.25);
 
         // Cable with Affine(2.0, 0.0): 0.25 * 2.0 + 0.0 = 0.5.
         let cable = Cable {
@@ -1209,18 +1201,10 @@ mod tests {
         let in_b = spawn_test_port(world, mod_b, "in", PortDirection::Input);
 
         // Set source to Float(0.99).
-        world
-            .entity_mut(out_a)
-            .get_mut::<CurrentValue>()
-            .unwrap()
-            .0 = Value::Float(0.99);
+        world.entity_mut(out_a).get_mut::<CurrentValue>().unwrap().0 = Value::Float(0.99);
 
         // Set target to a known initial value.
-        world
-            .entity_mut(in_b)
-            .get_mut::<CurrentValue>()
-            .unwrap()
-            .0 = Value::Float(0.1);
+        world.entity_mut(in_b).get_mut::<CurrentValue>().unwrap().0 = Value::Float(0.1);
 
         // Disabled cable.
         let cable = Cable {
@@ -1265,16 +1249,8 @@ mod tests {
         );
 
         // Set source values.
-        world
-            .entity_mut(out_a)
-            .get_mut::<CurrentValue>()
-            .unwrap()
-            .0 = Value::Float(0.25);
-        world
-            .entity_mut(out_b)
-            .get_mut::<CurrentValue>()
-            .unwrap()
-            .0 = Value::Float(0.75);
+        world.entity_mut(out_a).get_mut::<CurrentValue>().unwrap().0 = Value::Float(0.25);
+        world.entity_mut(out_b).get_mut::<CurrentValue>().unwrap().0 = Value::Float(0.75);
 
         // Two cables targeting the same input.
         let cable1 = Cable {
@@ -1306,6 +1282,99 @@ mod tests {
     }
 
     #[test]
+    fn test_propagation_order_cached_and_dirty() {
+        let mut app = test_app();
+
+        let world = app.world_mut();
+        let mod_a = spawn_test_module(world, "gen", "a");
+        let out_a = spawn_test_port(world, mod_a, "out", PortDirection::Output);
+        let mod_b = spawn_test_module(world, "gen", "b");
+        let in_b = spawn_test_port(world, mod_b, "in", PortDirection::Input);
+
+        world.entity_mut(out_a).get_mut::<CurrentValue>().unwrap().0 = Value::Float(0.5);
+
+        let cable = Cable {
+            source_port: out_a,
+            target_port: in_b,
+            transform: None,
+            enabled: true,
+        };
+        let cable_entity = world.spawn(cable.clone()).id();
+        world
+            .resource_mut::<CableIndex>()
+            .add_cable(cable_entity, &cable);
+
+        // Dirty flag defaults to true on init.
+        assert!(
+            world.resource::<PropagationOrderDirty>().0,
+            "dirty flag should start true"
+        );
+
+        // First update: rebuilds the order and clears the dirty flag.
+        app.update();
+
+        let world = app.world();
+        assert!(
+            !world.resource::<PropagationOrderDirty>().0,
+            "dirty flag should be false after rebuild"
+        );
+        assert_eq!(
+            world.resource::<PropagationOrder>().cables.len(),
+            1,
+            "should have 1 cable in order"
+        );
+
+        // Second update: no rebuild (dirty=false), order stays cached.
+        app.update();
+
+        let world = app.world();
+        assert!(
+            !world.resource::<PropagationOrderDirty>().0,
+            "dirty flag should remain false"
+        );
+        assert_eq!(
+            world.resource::<PropagationOrder>().cables.len(),
+            1,
+            "order should remain cached with 1 cable"
+        );
+
+        // Re-mark dirty and add a second cable.
+        let world = app.world_mut();
+        let mod_c = spawn_test_module(world, "gen", "c");
+        let in_c = spawn_test_port(world, mod_c, "in", PortDirection::Input);
+        let cable2 = Cable {
+            source_port: out_a,
+            target_port: in_c,
+            transform: None,
+            enabled: true,
+        };
+        let cable_entity2 = world.spawn(cable2.clone()).id();
+        world
+            .resource_mut::<CableIndex>()
+            .add_cable(cable_entity2, &cable2);
+        crate::mark_propagation_order_dirty(world);
+
+        assert!(
+            world.resource::<PropagationOrderDirty>().0,
+            "dirty flag should be true after marking dirty"
+        );
+
+        // Third update: rebuilds with 2 cables.
+        app.update();
+
+        let world = app.world();
+        assert!(
+            !world.resource::<PropagationOrderDirty>().0,
+            "dirty flag should be false after second rebuild"
+        );
+        assert_eq!(
+            world.resource::<PropagationOrder>().cables.len(),
+            2,
+            "order should now have 2 cables"
+        );
+    }
+
+    #[test]
     fn test_sample_and_hold() {
         let mut app = test_app();
 
@@ -1314,11 +1383,7 @@ mod tests {
         let in_a = spawn_test_port(world, mod_a, "in", PortDirection::Input);
 
         // Set an initial value.
-        world
-            .entity_mut(in_a)
-            .get_mut::<CurrentValue>()
-            .unwrap()
-            .0 = Value::Float(0.42);
+        world.entity_mut(in_a).get_mut::<CurrentValue>().unwrap().0 = Value::Float(0.42);
 
         // No cables to in_a. Run two updates.
         app.update();

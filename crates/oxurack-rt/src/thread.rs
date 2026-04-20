@@ -220,11 +220,8 @@ pub(crate) fn rt_thread_main(
             divide,
             ..
         } => {
-            let mut pt_clock = crate::clock::passthrough::PassthroughClock::new(
-                *multiply,
-                *divide,
-                *timeout_ns,
-            );
+            let mut pt_clock =
+                crate::clock::passthrough::PassthroughClock::new(*multiply, *divide, *timeout_ns);
 
             // Passthrough mode loop.
             loop {
@@ -327,11 +324,7 @@ pub(crate) fn rt_thread_main(
                                     tempo_bpm: 0.0, // Passthrough does not estimate tempo.
                                     timestamp_ns: clock.now(),
                                 };
-                                push_event(
-                                    &mut queues,
-                                    tick_event,
-                                    &mut consecutive_overflows,
-                                );
+                                push_event(&mut queues, tick_event, &mut consecutive_overflows);
                                 pt_clock.advance_output();
                                 any_tick = true;
                             }
@@ -726,13 +719,7 @@ mod tests {
 
         let mut jitters: Vec<u64> = intervals
             .iter()
-            .map(|&iv| {
-                if iv >= expected_ns {
-                    iv - expected_ns
-                } else {
-                    expected_ns - iv
-                }
-            })
+            .map(|&iv| iv.abs_diff(expected_ns))
             .collect();
 
         jitters.sort_unstable();
@@ -777,11 +764,7 @@ mod tests {
         let total_ns: u64 = intervals.iter().sum();
         let expected_total_ns: u64 = 1_000 * 1_000_000;
 
-        let drift_ns = if total_ns >= expected_total_ns {
-            total_ns - expected_total_ns
-        } else {
-            expected_total_ns - total_ns
-        };
+        let drift_ns = total_ns.abs_diff(expected_total_ns);
 
         let drift_pct = (drift_ns as f64 / expected_total_ns as f64) * 100.0;
 
@@ -999,7 +982,10 @@ mod tests {
         let deadline = std::time::Instant::now() + std::time::Duration::from_millis(200);
         while std::time::Instant::now() < deadline {
             while let Ok(event) = handles.events.pop() {
-                if matches!(event, crate::RtEvent::Transport(crate::TransportEvent::Stop)) {
+                if matches!(
+                    event,
+                    crate::RtEvent::Transport(crate::TransportEvent::Stop)
+                ) {
                     saw_stop = true;
                 }
             }
@@ -1092,10 +1078,10 @@ mod tests {
         let deadline = std::time::Instant::now() + std::time::Duration::from_millis(150);
         while std::time::Instant::now() < deadline {
             while let Ok(event) = handles.events.pop() {
-                if let crate::RtEvent::ClockTick { beat, .. } = event {
-                    if beat_after_continue.is_none() {
-                        beat_after_continue = Some(beat);
-                    }
+                if let crate::RtEvent::ClockTick { beat, .. } = event
+                    && beat_after_continue.is_none()
+                {
+                    beat_after_continue = Some(beat);
                 }
             }
             std::thread::sleep(std::time::Duration::from_millis(5));
@@ -1290,9 +1276,18 @@ mod tests {
             }
         }
 
-        assert!(saw_start, "expected Transport(Start) event in passthrough mode");
-        assert!(saw_stop, "expected Transport(Stop) event in passthrough mode");
-        assert!(saw_continue, "expected Transport(Continue) event in passthrough mode");
+        assert!(
+            saw_start,
+            "expected Transport(Start) event in passthrough mode"
+        );
+        assert!(
+            saw_stop,
+            "expected Transport(Stop) event in passthrough mode"
+        );
+        assert!(
+            saw_continue,
+            "expected Transport(Continue) event in passthrough mode"
+        );
         assert!(saw_spp, "expected SongPosition event in passthrough mode");
     }
 
@@ -1508,10 +1503,7 @@ mod tests {
         assert!(first_stop.is_ok(), "first stop should succeed");
 
         let second_stop = runtime.stop();
-        assert!(
-            second_stop.is_err(),
-            "second stop should return an error"
-        );
+        assert!(second_stop.is_err(), "second stop should return an error");
         match second_stop.unwrap_err() {
             crate::Error::AlreadyStopped => {} // expected
             other => panic!("expected AlreadyStopped, got: {other}"),

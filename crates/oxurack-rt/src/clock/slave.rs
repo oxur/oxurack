@@ -923,11 +923,7 @@ mod tests {
         let mut jitters_ns: Vec<u64> = Vec::new();
         for window in internal_ticks.windows(2) {
             let actual_interval = window[1].saturating_sub(window[0]);
-            let jitter = if actual_interval >= INTERVAL_120_BPM_NS {
-                actual_interval - INTERVAL_120_BPM_NS
-            } else {
-                INTERVAL_120_BPM_NS - actual_interval
-            };
+            let jitter = actual_interval.abs_diff(INTERVAL_120_BPM_NS);
             jitters_ns.push(jitter);
         }
 
@@ -968,7 +964,10 @@ mod tests {
             estimator.feed_tick(i * INTERVAL_120_BPM_NS);
         }
 
-        assert!(!estimator.is_locked(), "3 ticks should not lock the estimator");
+        assert!(
+            !estimator.is_locked(),
+            "3 ticks should not lock the estimator"
+        );
         assert_eq!(estimator.estimated_bpm(), None);
         assert_eq!(estimator.estimated_interval_ns(), None);
     }
@@ -1004,10 +1003,7 @@ mod tests {
         estimator.feed_tick(INTERVAL_120_BPM_NS);
         assert!(!estimator.is_locked());
         let raw = estimator.raw_filtered_interval_ns();
-        assert!(
-            raw.is_some(),
-            "should have raw interval after 2 ticks"
-        );
+        assert!(raw.is_some(), "should have raw interval after 2 ticks");
         let raw = raw.unwrap();
         let error = (raw - INTERVAL_120_BPM_NS as f64).abs();
         assert!(
@@ -1144,7 +1140,10 @@ mod tests {
         osc.resume(1_000_000_000, INTERVAL_120_BPM_NS);
 
         let after = osc.next_tick(INTERVAL_120_BPM_NS).unwrap().next_tick_ns;
-        assert_eq!(before, after, "resume should not change next_tick_ns if already running");
+        assert_eq!(
+            before, after,
+            "resume should not change next_tick_ns if already running"
+        );
     }
 
     // ── Estimator window_size minimum clamp ────────────────────────

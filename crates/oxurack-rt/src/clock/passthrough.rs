@@ -90,10 +90,8 @@ impl PassthroughClock {
         // The total number of output ticks after `n` input ticks is
         // `(n * multiply) / divide`. The delta is this tick's
         // contribution.
-        let prev_total =
-            ((self.input_count - 1) * self.multiply as u64) / self.divide as u64;
-        let curr_total =
-            (self.input_count * self.multiply as u64) / self.divide as u64;
+        let prev_total = ((self.input_count - 1) * self.multiply as u64) / self.divide as u64;
+        let curr_total = (self.input_count * self.multiply as u64) / self.divide as u64;
 
         (curr_total - prev_total) as u32
     }
@@ -189,7 +187,10 @@ mod tests {
             total_output += ticks;
         }
 
-        assert_eq!(total_output, 24, "1:1 should produce 24 output ticks from 24 inputs");
+        assert_eq!(
+            total_output, 24,
+            "1:1 should produce 24 output ticks from 24 inputs"
+        );
     }
 
     #[test]
@@ -202,7 +203,10 @@ mod tests {
             total_output += ticks;
         }
 
-        assert_eq!(total_output, 48, "multiply=2 should produce 48 output ticks from 24 inputs");
+        assert_eq!(
+            total_output, 48,
+            "multiply=2 should produce 48 output ticks from 24 inputs"
+        );
     }
 
     #[test]
@@ -215,7 +219,10 @@ mod tests {
             total_output += ticks;
         }
 
-        assert_eq!(total_output, 12, "divide=2 should produce 12 output ticks from 24 inputs");
+        assert_eq!(
+            total_output, 12,
+            "divide=2 should produce 12 output ticks from 24 inputs"
+        );
     }
 
     #[test]
@@ -228,7 +235,10 @@ mod tests {
             total_output += ticks;
         }
 
-        assert_eq!(total_output, 36, "multiply=3, divide=2 should produce 36 output ticks from 24 inputs");
+        assert_eq!(
+            total_output, 36,
+            "multiply=3, divide=2 should produce 36 output ticks from 24 inputs"
+        );
     }
 
     #[test]
@@ -275,12 +285,18 @@ mod tests {
             }
         }
 
-        assert!(clock.output_beat() > 0 || clock.output_subdivision() > 0,
-            "position should have advanced");
+        assert!(
+            clock.output_beat() > 0 || clock.output_subdivision() > 0,
+            "position should have advanced"
+        );
 
         clock.reset();
 
-        assert_eq!(clock.output_subdivision(), 0, "subdivision should be 0 after reset");
+        assert_eq!(
+            clock.output_subdivision(),
+            0,
+            "subdivision should be 0 after reset"
+        );
         assert_eq!(clock.output_beat(), 0, "beat should be 0 after reset");
     }
 
@@ -312,10 +328,16 @@ mod tests {
         assert!(clock.is_running(), "should be running initially");
 
         clock.set_running(false);
-        assert!(!clock.is_running(), "should be stopped after set_running(false)");
+        assert!(
+            !clock.is_running(),
+            "should be stopped after set_running(false)"
+        );
 
         clock.set_running(true);
-        assert!(clock.is_running(), "should be running after set_running(true)");
+        assert!(
+            clock.is_running(),
+            "should be running after set_running(true)"
+        );
     }
 
     #[test]

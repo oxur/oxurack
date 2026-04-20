@@ -128,7 +128,7 @@ mod tests {
         let after = clock.now();
         let elapsed_ms = (after - before) / 1_000_000;
         assert!(
-            elapsed_ms >= 8 && elapsed_ms <= 30,
+            (8..=30).contains(&elapsed_ms),
             "expected ~10 ms sleep, got {elapsed_ms} ms"
         );
     }

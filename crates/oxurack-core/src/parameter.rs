@@ -13,7 +13,6 @@ use std::collections::HashMap;
 use std::fmt;
 
 use bevy_ecs::prelude::{Entity, Resource, World};
-use bevy_reflect::Reflect;
 use serde::{Deserialize, Serialize};
 
 /// Name of a module parameter (e.g. `"write_probability"`, `"scale"`).
@@ -53,7 +52,7 @@ impl AsRef<str> for ParameterName {
 /// enabling scale parameters to be set via the same registry mechanism
 /// as simple numeric or boolean parameters.
 #[non_exhaustive]
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Reflect)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ParameterValue {
     /// A floating-point parameter.
     Float(f32),
@@ -124,12 +123,13 @@ impl ParameterRegistry {
         value: ParameterValue,
     ) -> Result<(), crate::CoreError> {
         let key = (module_kind.clone(), ParameterName::from(param_name));
-        let setter = self.setters.get(&key).ok_or_else(|| {
-            crate::CoreError::UnknownParameter {
+        let setter = self
+            .setters
+            .get(&key)
+            .ok_or_else(|| crate::CoreError::UnknownParameter {
                 module: module_kind.to_string(),
                 param: param_name.to_string(),
-            }
-        })?;
+            })?;
         setter(world, module_entity, value)
     }
 }
@@ -184,10 +184,7 @@ mod tests {
     fn test_parameter_name_debug() {
         let name = ParameterName::from("test");
         let debug = format!("{name:?}");
-        assert!(
-            debug.contains("test"),
-            "expected 'test' in debug: {debug}"
-        );
+        assert!(debug.contains("test"), "expected 'test' in debug: {debug}");
     }
 
     // ── ParameterValue ──────────────────────────────────────────
@@ -250,10 +247,7 @@ mod tests {
             default: ParameterValue::Float(0.5),
         };
         let debug = format!("{schema:?}");
-        assert!(
-            debug.contains("cutoff"),
-            "expected 'cutoff' in: {debug}"
-        );
+        assert!(debug.contains("cutoff"), "expected 'cutoff' in: {debug}");
     }
 
     #[test]

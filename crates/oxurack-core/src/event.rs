@@ -84,6 +84,41 @@ pub struct PatchLoaded {
     pub patch_name: String,
 }
 
+/// Non-fatal warning reported by the real-time thread.
+///
+/// The [`RtWarningCode`] discriminant classifies the warning. These
+/// messages are emitted by the RT bridge's drain system when it
+/// encounters a `NonFatalError` event from the RT queue.
+#[derive(Message, Debug, Clone, Copy)]
+pub struct RtWarning {
+    /// The classification of this warning.
+    pub code: RtWarningCode,
+}
+
+/// Classification of non-fatal warnings from the RT thread.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RtWarningCode {
+    /// RT priority elevation failed; timing jitter may be higher.
+    PriorityElevationFailed,
+    /// The slave clock detected a dropout in the external clock signal.
+    ClockDropout,
+    /// The slave clock has not yet locked to an external clock source.
+    ClockNotLocked,
+    /// The RT-to-ECS queue overflowed; some events were dropped.
+    QueueOverflow,
+    /// A MIDI output port was disconnected or became unavailable.
+    OutputPortLost,
+    /// A MIDI input port was disconnected or became unavailable.
+    InputPortLost,
+}
+
+/// Emitted when the RT thread reports a MIDI Song Position Pointer update.
+#[derive(Message, Debug, Clone, Copy)]
+pub struct SongPositionChanged {
+    /// 14-bit song position in MIDI beats (6 clocks per beat).
+    pub position: u16,
+}
+
 /// Dispatches a [`CoreCommand`] against the world.
 ///
 /// Called by the REPL, umbrella crate's command handler, or any other
@@ -144,10 +179,7 @@ mod tests {
     fn test_transport_changed_debug() {
         let tc = TransportChanged(TransportState::Started);
         let debug = format!("{tc:?}");
-        assert!(
-            debug.contains("Started"),
-            "expected 'Started' in: {debug}"
-        );
+        assert!(debug.contains("Started"), "expected 'Started' in: {debug}");
     }
 
     #[test]
@@ -190,10 +222,7 @@ mod tests {
             },
         };
         let debug = format!("{msg:?}");
-        assert!(
-            debug.contains("NoteOn"),
-            "expected 'NoteOn' in: {debug}"
-        );
+        assert!(debug.contains("NoteOn"), "expected 'NoteOn' in: {debug}");
     }
 
     #[test]
@@ -274,20 +303,14 @@ mod tests {
     fn test_core_command_set_bpm_debug() {
         let cmd = CoreCommand::SetBpm(120.0);
         let debug = format!("{cmd:?}");
-        assert!(
-            debug.contains("SetBpm"),
-            "expected 'SetBpm' in: {debug}"
-        );
+        assert!(debug.contains("SetBpm"), "expected 'SetBpm' in: {debug}");
     }
 
     #[test]
     fn test_core_command_panic_debug() {
         let cmd = CoreCommand::Panic;
         let debug = format!("{cmd:?}");
-        assert!(
-            debug.contains("Panic"),
-            "expected 'Panic' in: {debug}"
-        );
+        assert!(debug.contains("Panic"), "expected 'Panic' in: {debug}");
     }
 
     #[test]
@@ -394,10 +417,7 @@ mod tests {
                 transform: None,
             },
         );
-        assert!(
-            result.is_ok(),
-            "AddCable stub should return Ok: {result:?}"
-        );
+        assert!(result.is_ok(), "AddCable stub should return Ok: {result:?}");
     }
 
     #[test]
