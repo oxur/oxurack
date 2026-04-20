@@ -144,15 +144,60 @@ pub trait OxurackModule: Send + Sync + 'static {
 
     /// Returns the static parameter schema for this module type.
     fn parameter_schema() -> &'static [crate::ParameterSchema];
+
+    /// Instantiate this module into the ECS world.
+    ///
+    /// Creates the module entity with all required components, spawns
+    /// child port entities from the port schema, and applies the given
+    /// parameter overrides.
+    ///
+    /// The default implementation spawns a module entity via
+    /// [`spawn_module_entity`] and creates ports from
+    /// [`port_schema`](OxurackModule::port_schema) via
+    /// [`spawn_port_on_module`](crate::spawn_port_on_module).
+    /// Concrete modules can override this to add custom components.
+    fn spawn(
+        world: &mut World,
+        instance_name: &str,
+        _parameters: &HashMap<String, crate::ParameterValue>,
+    ) -> Result<Entity, crate::CoreError> {
+        let module_entity = spawn_module_entity(world, Self::KIND, instance_name);
+
+        for schema in Self::port_schema() {
+            crate::spawn_port_on_module(
+                world,
+                module_entity,
+                schema.name,
+                schema.direction,
+                schema.value_kind,
+                schema.merge_policy,
+            );
+        }
+
+        Ok(module_entity)
+    }
 }
+
+// ── ModuleSpawner ────────────────────────────────────────────────
+
+/// Type alias for a module spawner function pointer.
+///
+/// Used by [`ModuleRegistration`] to store a type-erased version
+/// of [`OxurackModule::spawn`] that can be called dynamically by
+/// the patch loader.
+pub type ModuleSpawner = fn(
+    &mut World,
+    &str,
+    &HashMap<String, crate::ParameterValue>,
+) -> Result<Entity, crate::CoreError>;
 
 // ── ModuleRegistration ───────────────────────────────────────────
 
 /// Registration entry for a module kind in the [`ModuleRegistry`].
 ///
 /// Stores a snapshot of the static metadata from an
-/// [`OxurackModule`] implementation.
-#[derive(Debug, Clone)]
+/// [`OxurackModule`] implementation, including a spawner function
+/// pointer that can create module entities in the ECS world.
 pub struct ModuleRegistration {
     /// The module kind.
     pub kind: ModuleKind,
@@ -164,6 +209,34 @@ pub struct ModuleRegistration {
     pub port_schemas: Vec<PortSchema>,
     /// Declared parameter schemas.
     pub parameter_schemas: Vec<crate::ParameterSchema>,
+    /// Function pointer to spawn an instance of this module.
+    pub spawner: ModuleSpawner,
+}
+
+impl Clone for ModuleRegistration {
+    fn clone(&self) -> Self {
+        Self {
+            kind: self.kind.clone(),
+            display_name: self.display_name.clone(),
+            description: self.description.clone(),
+            port_schemas: self.port_schemas.clone(),
+            parameter_schemas: self.parameter_schemas.clone(),
+            spawner: self.spawner,
+        }
+    }
+}
+
+impl fmt::Debug for ModuleRegistration {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ModuleRegistration")
+            .field("kind", &self.kind)
+            .field("display_name", &self.display_name)
+            .field("description", &self.description)
+            .field("port_schemas", &self.port_schemas)
+            .field("parameter_schemas", &self.parameter_schemas)
+            .field("spawner", &"<fn>")
+            .finish()
+    }
 }
 
 // ── ModuleRegistry ───────────────────────────────────────────────
@@ -183,6 +256,9 @@ impl ModuleRegistry {
     ///
     /// Collects the static metadata from the [`OxurackModule`]
     /// implementation and stores it keyed by [`ModuleKind`].
+    /// Also captures the module's [`spawn`](OxurackModule::spawn)
+    /// function pointer so the patch loader can instantiate modules
+    /// dynamically by kind.
     pub fn register<M: OxurackModule>(&mut self) {
         let kind = ModuleKind::from(M::KIND);
         let reg = ModuleRegistration {
@@ -191,6 +267,7 @@ impl ModuleRegistry {
             description: M::DESCRIPTION.to_string(),
             port_schemas: M::port_schema().to_vec(),
             parameter_schemas: M::parameter_schema().to_vec(),
+            spawner: M::spawn,
         };
         self.registrations.insert(kind, reg);
     }

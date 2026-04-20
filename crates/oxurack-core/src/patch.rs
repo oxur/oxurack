@@ -12,6 +12,8 @@
 
 use std::collections::HashMap;
 
+use bevy_ecs::prelude::Entity;
+use bevy_ecs::world::World;
 use serde::{Deserialize, Serialize};
 
 // ── Patch data structures ────────────────────────────────────────────
@@ -429,6 +431,126 @@ pub fn load_patch_from_file(path: &std::path::Path) -> Result<Patch, crate::Core
     let ron_str = std::fs::read_to_string(path)
         .map_err(|e| crate::CoreError::Patch(crate::PatchError::Io(e)))?;
     deserialize_patch(&ron_str).map_err(crate::CoreError::Patch)
+}
+
+// ── Patch application ────────────────────────────────────────────────
+
+/// Handle returned by [`apply_patch_to_world`], mapping instance names
+/// to the ECS entities that were spawned.
+#[derive(Debug, Clone)]
+pub struct PatchHandle {
+    /// Map from module instance name to the spawned module entity.
+    pub modules: HashMap<String, Entity>,
+}
+
+/// Applies a validated patch to the ECS world, spawning all modules
+/// and cables.
+///
+/// # Workflow
+///
+/// 1. Validates the patch against the registry.
+/// 2. Spawns each module using the registered spawner function.
+/// 3. Spawns cables connecting the appropriate port entities.
+/// 4. Updates the [`CableIndex`](crate::CableIndex) resource.
+///
+/// # Errors
+///
+/// Returns [`CoreError`](crate::CoreError) if validation fails or a
+/// module spawner returns an error.
+pub fn apply_patch_to_world(
+    patch: &Patch,
+    registry: &crate::ModuleRegistry,
+    world: &mut World,
+) -> Result<PatchHandle, crate::CoreError> {
+    // 1. Validate the patch against the registry.
+    validate_patch(patch, registry)?;
+
+    // 2. Spawn modules.
+    let mut module_entities: HashMap<String, Entity> = HashMap::new();
+    for module_config in &patch.modules {
+        let kind = crate::ModuleKind::from(module_config.kind.as_str());
+        let reg = registry.get(&kind).expect("validated");
+        let entity = (reg.spawner)(
+            world,
+            &module_config.instance_name,
+            &module_config.parameters,
+        )?;
+        module_entities.insert(module_config.instance_name.clone(), entity);
+    }
+
+    // 3. Spawn cables and update CableIndex.
+    for cable_config in &patch.cables {
+        let source_module = module_entities[&cable_config.source.0];
+        let target_module = module_entities[&cable_config.target.0];
+
+        let source_port = find_port_entity(world, source_module, &cable_config.source.1)
+            .ok_or_else(|| {
+                crate::CoreError::Patch(crate::PatchError::UnknownPort {
+                    module: cable_config.source.0.clone(),
+                    port: cable_config.source.1.clone(),
+                })
+            })?;
+        let target_port = find_port_entity(world, target_module, &cable_config.target.1)
+            .ok_or_else(|| {
+                crate::CoreError::Patch(crate::PatchError::UnknownPort {
+                    module: cable_config.target.0.clone(),
+                    port: cable_config.target.1.clone(),
+                })
+            })?;
+
+        let cable = crate::Cable {
+            source_port,
+            target_port,
+            transform: cable_config.transform,
+            enabled: true,
+        };
+        let cable_entity = world.spawn(cable.clone()).id();
+
+        // Update CableIndex resource.
+        world
+            .resource_mut::<crate::CableIndex>()
+            .add_cable(cable_entity, &cable);
+    }
+
+    Ok(PatchHandle {
+        modules: module_entities,
+    })
+}
+
+/// Finds a port entity by name among the children of a module entity.
+///
+/// Iterates all entities with [`Port`](crate::Port) and
+/// [`ChildOf`](bevy_ecs::hierarchy::ChildOf) components, returning the
+/// first whose parent is `module_entity` and whose port name matches.
+fn find_port_entity(world: &mut World, module_entity: Entity, port_name: &str) -> Option<Entity> {
+    let mut query = world.query::<(Entity, &crate::Port, &bevy_ecs::hierarchy::ChildOf)>();
+    query
+        .iter(world)
+        .find_map(|(entity, port, child_of)| {
+            if child_of.0 == module_entity && port.name.as_ref() == port_name {
+                Some(entity)
+            } else {
+                None
+            }
+        })
+}
+
+/// Loads a patch from a RON file and applies it to the ECS world.
+///
+/// Convenience wrapper combining [`load_patch_from_file`] and
+/// [`apply_patch_to_world`].
+///
+/// # Errors
+///
+/// Returns [`CoreError`](crate::CoreError) on I/O, parse, validation,
+/// or spawn failure.
+pub fn load_patch_into_world(
+    path: &std::path::Path,
+    registry: &crate::ModuleRegistry,
+    world: &mut World,
+) -> Result<PatchHandle, crate::CoreError> {
+    let patch = load_patch_from_file(path)?;
+    apply_patch_to_world(&patch, registry, world)
 }
 
 // ── Tests ────────────────────────────────────────────────────────────
@@ -1341,5 +1463,318 @@ mod tests {
         } else {
             panic!("expected FeedbackCycle, got: {err:?}");
         }
+    }
+
+    // ── apply_patch_to_world tests ──────────────────────────────
+
+    use bevy_app::App;
+    use crate::{Cable, CableIndex, CorePlugin, CurrentValue, Module, ModuleId, Value};
+
+    /// Helper: set up a minimal App with CorePlugin and return it.
+    fn test_app() -> App {
+        let mut app = App::new();
+        app.add_plugins(CorePlugin);
+        app
+    }
+
+    #[test]
+    fn test_apply_patch_to_world_spawns_modules() {
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = valid_patch();
+
+        let handle = apply_patch_to_world(&patch, &registry, app.world_mut())
+            .expect("should succeed");
+
+        // Both modules should be in the handle.
+        assert_eq!(handle.modules.len(), 2);
+        assert!(handle.modules.contains_key("vco_1"));
+        assert!(handle.modules.contains_key("filter_1"));
+
+        // Verify module entities have the correct Module component.
+        let world = app.world();
+        let vco_entity = handle.modules["vco_1"];
+        let vco_mod = world.entity(vco_entity).get::<Module>().unwrap();
+        assert_eq!(vco_mod.kind, crate::ModuleKind::from("vco"));
+        assert_eq!(vco_mod.instance_name, "vco_1");
+
+        let filter_entity = handle.modules["filter_1"];
+        let filter_mod = world.entity(filter_entity).get::<Module>().unwrap();
+        assert_eq!(filter_mod.kind, crate::ModuleKind::from("filter"));
+        assert_eq!(filter_mod.instance_name, "filter_1");
+    }
+
+    #[test]
+    fn test_apply_patch_to_world_spawns_ports() {
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = valid_patch();
+
+        let handle = apply_patch_to_world(&patch, &registry, app.world_mut())
+            .expect("should succeed");
+
+        // Find VCO ports.
+        let world = app.world_mut();
+        let vco_entity = handle.modules["vco_1"];
+        let pitch_port = find_port_entity(world, vco_entity, "pitch");
+        assert!(pitch_port.is_some(), "vco_1 should have a 'pitch' port");
+        let out_port = find_port_entity(world, vco_entity, "out");
+        assert!(out_port.is_some(), "vco_1 should have an 'out' port");
+
+        // Find Filter ports.
+        let filter_entity = handle.modules["filter_1"];
+        let in_port = find_port_entity(world, filter_entity, "in");
+        assert!(in_port.is_some(), "filter_1 should have an 'in' port");
+        let cutoff_port = find_port_entity(world, filter_entity, "cutoff");
+        assert!(cutoff_port.is_some(), "filter_1 should have a 'cutoff' port");
+    }
+
+    #[test]
+    fn test_apply_patch_to_world_spawns_cable() {
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = valid_patch();
+
+        let handle = apply_patch_to_world(&patch, &registry, app.world_mut())
+            .expect("should succeed");
+
+        // Find the source and target port entities.
+        let world = app.world_mut();
+        let vco_entity = handle.modules["vco_1"];
+        let filter_entity = handle.modules["filter_1"];
+        let source_port = find_port_entity(world, vco_entity, "out").unwrap();
+        let target_port = find_port_entity(world, filter_entity, "in").unwrap();
+
+        // Copy the cable entity from the CableIndex before inspecting
+        // the Cable component (avoids overlapping borrows).
+        let cable_entity = {
+            let cable_index = world.resource::<CableIndex>();
+            let cables_to_target = cable_index.cables_targeting(target_port);
+            assert_eq!(cables_to_target.len(), 1, "should have one cable targeting filter_1.in");
+            cables_to_target[0]
+        };
+
+        // Verify the cable component has correct endpoints.
+        let cable = world.entity(cable_entity).get::<Cable>().unwrap();
+        assert_eq!(cable.source_port, source_port);
+        assert_eq!(cable.target_port, target_port);
+        assert!(cable.enabled);
+        assert!(cable.transform.is_none());
+    }
+
+    #[test]
+    fn test_apply_patch_to_world_module_ids_deterministic() {
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = valid_patch();
+
+        let handle = apply_patch_to_world(&patch, &registry, app.world_mut())
+            .expect("should succeed");
+
+        let world = app.world();
+        let vco_id = *world
+            .entity(handle.modules["vco_1"])
+            .get::<ModuleId>()
+            .unwrap();
+        assert_eq!(vco_id, ModuleId::from_instance_name("vco_1"));
+
+        let filter_id = *world
+            .entity(handle.modules["filter_1"])
+            .get::<ModuleId>()
+            .unwrap();
+        assert_eq!(filter_id, ModuleId::from_instance_name("filter_1"));
+    }
+
+    #[test]
+    fn test_apply_patch_to_world_validation_failure() {
+        let mut app = test_app();
+        let registry = test_registry();
+        let bad_patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![ModuleConfig {
+                kind: "nonexistent".to_string(),
+                instance_name: "bad".to_string(),
+                parameters: HashMap::new(),
+            }],
+            cables: vec![],
+        };
+
+        let result = apply_patch_to_world(&bad_patch, &registry, app.world_mut());
+        assert!(result.is_err(), "should fail for unregistered module kind");
+    }
+
+    #[test]
+    fn test_apply_patch_to_world_propagation_integration() {
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = valid_patch();
+
+        let handle = apply_patch_to_world(&patch, &registry, app.world_mut())
+            .expect("should succeed");
+
+        // Set the VCO output port to a known value.
+        let world = app.world_mut();
+        let vco_entity = handle.modules["vco_1"];
+        let vco_out = find_port_entity(world, vco_entity, "out").unwrap();
+        world
+            .entity_mut(vco_out)
+            .get_mut::<CurrentValue>()
+            .unwrap()
+            .0 = Value::Bipolar(0.75);
+
+        // Run one tick.
+        app.update();
+
+        // The filter's "in" port should now hold Bipolar(0.75).
+        let world = app.world_mut();
+        let filter_entity = handle.modules["filter_1"];
+        let filter_in = find_port_entity(world, filter_entity, "in").unwrap();
+        let cv = world.entity(filter_in).get::<CurrentValue>().unwrap();
+        assert_eq!(cv.0, Value::Bipolar(0.75));
+    }
+
+    #[test]
+    fn test_apply_patch_to_world_with_transform() {
+        let mut app = test_app();
+        let registry = test_registry();
+
+        // VCO out (Bipolar) -> Filter cutoff (Float) with Bipolarize transform.
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![
+                ModuleConfig {
+                    kind: "vco".to_string(),
+                    instance_name: "vco_1".to_string(),
+                    parameters: HashMap::new(),
+                },
+                ModuleConfig {
+                    kind: "filter".to_string(),
+                    instance_name: "filter_1".to_string(),
+                    parameters: HashMap::new(),
+                },
+            ],
+            cables: vec![CableConfig {
+                source: ("vco_1".to_string(), "out".to_string()),
+                target: ("filter_1".to_string(), "cutoff".to_string()),
+                transform: Some(crate::CableTransform::Bipolarize),
+            }],
+        };
+
+        let handle = apply_patch_to_world(&patch, &registry, app.world_mut())
+            .expect("should succeed");
+
+        // Set VCO output to Bipolar(0.0) => Bipolarize => Float(0.5).
+        let world = app.world_mut();
+        let vco_entity = handle.modules["vco_1"];
+        let vco_out = find_port_entity(world, vco_entity, "out").unwrap();
+        world
+            .entity_mut(vco_out)
+            .get_mut::<CurrentValue>()
+            .unwrap()
+            .0 = Value::Bipolar(0.0);
+
+        app.update();
+
+        let world = app.world_mut();
+        let filter_entity = handle.modules["filter_1"];
+        let filter_cutoff = find_port_entity(world, filter_entity, "cutoff").unwrap();
+        let cv = world.entity(filter_cutoff).get::<CurrentValue>().unwrap();
+        assert_eq!(cv.0, Value::Float(0.5));
+    }
+
+    #[test]
+    fn test_apply_patch_to_world_empty_patch() {
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![],
+            cables: vec![],
+        };
+
+        let handle = apply_patch_to_world(&patch, &registry, app.world_mut())
+            .expect("empty patch should succeed");
+        assert!(handle.modules.is_empty());
+    }
+
+    #[test]
+    fn test_load_patch_into_world_nonexistent_file() {
+        let mut app = test_app();
+        let registry = test_registry();
+        let path = std::path::Path::new("/tmp/oxurack_nonexistent_patch.ron");
+
+        let result = load_patch_into_world(path, &registry, app.world_mut());
+        assert!(result.is_err(), "should fail for nonexistent file");
+    }
+
+    #[test]
+    fn test_load_patch_into_world_roundtrip() {
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = valid_patch();
+
+        let path = std::env::temp_dir().join("oxurack_test_load_into_world.ron");
+        save_patch_to_file(&patch, &path).expect("save should succeed");
+
+        let handle = load_patch_into_world(&path, &registry, app.world_mut())
+            .expect("should succeed");
+        assert_eq!(handle.modules.len(), 2);
+        assert!(handle.modules.contains_key("vco_1"));
+        assert!(handle.modules.contains_key("filter_1"));
+
+        // Clean up.
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn test_find_port_entity_returns_none_for_unknown_port() {
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![ModuleConfig {
+                kind: "vco".to_string(),
+                instance_name: "vco_1".to_string(),
+                parameters: HashMap::new(),
+            }],
+            cables: vec![],
+        };
+
+        let handle = apply_patch_to_world(&patch, &registry, app.world_mut())
+            .expect("should succeed");
+
+        let world = app.world_mut();
+        let vco_entity = handle.modules["vco_1"];
+        assert!(find_port_entity(world, vco_entity, "nonexistent").is_none());
+    }
+
+    #[test]
+    fn test_patch_handle_clone() {
+        let handle = PatchHandle {
+            modules: HashMap::from([("test".to_string(), Entity::PLACEHOLDER)]),
+        };
+        let cloned = handle.clone();
+        assert_eq!(cloned.modules.len(), 1);
+        assert!(cloned.modules.contains_key("test"));
+    }
+
+    #[test]
+    fn test_patch_handle_debug() {
+        let handle = PatchHandle {
+            modules: HashMap::new(),
+        };
+        let debug = format!("{handle:?}");
+        assert!(
+            debug.contains("PatchHandle"),
+            "expected 'PatchHandle' in: {debug}"
+        );
     }
 }

@@ -67,11 +67,12 @@ pub use tick::{compute_tick_order, MergeBuffers, PropagationOrder, TickNow, Tick
 // Phase 4
 pub use event::{CoreCommand, MidiInReceived, PatchLoaded, TransportChanged, TransportState};
 pub use event::dispatch_core_command;
-pub use module::{ModuleRegistration, ModuleRegistry, OxurackModule, PortSchema};
+pub use module::{ModuleRegistration, ModuleRegistry, ModuleSpawner, OxurackModule, PortSchema};
 pub use parameter::{ParameterName, ParameterRegistry, ParameterSchema, ParameterValue};
 pub use patch::{
-    deserialize_patch, load_patch_from_file, save_patch_to_file, serialize_patch, validate_patch,
-    CableConfig, ModuleConfig, Patch,
+    apply_patch_to_world, deserialize_patch, load_patch_from_file, load_patch_into_world,
+    save_patch_to_file, serialize_patch, validate_patch, CableConfig, ModuleConfig, Patch,
+    PatchHandle,
 };
 pub use scale::Scale;
 
