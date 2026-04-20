@@ -8,6 +8,7 @@ repository  = "https://github.com/oxur/oxurack"
 
 [dependencies]
 midir                 = "0.11"
+oxurack-midi          = { path = "../oxurack-midi" }
 rtrb                  = "0.3"
 spin_sleep            = "1"
 quanta                = "0.12"

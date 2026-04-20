@@ -990,6 +990,7 @@ dependencies = [
  "bevy_app",
  "bevy_ecs",
  "bevy_reflect",
+ "oxurack-midi",
  "oxurack-rt",
  "pretty_assertions",
  "rand",
@@ -1001,11 +1002,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxurack-midi"
+version = "0.1.0"
+dependencies = [
+ "bevy_reflect",
+ "pretty_assertions",
+ "serde",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "oxurack-rt"
 version = "0.1.0"
 dependencies = [
  "audio_thread_priority",
  "midir",
+ "oxurack-midi",
  "pretty_assertions",
  "quanta",
  "rtrb",

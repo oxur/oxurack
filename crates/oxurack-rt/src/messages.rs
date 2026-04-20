@@ -57,19 +57,10 @@ pub enum TransportEvent {
 
 /// A compact MIDI message representation.
 ///
-/// Stores up to 3 bytes of a MIDI message plus a length indicator.
-/// This is `Copy` and fits in 4 bytes, making it ideal for lock-free queues.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct MidiMessage {
-    /// MIDI status byte (channel message, system message, etc.).
-    pub status: u8,
-    /// First data byte (0 if unused).
-    pub data1: u8,
-    /// Second data byte (0 if unused).
-    pub data2: u8,
-    /// Number of valid bytes (1, 2, or 3).
-    pub length: u8,
-}
+/// Re-exported from [`oxurack_midi::MidiWire`]. Stores up to 3 bytes
+/// of a MIDI message plus a length indicator. `Copy` and fits in 4
+/// bytes, making it ideal for lock-free queues.
+pub type MidiMessage = oxurack_midi::MidiWire;
 
 /// A command sent from the ECS world to the RT thread.
 #[non_exhaustive]
@@ -102,108 +93,9 @@ pub enum EcsCommand {
     Shutdown,
 }
 
-impl MidiMessage {
-    /// Creates a Note On message on the given channel.
-    #[must_use]
-    pub fn note_on(channel: u8, note: u8, velocity: u8) -> Self {
-        Self {
-            status: 0x90 | channel,
-            data1: note,
-            data2: velocity,
-            length: 3,
-        }
-    }
-
-    /// Creates a Note Off message on the given channel.
-    #[must_use]
-    pub fn note_off(channel: u8, note: u8, velocity: u8) -> Self {
-        Self {
-            status: 0x80 | channel,
-            data1: note,
-            data2: velocity,
-            length: 3,
-        }
-    }
-
-    /// Creates a Control Change message on the given channel.
-    #[must_use]
-    pub fn cc(channel: u8, controller: u8, value: u8) -> Self {
-        Self {
-            status: 0xB0 | channel,
-            data1: controller,
-            data2: value,
-            length: 3,
-        }
-    }
-
-    /// Creates a Program Change message on the given channel.
-    #[must_use]
-    pub fn program_change(channel: u8, program: u8) -> Self {
-        Self {
-            status: 0xC0 | channel,
-            data1: program,
-            data2: 0,
-            length: 2,
-        }
-    }
-
-    /// Creates a Pitch Bend message on the given channel.
-    #[must_use]
-    pub fn pitch_bend(channel: u8, lsb: u8, msb: u8) -> Self {
-        Self {
-            status: 0xE0 | channel,
-            data1: lsb,
-            data2: msb,
-            length: 3,
-        }
-    }
-
-    /// Parses a MIDI message from a byte slice.
-    ///
-    /// Returns `None` if the slice is empty, the first byte is not a valid
-    /// status byte (< 0x80), or the status byte indicates a system message
-    /// (>= 0xF0), which are handled separately.
-    #[must_use]
-    pub fn from_bytes(bytes: &[u8]) -> Option<Self> {
-        let &status = bytes.first()?;
-
-        if status < 0x80 {
-            return None;
-        }
-
-        let length: u8 = match status {
-            0x80..=0xBF | 0xE0..=0xEF => 3,
-            0xC0..=0xDF => 2,
-            // System messages (0xF0..=0xFF): not handled yet.
-            _ => return None,
-        };
-
-        let data1 = if length >= 2 {
-            *bytes.get(1).unwrap_or(&0)
-        } else {
-            0
-        };
-
-        let data2 = if length >= 3 {
-            *bytes.get(2).unwrap_or(&0)
-        } else {
-            0
-        };
-
-        Some(Self {
-            status,
-            data1,
-            data2,
-            length,
-        })
-    }
-
-    /// Serialises the message to a 3-byte array, zero-padded if shorter.
-    #[must_use]
-    pub fn to_bytes(&self) -> [u8; 3] {
-        [self.status, self.data1, self.data2]
-    }
-}
+// MidiMessage constructors and methods (note_on, note_off, cc,
+// program_change, pitch_bend, from_bytes, to_bytes) are now provided
+// by oxurack_midi::MidiWire, which is re-exported above as MidiMessage.
 
 /// Classification of a raw MIDI byte sequence.
 ///

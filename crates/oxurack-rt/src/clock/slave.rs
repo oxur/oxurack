@@ -188,6 +188,14 @@ impl TempoEstimator {
     fn raw_filtered_interval_ns(&self) -> Option<f64> {
         self.filtered_interval_ns
     }
+
+    /// Returns the timestamp of the most recently received tick, if any.
+    ///
+    /// Used by [`SlaveClock`] for timeout-based dropout detection when
+    /// the estimator has received ticks but is not yet locked.
+    pub(crate) fn last_tick_ns(&self) -> Option<u64> {
+        self.last_tick_ns
+    }
 }
 
 // ── Milestone 4.2: SlaveOscillator ─────────────────────────────────
@@ -505,7 +513,7 @@ impl SlaveClock {
 
         // Also check against the configured timeout if the estimator
         // has a last tick but isn't locked yet.
-        if let Some(last_tick) = self.estimator.last_tick_ns
+        if let Some(last_tick) = self.estimator.last_tick_ns()
             && now_ns.saturating_sub(last_tick) > self.timeout_ns
         {
             self.oscillator.stop();

@@ -8,86 +8,9 @@ use bevy_reflect::Reflect;
 
 /// Structured MIDI message for the ECS world.
 ///
-/// Distinct from `oxurack_rt::MidiMessage`, which is a compact 4-byte
-/// format optimised for lock-free queues. This enum is richer and
-/// intended for ECS-side processing where ergonomics matter more than
-/// byte packing.
-#[non_exhaustive]
-#[derive(Debug, Clone, Copy, PartialEq, Reflect)]
-pub enum MidiMessage {
-    /// Note-on event.
-    NoteOn {
-        /// MIDI channel (0--15).
-        channel: u8,
-        /// Note number (0--127).
-        note: u8,
-        /// Velocity (0--127).
-        velocity: u8,
-    },
-    /// Note-off event.
-    NoteOff {
-        /// MIDI channel (0--15).
-        channel: u8,
-        /// Note number (0--127).
-        note: u8,
-        /// Velocity (0--127).
-        velocity: u8,
-    },
-    /// Control change (CC) event.
-    ControlChange {
-        /// MIDI channel (0--15).
-        channel: u8,
-        /// Controller number (0--127).
-        controller: u8,
-        /// Controller value (0--127).
-        value: u8,
-    },
-    /// Pitch bend event.
-    PitchBend {
-        /// MIDI channel (0--15).
-        channel: u8,
-        /// 14-bit signed pitch-bend value (-8192..=8191).
-        value: i16,
-    },
-    /// Program change event.
-    ProgramChange {
-        /// MIDI channel (0--15).
-        channel: u8,
-        /// Program number (0--127).
-        program: u8,
-    },
-    /// Channel (aftertouch) pressure event.
-    ChannelPressure {
-        /// MIDI channel (0--15).
-        channel: u8,
-        /// Pressure value (0--127).
-        pressure: u8,
-    },
-    /// Polyphonic key pressure event.
-    PolyKeyPressure {
-        /// MIDI channel (0--15).
-        channel: u8,
-        /// Note number (0--127).
-        note: u8,
-        /// Pressure value (0--127).
-        pressure: u8,
-    },
-    /// MIDI timing clock (24 PPQN).
-    Clock,
-    /// MIDI start.
-    Start,
-    /// MIDI stop.
-    Stop,
-    /// MIDI continue.
-    Continue,
-    /// Song position pointer.
-    SongPosition {
-        /// Position in MIDI beats (1 beat = 6 clock ticks).
-        position: u16,
-    },
-    /// System exclusive (data is not carried inline).
-    SystemExclusive,
-}
+/// Re-exported from [`oxurack_midi::MidiMessage`]. For the compact
+/// wire format used by the RT thread, see [`oxurack_midi::MidiWire`].
+pub use oxurack_midi::MidiMessage;
 
 /// Universal signal value carried by cables and stored in ports.
 ///

@@ -88,6 +88,28 @@ pub enum ClockMode {
         /// this window, the slave reports [`RtErrorCode::ClockDropout`].
         timeout_ns: u64,
     },
+
+    /// This system receives an external MIDI clock and re-emits it on
+    /// all output ports, optionally multiplied or divided.
+    ///
+    /// Unlike [`Slave`](ClockMode::Slave), passthrough mode does not
+    /// apply PLL smoothing or oscillator interpolation. It forwards
+    /// clock ticks directly, making it suitable for deterministic clock
+    /// distribution chains where jitter smoothing is undesirable.
+    Passthrough {
+        /// Name (or substring) of the MIDI input port carrying the
+        /// external clock.
+        clock_input_port: String,
+        /// Timeout in nanoseconds: if no clock tick is received within
+        /// this window, a [`RtErrorCode::ClockDropout`] event is emitted.
+        timeout_ns: u64,
+        /// Clock multiplication factor (1 = forward unchanged). For each
+        /// input tick, `multiply / divide` output ticks are emitted.
+        multiply: u8,
+        /// Clock division factor (1 = forward unchanged). For each
+        /// input tick, `multiply / divide` output ticks are emitted.
+        divide: u8,
+    },
 }
 
 /// Full configuration for starting the RT runtime.
@@ -295,6 +317,18 @@ mod tests {
         assert!(
             debug.contains("Slave"),
             "expected 'Slave' in debug output, got: {debug}"
+        );
+
+        let passthrough = ClockMode::Passthrough {
+            clock_input_port: "test".to_string(),
+            timeout_ns: 1_000_000_000,
+            multiply: 2,
+            divide: 1,
+        };
+        let debug = format!("{passthrough:?}");
+        assert!(
+            debug.contains("Passthrough"),
+            "expected 'Passthrough' in debug output, got: {debug}"
         );
     }
 

@@ -197,6 +197,208 @@ pub(crate) fn rt_thread_main(
                 drain_midi_input(&mut midi_input_ports, &mut queues);
             }
         }
+        crate::ClockMode::Passthrough {
+            timeout_ns,
+            multiply,
+            divide,
+            ..
+        } => {
+            let mut pt_clock = crate::clock::passthrough::PassthroughClock::new(
+                *multiply,
+                *divide,
+                *timeout_ns,
+            );
+
+            // Passthrough mode loop.
+            loop {
+                if shutdown.load(Ordering::Relaxed) {
+                    break;
+                }
+
+                // Drain commands from ECS.
+                while let Ok(cmd) = queues.commands.pop() {
+                    match cmd {
+                        crate::EcsCommand::Shutdown => {
+                            shutdown.store(true, Ordering::Relaxed);
+                            break;
+                        }
+                        crate::EcsCommand::SendMidi {
+                            output_port_index,
+                            message,
+                        } => {
+                            let bytes = message.to_bytes();
+                            let len = message.length as usize;
+                            let _ = midi_ports.send(output_port_index, &bytes[..len]);
+                        }
+                        crate::EcsCommand::SetTempo { .. } => {
+                            // In passthrough mode, tempo is determined by the
+                            // external clock source. Ignore SetTempo.
+                        }
+                        crate::EcsCommand::SendTransport(transport) => {
+                            // Forward transport to output ports.
+                            let byte = match transport {
+                                crate::TransportEvent::Start => {
+                                    pt_clock.reset();
+                                    pt_clock.set_running(true);
+                                    0xFA
+                                }
+                                crate::TransportEvent::Stop => {
+                                    pt_clock.set_running(false);
+                                    0xFC
+                                }
+                                crate::TransportEvent::Continue => {
+                                    pt_clock.set_running(true);
+                                    0xFB
+                                }
+                            };
+                            for i in 0..config.outputs.len() {
+                                let _ = midi_ports.send(i as u8, &[byte]);
+                            }
+                            push_event(
+                                &mut queues,
+                                crate::RtEvent::Transport(transport),
+                                &mut consecutive_overflows,
+                            );
+                        }
+                        crate::EcsCommand::SendSongPosition { position } => {
+                            pt_clock.set_position_from_spp(position);
+                            let lsb = (position & 0x7F) as u8;
+                            let msb = ((position >> 7) & 0x7F) as u8;
+                            for i in 0..config.outputs.len() {
+                                let _ = midi_ports.send(i as u8, &[0xF2, lsb, msb]);
+                            }
+                            push_event(
+                                &mut queues,
+                                crate::RtEvent::SongPosition { position },
+                                &mut consecutive_overflows,
+                            );
+                        }
+                    }
+                }
+
+                if shutdown.load(Ordering::Relaxed) {
+                    break;
+                }
+
+                // Drain MIDI input events, routing clock/transport to
+                // the PassthroughClock and forwarding to outputs.
+                let now = clock.now();
+                let mut any_tick = false;
+
+                for raw_event in midi_input_ports.drain_all() {
+                    let Some(classification) = crate::messages::classify_midi(
+                        &raw_event.bytes[..raw_event.length as usize],
+                    ) else {
+                        continue;
+                    };
+
+                    match classification {
+                        crate::messages::MidiClassification::Clock => {
+                            if !pt_clock.is_running() {
+                                continue;
+                            }
+                            let output_ticks = pt_clock.feed_clock(raw_event.timestamp_ns);
+                            for _ in 0..output_ticks {
+                                // Emit 0xF8 on all output ports.
+                                for i in 0..config.outputs.len() {
+                                    let _ = midi_ports.send(i as u8, &[0xF8]);
+                                }
+                                // Push ClockTick event to ECS.
+                                let tick_event = crate::RtEvent::ClockTick {
+                                    subdivision: pt_clock.output_subdivision(),
+                                    beat: pt_clock.output_beat(),
+                                    tempo_bpm: 0.0, // Passthrough does not estimate tempo.
+                                    timestamp_ns: clock.now(),
+                                };
+                                push_event(
+                                    &mut queues,
+                                    tick_event,
+                                    &mut consecutive_overflows,
+                                );
+                                pt_clock.advance_output();
+                                any_tick = true;
+                            }
+                        }
+                        crate::messages::MidiClassification::Start => {
+                            pt_clock.reset();
+                            pt_clock.set_running(true);
+                            // Forward to outputs.
+                            for i in 0..config.outputs.len() {
+                                let _ = midi_ports.send(i as u8, &[0xFA]);
+                            }
+                            push_event(
+                                &mut queues,
+                                crate::RtEvent::Transport(crate::TransportEvent::Start),
+                                &mut consecutive_overflows,
+                            );
+                        }
+                        crate::messages::MidiClassification::Stop => {
+                            pt_clock.set_running(false);
+                            // Forward to outputs.
+                            for i in 0..config.outputs.len() {
+                                let _ = midi_ports.send(i as u8, &[0xFC]);
+                            }
+                            push_event(
+                                &mut queues,
+                                crate::RtEvent::Transport(crate::TransportEvent::Stop),
+                                &mut consecutive_overflows,
+                            );
+                        }
+                        crate::messages::MidiClassification::Continue => {
+                            pt_clock.set_running(true);
+                            // Forward to outputs.
+                            for i in 0..config.outputs.len() {
+                                let _ = midi_ports.send(i as u8, &[0xFB]);
+                            }
+                            push_event(
+                                &mut queues,
+                                crate::RtEvent::Transport(crate::TransportEvent::Continue),
+                                &mut consecutive_overflows,
+                            );
+                        }
+                        crate::messages::MidiClassification::SongPosition { position } => {
+                            pt_clock.set_position_from_spp(position);
+                            // Forward to outputs.
+                            let lsb = (position & 0x7F) as u8;
+                            let msb = ((position >> 7) & 0x7F) as u8;
+                            for i in 0..config.outputs.len() {
+                                let _ = midi_ports.send(i as u8, &[0xF2, lsb, msb]);
+                            }
+                            push_event(
+                                &mut queues,
+                                crate::RtEvent::SongPosition { position },
+                                &mut consecutive_overflows,
+                            );
+                        }
+                        crate::messages::MidiClassification::Channel(msg) => {
+                            let event = crate::RtEvent::MidiInput {
+                                input_port_index: raw_event.port_index,
+                                timestamp_ns: raw_event.timestamp_ns,
+                                message: msg,
+                            };
+                            let _ = queues.events.push(event);
+                        }
+                        crate::messages::MidiClassification::ActiveSensing
+                        | crate::messages::MidiClassification::SystemReset => {
+                            // Ignored system messages.
+                        }
+                    }
+                }
+
+                // Check for clock dropout.
+                if pt_clock.check_dropout(now) {
+                    let _ = queues.events.push(crate::RtEvent::NonFatalError(
+                        crate::RtErrorCode::ClockDropout,
+                    ));
+                }
+
+                // If no tick was produced this iteration, sleep briefly
+                // to avoid busy-waiting.
+                if !any_tick {
+                    std::thread::sleep(std::time::Duration::from_millis(1));
+                }
+            }
+        }
         crate::ClockMode::Slave { timeout_ns, .. } => {
             let mut slave_clock = crate::clock::slave::SlaveClock::new(*timeout_ns);
 
@@ -923,6 +1125,152 @@ mod tests {
         runtime.stop().unwrap();
 
         assert!(saw_spp, "expected SongPosition event with position=96");
+    }
+
+    // ── Passthrough mode test (Task 10) ────────────────────────────────
+
+    #[test]
+    fn test_passthrough_mode_starts_and_stops() {
+        let config = crate::RuntimeConfig {
+            clock_mode: crate::ClockMode::Passthrough {
+                clock_input_port: String::new(),
+                timeout_ns: 1_000_000_000,
+                multiply: 1,
+                divide: 1,
+            },
+            outputs: Vec::new(),
+            inputs: Vec::new(),
+            event_queue_capacity: 1024,
+            command_queue_capacity: 1024,
+        };
+        let (mut runtime, _handles) = crate::Runtime::start(config).unwrap();
+
+        // Let the thread run briefly.
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        let stop_result = runtime.stop();
+        assert!(
+            stop_result.is_ok(),
+            "Runtime::stop failed in passthrough mode: {stop_result:?}"
+        );
+    }
+
+    #[test]
+    fn test_passthrough_mode_shutdown_command() {
+        let config = crate::RuntimeConfig {
+            clock_mode: crate::ClockMode::Passthrough {
+                clock_input_port: String::new(),
+                timeout_ns: 1_000_000_000,
+                multiply: 2,
+                divide: 1,
+            },
+            outputs: Vec::new(),
+            inputs: Vec::new(),
+            event_queue_capacity: 1024,
+            command_queue_capacity: 1024,
+        };
+        let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
+
+        // Send Shutdown command.
+        let cmd = crate::EcsCommand::Shutdown;
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+
+        let stop_result = runtime.stop();
+        assert!(
+            stop_result.is_ok(),
+            "thread should exit cleanly after Shutdown command in passthrough mode: {stop_result:?}"
+        );
+    }
+
+    #[test]
+    fn test_passthrough_mode_exercises_command_paths() {
+        let config = crate::RuntimeConfig {
+            clock_mode: crate::ClockMode::Passthrough {
+                clock_input_port: String::new(),
+                timeout_ns: 1_000_000_000,
+                multiply: 1,
+                divide: 1,
+            },
+            outputs: Vec::new(),
+            inputs: Vec::new(),
+            event_queue_capacity: 1024,
+            command_queue_capacity: 1024,
+        };
+        let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
+
+        // SetTempo should be silently ignored in passthrough mode.
+        let cmd = crate::EcsCommand::SetTempo { bpm: 200.0 };
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+
+        // SendMidi should exercise the passthrough-mode SendMidi path.
+        let msg = crate::MidiMessage::note_on(0, 60, 100);
+        let cmd = crate::EcsCommand::SendMidi {
+            output_port_index: 0,
+            message: msg,
+        };
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+
+        // SendTransport Start.
+        let cmd = crate::EcsCommand::SendTransport(crate::TransportEvent::Start);
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+
+        // SendTransport Stop.
+        let cmd = crate::EcsCommand::SendTransport(crate::TransportEvent::Stop);
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+
+        // SendTransport Continue.
+        let cmd = crate::EcsCommand::SendTransport(crate::TransportEvent::Continue);
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+
+        // SendSongPosition.
+        let cmd = crate::EcsCommand::SendSongPosition { position: 32 };
+        while handles.commands.push(cmd).is_err() {
+            std::thread::yield_now();
+        }
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        runtime.stop().unwrap();
+
+        // Drain all events and verify transport + SPP events appeared.
+        let mut saw_start = false;
+        let mut saw_stop = false;
+        let mut saw_continue = false;
+        let mut saw_spp = false;
+
+        while let Ok(event) = handles.events.pop() {
+            match event {
+                crate::RtEvent::Transport(crate::TransportEvent::Start) => saw_start = true,
+                crate::RtEvent::Transport(crate::TransportEvent::Stop) => saw_stop = true,
+                crate::RtEvent::Transport(crate::TransportEvent::Continue) => {
+                    saw_continue = true;
+                }
+                crate::RtEvent::SongPosition { position } => {
+                    assert_eq!(position, 32);
+                    saw_spp = true;
+                }
+                _ => {}
+            }
+        }
+
+        assert!(saw_start, "expected Transport(Start) event in passthrough mode");
+        assert!(saw_stop, "expected Transport(Stop) event in passthrough mode");
+        assert!(saw_continue, "expected Transport(Continue) event in passthrough mode");
+        assert!(saw_spp, "expected SongPosition event in passthrough mode");
     }
 
     // ── Slave transport test (M5.3) ────────────────────────────────────

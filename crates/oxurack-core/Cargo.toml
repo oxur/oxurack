@@ -20,6 +20,7 @@ ron          = "0.12"
 thiserror    = "2"
 ahash        = "0.8"
 rand         = { version = "0.10", default-features = false }
+oxurack-midi = { path = "../oxurack-midi", features = ["reflect"] }
 oxurack-rt   = { path = "../oxurack-rt", optional = true }
 rtrb         = { version = "0.3", optional = true }
 

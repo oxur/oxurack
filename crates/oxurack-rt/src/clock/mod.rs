@@ -2,7 +2,7 @@
 //! shared scheduling types.
 
 pub(crate) mod master;
-mod passthrough;
+pub(crate) mod passthrough;
 pub(crate) mod slave;
 
 /// Scheduling state for the next clock tick.

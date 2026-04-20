@@ -1,0 +1,20 @@
+[package]
+name        = "oxurack-midi"
+version     = "0.1.0"
+edition     = "2024"
+description = "Shared MIDI message types for the oxurack ecosystem."
+license     = "MIT OR Apache-2.0"
+repository  = "https://github.com/oxur/oxurack"
+
+[features]
+default = []
+reflect = ["dep:bevy_reflect"]
+serde   = ["dep:serde"]
+
+[dependencies]
+bevy_reflect = { version = "0.18", default-features = false, features = ["std"], optional = true }
+serde        = { version = "1", features = ["derive"], optional = true }
+thiserror    = "2"
+
+[dev-dependencies]
+pretty_assertions = "1"

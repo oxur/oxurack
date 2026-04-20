@@ -57,54 +57,11 @@ pub struct MidiOutputQueue {
 /// to core's structured [`MidiMessage`](crate::MidiMessage).
 ///
 /// Returns `None` for unrecognised status bytes (system messages, etc.).
+///
+/// Delegates to [`oxurack_midi::MidiWire::to_message`].
 #[must_use]
 pub fn convert_rt_midi(rt_msg: &oxurack_rt::MidiMessage) -> Option<crate::MidiMessage> {
-    let bytes = rt_msg.to_bytes();
-    let status = bytes[0];
-    let data1 = bytes[1];
-    let data2 = bytes[2];
-    let channel = status & 0x0F;
-
-    match status & 0xF0 {
-        0x90 if data2 > 0 => Some(crate::MidiMessage::NoteOn {
-            channel,
-            note: data1,
-            velocity: data2,
-        }),
-        0x90 => Some(crate::MidiMessage::NoteOff {
-            channel,
-            note: data1,
-            velocity: 0,
-        }),
-        0x80 => Some(crate::MidiMessage::NoteOff {
-            channel,
-            note: data1,
-            velocity: data2,
-        }),
-        0xB0 => Some(crate::MidiMessage::ControlChange {
-            channel,
-            controller: data1,
-            value: data2,
-        }),
-        0xE0 => {
-            let value = ((data2 as i16) << 7 | data1 as i16) - 8192;
-            Some(crate::MidiMessage::PitchBend { channel, value })
-        }
-        0xC0 => Some(crate::MidiMessage::ProgramChange {
-            channel,
-            program: data1,
-        }),
-        0xD0 => Some(crate::MidiMessage::ChannelPressure {
-            channel,
-            pressure: data1,
-        }),
-        0xA0 => Some(crate::MidiMessage::PolyKeyPressure {
-            channel,
-            note: data1,
-            pressure: data2,
-        }),
-        _ => None,
-    }
+    rt_msg.to_message()
 }
 
 /// Converts core's structured [`MidiMessage`](crate::MidiMessage) back
@@ -113,54 +70,11 @@ pub fn convert_rt_midi(rt_msg: &oxurack_rt::MidiMessage) -> Option<crate::MidiMe
 /// Returns `None` for system messages (`Clock`, `Start`, `Stop`,
 /// `Continue`, `SongPosition`, `SystemExclusive`) which have no
 /// channel-message representation in the RT format.
+///
+/// Delegates to [`oxurack_midi::MidiMessage::to_wire`].
 #[must_use]
 pub fn convert_core_midi(msg: &crate::MidiMessage) -> Option<oxurack_rt::MidiMessage> {
-    match msg {
-        crate::MidiMessage::NoteOn {
-            channel,
-            note,
-            velocity,
-        } => Some(oxurack_rt::MidiMessage::note_on(*channel, *note, *velocity)),
-        crate::MidiMessage::NoteOff {
-            channel,
-            note,
-            velocity,
-        } => Some(oxurack_rt::MidiMessage::note_off(*channel, *note, *velocity)),
-        crate::MidiMessage::ControlChange {
-            channel,
-            controller,
-            value,
-        } => Some(oxurack_rt::MidiMessage::cc(*channel, *controller, *value)),
-        crate::MidiMessage::ProgramChange { channel, program } => {
-            Some(oxurack_rt::MidiMessage::program_change(*channel, *program))
-        }
-        crate::MidiMessage::PitchBend { channel, value } => {
-            let biased = (*value + 8192) as u16;
-            let lsb = (biased & 0x7F) as u8;
-            let msb = ((biased >> 7) & 0x7F) as u8;
-            Some(oxurack_rt::MidiMessage::pitch_bend(*channel, lsb, msb))
-        }
-        crate::MidiMessage::ChannelPressure { channel, pressure } => {
-            Some(oxurack_rt::MidiMessage {
-                status: 0xD0 | channel,
-                data1: *pressure,
-                data2: 0,
-                length: 2,
-            })
-        }
-        crate::MidiMessage::PolyKeyPressure {
-            channel,
-            note,
-            pressure,
-        } => Some(oxurack_rt::MidiMessage {
-            status: 0xA0 | channel,
-            data1: *note,
-            data2: *pressure,
-            length: 3,
-        }),
-        // System messages have no compact channel-message representation.
-        _ => None,
-    }
+    msg.to_wire()
 }
 
 // ── Systems ─────────────────────────────────────────────────────────
