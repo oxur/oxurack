@@ -243,9 +243,8 @@ impl Quantizer {
         let raw = lo + (u16::from(dac) * span + 127) / 255;
         let raw = raw.min(127) as u8;
 
-        let quantized = self.scale.quantize(raw, self.root);
-
-        quantized
+        self.scale
+            .quantize(raw, self.root)
             .clamp(*self.range.start(), *self.range.end())
             .max(1)
     }

@@ -39,6 +39,6 @@ pub struct StepOutputs {
     /// Currently active loop length.
     pub length: usize,
 
-    /// Currently active write probability (0.0 = locked, 1.0 = random).
+    /// Currently active write probability (0.0 = fully random, 1.0 = locked).
     pub write_probability: f32,
 }

@@ -70,6 +70,12 @@ impl MergeBuffers {
             buffer.clear();
         }
     }
+
+    /// Removes map entries whose buffers are empty, freeing memory
+    /// from ports that no longer receive contributions.
+    pub fn prune_empty(&mut self) {
+        self.buffers.retain(|_, v| !v.is_empty());
+    }
 }
 
 // ── TickOrder ─────────────────────────────────────────────────────
@@ -186,11 +192,13 @@ pub(crate) fn rebuild_propagation_order_system(
     module_q: Query<&crate::ModuleId>,
     mut order: ResMut<PropagationOrder>,
     mut dirty: ResMut<PropagationOrderDirty>,
+    mut merge_buffers: ResMut<MergeBuffers>,
 ) {
     if !dirty.0 {
         return;
     }
     order.cables = rebuild_propagation_order(&cable_q, &port_q, &module_q);
+    merge_buffers.prune_empty();
     dirty.0 = false;
 }
 
@@ -666,6 +674,15 @@ mod tests {
     fn test_apply_merge_max_gate() {
         let result = apply_merge(MergePolicy::Max, &[Value::Gate(false), Value::Gate(false)]);
         assert_eq!(result, Value::Gate(false));
+    }
+
+    #[test]
+    fn test_apply_merge_max_bipolar() {
+        let result = apply_merge(
+            MergePolicy::Max,
+            &[Value::Bipolar(-0.5), Value::Bipolar(0.5)],
+        );
+        assert_eq!(result, Value::Bipolar(0.5));
     }
 
     // ── TickPhase tests (preserved from Phase 2) ──────────────────

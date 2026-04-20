@@ -177,9 +177,15 @@ impl CableIndex {
     pub fn remove_cable(&mut self, cable_entity: Entity, cable: &Cable) {
         if let Some(v) = self.by_target.get_mut(&cable.target_port) {
             v.retain(|e| *e != cable_entity);
+            if v.is_empty() {
+                self.by_target.remove(&cable.target_port);
+            }
         }
         if let Some(v) = self.by_source.get_mut(&cable.source_port) {
             v.retain(|e| *e != cable_entity);
+            if v.is_empty() {
+                self.by_source.remove(&cable.source_port);
+            }
         }
     }
 

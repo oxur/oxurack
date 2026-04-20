@@ -110,6 +110,8 @@ pub enum RtWarningCode {
     OutputPortLost,
     /// A MIDI input port was disconnected or became unavailable.
     InputPortLost,
+    /// The ECS-to-RT output command queue was full; MIDI commands were dropped.
+    OutputQueueFull,
 }
 
 /// Emitted when the RT thread reports a MIDI Song Position Pointer update.

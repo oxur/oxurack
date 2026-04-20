@@ -492,19 +492,26 @@ pub fn apply_patch_to_world(
         module_entities.insert(module_config.instance_name.clone(), entity);
     }
 
-    // 3. Spawn cables and update CableIndex.
+    // 3. Build a port lookup map: (module_entity, port_name) -> port_entity.
+    let port_map = build_port_map(world, &module_entities);
+
+    // 4. Spawn cables and update CableIndex.
     for cable_config in &patch.cables {
         let source_module = module_entities[&cable_config.source.0];
         let target_module = module_entities[&cable_config.target.0];
 
-        let source_port = find_port_entity(world, source_module, &cable_config.source.1)
+        let source_port = port_map
+            .get(&(source_module, cable_config.source.1.clone()))
+            .copied()
             .ok_or_else(|| {
                 crate::CoreError::Patch(crate::PatchError::UnknownPort {
                     module: cable_config.source.0.clone(),
                     port: cable_config.source.1.clone(),
                 })
             })?;
-        let target_port = find_port_entity(world, target_module, &cable_config.target.1)
+        let target_port = port_map
+            .get(&(target_module, cable_config.target.1.clone()))
+            .copied()
             .ok_or_else(|| {
                 crate::CoreError::Patch(crate::PatchError::UnknownPort {
                     module: cable_config.target.0.clone(),
@@ -534,11 +541,32 @@ pub fn apply_patch_to_world(
     })
 }
 
+/// Builds a lookup map from `(module_entity, port_name)` to port entity
+/// for all ports in the world that belong to the given module set.
+fn build_port_map(
+    world: &mut World,
+    module_entities: &HashMap<String, Entity>,
+) -> HashMap<(Entity, String), Entity> {
+    let module_set: std::collections::HashSet<Entity> = module_entities.values().copied().collect();
+    let mut query = world.query::<(Entity, &crate::Port, &bevy_ecs::hierarchy::ChildOf)>();
+    query
+        .iter(world)
+        .filter_map(|(entity, port, child_of)| {
+            if module_set.contains(&child_of.0) {
+                Some(((child_of.0, port.name.as_ref().to_owned()), entity))
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
 /// Finds a port entity by name among the children of a module entity.
 ///
 /// Iterates all entities with [`Port`](crate::Port) and
 /// [`ChildOf`](bevy_ecs::hierarchy::ChildOf) components, returning the
 /// first whose parent is `module_entity` and whose port name matches.
+#[cfg(test)]
 fn find_port_entity(world: &mut World, module_entity: Entity, port_name: &str) -> Option<Entity> {
     let mut query = world.query::<(Entity, &crate::Port, &bevy_ecs::hierarchy::ChildOf)>();
     query.iter(world).find_map(|(entity, port, child_of)| {

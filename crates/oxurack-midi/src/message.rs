@@ -131,8 +131,8 @@ impl MidiMessage {
             }
 
             Self::ChannelPressure { channel, pressure } => Some(MidiWire {
-                status: 0xD0 | channel,
-                data1: *pressure,
+                status: 0xD0 | (channel & 0x0F),
+                data1: pressure & 0x7F,
                 data2: 0,
                 length: 2,
             }),
@@ -142,9 +142,9 @@ impl MidiMessage {
                 note,
                 pressure,
             } => Some(MidiWire {
-                status: 0xA0 | channel,
-                data1: *note,
-                data2: *pressure,
+                status: 0xA0 | (channel & 0x0F),
+                data1: note & 0x7F,
+                data2: pressure & 0x7F,
                 length: 3,
             }),
 

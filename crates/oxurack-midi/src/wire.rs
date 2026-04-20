@@ -26,56 +26,66 @@ pub struct MidiWire {
 
 impl MidiWire {
     /// Creates a Note On message on the given channel.
+    ///
+    /// `channel` is masked to 0--15; `note` and `velocity` to 0--127.
     #[must_use]
     pub fn note_on(channel: u8, note: u8, velocity: u8) -> Self {
         Self {
-            status: 0x90 | channel,
-            data1: note,
-            data2: velocity,
+            status: 0x90 | (channel & 0x0F),
+            data1: note & 0x7F,
+            data2: velocity & 0x7F,
             length: 3,
         }
     }
 
     /// Creates a Note Off message on the given channel.
+    ///
+    /// `channel` is masked to 0--15; `note` and `velocity` to 0--127.
     #[must_use]
     pub fn note_off(channel: u8, note: u8, velocity: u8) -> Self {
         Self {
-            status: 0x80 | channel,
-            data1: note,
-            data2: velocity,
+            status: 0x80 | (channel & 0x0F),
+            data1: note & 0x7F,
+            data2: velocity & 0x7F,
             length: 3,
         }
     }
 
     /// Creates a Control Change message on the given channel.
+    ///
+    /// `channel` is masked to 0--15; `controller` and `value` to 0--127.
     #[must_use]
     pub fn cc(channel: u8, controller: u8, value: u8) -> Self {
         Self {
-            status: 0xB0 | channel,
-            data1: controller,
-            data2: value,
+            status: 0xB0 | (channel & 0x0F),
+            data1: controller & 0x7F,
+            data2: value & 0x7F,
             length: 3,
         }
     }
 
     /// Creates a Program Change message on the given channel.
+    ///
+    /// `channel` is masked to 0--15; `program` to 0--127.
     #[must_use]
     pub fn program_change(channel: u8, program: u8) -> Self {
         Self {
-            status: 0xC0 | channel,
-            data1: program,
+            status: 0xC0 | (channel & 0x0F),
+            data1: program & 0x7F,
             data2: 0,
             length: 2,
         }
     }
 
     /// Creates a Pitch Bend message on the given channel.
+    ///
+    /// `channel` is masked to 0--15; `lsb` and `msb` to 0--127.
     #[must_use]
     pub fn pitch_bend(channel: u8, lsb: u8, msb: u8) -> Self {
         Self {
-            status: 0xE0 | channel,
-            data1: lsb,
-            data2: msb,
+            status: 0xE0 | (channel & 0x0F),
+            data1: lsb & 0x7F,
+            data2: msb & 0x7F,
             length: 3,
         }
     }
@@ -478,5 +488,49 @@ mod tests {
             length: 1,
         };
         assert!(wire.to_message().is_none());
+    }
+
+    // ── Input masking tests ───────────────────────────────────────
+
+    #[test]
+    fn test_note_on_masks_channel() {
+        let msg = MidiWire::note_on(16, 60, 100);
+        assert_eq!(msg.status, 0x90, "channel 16 should be masked to 0");
+    }
+
+    #[test]
+    fn test_note_on_masks_data() {
+        let msg = MidiWire::note_on(0, 128, 200);
+        assert_eq!(msg.data1, 0, "note 128 should be masked to 0");
+        assert_eq!(msg.data2, 72, "velocity 200 should be masked to 72");
+    }
+
+    #[test]
+    fn test_note_off_masks_channel() {
+        let msg = MidiWire::note_off(0xFF, 60, 0);
+        assert_eq!(msg.status, 0x8F, "channel 0xFF should be masked to 0x0F");
+    }
+
+    #[test]
+    fn test_cc_masks_all_fields() {
+        let msg = MidiWire::cc(16, 128, 128);
+        assert_eq!(msg.status, 0xB0);
+        assert_eq!(msg.data1, 0);
+        assert_eq!(msg.data2, 0);
+    }
+
+    #[test]
+    fn test_program_change_masks_channel_and_program() {
+        let msg = MidiWire::program_change(17, 200);
+        assert_eq!(msg.status, 0xC1, "channel 17 masked to 1");
+        assert_eq!(msg.data1, 72, "program 200 masked to 72");
+    }
+
+    #[test]
+    fn test_pitch_bend_masks_all_fields() {
+        let msg = MidiWire::pitch_bend(16, 128, 128);
+        assert_eq!(msg.status, 0xE0);
+        assert_eq!(msg.data1, 0);
+        assert_eq!(msg.data2, 0);
     }
 }

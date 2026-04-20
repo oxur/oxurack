@@ -164,10 +164,19 @@ pub fn drain_rt_events_system(
 pub fn flush_midi_output_system(
     bridge: Option<NonSendMut<RtBridge>>,
     mut queue: ResMut<MidiOutputQueue>,
+    mut warning_writer: MessageWriter<crate::RtWarning>,
 ) {
     let Some(mut bridge) = bridge else { return };
+    let mut dropped = 0u32;
     for cmd in queue.commands.drain(..) {
-        let _ = bridge.commands.push(cmd); // drop on full, don't panic
+        if bridge.commands.push(cmd).is_err() {
+            dropped += 1;
+        }
+    }
+    if dropped > 0 {
+        warning_writer.write(crate::RtWarning {
+            code: crate::RtWarningCode::OutputQueueFull,
+        });
     }
 }
 
