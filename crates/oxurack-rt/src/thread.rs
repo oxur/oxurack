@@ -941,7 +941,12 @@ mod tests {
                 {
                     beat_after_start = Some(beat);
                 }
-                _ => {}
+                crate::RtEvent::ClockTick { .. } => {}
+                crate::RtEvent::Transport(crate::TransportEvent::Stop) => {}
+                crate::RtEvent::Transport(crate::TransportEvent::Continue) => {}
+                crate::RtEvent::MidiInput { .. } => {}
+                crate::RtEvent::SongPosition { .. } => {}
+                crate::RtEvent::NonFatalError(_) => {}
             }
         }
 
@@ -1272,7 +1277,9 @@ mod tests {
                     assert_eq!(position, 32);
                     saw_spp = true;
                 }
-                _ => {}
+                crate::RtEvent::ClockTick { .. } => {}
+                crate::RtEvent::MidiInput { .. } => {}
+                crate::RtEvent::NonFatalError(_) => {}
             }
         }
 
@@ -1392,7 +1399,11 @@ mod tests {
                 match event {
                     crate::RtEvent::ClockTick { .. } => tick_count += 1,
                     crate::RtEvent::MidiInput { .. } => midi_input_count += 1,
-                    _ => {}
+                    crate::RtEvent::Transport(crate::TransportEvent::Start) => {}
+                    crate::RtEvent::Transport(crate::TransportEvent::Stop) => {}
+                    crate::RtEvent::Transport(crate::TransportEvent::Continue) => {}
+                    crate::RtEvent::SongPosition { .. } => {}
+                    crate::RtEvent::NonFatalError(_) => {}
                 }
             }
             std::thread::sleep(std::time::Duration::from_millis(5));
@@ -1480,7 +1491,9 @@ mod tests {
                     assert_eq!(position, 48);
                     saw_spp = true;
                 }
-                _ => {}
+                crate::RtEvent::ClockTick { .. } => {}
+                crate::RtEvent::MidiInput { .. } => {}
+                crate::RtEvent::NonFatalError(_) => {}
             }
         }
 
