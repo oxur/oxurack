@@ -45,11 +45,24 @@ pub(crate) fn rt_thread_main(
     ready_signal: std::sync::mpsc::SyncSender<Result<(), crate::Error>>,
     shutdown: Arc<AtomicBool>,
 ) {
-    // 1. Elevate RT priority (best-effort). Failure is non-fatal: the
-    //    thread will still function correctly, just with higher jitter.
-    //    This mirrors the approach in `run_timing_test` and avoids
-    //    breaking tests in CI sandboxes that lack scheduling permissions.
-    let _rt_priority_handle = crate::priority::elevate_rt_priority().ok();
+    // 1. Elevate RT priority. If `allow_normal_priority` is false,
+    //    failure is fatal and the thread reports the error to the
+    //    spawning thread via the ready signal. When allowed, a failure
+    //    is reported as a non-fatal event on the queue.
+    let _rt_priority_handle = match crate::priority::elevate_rt_priority() {
+        Ok(handle) => Some(handle),
+        Err(e) => {
+            if !config.allow_normal_priority {
+                let _ = ready_signal.send(Err(e));
+                return;
+            }
+            // Report as non-fatal error via queue (queue is available here).
+            let _ = queues.events.push(crate::RtEvent::NonFatalError(
+                crate::RtErrorCode::PriorityElevationFailed,
+            ));
+            None
+        }
+    };
 
     // 2. Open MIDI output ports.
     let mut midi_ports = match crate::midi_io::MidiPorts::open_outputs(&config.outputs) {
@@ -190,6 +203,10 @@ pub(crate) fn rt_thread_main(
                     master.advance();
                 } else {
                     // When stopped, sleep briefly to avoid busy-waiting.
+                    // We use a plain sleep rather than a condvar because
+                    // the RT thread avoids blocking synchronisation
+                    // primitives that could cause priority inversion or
+                    // unbounded latency when transport resumes.
                     std::thread::sleep(std::time::Duration::from_millis(1));
                 }
 
@@ -785,7 +802,9 @@ mod tests {
     // ── Runtime integration tests (M2.4) ────────────────────────────
 
     /// Helper to build a minimal `RuntimeConfig` for testing (no MIDI
-    /// ports, master clock mode).
+    /// ports, master clock mode). Sets `allow_normal_priority: true` so
+    /// tests do not fail in CI sandboxes that lack RT scheduling
+    /// permissions.
     fn test_config(tempo_bpm: f64) -> crate::RuntimeConfig {
         crate::RuntimeConfig {
             clock_mode: crate::ClockMode::Master {
@@ -796,6 +815,7 @@ mod tests {
             inputs: Vec::new(),
             event_queue_capacity: 1024,
             command_queue_capacity: 1024,
+            allow_normal_priority: true,
         }
     }
 
@@ -1142,6 +1162,7 @@ mod tests {
             inputs: Vec::new(),
             event_queue_capacity: 1024,
             command_queue_capacity: 1024,
+            allow_normal_priority: true,
         };
         let (mut runtime, _handles) = crate::Runtime::start(config).unwrap();
 
@@ -1168,6 +1189,7 @@ mod tests {
             inputs: Vec::new(),
             event_queue_capacity: 1024,
             command_queue_capacity: 1024,
+            allow_normal_priority: true,
         };
         let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
 
@@ -1197,6 +1219,7 @@ mod tests {
             inputs: Vec::new(),
             event_queue_capacity: 1024,
             command_queue_capacity: 1024,
+            allow_normal_priority: true,
         };
         let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
 
@@ -1286,6 +1309,7 @@ mod tests {
             inputs: Vec::new(),
             event_queue_capacity: 1024,
             command_queue_capacity: 1024,
+            allow_normal_priority: true,
         };
         let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
 
@@ -1402,6 +1426,7 @@ mod tests {
             inputs: Vec::new(),
             event_queue_capacity: 1024,
             command_queue_capacity: 1024,
+            allow_normal_priority: true,
         }
     }
 
@@ -1564,6 +1589,7 @@ mod tests {
             inputs: Vec::new(),
             event_queue_capacity: 1024,
             command_queue_capacity: 1024,
+            allow_normal_priority: true,
         };
         let (mut runtime, mut handles) = crate::Runtime::start(config).unwrap();
 

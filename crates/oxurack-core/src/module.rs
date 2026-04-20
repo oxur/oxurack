@@ -131,6 +131,10 @@ pub struct PortSchema {
 /// [`ModuleRegistry`] at app build time. Concrete module types
 /// (e.g. `TuringMachine`, `Vco`, `Filter`) implement this trait
 /// and register themselves via `ModuleRegistry::register::<M>()`.
+///
+/// The [`spawn`](OxurackModule::spawn) method instantiates a module
+/// entity in the ECS world; the default implementation creates the
+/// entity and its child port entities from the port schema.
 pub trait OxurackModule: Send + Sync + 'static {
     /// The machine-readable kind name (e.g. `"turing_machine"`, `"vco"`).
     const KIND: &'static str;

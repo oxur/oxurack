@@ -7,6 +7,8 @@
 //!   24-PPQN MIDI clock ticks.
 //! - **Clock tracking** (slave mode) using a PLL-based tempo estimator
 //!   locked to an external MIDI clock source.
+//! - **Clock passthrough** (passthrough mode) forwarding an external clock
+//!   to output ports with optional multiplication/division.
 //! - **MIDI I/O** via `midir`, forwarding input messages to the ECS world
 //!   and sending output messages on command.
 //! - **Lock-free communication** with the ECS world through bounded SPSC
@@ -114,11 +116,12 @@ pub enum ClockMode {
 
 /// Full configuration for starting the RT runtime.
 ///
-/// Specifies the clock mode (master or slave), which MIDI ports to
-/// open, and the capacity of the lock-free communication queues.
+/// Specifies the clock mode (master, slave, or passthrough), which
+/// MIDI ports to open, and the capacity of the lock-free
+/// communication queues.
 #[derive(Debug, Clone)]
 pub struct RuntimeConfig {
-    /// Clock mode selection (master or slave).
+    /// Clock mode selection (master, slave, or passthrough).
     pub clock_mode: ClockMode,
     /// MIDI output port configurations.
     pub outputs: Vec<MidiOutputConfig>,
@@ -128,6 +131,10 @@ pub struct RuntimeConfig {
     pub event_queue_capacity: usize,
     /// Capacity of the ECS-to-RT command queue.
     pub command_queue_capacity: usize,
+    /// If `true`, the runtime will continue at normal OS priority when
+    /// RT priority elevation fails. If `false` (the default), a failed
+    /// elevation is treated as a fatal startup error.
+    pub allow_normal_priority: bool,
 }
 
 /// Handle to the running RT thread.
@@ -161,7 +168,8 @@ impl Runtime {
     ///
     /// Returns [`Error::MidiInit`] if MIDI ports cannot be opened,
     /// [`Error::PortNotFound`] if a configured port name has no match,
-    /// or [`Error::PriorityElevation`] if RT priority cannot be obtained.
+    /// or [`Error::PriorityElevation`] if RT priority cannot be obtained
+    /// and [`RuntimeConfig::allow_normal_priority`] is `false`.
     pub fn start(config: RuntimeConfig) -> Result<(Self, RtHandles), Error> {
         let (rt_queues, ecs_handles) = crate::queues::create_queues(
             config.event_queue_capacity,
@@ -237,6 +245,7 @@ mod tests {
             inputs: Vec::new(),
             event_queue_capacity: 1024,
             command_queue_capacity: 1024,
+            allow_normal_priority: true,
         };
         let (mut runtime, _handles) = Runtime::start(config).unwrap();
 
@@ -266,6 +275,7 @@ mod tests {
             inputs: Vec::new(),
             event_queue_capacity: 1024,
             command_queue_capacity: 1024,
+            allow_normal_priority: true,
         };
         let (mut runtime, handles) = Runtime::start(config).unwrap();
 
@@ -289,6 +299,7 @@ mod tests {
             inputs: Vec::new(),
             event_queue_capacity: 1024,
             command_queue_capacity: 1024,
+            allow_normal_priority: true,
         };
         let debug = format!("{config:?}");
         assert!(

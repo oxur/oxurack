@@ -193,6 +193,9 @@ pub enum RtErrorCode {
     ClockNotLocked,
     /// The slave clock detected a dropout in the external clock signal.
     ClockDropout,
+    /// RT priority elevation failed; the thread is running at normal
+    /// OS priority. Timing jitter may be higher than expected.
+    PriorityElevationFailed,
 }
 
 #[cfg(test)]
