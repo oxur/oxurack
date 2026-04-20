@@ -200,7 +200,7 @@ impl TuringMachine {
     /// When `advance_clock` is `true` the clock dividers are ticked;
     /// otherwise their outputs are reported as `false`.
     fn step_inner(&mut self, advance_clock: bool) -> StepOutputs {
-        let len = self.length.length();
+        let len = self.length.length_nonzero();
         let fb = self.register.feedback_bit(len);
         let new_bit = self.write_knob.resolve(fb, &mut self.rng);
         self.register.clock(new_bit);
@@ -238,7 +238,7 @@ impl TuringMachine {
             div4: d4,
             noise_cc: self.rng.random::<u8>() & 0x7F,
             register_bits: self.register.bits(),
-            length: len,
+            length: len.get(),
             write_probability: self.write_knob.probability(),
         }
     }

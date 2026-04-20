@@ -8,6 +8,8 @@
 //! On each clock pulse the register shifts left by one position and
 //! the incoming bit is inserted at position 0.
 
+use std::num::NonZeroUsize;
+
 use rand::{Rng, RngExt};
 
 /// A 16-bit shift register modelling four chained CD4015 ICs.
@@ -38,13 +40,9 @@ impl ShiftRegister {
     }
 
     /// Returns the feedback bit — the bit at position `length - 1`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `length` is 0.
     #[must_use]
-    pub fn feedback_bit(&self, length: usize) -> bool {
-        (self.bits >> (length - 1)) & 1 == 1
+    pub fn feedback_bit(&self, length: NonZeroUsize) -> bool {
+        (self.bits >> (length.get() - 1)) & 1 == 1
     }
 
     /// Returns the raw 16-bit contents of the register.
@@ -60,14 +58,14 @@ impl ShiftRegister {
     /// the lower bits come from below the loop window, matching the
     /// hardware behaviour.
     #[must_use]
-    pub fn dac_byte(&self, length: usize) -> u8 {
-        ((self.bits >> length.saturating_sub(8)) & 0xFF) as u8
+    pub fn dac_byte(&self, length: NonZeroUsize) -> u8 {
+        ((self.bits >> length.get().saturating_sub(8)) & 0xFF) as u8
     }
 
     /// Returns the MSB (bit 7) of [`dac_byte`](Self::dac_byte), which
     /// drives the pulse output on the hardware.
     #[must_use]
-    pub fn pulse_bit(&self, length: usize) -> bool {
+    pub fn pulse_bit(&self, length: NonZeroUsize) -> bool {
         (self.dac_byte(length) >> 7) & 1 == 1
     }
 
@@ -100,6 +98,10 @@ impl Default for ShiftRegister {
 mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
+
+    fn nz(n: usize) -> NonZeroUsize {
+        NonZeroUsize::new(n).unwrap()
+    }
 
     #[test]
     fn test_new_returns_zeroed_register() {
@@ -145,13 +147,13 @@ mod tests {
         sr.clock(false); // 0b1010
 
         // length=4 → feedback is bit 3
-        assert!(sr.feedback_bit(4));
+        assert!(sr.feedback_bit(nz(4)));
 
         // length=3 → feedback is bit 2
-        assert!(!sr.feedback_bit(3));
+        assert!(!sr.feedback_bit(nz(3)));
 
         // length=2 → feedback is bit 1
-        assert!(sr.feedback_bit(2));
+        assert!(sr.feedback_bit(nz(2)));
     }
 
     #[test]
@@ -159,7 +161,7 @@ mod tests {
         let sr = ShiftRegister { bits: 0xAB_CD };
 
         // length=16 → shift right by 8 → upper byte 0xAB
-        assert_eq!(sr.dac_byte(16), 0xAB);
+        assert_eq!(sr.dac_byte(nz(16)), 0xAB);
     }
 
     #[test]
@@ -167,7 +169,7 @@ mod tests {
         let sr = ShiftRegister { bits: 0xAB_CD };
 
         // length=8 → shift right by 0 → lower byte 0xCD
-        assert_eq!(sr.dac_byte(8), 0xCD);
+        assert_eq!(sr.dac_byte(nz(8)), 0xCD);
     }
 
     #[test]
@@ -175,7 +177,7 @@ mod tests {
         let sr = ShiftRegister { bits: 0x00_3F };
 
         // length=4 → saturating_sub(8) = 0 → lower byte = 0x3F
-        assert_eq!(sr.dac_byte(4), 0x3F);
+        assert_eq!(sr.dac_byte(nz(4)), 0x3F);
     }
 
     #[test]
@@ -183,10 +185,10 @@ mod tests {
         let sr = ShiftRegister { bits: 0xFF_00 };
 
         // length=16 → dac_byte = 0xFF → MSB = 1
-        assert!(sr.pulse_bit(16));
+        assert!(sr.pulse_bit(nz(16)));
 
         // length=8 → dac_byte = 0x00 → MSB = 0
-        assert!(!sr.pulse_bit(8));
+        assert!(!sr.pulse_bit(nz(8)));
     }
 
     #[test]
@@ -211,6 +213,23 @@ mod tests {
         let mut sr = ShiftRegister { bits: 0xFFFF };
         sr.reset();
         assert_eq!(sr.bits(), 0);
+    }
+
+    #[test]
+    fn test_feedback_bit_length_one() {
+        let mut sr = ShiftRegister::new();
+        sr.clock(true); // bit 0 = 1
+        assert!(sr.feedback_bit(nz(1)));
+        sr.clock(false); // bit 0 = 0
+        assert!(!sr.feedback_bit(nz(1)));
+    }
+
+    #[test]
+    fn test_feedback_bit_maximum_length() {
+        let sr = ShiftRegister { bits: 0x8000 }; // bit 15 = 1
+        assert!(sr.feedback_bit(nz(16)));
+        let sr = ShiftRegister { bits: 0x7FFF }; // bit 15 = 0
+        assert!(!sr.feedback_bit(nz(16)));
     }
 
     #[test]

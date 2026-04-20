@@ -130,44 +130,35 @@ pub struct SongPositionChanged {
 ///
 /// # Currently implemented
 ///
-/// - [`CoreCommand::LoadPatch`] -- loads and returns the patch; does
-///   not instantiate module entities (that requires the umbrella
-///   crate's spawn logic).
 /// - [`CoreCommand::Panic`] -- returns `Ok(())` (module reset will be
 ///   implemented when concrete modules exist).
 /// - [`CoreCommand::SetBpm`] -- returns `Ok(())` (tempo propagation
 ///   will be wired when the RT bridge is integrated into the umbrella
 ///   crate).
 ///
-/// # Stubbed commands
+/// # Not yet implemented
 ///
-/// - [`CoreCommand::SetParameter`] -- requires module entity lookup
-///   by instance name, which depends on the umbrella crate's world
-///   layout.
-/// - [`CoreCommand::SavePatch`] -- requires querying the world to
-///   reconstruct the patch structure.
-/// - [`CoreCommand::AddCable`] / [`CoreCommand::RemoveCable`] --
-///   require port entity resolution, which depends on the umbrella
-///   crate's spawn conventions.
+/// The following commands return
+/// [`Err(NotImplemented(..))`](crate::CoreError::NotImplemented)
+/// because they require infrastructure provided by the umbrella crate
+/// (module-entity lookup, world reconstruction, port-entity
+/// resolution):
+///
+/// - [`CoreCommand::LoadPatch`]
+/// - [`CoreCommand::SetParameter`]
+/// - [`CoreCommand::SavePatch`]
+/// - [`CoreCommand::AddCable`] / [`CoreCommand::RemoveCable`]
 pub fn dispatch_core_command(
     _world: &mut bevy_ecs::world::World,
     command: &CoreCommand,
 ) -> Result<(), crate::CoreError> {
     match command {
-        CoreCommand::LoadPatch(path) => {
-            crate::patch::load_patch_from_file(path)?;
-            Ok(())
-        }
         CoreCommand::Panic | CoreCommand::SetBpm(_) => Ok(()),
-        CoreCommand::SetParameter { .. }
-        | CoreCommand::SavePatch(_)
-        | CoreCommand::AddCable { .. }
-        | CoreCommand::RemoveCable { .. } => {
-            // These commands require infrastructure that lives in the
-            // umbrella crate. They will be implemented when the REPL
-            // and full world layout are available.
-            Ok(())
-        }
+        CoreCommand::LoadPatch(_) => Err(crate::CoreError::NotImplemented("LoadPatch")),
+        CoreCommand::SetParameter { .. } => Err(crate::CoreError::NotImplemented("SetParameter")),
+        CoreCommand::SavePatch(_) => Err(crate::CoreError::NotImplemented("SavePatch")),
+        CoreCommand::AddCable { .. } => Err(crate::CoreError::NotImplemented("AddCable")),
+        CoreCommand::RemoveCable { .. } => Err(crate::CoreError::NotImplemented("RemoveCable")),
     }
 }
 
@@ -366,20 +357,20 @@ mod tests {
     }
 
     #[test]
-    fn test_dispatch_load_patch_nonexistent_file() {
+    fn test_dispatch_load_patch_returns_not_implemented() {
         let mut world = bevy_ecs::world::World::new();
         let result = dispatch_core_command(
             &mut world,
-            &CoreCommand::LoadPatch(PathBuf::from("/nonexistent/path.ron")),
+            &CoreCommand::LoadPatch(PathBuf::from("patch.ron")),
         );
         assert!(
-            result.is_err(),
-            "LoadPatch with nonexistent file should return Err"
+            matches!(result, Err(crate::CoreError::NotImplemented("LoadPatch"))),
+            "LoadPatch should return NotImplemented: {result:?}"
         );
     }
 
     #[test]
-    fn test_dispatch_set_parameter_stub() {
+    fn test_dispatch_set_parameter_returns_not_implemented() {
         let mut world = bevy_ecs::world::World::new();
         let result = dispatch_core_command(
             &mut world,
@@ -390,26 +381,29 @@ mod tests {
             },
         );
         assert!(
-            result.is_ok(),
-            "SetParameter stub should return Ok: {result:?}"
+            matches!(
+                result,
+                Err(crate::CoreError::NotImplemented("SetParameter"))
+            ),
+            "SetParameter should return NotImplemented: {result:?}"
         );
     }
 
     #[test]
-    fn test_dispatch_save_patch_stub() {
+    fn test_dispatch_save_patch_returns_not_implemented() {
         let mut world = bevy_ecs::world::World::new();
         let result = dispatch_core_command(
             &mut world,
             &CoreCommand::SavePatch(PathBuf::from("out.ron")),
         );
         assert!(
-            result.is_ok(),
-            "SavePatch stub should return Ok: {result:?}"
+            matches!(result, Err(crate::CoreError::NotImplemented("SavePatch"))),
+            "SavePatch should return NotImplemented: {result:?}"
         );
     }
 
     #[test]
-    fn test_dispatch_add_cable_stub() {
+    fn test_dispatch_add_cable_returns_not_implemented() {
         let mut world = bevy_ecs::world::World::new();
         let result = dispatch_core_command(
             &mut world,
@@ -419,11 +413,14 @@ mod tests {
                 transform: None,
             },
         );
-        assert!(result.is_ok(), "AddCable stub should return Ok: {result:?}");
+        assert!(
+            matches!(result, Err(crate::CoreError::NotImplemented("AddCable"))),
+            "AddCable should return NotImplemented: {result:?}"
+        );
     }
 
     #[test]
-    fn test_dispatch_remove_cable_stub() {
+    fn test_dispatch_remove_cable_returns_not_implemented() {
         let mut world = bevy_ecs::world::World::new();
         let result = dispatch_core_command(
             &mut world,
@@ -433,8 +430,8 @@ mod tests {
             },
         );
         assert!(
-            result.is_ok(),
-            "RemoveCable stub should return Ok: {result:?}"
+            matches!(result, Err(crate::CoreError::NotImplemented("RemoveCable"))),
+            "RemoveCable should return NotImplemented: {result:?}"
         );
     }
 }

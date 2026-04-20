@@ -425,11 +425,12 @@ mod tests {
     // ── size assertion ──────────────────────────────────────────────
 
     #[test]
-    fn test_value_size_at_most_16_bytes() {
-        assert!(
-            std::mem::size_of::<Value>() <= 16,
-            "Value is {} bytes, expected <= 16",
-            std::mem::size_of::<Value>()
+    fn test_value_size() {
+        const EXPECTED: usize = 8;
+        assert_eq!(
+            std::mem::size_of::<Value>(),
+            EXPECTED,
+            "Value size changed from {EXPECTED} bytes; decide whether to update EXPECTED",
         );
     }
 

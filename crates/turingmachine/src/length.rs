@@ -64,6 +64,15 @@ impl LengthSelector {
         Self::VALID_LENGTHS[self.position]
     }
 
+    /// Returns the loop length as a [`NonZeroUsize`].
+    ///
+    /// All valid lengths are >= 2, so this is always safe.
+    #[must_use]
+    pub fn length_nonzero(&self) -> std::num::NonZeroUsize {
+        std::num::NonZeroUsize::new(Self::VALID_LENGTHS[self.position])
+            .expect("all valid lengths are >= 2")
+    }
+
     /// Returns the current rotary-switch position (0..=8).
     #[must_use]
     pub fn position(&self) -> usize {

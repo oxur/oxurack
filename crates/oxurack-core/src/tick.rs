@@ -293,6 +293,10 @@ pub(crate) fn apply_merge(policy: crate::MergePolicy, values: &[crate::Value]) -
 
         crate::MergePolicy::Average => match values[0] {
             crate::Value::Float(_) => {
+                debug_assert!(
+                    values.iter().all(|v| matches!(v, crate::Value::Float(_))),
+                    "apply_merge(Average) received non-Float values: {values:?}"
+                );
                 let sum: f32 = values
                     .iter()
                     .map(|v| match v {
@@ -303,6 +307,10 @@ pub(crate) fn apply_merge(policy: crate::MergePolicy, values: &[crate::Value]) -
                 crate::Value::Float(sum / values.len() as f32)
             }
             crate::Value::Bipolar(_) => {
+                debug_assert!(
+                    values.iter().all(|v| matches!(v, crate::Value::Bipolar(_))),
+                    "apply_merge(Average) received non-Bipolar values: {values:?}"
+                );
                 let sum: f32 = values
                     .iter()
                     .map(|v| match v {
@@ -312,11 +320,15 @@ pub(crate) fn apply_merge(policy: crate::MergePolicy, values: &[crate::Value]) -
                     .sum();
                 crate::Value::Bipolar(sum / values.len() as f32)
             }
-            other => other, // shouldn't happen if validated at load time
+            other => other,
         },
 
         crate::MergePolicy::Sum => match values[0] {
             crate::Value::Float(_) => {
+                debug_assert!(
+                    values.iter().all(|v| matches!(v, crate::Value::Float(_))),
+                    "apply_merge(Sum) received non-Float values: {values:?}"
+                );
                 let sum: f32 = values
                     .iter()
                     .map(|v| match v {
@@ -327,6 +339,10 @@ pub(crate) fn apply_merge(policy: crate::MergePolicy, values: &[crate::Value]) -
                 crate::Value::Float(sum.clamp(0.0, 1.0))
             }
             crate::Value::Bipolar(_) => {
+                debug_assert!(
+                    values.iter().all(|v| matches!(v, crate::Value::Bipolar(_))),
+                    "apply_merge(Sum) received non-Bipolar values: {values:?}"
+                );
                 let sum: f32 = values
                     .iter()
                     .map(|v| match v {
@@ -337,7 +353,10 @@ pub(crate) fn apply_merge(policy: crate::MergePolicy, values: &[crate::Value]) -
                 crate::Value::Bipolar(sum.clamp(-1.0, 1.0))
             }
             crate::Value::Gate(_) => {
-                // OR semantics: true if any contribution is true.
+                debug_assert!(
+                    values.iter().all(|v| matches!(v, crate::Value::Gate(_))),
+                    "apply_merge(Sum) received non-Gate values: {values:?}"
+                );
                 let any_true = values.iter().any(|v| matches!(v, crate::Value::Gate(true)));
                 crate::Value::Gate(any_true)
             }
@@ -346,6 +365,10 @@ pub(crate) fn apply_merge(policy: crate::MergePolicy, values: &[crate::Value]) -
 
         crate::MergePolicy::Max => match values[0] {
             crate::Value::Float(_) => {
+                debug_assert!(
+                    values.iter().all(|v| matches!(v, crate::Value::Float(_))),
+                    "apply_merge(Max) received non-Float values: {values:?}"
+                );
                 let max = values
                     .iter()
                     .filter_map(|v| match v {
@@ -356,6 +379,10 @@ pub(crate) fn apply_merge(policy: crate::MergePolicy, values: &[crate::Value]) -
                 crate::Value::Float(max)
             }
             crate::Value::Bipolar(_) => {
+                debug_assert!(
+                    values.iter().all(|v| matches!(v, crate::Value::Bipolar(_))),
+                    "apply_merge(Max) received non-Bipolar values: {values:?}"
+                );
                 let max = values
                     .iter()
                     .filter_map(|v| match v {
@@ -366,6 +393,10 @@ pub(crate) fn apply_merge(policy: crate::MergePolicy, values: &[crate::Value]) -
                 crate::Value::Bipolar(max)
             }
             crate::Value::Gate(_) => {
+                debug_assert!(
+                    values.iter().all(|v| matches!(v, crate::Value::Gate(_))),
+                    "apply_merge(Max) received non-Gate values: {values:?}"
+                );
                 let any_true = values.iter().any(|v| matches!(v, crate::Value::Gate(true)));
                 crate::Value::Gate(any_true)
             }
@@ -683,6 +714,25 @@ mod tests {
             &[Value::Bipolar(-0.5), Value::Bipolar(0.5)],
         );
         assert_eq!(result, Value::Bipolar(0.5));
+    }
+
+    // ── Mixed-kind merge panic tests (debug only) ─────────────────
+
+    #[cfg(debug_assertions)]
+    #[test]
+    #[should_panic(expected = "apply_merge(Average) received non-Float values")]
+    fn test_apply_merge_average_mixed_kind_panics() {
+        apply_merge(
+            MergePolicy::Average,
+            &[Value::Float(0.5), Value::Gate(true)],
+        );
+    }
+
+    #[cfg(debug_assertions)]
+    #[test]
+    #[should_panic(expected = "apply_merge(Sum) received non-Float values")]
+    fn test_apply_merge_sum_mixed_kind_panics() {
+        apply_merge(MergePolicy::Sum, &[Value::Float(0.5), Value::Gate(true)]);
     }
 
     // ── TickPhase tests (preserved from Phase 2) ──────────────────

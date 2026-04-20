@@ -37,6 +37,14 @@ pub enum CoreError {
         /// Human-readable explanation of why the value was rejected.
         reason: String,
     },
+
+    /// The command is recognized but not yet implemented in this crate.
+    ///
+    /// Returned by [`dispatch_core_command`](crate::dispatch_core_command)
+    /// for commands whose implementation requires infrastructure provided
+    /// by the umbrella crate.
+    #[error("command not implemented: {0}")]
+    NotImplemented(&'static str),
 }
 
 /// Errors related to patch construction and cable routing.
@@ -159,6 +167,13 @@ mod tests {
             "expected 'tick error' in: {msg}"
         );
         assert!(msg.contains("vco_1"), "expected 'vco_1' in: {msg}");
+    }
+
+    #[test]
+    fn test_core_error_not_implemented_display() {
+        let err = CoreError::NotImplemented("SetParameter");
+        let msg = format!("{err}");
+        assert_eq!(msg, "command not implemented: SetParameter");
     }
 
     #[test]
