@@ -113,11 +113,6 @@ impl Oxurack {
         self.app.update();
     }
 
-    /// Runs the app to completion (blocking).
-    pub fn run(mut self) {
-        self.app.run();
-    }
-
     /// Consume the rack and return the underlying Bevy [`App`].
     pub fn into_app(self) -> App {
         self.app
