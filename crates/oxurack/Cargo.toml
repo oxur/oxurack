@@ -1,0 +1,16 @@
+[package]
+name        = "oxurack"
+version     = "0.1.0"
+edition     = "2024"
+description = "Umbrella crate for the oxurack modular MIDI rack: app bootstrap, module registration, and patch loading."
+license     = "MIT OR Apache-2.0"
+repository  = "https://github.com/oxur/oxurack"
+
+[dependencies]
+oxurack-core = { version = "0.1.0", path = "../oxurack-core" }
+bevy_app     = { version = "0.18", default-features = false, features = ["std"] }
+bevy_ecs     = { version = "0.18", default-features = false, features = ["std"] }
+bevy_time    = { version = "0.18", default-features = false, features = ["std"] }
+
+[dev-dependencies]
+pretty_assertions = "1"

@@ -91,10 +91,10 @@ pub use bridge::{
 
 // ── CorePlugin ──────────────────────────────────────────────────────
 
-use bevy_app::prelude::{App, Plugin, Update};
+use bevy_app::prelude::{App, FixedUpdate, Plugin, Update};
 #[cfg(feature = "rt-bridge")]
 use bevy_app::prelude::{PostUpdate, PreUpdate};
-use bevy_ecs::schedule::IntoScheduleConfigs;
+use bevy_ecs::schedule::{IntoScheduleConfigs, ScheduleLabel};
 
 /// Bevy plugin that registers core resources and system-set ordering.
 ///
@@ -109,6 +109,9 @@ use bevy_ecs::schedule::IntoScheduleConfigs;
 /// - Adds the propagate and consume systems to [`TickPhase::Propagate`]
 ///   and [`TickPhase::Consume`] respectively.
 ///
+/// For fixed-timestep simulation (e.g. 1000 Hz), use
+/// [`CorePlugin::fixed()`] which targets [`FixedUpdate`] instead.
+///
 /// # `rt-bridge` feature
 ///
 /// When the `rt-bridge` feature is enabled, the plugin also:
@@ -118,43 +121,72 @@ use bevy_ecs::schedule::IntoScheduleConfigs;
 /// - Adds `flush_midi_output_system` to `PostUpdate`.
 pub struct CorePlugin;
 
+impl CorePlugin {
+    /// Returns a plugin variant that places tick systems in
+    /// [`FixedUpdate`] instead of [`Update`].
+    ///
+    /// Use this when the simulation should run at a fixed rate
+    /// (configured via `Time<Fixed>`) independent of the render
+    /// frame rate.
+    pub fn fixed() -> CorePluginFixed {
+        CorePluginFixed
+    }
+}
+
 impl Plugin for CorePlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<CableIndex>()
-            .init_resource::<tick::MergeBuffers>()
-            .init_resource::<tick::TickOrder>()
-            .init_resource::<tick::PropagationOrder>()
-            .init_resource::<tick::PropagationOrderDirty>()
-            .init_resource::<ParameterRegistry>()
-            .init_resource::<ModuleRegistry>()
-            .add_message::<tick::TickNow>()
-            .add_message::<TransportChanged>()
-            .add_message::<MidiInReceived>()
-            .add_message::<CoreCommand>()
-            .add_message::<PatchLoaded>()
-            .add_message::<RtWarning>()
-            .add_message::<SongPositionChanged>()
-            .configure_sets(
-                Update,
-                (TickPhase::Produce, TickPhase::Propagate, TickPhase::Consume).chain(),
-            )
-            .add_systems(
-                Update,
-                (
-                    tick::rebuild_propagation_order_system
-                        .in_set(TickPhase::Propagate)
-                        .before(tick::propagate_cables_system),
-                    tick::propagate_cables_system.in_set(TickPhase::Propagate),
-                    tick::consume_ports_system.in_set(TickPhase::Consume),
-                ),
-            );
+        build_core_plugin(app, Update);
+    }
+}
 
-        #[cfg(feature = "rt-bridge")]
-        {
-            app.init_resource::<bridge::MidiOutputQueue>()
-                .add_systems(PreUpdate, bridge::drain_rt_events_system)
-                .add_systems(PostUpdate, bridge::flush_midi_output_system);
-        }
+/// Variant of [`CorePlugin`] that places tick systems in [`FixedUpdate`].
+///
+/// Created via [`CorePlugin::fixed()`]. Resources and messages are
+/// identical to [`CorePlugin`]; only the schedule for tick-phase
+/// systems differs.
+pub struct CorePluginFixed;
+
+impl Plugin for CorePluginFixed {
+    fn build(&self, app: &mut App) {
+        build_core_plugin(app, FixedUpdate);
+    }
+}
+
+fn build_core_plugin(app: &mut App, schedule: impl ScheduleLabel + Clone) {
+    app.init_resource::<CableIndex>()
+        .init_resource::<tick::MergeBuffers>()
+        .init_resource::<tick::TickOrder>()
+        .init_resource::<tick::PropagationOrder>()
+        .init_resource::<tick::PropagationOrderDirty>()
+        .init_resource::<ParameterRegistry>()
+        .init_resource::<ModuleRegistry>()
+        .add_message::<tick::TickNow>()
+        .add_message::<TransportChanged>()
+        .add_message::<MidiInReceived>()
+        .add_message::<CoreCommand>()
+        .add_message::<PatchLoaded>()
+        .add_message::<RtWarning>()
+        .add_message::<SongPositionChanged>()
+        .configure_sets(
+            schedule.clone(),
+            (TickPhase::Produce, TickPhase::Propagate, TickPhase::Consume).chain(),
+        )
+        .add_systems(
+            schedule,
+            (
+                tick::rebuild_propagation_order_system
+                    .in_set(TickPhase::Propagate)
+                    .before(tick::propagate_cables_system),
+                tick::propagate_cables_system.in_set(TickPhase::Propagate),
+                tick::consume_ports_system.in_set(TickPhase::Consume),
+            ),
+        );
+
+    #[cfg(feature = "rt-bridge")]
+    {
+        app.init_resource::<bridge::MidiOutputQueue>()
+            .add_systems(PreUpdate, bridge::drain_rt_events_system)
+            .add_systems(PostUpdate, bridge::flush_midi_output_system);
     }
 }
 

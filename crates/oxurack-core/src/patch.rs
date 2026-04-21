@@ -451,7 +451,7 @@ pub fn load_patch_from_file(path: &std::path::Path) -> Result<Patch, crate::Core
 
 /// Handle returned by [`apply_patch_to_world`], mapping instance names
 /// to the ECS entities that were spawned.
-#[derive(Debug, Clone)]
+#[derive(bevy_ecs::prelude::Resource, Debug, Clone)]
 pub struct PatchHandle {
     /// Map from module instance name to the spawned module entity.
     pub modules: HashMap<String, Entity>,
