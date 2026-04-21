@@ -38,6 +38,14 @@ pub enum CoreError {
         reason: String,
     },
 
+    /// No module instance with the given name exists in the loaded patch.
+    #[error("unknown module instance: '{0}'")]
+    UnknownModule(String),
+
+    /// No patch is loaded; cannot resolve module instance names.
+    #[error("no patch loaded")]
+    NoPatchLoaded,
+
     /// The command is recognized but not yet implemented in this crate.
     ///
     /// Returned by [`dispatch_core_command`](crate::dispatch_core_command)
@@ -167,6 +175,20 @@ mod tests {
             "expected 'tick error' in: {msg}"
         );
         assert!(msg.contains("vco_1"), "expected 'vco_1' in: {msg}");
+    }
+
+    #[test]
+    fn test_core_error_unknown_module_display() {
+        let err = CoreError::UnknownModule("clock_1".into());
+        let msg = format!("{err}");
+        assert_eq!(msg, "unknown module instance: 'clock_1'");
+    }
+
+    #[test]
+    fn test_core_error_no_patch_loaded_display() {
+        let err = CoreError::NoPatchLoaded;
+        let msg = format!("{err}");
+        assert_eq!(msg, "no patch loaded");
     }
 
     #[test]

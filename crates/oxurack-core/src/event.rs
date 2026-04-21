@@ -130,6 +130,11 @@ pub struct SongPositionChanged {
 ///
 /// # Currently implemented
 ///
+/// - [`CoreCommand::SetParameter`] -- resolves the target module by
+///   instance name via [`PatchHandle`](crate::PatchHandle), reads the
+///   [`ModuleKind`](crate::ModuleKind) from the entity's
+///   [`Module`](crate::Module) component, and invokes the registered
+///   setter via [`ParameterRegistry`](crate::ParameterRegistry).
 /// - [`CoreCommand::Panic`] -- returns `Ok(())` (module reset will be
 ///   implemented when concrete modules exist).
 /// - [`CoreCommand::SetBpm`] -- returns `Ok(())` (tempo propagation
@@ -140,26 +145,76 @@ pub struct SongPositionChanged {
 ///
 /// The following commands return
 /// [`Err(NotImplemented(..))`](crate::CoreError::NotImplemented)
-/// because they require infrastructure provided by the umbrella crate
-/// (module-entity lookup, world reconstruction, port-entity
-/// resolution):
+/// because they require infrastructure provided by the umbrella crate:
 ///
 /// - [`CoreCommand::LoadPatch`]
-/// - [`CoreCommand::SetParameter`]
 /// - [`CoreCommand::SavePatch`]
 /// - [`CoreCommand::AddCable`] / [`CoreCommand::RemoveCable`]
 pub fn dispatch_core_command(
-    _world: &mut bevy_ecs::world::World,
+    world: &mut bevy_ecs::world::World,
     command: &CoreCommand,
 ) -> Result<(), crate::CoreError> {
     match command {
         CoreCommand::Panic | CoreCommand::SetBpm(_) => Ok(()),
+        CoreCommand::SetParameter {
+            module,
+            param,
+            value,
+        } => dispatch_set_parameter(world, module, param, value),
         CoreCommand::LoadPatch(_) => Err(crate::CoreError::NotImplemented("LoadPatch")),
-        CoreCommand::SetParameter { .. } => Err(crate::CoreError::NotImplemented("SetParameter")),
         CoreCommand::SavePatch(_) => Err(crate::CoreError::NotImplemented("SavePatch")),
         CoreCommand::AddCable { .. } => Err(crate::CoreError::NotImplemented("AddCable")),
         CoreCommand::RemoveCable { .. } => Err(crate::CoreError::NotImplemented("RemoveCable")),
     }
+}
+
+fn dispatch_set_parameter(
+    world: &mut bevy_ecs::world::World,
+    instance_name: &str,
+    param: &str,
+    value: &crate::ParameterValue,
+) -> Result<(), crate::CoreError> {
+    let entity = world
+        .get_resource::<crate::PatchHandle>()
+        .ok_or(crate::CoreError::NoPatchLoaded)?
+        .modules
+        .get(instance_name)
+        .copied()
+        .ok_or_else(|| crate::CoreError::UnknownModule(instance_name.to_string()))?;
+
+    let kind = world
+        .get::<crate::Module>(entity)
+        .ok_or_else(|| crate::CoreError::UnknownModule(instance_name.to_string()))?
+        .kind
+        .clone();
+
+    // TODO(bucket-4): Centralise schema validation here once
+    // OxurackModule exposes per-parameter setters via the trait and
+    // install() wires them with schemas into ParameterRegistry.
+    // Currently, validation is the responsibility of each setter fn.
+
+    world.resource_scope(
+        |world, registry: bevy_ecs::change_detection::Mut<crate::ParameterRegistry>| {
+            registry
+                .set_parameter(world, entity, &kind, param, value.clone())
+                .map_err(|e| match e {
+                    crate::CoreError::UnknownParameter { param, .. } => {
+                        crate::CoreError::UnknownParameter {
+                            module: instance_name.to_string(),
+                            param,
+                        }
+                    }
+                    crate::CoreError::InvalidParameterValue { param, reason, .. } => {
+                        crate::CoreError::InvalidParameterValue {
+                            module: instance_name.to_string(),
+                            param,
+                            reason,
+                        }
+                    }
+                    other => other,
+                })
+        },
+    )
 }
 
 #[cfg(test)]
@@ -369,25 +424,164 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_dispatch_set_parameter_returns_not_implemented() {
+    // ── SetParameter dispatch tests ───────────────────────────────
+
+    #[derive(bevy_ecs::prelude::Component, Debug, Clone, PartialEq)]
+    struct TestParamState {
+        gain: f32,
+    }
+
+    fn test_gain_setter(
+        world: &mut bevy_ecs::world::World,
+        entity: bevy_ecs::prelude::Entity,
+        value: crate::ParameterValue,
+    ) -> Result<(), crate::CoreError> {
+        match value {
+            crate::ParameterValue::Float(f) => {
+                world
+                    .entity_mut(entity)
+                    .get_mut::<TestParamState>()
+                    .expect("TestParamState should exist")
+                    .gain = f;
+                Ok(())
+            }
+            _ => Err(crate::CoreError::InvalidParameterValue {
+                module: "test".into(),
+                param: "gain".into(),
+                reason: "expected Float".into(),
+            }),
+        }
+    }
+
+    fn setup_set_parameter_world() -> bevy_ecs::world::World {
         let mut world = bevy_ecs::world::World::new();
+
+        let module_entity = crate::spawn_module_entity(&mut world, "test_gen", "gen_1");
+        world
+            .entity_mut(module_entity)
+            .insert(TestParamState { gain: 0.0 });
+
+        let mut handle = crate::PatchHandle {
+            modules: std::collections::HashMap::new(),
+        };
+        handle.modules.insert("gen_1".to_string(), module_entity);
+        world.insert_resource(handle);
+
+        let mut registry = crate::ParameterRegistry::default();
+        registry.register(
+            crate::ModuleKind::from("test_gen"),
+            "gain",
+            test_gain_setter,
+        );
+        world.insert_resource(registry);
+
+        world
+    }
+
+    #[test]
+    fn test_dispatch_set_parameter_positive_path() {
+        let mut world = setup_set_parameter_world();
         let result = dispatch_core_command(
             &mut world,
             &CoreCommand::SetParameter {
-                module: "vco_1".into(),
-                param: "freq".into(),
-                value: crate::ParameterValue::Float(440.0),
+                module: "gen_1".into(),
+                param: "gain".into(),
+                value: crate::ParameterValue::Float(0.75),
+            },
+        );
+        assert!(
+            result.is_ok(),
+            "valid SetParameter should return Ok: {result:?}"
+        );
+
+        let handle = world.get_resource::<crate::PatchHandle>().unwrap();
+        let entity = handle.modules["gen_1"];
+        let state = world.get::<TestParamState>(entity).unwrap();
+        assert_eq!(state.gain, 0.75, "setter should have updated the component");
+    }
+
+    #[test]
+    fn test_dispatch_set_parameter_no_patch_loaded() {
+        let mut world = bevy_ecs::world::World::new();
+        world.init_resource::<crate::ParameterRegistry>();
+
+        let result = dispatch_core_command(
+            &mut world,
+            &CoreCommand::SetParameter {
+                module: "gen_1".into(),
+                param: "gain".into(),
+                value: crate::ParameterValue::Float(0.5),
+            },
+        );
+        assert!(
+            matches!(result, Err(crate::CoreError::NoPatchLoaded)),
+            "should return NoPatchLoaded when no patch is loaded: {result:?}"
+        );
+    }
+
+    #[test]
+    fn test_dispatch_set_parameter_unknown_module() {
+        let mut world = setup_set_parameter_world();
+        let result = dispatch_core_command(
+            &mut world,
+            &CoreCommand::SetParameter {
+                module: "nonexistent".into(),
+                param: "gain".into(),
+                value: crate::ParameterValue::Float(0.5),
+            },
+        );
+        assert!(
+            matches!(result, Err(crate::CoreError::UnknownModule(ref name)) if name == "nonexistent"),
+            "should return UnknownModule for missing instance: {result:?}"
+        );
+    }
+
+    #[test]
+    fn test_dispatch_set_parameter_unknown_parameter() {
+        let mut world = setup_set_parameter_world();
+        let result = dispatch_core_command(
+            &mut world,
+            &CoreCommand::SetParameter {
+                module: "gen_1".into(),
+                param: "nonexistent".into(),
+                value: crate::ParameterValue::Float(0.5),
             },
         );
         assert!(
             matches!(
                 result,
-                Err(crate::CoreError::NotImplemented("SetParameter"))
+                Err(crate::CoreError::UnknownParameter { ref module, ref param })
+                    if module == "gen_1" && param == "nonexistent"
             ),
-            "SetParameter should return NotImplemented: {result:?}"
+            "should return UnknownParameter with instance name: {result:?}"
         );
     }
+
+    #[test]
+    fn test_dispatch_set_parameter_invalid_value() {
+        let mut world = setup_set_parameter_world();
+        let result = dispatch_core_command(
+            &mut world,
+            &CoreCommand::SetParameter {
+                module: "gen_1".into(),
+                param: "gain".into(),
+                value: crate::ParameterValue::Bool(true),
+            },
+        );
+        assert!(
+            matches!(
+                result,
+                Err(crate::CoreError::InvalidParameterValue { ref module, ref param, .. })
+                    if module == "gen_1" && param == "gain"
+            ),
+            "should return InvalidParameterValue with instance name: {result:?}"
+        );
+    }
+
+    // Schema validation is deferred to Bucket 4, when OxurackModule
+    // exposes per-parameter setters and install() wires them with
+    // schemas into ParameterRegistry. Currently each setter is
+    // responsible for its own validation (see test_gain_setter above).
 
     #[test]
     fn test_dispatch_save_patch_returns_not_implemented() {
