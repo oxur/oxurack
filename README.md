@@ -89,7 +89,7 @@ interface, and the build roadmap.
 ## Current state
 
 oxurack is in early development. The Turing Machine Mk2 port
-(`crates/turingmachine/`) is the first working module; the core
+(`crates/oxurack-mod-turingmachine/`) is the first working module; the core
 infrastructure, RT thread, and additional modules are being built out
 against the v1 roadmap. APIs will change until v1.0 is tagged.
 

@@ -17,7 +17,7 @@ version: 1.0
 ## Context
 
 You are working in the `oxur/oxurack` Rust workspace. The workspace root has a
-`Cargo.toml` that includes `crates/turingmachine` in its `[workspace.members]`.
+`Cargo.toml` that includes `crates/oxurack-mod-turingmachine` in its `[workspace.members]`.
 
 This crate is a **MIDI-domain port of the Music Thing Modular Turing Machine Mk2**
 (hardware schematic dated May 2016). It does **not** do voltage or audio
@@ -39,7 +39,7 @@ Ensure `oxurack/Cargo.toml` exists and contains:
 [workspace]
 resolver = "2"
 members = [
-    "crates/turingmachine",
+    "crates/oxurack-mod-turingmachine",
 ]
 ```
 
@@ -47,10 +47,10 @@ members = [
 
 ## 1. Crate scaffold
 
-Create/update `crates/turingmachine/` with this layout:
+Create/update `crates/oxurack-mod-turingmachine/` with this layout:
 
 ```
-crates/turingmachine/
+crates/oxurack-mod-turingmachine/
 ├── Cargo.toml
 ├── README.md
 └── src/
@@ -71,7 +71,7 @@ crates/turingmachine/
 
 ```toml
 [package]
-name    = "turingmachine"
+name    = "oxurack-mod-turingmachine"
 version = "0.1.0"
 edition = "2024"
 description = "MIDI-domain Turing Machine Mk2. Applies shift-register randomisation and looping to MIDI note, velocity, gate, and CC streams."

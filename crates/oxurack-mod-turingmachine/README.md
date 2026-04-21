@@ -1,4 +1,4 @@
-# turingmachine
+# oxurack-mod-turingmachine
 
 A MIDI-domain port of the
 [Music Thing Modular Turing Machine Mk2](https://musicthing.co.uk/pages/turing.html).
@@ -77,13 +77,13 @@ Add the dependency to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-turingmachine = { path = "crates/turingmachine" }
+oxurack-mod-turingmachine = { path = "crates/oxurack-mod-turingmachine" }
 ```
 
 Create an engine, tick it, and read the outputs:
 
 ```rust
-use turingmachine::{TuringMachine, Scale};
+use oxurack_mod_turingmachine::{TuringMachine, Scale};
 
 let mut tm = TuringMachine::new();
 
@@ -108,7 +108,7 @@ if out.gate {
 For **deterministic / reproducible** sequences, use a seeded constructor:
 
 ```rust
-use turingmachine::TuringMachine;
+use oxurack_mod_turingmachine::TuringMachine;
 
 let mut tm = TuringMachine::with_seed(42);
 // Two engines built with the same seed produce identical output.
@@ -120,7 +120,7 @@ A tight loop simulating a sequencer session. Each tick prints the register
 state and the current note.
 
 ```rust
-use turingmachine::{TuringMachine, Scale};
+use oxurack_mod_turingmachine::{TuringMachine, Scale};
 use std::thread;
 use std::time::Duration;
 
@@ -160,19 +160,19 @@ Off and CC messages to a real MIDI port.
 
 ```toml
 [dependencies]
-turingmachine = { path = "crates/turingmachine", features = ["midi-io"] }
+oxurack-mod-turingmachine = { path = "crates/oxurack-mod-turingmachine", features = ["midi-io"] }
 ```
 
 ```rust
-use turingmachine::{TuringMachine, Scale};
+use oxurack_mod_turingmachine::{TuringMachine, Scale};
 // MidiTuringMachine is only available with the "midi-io" feature.
-// use turingmachine::MidiTuringMachine;
+// use oxurack_mod_turingmachine::MidiTuringMachine;
 
 use std::thread;
 use std::time::Duration;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let midi_out = midir::MidiOutput::new("turingmachine")?;
+    let midi_out = midir::MidiOutput::new("oxurack-mod-turingmachine")?;
     let ports = midi_out.ports();
     let port = ports.first().expect("no MIDI output port found");
     let conn = midi_out.connect(port, "tm-out")?;

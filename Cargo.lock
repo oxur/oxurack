@@ -1011,6 +1011,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxurack-mod-turingmachine"
+version = "0.1.0"
+dependencies = [
+ "midir",
+ "pretty_assertions",
+ "rand",
+ "serde",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "oxurack-rt"
 version = "0.1.0"
 dependencies = [
@@ -1445,17 +1456,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2abe9b86193656635d2411dc43050282ca48aa31c2451210f4202550afb7526"
 dependencies = [
  "winnow 1.0.1",
-]
-
-[[package]]
-name = "turingmachine"
-version = "0.1.0"
-dependencies = [
- "midir",
- "pretty_assertions",
- "rand",
- "serde",
- "thiserror 2.0.18",
 ]
 
 [[package]]

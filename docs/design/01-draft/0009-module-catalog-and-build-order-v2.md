@@ -116,9 +116,9 @@ module authoring story.
 
 ```
 Phase 1 deliverables:
-  [P1-1] oxurack-mod-turingmachine crate extracted from existing
+  [P1-1] oxurack-mod-turingmachine crate renamed from the original
          turingmachine crate.
-  [P1-2] Scale type moved from turingmachine to oxurack-core.
+  [P1-2] Scale type moved from oxurack-mod-turingmachine to oxurack-core.
   [P1-3] TuringMachineState as a Component.
   [P1-4] tick_turingmachine system in TickPhase::Produce.
   [P1-5] TuringMachineModule impl OxurackModule + Plugin.
@@ -264,7 +264,7 @@ session and is not embarrassed by it.
 
 Condensed form; each module gets a proper design doc as it's implemented.
 
-### 3.1 turingmachine
+### 3.1 oxurack-mod-turingmachine
 
 Status: existing crate being ported. Full spec in
 `0001-turing-machine-to-midi-module-design-doc.md`.

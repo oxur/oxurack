@@ -77,7 +77,7 @@ oxurack-core/
 │   ├── tick.rs             # Tick phases, scheduling, topology sort
 │   ├── parameter.rs        # Parameter registry, setter dispatch
 │   ├── patch.rs            # Patch serialization via bevy_reflect + RON
-│   ├── scale.rs            # Musical Scale type (extracted from turingmachine)
+│   ├── scale.rs            # Musical Scale type (extracted from oxurack-mod-turingmachine)
 │   ├── rng.rs              # Seed derivation helpers
 │   ├── event.rs            # Cross-system events (RtEvent mirror, etc.)
 │   └── error.rs            # CoreError, PatchError, TickError
@@ -481,7 +481,7 @@ A field exposed as both a port and a parameter:
 - The port is the **override**; applied when ≥1 cable is connected.
 - This is the VCV Rack convention (knob + CV input sharing a destination).
 
-## 9. Scale Type (Moved from turingmachine)
+## 9. Scale Type (Moved from oxurack-mod-turingmachine)
 
 The `Scale` type, previously defined in the Turing Machine crate, moves
 here. Its API remains identical:
@@ -503,7 +503,7 @@ impl Scale {
 }
 ```
 
-The turingmachine crate re-exports `oxurack_core::Scale` for back-compat and
+The oxurack-mod-turingmachine crate re-exports `oxurack_core::Scale` for back-compat and
 eventually drops the re-export on a major version.
 
 A future `oxurack-mod-quantizer` module uses this type.
@@ -835,7 +835,7 @@ survived scrutiny:
 - `Value` enum with `Float`/`Gate`/`Bipolar`/`Midi`/`Raw` variants
 - `ValueKind` as a parallel tag enum
 - `CableTransform` (extended with more variants)
-- `Scale` extraction from `turingmachine` to `core`
+- `Scale` extraction from `oxurack-mod-turingmachine` to `core`
 - `Patch` + per-module config for serialization
 
 And replaces:

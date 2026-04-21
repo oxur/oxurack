@@ -544,7 +544,7 @@ Failure modes the RT thread must handle:
 ## 14. Open Questions
 
 **Q1. Coremidi direct vs. midir.** `midir` is the obvious choice for v1:
-cross-platform, well-maintained, shared with the existing `turingmachine`
+cross-platform, well-maintained, shared with the existing `oxurack-mod-turingmachine`
 crate's MIDI I/O feature. If jitter measurement reveals we cannot meet
 the timing budget through `midir` on macOS, the fallback is direct
 `coremidi` use with kernel-scheduled message delivery. Architecture
