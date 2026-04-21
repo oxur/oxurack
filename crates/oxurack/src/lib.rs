@@ -11,7 +11,25 @@ use bevy_app::prelude::App;
 use bevy_ecs::prelude::Resource;
 use bevy_time::prelude::{Fixed, Time};
 
-pub use oxurack_core;
+// ── Re-exports from oxurack-core ────────────────────────────────────
+//
+// Curated public surface. Users import from `oxurack::`, not
+// `oxurack::oxurack_core::`.
+
+pub use oxurack_core::OxurackModule as Module;
+
+pub use oxurack_core::{CoreError, CorePlugin, CorePluginFixed, PatchHandle, Scale};
+
+pub use oxurack_core::{
+    CableConfig, CableTransform, ModuleConfig, ParameterValue, Patch, Value, ValueKind,
+};
+
+pub use oxurack_core::{
+    MergePolicy, ModuleId, ModuleKind, ParameterName, ParameterSchema, Port, PortDirection,
+    PortName, PortSchema, TickPhase,
+};
+
+pub use oxurack_core::{CurrentValue, spawn_module_entity, spawn_port_on_module};
 
 /// Whether the simulation tick loop is running.
 ///
