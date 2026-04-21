@@ -29,7 +29,9 @@ pub use oxurack_core::{
     PortName, PortSchema, TickPhase,
 };
 
-pub use oxurack_core::{CurrentValue, spawn_module_entity, spawn_port_on_module};
+// spawn_module_entity, spawn_port_on_module, and CurrentValue are
+// module-author internals. Module crates import them directly from
+// oxurack_core, not from the user-facing oxurack surface.
 
 /// Whether the simulation tick loop is running.
 ///
