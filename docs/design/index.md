@@ -6,6 +6,7 @@ This index is automatically generated. Do not edit manually.
 
 | Number | Title | State | Updated |
 |--------|-------|-------|----------|
+| 0010 | oxurack Public API Design (v0) | Draft | 2026-04-20 |
 | 0009 | Module Catalog and Build Order (v2) | Draft | 2026-04-18 |
 | 0008 | oxurack Module Infrastructure: Authoring Modules on Bevy | Draft | 2026-04-18 |
 | 0007 | oxurack-core: ECS World, Values, Ports, and Cables | Draft | 2026-04-18 |
@@ -20,6 +21,7 @@ This index is automatically generated. Do not edit manually.
 
 ### Draft
 
+- [0010 - oxurack Public API Design (v0)](01-draft/0010-oxurack-public-api-design-v0.md)
 - [0009 - Module Catalog and Build Order (v2)](01-draft/0009-module-catalog-and-build-order-v2.md)
 - [0008 - oxurack Module Infrastructure: Authoring Modules on Bevy](01-draft/0008-oxurack-module-infrastructure-authoring-modules-on-bevy.md)
 - [0007 - oxurack-core: ECS World, Values, Ports, and Cables](01-draft/0007-oxurack-core-ecs-world-values-ports-and-cables.md)
