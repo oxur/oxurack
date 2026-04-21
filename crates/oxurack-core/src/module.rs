@@ -234,7 +234,7 @@ impl fmt::Debug for ModuleRegistration {
 /// Module plugins call [`register`](ModuleRegistry::register) during
 /// app build. The patch loader uses the registry to look up module
 /// metadata by [`ModuleKind`].
-#[derive(Resource, Default, Debug, Clone)]
+#[derive(Resource, Default, Debug)]
 pub struct ModuleRegistry {
     registrations: HashMap<ModuleKind, ModuleRegistration>,
 }

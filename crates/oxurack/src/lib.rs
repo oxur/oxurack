@@ -73,24 +73,16 @@ impl Oxurack {
     pub fn load_patch(&mut self, path: &Path) -> Result<(), oxurack_core::CoreError> {
         let patch = oxurack_core::load_patch_from_file(path)?;
 
-        // apply_patch_to_world validates internally and needs &mut World,
-        // but also reads &ModuleRegistry from the same world. It handles
-        // the borrow split internally by taking the registry reference
-        // before mutating. We pass the registry as a separate parameter.
-        //
-        // Clone the registry to break the borrow overlap between the
-        // immutable registry read and the mutable world access needed
-        // for spawning.
-        let registry = self
-            .app
-            .world()
-            .get_resource::<oxurack_core::ModuleRegistry>()
-            .expect("ModuleRegistry should be initialized by CorePlugin")
-            .clone();
-
-        let handle = oxurack_core::apply_patch_to_world(&patch, &registry, self.app.world_mut())?;
-
-        self.app.world_mut().insert_resource(handle);
+        // resource_scope temporarily removes ModuleRegistry from the
+        // world, giving us an &-ref to pass to apply_patch_to_world
+        // alongside the &mut World it needs for spawning.
+        self.app
+            .world_mut()
+            .resource_scope::<oxurack_core::ModuleRegistry, _>(|world, registry| {
+                let handle = oxurack_core::apply_patch_to_world(&patch, &registry, world)?;
+                world.insert_resource(handle);
+                Ok::<(), oxurack_core::CoreError>(())
+            })?;
         Ok(())
     }
 
