@@ -305,10 +305,10 @@ PLL test data: synthetic tick streams with known tempo + controlled Gaussian noi
 
 ## Key Patterns to Follow
 
-- **Error handling**: use `thiserror` derive (the existing turingmachine crate has thiserror as a dep but implements Error manually; oxurack-rt should use the derive macro idiomatically)
-- **Edition**: 2024 (matching turingmachine)
-- **License**: MIT OR Apache-2.0 (matching turingmachine Cargo.toml)
-- **Dev deps**: `pretty_assertions = "1"` (matching turingmachine)
+- **Error handling**: use `thiserror` derive (the existing oxurack-mod-turingmachine crate has thiserror as a dep but implements Error manually; oxurack-rt should use the derive macro idiomatically)
+- **Edition**: 2024 (matching oxurack-mod-turingmachine)
+- **License**: MIT OR Apache-2.0 (matching oxurack-mod-turingmachine Cargo.toml)
+- **Dev deps**: `pretty_assertions = "1"` (matching oxurack-mod-turingmachine)
 - **No `#![deny(warnings)]`** in library code (per anti-pattern AP-01)
 - **`#[non_exhaustive]`** on public enums (per idiom ID-01)
 

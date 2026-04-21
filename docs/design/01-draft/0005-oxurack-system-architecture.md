@@ -248,7 +248,7 @@ dependency.
 The standalone API for each module is preserved because Principle 2 (each
 crate stands alone) remains load-bearing. In practice, the ECS-facing plugin
 layer wraps a pure-Rust core that does the actual computation — the same
-way `MidiTuringMachine` in the existing `turingmachine` crate wraps the
+way `MidiTuringMachine` in the existing `oxurack-mod-turingmachine` crate wraps the
 pure `TuringMachine`.
 
 See design doc 0008 for the module infrastructure specification and design
@@ -458,7 +458,7 @@ Key departures from underack:
   the ETS-based cable registry.
 - Master *and* slave clock modes from v1, rather than master-only.
 
-The existing `turingmachine` crate (design doc 0001, state Final) is
+The existing `oxurack-mod-turingmachine` crate (design doc 0001, state Final) is
 preserved and will be refactored to integrate with `oxurack-core` as part
 of the v1 work, with its public standalone API unchanged.
 

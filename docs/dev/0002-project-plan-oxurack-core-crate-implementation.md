@@ -241,10 +241,10 @@ Implement in `parameter.rs`:
 
 **Tests**: Register/call setter. Unknown parameter → CoreError. Invalid value → CoreError.
 
-### Milestone 4.2 — Scale type extracted from turingmachine
+### Milestone 4.2 — Scale type extracted from oxurack-mod-turingmachine
 
 Implement in `scale.rs`:
-- Port `Scale` from turingmachine with: SmallVec<[u8; 12]> intervals, root field, Optional name, Reflect + Serialize + Deserialize derives.
+- Port `Scale` from oxurack-mod-turingmachine with: SmallVec<[u8; 12]> intervals, root field, Optional name, Reflect + Serialize + Deserialize derives.
 - All built-in constructors: chromatic, major, minor, pentatonic, blues, etc.
 - `Scale::quantize(&self, raw_note: u8) -> u8` (root now on Scale, not Quantizer).
 
