@@ -1,9 +1,8 @@
 //! Umbrella crate for the oxurack modular MIDI rack.
 //!
-//! Provides [`OxurackApp`], the top-level entry point that wires
-//! `oxurack-core`'s ECS infrastructure into a runnable Bevy
-//! application with fixed-timestep simulation, module registration,
-//! and patch loading.
+//! [`Oxurack`] is the rack: install modules, load patches, set knobs,
+//! power on, play. The Bevy ECS engine runs underneath but stays out
+//! of your way unless you ask for it via [`Oxurack::into_app`].
 
 use std::path::Path;
 use std::time::Duration;
@@ -21,25 +20,18 @@ pub use oxurack_core;
 #[derive(Resource, Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SimulationRunning(pub bool);
 
-/// Top-level oxurack application.
+/// The rack. Install modules, load patches, power on, play.
 ///
-/// Wraps a Bevy [`App`] configured with:
-///
-/// - [`CorePlugin::fixed()`](oxurack_core::CorePluginFixed) — tick
-///   systems in [`FixedUpdate`](bevy_app::FixedUpdate) at 1000 Hz.
-/// - [`Time<Fixed>`] period set to 1 ms.
-/// - [`SimulationRunning`] resource (initially `false`).
-///
-/// Module crates register via [`register_module`](Self::register_module).
-/// Patches are loaded via [`load_patch`](Self::load_patch), which stores
-/// the resulting [`PatchHandle`](oxurack_core::PatchHandle) as a
-/// resource for downstream entity lookups.
-pub struct OxurackApp {
+/// Internally wraps a Bevy [`App`] with fixed-timestep simulation
+/// at 1000 Hz. Modules are installed via [`install`](Self::install),
+/// patches loaded via [`load_patch`](Self::load_patch). The Bevy
+/// engine is accessible via [`into_app`](Self::into_app) when needed.
+pub struct Oxurack {
     app: App,
 }
 
-impl OxurackApp {
-    /// Creates a new oxurack app with fixed-timestep simulation at 1000 Hz.
+impl Oxurack {
+    /// Build a new rack with fixed-timestep simulation at 1000 Hz.
     pub fn new() -> Self {
         let mut app = App::new();
 
@@ -55,20 +47,11 @@ impl OxurackApp {
         Self { app }
     }
 
-    /// Registers a module type in the [`ModuleRegistry`](oxurack_core::ModuleRegistry).
+    /// Install a module type into the rack.
     ///
-    /// After registration, patches referencing `M::KIND` can be loaded
+    /// After installation, patches referencing `M::KIND` can be loaded
     /// and their module instances will be spawned by `M::spawn`.
-    ///
-    /// # Note on parameter setters
-    ///
-    /// This method registers the module's metadata (kind, ports,
-    /// parameter schemas, spawner) but does **not** register per-parameter
-    /// setter functions in the [`ParameterRegistry`](oxurack_core::ParameterRegistry).
-    /// The `OxurackModule` trait currently has no way to expose setter
-    /// functions. Bucket 3 will address this gap when it closes the
-    /// `SetParameter` command.
-    pub fn register_module<M: oxurack_core::OxurackModule>(&mut self) -> &mut Self {
+    pub fn install<M: oxurack_core::OxurackModule>(&mut self) -> &mut Self {
         self.app
             .world_mut()
             .resource_mut::<oxurack_core::ModuleRegistry>()
@@ -125,18 +108,23 @@ impl OxurackApp {
         self.app.run();
     }
 
-    /// Returns a mutable reference to the underlying Bevy [`App`].
-    pub fn bevy_app_mut(&mut self) -> &mut App {
-        &mut self.app
+    /// Consume the rack and return the underlying Bevy [`App`].
+    pub fn into_app(self) -> App {
+        self.app
     }
 
-    /// Returns a shared reference to the underlying Bevy [`App`].
-    pub fn bevy_app(&self) -> &App {
-        &self.app
+    #[cfg(test)]
+    fn world(&self) -> &bevy_ecs::world::World {
+        self.app.world()
+    }
+
+    #[cfg(test)]
+    fn world_mut(&mut self) -> &mut bevy_ecs::world::World {
+        self.app.world_mut()
     }
 }
 
-impl Default for OxurackApp {
+impl Default for Oxurack {
     fn default() -> Self {
         Self::new()
     }
@@ -269,9 +257,8 @@ mod tests {
 
     #[test]
     fn test_new_has_simulation_running_false() {
-        let oxa = OxurackApp::new();
+        let oxa = Oxurack::new();
         let sr = oxa
-            .bevy_app()
             .world()
             .get_resource::<SimulationRunning>()
             .expect("SimulationRunning should be present");
@@ -280,9 +267,8 @@ mod tests {
 
     #[test]
     fn test_new_has_time_fixed_at_1ms() {
-        let oxa = OxurackApp::new();
+        let oxa = Oxurack::new();
         let time = oxa
-            .bevy_app()
             .world()
             .get_resource::<Time<Fixed>>()
             .expect("Time<Fixed> should be present");
@@ -295,26 +281,19 @@ mod tests {
 
     #[test]
     fn test_new_has_module_registry() {
-        let oxa = OxurackApp::new();
+        let oxa = Oxurack::new();
         assert!(
-            oxa.bevy_app()
-                .world()
-                .get_resource::<ModuleRegistry>()
-                .is_some(),
+            oxa.world().get_resource::<ModuleRegistry>().is_some(),
             "ModuleRegistry should be present"
         );
     }
 
     #[test]
-    fn test_register_module_populates_registry() {
-        let mut oxa = OxurackApp::new();
-        oxa.register_module::<TestGen>();
+    fn test_install_populates_registry() {
+        let mut oxa = Oxurack::new();
+        oxa.install::<TestGen>();
 
-        let registry = oxa
-            .bevy_app()
-            .world()
-            .get_resource::<ModuleRegistry>()
-            .unwrap();
+        let registry = oxa.world().get_resource::<ModuleRegistry>().unwrap();
         assert!(
             registry.contains(&oxurack_core::ModuleKind::from("test_gen")),
             "test_gen should be registered"
@@ -323,16 +302,15 @@ mod tests {
 
     #[test]
     fn test_load_patch_stores_handle() {
-        let mut oxa = OxurackApp::new();
-        oxa.register_module::<TestGen>();
-        oxa.register_module::<TestSink>();
+        let mut oxa = Oxurack::new();
+        oxa.install::<TestGen>();
+        oxa.install::<TestSink>();
 
         let path = save_patch_to_temp(&two_module_patch(), "oxurack_test_umbrella_load.ron");
         oxa.load_patch(&path).expect("load_patch should succeed");
         let _ = std::fs::remove_file(&path);
 
         let handle = oxa
-            .bevy_app()
             .world()
             .get_resource::<PatchHandle>()
             .expect("PatchHandle should be stored after load_patch");
@@ -343,7 +321,7 @@ mod tests {
 
     #[test]
     fn test_load_patch_unregistered_kind_errors() {
-        let mut oxa = OxurackApp::new();
+        let mut oxa = Oxurack::new();
         // Do NOT register any modules.
 
         let path = save_patch_to_temp(&two_module_patch(), "oxurack_test_umbrella_unreg.ron");
@@ -353,19 +331,16 @@ mod tests {
         assert!(result.is_err(), "should fail for unregistered module kind");
 
         assert!(
-            oxa.bevy_app()
-                .world()
-                .get_resource::<PatchHandle>()
-                .is_none(),
+            oxa.world().get_resource::<PatchHandle>().is_none(),
             "PatchHandle should not be inserted on error"
         );
     }
 
     #[test]
     fn test_load_patch_replaces_previous_handle() {
-        let mut oxa = OxurackApp::new();
-        oxa.register_module::<TestGen>();
-        oxa.register_module::<TestSink>();
+        let mut oxa = Oxurack::new();
+        oxa.install::<TestGen>();
+        oxa.install::<TestSink>();
 
         // Load patch A.
         let patch_a = two_module_patch();
@@ -384,7 +359,6 @@ mod tests {
         let _ = std::fs::remove_file(&path_b);
 
         let handle = oxa
-            .bevy_app()
             .world()
             .get_resource::<PatchHandle>()
             .expect("PatchHandle should exist");
@@ -403,24 +377,19 @@ mod tests {
     }
 
     #[test]
-    fn test_register_module_then_apply_patch_spawns_entities() {
-        let mut oxa = OxurackApp::new();
-        oxa.register_module::<TestGen>();
-        oxa.register_module::<TestSink>();
+    fn test_install_then_apply_patch_spawns_entities() {
+        let mut oxa = Oxurack::new();
+        oxa.install::<TestGen>();
+        oxa.install::<TestSink>();
 
         let path = save_patch_to_temp(&two_module_patch(), "oxurack_test_umbrella_spawn.ron");
         oxa.load_patch(&path).expect("load should succeed");
         let _ = std::fs::remove_file(&path);
 
-        let handle = oxa
-            .bevy_app()
-            .world()
-            .get_resource::<PatchHandle>()
-            .unwrap();
+        let handle = oxa.world().get_resource::<PatchHandle>().unwrap();
         let gen_entity = handle.modules["gen_1"];
 
         let module = oxa
-            .bevy_app()
             .world()
             .entity(gen_entity)
             .get::<oxurack_core::Module>()
@@ -431,25 +400,20 @@ mod tests {
 
     #[test]
     fn test_tick_systems_run_in_fixed_update() {
-        let mut oxa = OxurackApp::new();
-        oxa.register_module::<TestGen>();
-        oxa.register_module::<TestSink>();
+        let mut oxa = Oxurack::new();
+        oxa.install::<TestGen>();
+        oxa.install::<TestSink>();
 
         let path = save_patch_to_temp(&two_module_patch(), "oxurack_test_umbrella_tick.ron");
         oxa.load_patch(&path).expect("load should succeed");
         let _ = std::fs::remove_file(&path);
 
         // Set gen_1's output port to a known value.
-        let handle = oxa
-            .bevy_app()
-            .world()
-            .get_resource::<PatchHandle>()
-            .unwrap()
-            .clone();
+        let handle = oxa.world().get_resource::<PatchHandle>().unwrap().clone();
         let gen_entity = handle.modules["gen_1"];
 
         {
-            let world = oxa.bevy_app_mut().world_mut();
+            let world = oxa.world_mut();
             let mut query = world.query::<(
                 bevy_ecs::prelude::Entity,
                 &oxurack_core::Port,
@@ -483,7 +447,7 @@ mod tests {
         // Check that propagation happened: sink_1's input should have
         // the value from gen_1's output.
         let sink_entity = handle.modules["sink_1"];
-        let world = oxa.bevy_app_mut().world_mut();
+        let world = oxa.world_mut();
         let mut query = world.query::<(
             bevy_ecs::prelude::Entity,
             &oxurack_core::Port,
@@ -509,7 +473,7 @@ mod tests {
 
     #[test]
     fn test_step_does_not_panic() {
-        let mut oxa = OxurackApp::new();
+        let mut oxa = Oxurack::new();
         oxa.step();
         oxa.step();
     }
