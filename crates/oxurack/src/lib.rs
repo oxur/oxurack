@@ -398,8 +398,60 @@ mod tests {
         assert_eq!(module.instance_name, "gen_1");
     }
 
+    fn find_port_value(
+        oxa: &mut Oxurack,
+        module_entity: bevy_ecs::prelude::Entity,
+        port_name: &str,
+    ) -> oxurack_core::Value {
+        let world = oxa.world_mut();
+        let mut query = world.query::<(
+            &oxurack_core::Port,
+            &oxurack_core::CurrentValue,
+            &bevy_ecs::hierarchy::ChildOf,
+        )>();
+        query
+            .iter(world)
+            .find_map(|(port, cv, child_of)| {
+                if child_of.0 == module_entity && port.name.as_ref() == port_name {
+                    Some(cv.0)
+                } else {
+                    None
+                }
+            })
+            .unwrap_or_else(|| panic!("port '{port_name}' not found on entity {module_entity:?}"))
+    }
+
+    fn set_port_value(
+        oxa: &mut Oxurack,
+        module_entity: bevy_ecs::prelude::Entity,
+        port_name: &str,
+        value: oxurack_core::Value,
+    ) {
+        let world = oxa.world_mut();
+        let mut query = world.query::<(
+            bevy_ecs::prelude::Entity,
+            &oxurack_core::Port,
+            &bevy_ecs::hierarchy::ChildOf,
+        )>();
+        let port_entity = query
+            .iter(world)
+            .find_map(|(e, port, child_of)| {
+                if child_of.0 == module_entity && port.name.as_ref() == port_name {
+                    Some(e)
+                } else {
+                    None
+                }
+            })
+            .unwrap_or_else(|| panic!("port '{port_name}' not found on entity {module_entity:?}"));
+        world
+            .entity_mut(port_entity)
+            .get_mut::<oxurack_core::CurrentValue>()
+            .unwrap()
+            .0 = value;
+    }
+
     #[test]
-    fn test_tick_systems_run_in_fixed_update() {
+    fn test_propagation_runs_in_fixed_update_not_update() {
         let mut oxa = Oxurack::new();
         oxa.install::<TestGen>();
         oxa.install::<TestSink>();
@@ -408,66 +460,37 @@ mod tests {
         oxa.load_patch(&path).expect("load should succeed");
         let _ = std::fs::remove_file(&path);
 
-        // Set gen_1's output port to a known value.
         let handle = oxa.world().get_resource::<PatchHandle>().unwrap().clone();
         let gen_entity = handle.modules["gen_1"];
-
-        {
-            let world = oxa.world_mut();
-            let mut query = world.query::<(
-                bevy_ecs::prelude::Entity,
-                &oxurack_core::Port,
-                &bevy_ecs::hierarchy::ChildOf,
-            )>();
-            let out_port = query
-                .iter(world)
-                .find_map(|(e, port, child_of)| {
-                    if child_of.0 == gen_entity && port.name.as_ref() == "out" {
-                        Some(e)
-                    } else {
-                        None
-                    }
-                })
-                .expect("gen_1 should have 'out' port");
-            world
-                .entity_mut(out_port)
-                .get_mut::<oxurack_core::CurrentValue>()
-                .unwrap()
-                .0 = oxurack_core::Value::Float(0.42);
-        }
-
-        // The first update initialises the time system's epoch.
-        // Subsequent updates advance Time<Real> from the wall clock,
-        // which propagates to Time<Virtual> and triggers FixedUpdate
-        // when enough time has accumulated past the 1 ms timestep.
-        oxa.step();
-        std::thread::sleep(Duration::from_millis(5));
-        oxa.step();
-
-        // Check that propagation happened: sink_1's input should have
-        // the value from gen_1's output.
         let sink_entity = handle.modules["sink_1"];
-        let world = oxa.world_mut();
-        let mut query = world.query::<(
-            bevy_ecs::prelude::Entity,
-            &oxurack_core::Port,
-            &oxurack_core::CurrentValue,
-            &bevy_ecs::hierarchy::ChildOf,
-        )>();
-        let sink_cv = query
-            .iter(world)
-            .find_map(|(_, port, cv, child_of)| {
-                if child_of.0 == sink_entity && port.name.as_ref() == "in" {
-                    Some(cv.0)
-                } else {
-                    None
-                }
-            })
-            .expect("sink_1 should have 'in' port");
-        assert_eq!(
-            sink_cv,
+
+        set_port_value(
+            &mut oxa,
+            gen_entity,
+            "out",
             oxurack_core::Value::Float(0.42),
-            "propagation should have carried the value through the cable"
+        );
+
+        // Running Update should NOT propagate — tick systems are in FixedUpdate.
+        // Ensure the Update schedule exists (it is only auto-created by
+        // app.update(), not by CorePlugin::fixed() which targets FixedUpdate).
+        let world = oxa.world_mut();
+        world.add_schedule(bevy_ecs::schedule::Schedule::new(bevy_app::prelude::Update));
+        world.run_schedule(bevy_app::prelude::Update);
+        let after_update = find_port_value(&mut oxa, sink_entity, "in");
+        assert_eq!(
+            after_update,
+            oxurack_core::Value::Float(0.0),
+            "Update should NOT propagate values — tick systems are in FixedUpdate"
+        );
+
+        // Running FixedUpdate SHOULD propagate.
+        oxa.world_mut().run_schedule(bevy_app::prelude::FixedUpdate);
+        let after_fixed = find_port_value(&mut oxa, sink_entity, "in");
+        assert_eq!(
+            after_fixed,
+            oxurack_core::Value::Float(0.42),
+            "FixedUpdate should propagate values through the cable"
         );
     }
 
