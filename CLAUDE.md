@@ -36,13 +36,9 @@ See `./docs/design/01-draft/0005-oxurack-system-architecture.md`
 
 **For Rust Code Quality:**
 
-1. **`assets/ai/ai-rust/skills/claude/SKILL.md`** - Advanced Rust programming skill (**use this**)
-2. **`assets/ai/ai-rust/guides/*.md`** - Comprehensive Rust guidelines referenced by the skill
+1. **`assets/ai/rust/SKILL.md`** - Advanced Rust programming skill (**use this**)
+2. **`assets/ai/rust/guides/*`** - Comprehensive Rust guidelines referenced by the skill
 3. **`assets/ai/CLAUDE-CODE-COVERAGE.md`** - Comprehensive test coverage guide
 4. **This file (CLAUDE.md)** - Project-specific conventions only
 
-**Important:** Depending upon the systesm, `assets/ai/ai-rust` may be a symlink; if so, you will need to look in `assets/ai/ai-rust/` (note the final slash). Depending upon the computer you are running on, the actual dir may be at `~/lab/oxur/ai-rust`, `~/lab/oxur/ai-rust-skill`, etc. If, after performing the above checks, you determine that `assets/ai/ai-rust` does not exist on the file system in any form, ask permission to clone it:
-
-```bash
-git clone https://github.com/oxur/ai-rust assets/ai/ai-rust
-```
+**Important:** Depending upon the system, `assets/ai/rust` may be a symlink; if so, you will need to look in `assets/ai/rust/` (note the final slash). If, after performing the above checks, you determine that `assets/ai/ai-rust` does not exist on the file system in any form, ask the user for help.
