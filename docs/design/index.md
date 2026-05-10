@@ -6,6 +6,7 @@ This index is automatically generated. Do not edit manually.
 
 | Number | Title | State | Updated |
 |--------|-------|-------|----------|
+| 0012 | Event Substrate (Bucket 3.25) — Design Memo | Draft | 2026-05-10 |
 | 0011 | RackGraph — Design Memo (v0) | Draft | 2026-04-21 |
 | 0010 | oxurack Public API Design (v0) | Draft | 2026-04-20 |
 | 0009 | Module Catalog and Build Order (v2) | Draft | 2026-04-18 |
@@ -22,6 +23,7 @@ This index is automatically generated. Do not edit manually.
 
 ### Draft
 
+- [0012 - Event Substrate (Bucket 3.25) — Design Memo](01-draft/0012-event-substrate-bucket-3.25-design-memo.md)
 - [0011 - RackGraph — Design Memo (v0)](01-draft/0011-rackgraph-design-memo-v0.md)
 - [0010 - oxurack Public API Design (v0)](01-draft/0010-oxurack-public-api-design-v0.md)
 - [0009 - Module Catalog and Build Order (v2)](01-draft/0009-module-catalog-and-build-order-v2.md)
