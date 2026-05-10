@@ -70,8 +70,9 @@ pub use tick::{
 // Phase 4
 pub use event::dispatch_core_command;
 pub use event::{
-    CoreCommand, MidiInReceived, PatchLoaded, RtWarning, RtWarningCode, SongPositionChanged,
-    TransportChanged, TransportState,
+    CableConnected, CableDisconnected, ChangeSource, CoreCommand, MidiInReceived, ModuleAdded,
+    ModuleRemoved, ParameterChanged, PatchLoaded, PatchSource, RtWarning, RtWarningCode,
+    SongPositionChanged, TransportChanged, TransportState,
 };
 pub use module::{ModuleRegistration, ModuleRegistry, ModuleSpawner, OxurackModule, PortSchema};
 pub use parameter::{ParameterName, ParameterRegistry, ParameterSchema, ParameterValue};
@@ -167,6 +168,11 @@ fn build_core_plugin(app: &mut App, schedule: impl ScheduleLabel + Clone) {
         .add_message::<PatchLoaded>()
         .add_message::<RtWarning>()
         .add_message::<SongPositionChanged>()
+        .add_message::<ModuleAdded>()
+        .add_message::<ModuleRemoved>()
+        .add_message::<CableConnected>()
+        .add_message::<CableDisconnected>()
+        .add_message::<ParameterChanged>()
         .configure_sets(
             schedule.clone(),
             (TickPhase::Produce, TickPhase::Propagate, TickPhase::Consume).chain(),

@@ -6,7 +6,7 @@
 
 use std::path::PathBuf;
 
-use bevy_ecs::prelude::Message;
+use bevy_ecs::prelude::{Entity, Message};
 
 /// Transport state change reported by the real-time thread.
 #[derive(Message, Debug, Clone, Copy, PartialEq, Eq)]
@@ -77,11 +77,137 @@ pub enum CoreCommand {
     Panic,
 }
 
-/// Emitted after a patch has been successfully loaded.
+/// Emitted *last* in a patch-load batch, after all individual
+/// [`ModuleAdded`], [`CableConnected`], and [`ParameterChanged`]
+/// notifications. Semantically: "the patch is now fully in place;
+/// redraw if you redraw."
+///
+/// Subscribers who don't care about granular structural changes can
+/// subscribe only to this event and treat it as a batch sync point.
 #[derive(Message, Debug, Clone)]
 pub struct PatchLoaded {
     /// The name of the patch that was loaded.
     pub patch_name: String,
+    /// Where the patch came from.
+    pub source: PatchSource,
+    /// Number of modules in the loaded patch.
+    pub module_count: usize,
+    /// Number of cables in the loaded patch.
+    pub cable_count: usize,
+}
+
+/// Provenance for a [`PatchLoaded`] notification.
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq)]
+pub enum PatchSource {
+    /// Loaded from a file at the given path.
+    File(PathBuf),
+    /// Constructed in memory (tests, direct API).
+    InMemory,
+    /// Other source (scripting, network, etc.).
+    Other(String),
+}
+
+// ── Structural-mutation notifications ─────────────────────────────
+
+/// Emitted when a module entity is added to the rack.
+///
+/// Producers: [`apply_patch_to_world`](crate::apply_patch_to_world)
+/// (during patch load); future runtime module-install APIs.
+#[derive(Message, Clone, Debug)]
+pub struct ModuleAdded {
+    /// The ECS entity for the new module.
+    pub entity: Entity,
+    /// User-facing instance name (key in `PatchHandle::modules`).
+    pub instance_name: String,
+    /// Module kind (matches the `Module` component's `kind` field).
+    pub kind: crate::ModuleKind,
+}
+
+/// Emitted when a module entity is removed from the rack.
+///
+/// Producers: future `remove_module` API (no emission site today).
+#[derive(Message, Clone, Debug)]
+pub struct ModuleRemoved {
+    /// The ECS entity that was removed.
+    pub entity: Entity,
+    /// User-facing instance name.
+    pub instance_name: String,
+    /// Module kind.
+    pub kind: crate::ModuleKind,
+}
+
+/// Emitted when a cable entity is added to the rack.
+///
+/// Producers: [`apply_patch_to_world`](crate::apply_patch_to_world)
+/// (during patch load); future `dispatch_add_cable` (currently
+/// `NotImplemented`).
+#[derive(Message, Clone, Debug)]
+pub struct CableConnected {
+    /// The ECS entity for the new cable.
+    pub cable_entity: Entity,
+    /// The output port entity this cable reads from.
+    pub source_port: Entity,
+    /// The input port entity this cable writes to.
+    pub target_port: Entity,
+    /// Optional inline signal transform.
+    pub transform: Option<crate::CableTransform>,
+}
+
+/// Emitted when a cable entity is removed from the rack.
+///
+/// Producers: future `dispatch_remove_cable` (currently
+/// `NotImplemented`).
+#[derive(Message, Clone, Debug)]
+pub struct CableDisconnected {
+    /// The ECS entity that was removed.
+    pub cable_entity: Entity,
+    /// The output port entity this cable was reading from.
+    pub source_port: Entity,
+    /// The input port entity this cable was writing to.
+    pub target_port: Entity,
+}
+
+/// Emitted after a parameter is successfully written.
+///
+/// Carries `old` (when available) and `new` so consumers (audit log,
+/// undo, diff renderers) get the full delta in one notification. The
+/// `source` field carries provenance — was this command-driven,
+/// patch-load-driven, or direct-API-driven.
+///
+/// Naming note: `ParameterChanged`, not `KnobChanged`. Parameters
+/// have multiple form factors — knobs, switches, sliders, MIDI-CC,
+/// modulation destinations — so the notification names the substrate,
+/// not the UI affordance.
+#[derive(Message, Clone, Debug)]
+pub struct ParameterChanged {
+    /// The module entity whose parameter changed.
+    pub entity: Entity,
+    /// User-facing instance name of the module.
+    pub instance_name: String,
+    /// The parameter that changed.
+    pub param: crate::ParameterName,
+    /// Previous value, if available.
+    // TODO(bucket-getter): Populate when ParameterRegistry getter
+    // machinery lands. Currently None at all emission sites.
+    pub old: Option<crate::ParameterValue>,
+    /// New value that was written.
+    pub new: crate::ParameterValue,
+    /// Provenance: what triggered this change.
+    pub source: ChangeSource,
+}
+
+/// Provenance for a [`ParameterChanged`] notification.
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq)]
+pub enum ChangeSource {
+    /// Direct user/script command via [`CoreCommand::SetParameter`].
+    Command,
+    /// Direct API mutation (future API surfaces).
+    DirectApi,
+    /// Patch-load initialization. One `ParameterChanged` per
+    /// parameter set during patch load.
+    PatchLoad,
 }
 
 /// Non-fatal warning reported by the real-time thread.
@@ -141,6 +267,11 @@ pub struct SongPositionChanged {
 ///   will be wired when the RT bridge is integrated into the umbrella
 ///   crate).
 ///
+/// # Emits
+///
+/// - `SetParameter` (on success): [`ParameterChanged`] with
+///   `source: ChangeSource::Command`.
+///
 /// # Not yet implemented
 ///
 /// The following commands return
@@ -193,7 +324,7 @@ fn dispatch_set_parameter(
     // install() wires them with schemas into ParameterRegistry.
     // Currently, validation is the responsibility of each setter fn.
 
-    world.resource_scope(
+    let result = world.resource_scope(
         |world, registry: bevy_ecs::change_detection::Mut<crate::ParameterRegistry>| {
             registry
                 .set_parameter(world, entity, &kind, param, value.clone())
@@ -214,7 +345,22 @@ fn dispatch_set_parameter(
                     other => other,
                 })
         },
-    )
+    );
+
+    if result.is_ok() {
+        world.write_message(ParameterChanged {
+            entity,
+            instance_name: instance_name.to_string(),
+            param: crate::ParameterName::from(param),
+            // TODO(bucket-getter): Populate when ParameterRegistry
+            // getter machinery lands.
+            old: None,
+            new: value.clone(),
+            source: ChangeSource::Command,
+        });
+    }
+
+    result
 }
 
 #[cfg(test)]
@@ -375,6 +521,9 @@ mod tests {
     fn test_patch_loaded_debug() {
         let evt = PatchLoaded {
             patch_name: "berlin_school".into(),
+            source: PatchSource::InMemory,
+            module_count: 2,
+            cable_count: 1,
         };
         let debug = format!("{evt:?}");
         assert!(
@@ -387,6 +536,9 @@ mod tests {
     fn test_patch_loaded_clone() {
         let evt = PatchLoaded {
             patch_name: "test_patch".into(),
+            source: PatchSource::InMemory,
+            module_count: 1,
+            cable_count: 0,
         };
         let cloned = evt.clone();
         assert_eq!(cloned.patch_name, "test_patch");
@@ -498,6 +650,62 @@ mod tests {
         let entity = handle.modules["gen_1"];
         let state = world.get::<TestParamState>(entity).unwrap();
         assert_eq!(state.gain, 0.75, "setter should have updated the component");
+    }
+
+    #[test]
+    fn test_parameter_changed_emitted_on_set_parameter() {
+        let mut world = setup_set_parameter_world();
+        world.init_resource::<bevy_ecs::prelude::Messages<ParameterChanged>>();
+
+        dispatch_core_command(
+            &mut world,
+            &CoreCommand::SetParameter {
+                module: "gen_1".into(),
+                param: "gain".into(),
+                value: crate::ParameterValue::Float(0.9),
+            },
+        )
+        .unwrap();
+
+        let messages = world.resource::<bevy_ecs::prelude::Messages<ParameterChanged>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+        assert_eq!(collected.len(), 1, "expected exactly one ParameterChanged");
+        assert!(matches!(
+            &collected[0],
+            ParameterChanged {
+                instance_name,
+                param,
+                old: None,
+                new: crate::ParameterValue::Float(v),
+                source: ChangeSource::Command,
+                ..
+            } if instance_name == "gen_1"
+              && param.as_ref() == "gain"
+              && (*v - 0.9).abs() < f32::EPSILON
+        ));
+    }
+
+    #[test]
+    fn test_parameter_changed_not_emitted_on_set_parameter_failure() {
+        let mut world = setup_set_parameter_world();
+        world.init_resource::<bevy_ecs::prelude::Messages<ParameterChanged>>();
+
+        let _ = dispatch_core_command(
+            &mut world,
+            &CoreCommand::SetParameter {
+                module: "nonexistent".into(),
+                param: "gain".into(),
+                value: crate::ParameterValue::Float(0.5),
+            },
+        );
+
+        let messages = world.resource::<bevy_ecs::prelude::Messages<ParameterChanged>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+        assert_eq!(
+            collected.len(),
+            0,
+            "no ParameterChanged should be emitted on failure"
+        );
     }
 
     #[test]

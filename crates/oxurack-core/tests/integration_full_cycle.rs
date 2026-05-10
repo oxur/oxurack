@@ -280,8 +280,13 @@ fn build_test_app(patch: &Patch) -> (App, oxurack_core::PatchHandle) {
     // but we need a separate reference for `apply_patch_to_world`.
     let registry = test_registry();
 
-    let handle =
-        apply_patch_to_world(patch, &registry, app.world_mut()).expect("patch should apply");
+    let handle = apply_patch_to_world(
+        patch,
+        &registry,
+        app.world_mut(),
+        oxurack_core::PatchSource::InMemory,
+    )
+    .expect("patch should apply");
 
     (app, handle)
 }

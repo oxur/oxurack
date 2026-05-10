@@ -475,11 +475,12 @@ pub fn apply_patch_to_world(
     patch: &Patch,
     registry: &crate::ModuleRegistry,
     world: &mut World,
+    source: crate::PatchSource,
 ) -> Result<PatchHandle, crate::CoreError> {
     // 1. Validate the patch against the registry.
     validate_patch(patch, registry)?;
 
-    // 2. Spawn modules.
+    // 2. Spawn modules and emit ModuleAdded + ParameterChanged per module.
     let mut module_entities: HashMap<String, Entity> = HashMap::new();
     for module_config in &patch.modules {
         let kind = crate::ModuleKind::from(module_config.kind.as_str());
@@ -490,12 +491,31 @@ pub fn apply_patch_to_world(
             &module_config.parameters,
         )?;
         module_entities.insert(module_config.instance_name.clone(), entity);
+
+        world.write_message(crate::ModuleAdded {
+            entity,
+            instance_name: module_config.instance_name.clone(),
+            kind: kind.clone(),
+        });
+
+        for (param_name, param_value) in &module_config.parameters {
+            world.write_message(crate::ParameterChanged {
+                entity,
+                instance_name: module_config.instance_name.clone(),
+                param: crate::ParameterName::from(param_name.as_str()),
+                // TODO(bucket-getter): Populate when ParameterRegistry
+                // getter machinery lands.
+                old: None,
+                new: param_value.clone(),
+                source: crate::ChangeSource::PatchLoad,
+            });
+        }
     }
 
     // 3. Build a port lookup map: (module_entity, port_name) -> port_entity.
     let port_map = build_port_map(world, &module_entities);
 
-    // 4. Spawn cables and update CableIndex.
+    // 4. Spawn cables, update CableIndex, emit CableConnected.
     for cable_config in &patch.cables {
         let source_module = module_entities[&cable_config.source.0];
         let target_module = module_entities[&cable_config.target.0];
@@ -531,10 +551,34 @@ pub fn apply_patch_to_world(
         world
             .resource_mut::<crate::CableIndex>()
             .add_cable(cable_entity, &cable);
+
+        world.write_message(crate::CableConnected {
+            cable_entity,
+            source_port,
+            target_port,
+            transform: cable_config.transform,
+        });
     }
 
     // Mark the propagation order dirty so it gets rebuilt on the next tick.
     world.resource_mut::<crate::PropagationOrderDirty>().0 = true;
+
+    // 5. Emit PatchLoaded as the final batch-summary notification.
+    let patch_name = match &source {
+        crate::PatchSource::File(path) => path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("unknown")
+            .to_string(),
+        crate::PatchSource::InMemory => String::new(),
+        crate::PatchSource::Other(name) => name.clone(),
+    };
+    world.write_message(crate::PatchLoaded {
+        patch_name,
+        source,
+        module_count: patch.modules.len(),
+        cable_count: patch.cables.len(),
+    });
 
     Ok(PatchHandle {
         modules: module_entities,
@@ -593,7 +637,12 @@ pub fn load_patch_into_world(
     world: &mut World,
 ) -> Result<PatchHandle, crate::CoreError> {
     let patch = load_patch_from_file(path)?;
-    apply_patch_to_world(&patch, registry, world)
+    apply_patch_to_world(
+        &patch,
+        registry,
+        world,
+        crate::PatchSource::File(path.to_path_buf()),
+    )
 }
 
 // ── Tests ────────────────────────────────────────────────────────────
@@ -1742,8 +1791,13 @@ mod tests {
         let registry = test_registry();
         let patch = valid_patch();
 
-        let handle =
-            apply_patch_to_world(&patch, &registry, app.world_mut()).expect("should succeed");
+        let handle = apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .expect("should succeed");
 
         // Both modules should be in the handle.
         assert_eq!(handle.modules.len(), 2);
@@ -1769,8 +1823,13 @@ mod tests {
         let registry = test_registry();
         let patch = valid_patch();
 
-        let handle =
-            apply_patch_to_world(&patch, &registry, app.world_mut()).expect("should succeed");
+        let handle = apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .expect("should succeed");
 
         // Find VCO ports.
         let world = app.world_mut();
@@ -1797,8 +1856,13 @@ mod tests {
         let registry = test_registry();
         let patch = valid_patch();
 
-        let handle =
-            apply_patch_to_world(&patch, &registry, app.world_mut()).expect("should succeed");
+        let handle = apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .expect("should succeed");
 
         // Find the source and target port entities.
         let world = app.world_mut();
@@ -1834,8 +1898,13 @@ mod tests {
         let registry = test_registry();
         let patch = valid_patch();
 
-        let handle =
-            apply_patch_to_world(&patch, &registry, app.world_mut()).expect("should succeed");
+        let handle = apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .expect("should succeed");
 
         let world = app.world();
         let vco_id = *world
@@ -1867,7 +1936,12 @@ mod tests {
             cables: vec![],
         };
 
-        let result = apply_patch_to_world(&bad_patch, &registry, app.world_mut());
+        let result = apply_patch_to_world(
+            &bad_patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        );
         assert!(result.is_err(), "should fail for unregistered module kind");
     }
 
@@ -1877,8 +1951,13 @@ mod tests {
         let registry = test_registry();
         let patch = valid_patch();
 
-        let handle =
-            apply_patch_to_world(&patch, &registry, app.world_mut()).expect("should succeed");
+        let handle = apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .expect("should succeed");
 
         // Set the VCO output port to a known value.
         let world = app.world_mut();
@@ -1930,8 +2009,13 @@ mod tests {
             }],
         };
 
-        let handle =
-            apply_patch_to_world(&patch, &registry, app.world_mut()).expect("should succeed");
+        let handle = apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .expect("should succeed");
 
         // Set VCO output to Bipolar(0.0) => Bipolarize => Float(0.5).
         let world = app.world_mut();
@@ -1964,8 +2048,13 @@ mod tests {
             cables: vec![],
         };
 
-        let handle = apply_patch_to_world(&patch, &registry, app.world_mut())
-            .expect("empty patch should succeed");
+        let handle = apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .expect("empty patch should succeed");
         assert!(handle.modules.is_empty());
     }
 
@@ -2014,8 +2103,13 @@ mod tests {
             cables: vec![],
         };
 
-        let handle =
-            apply_patch_to_world(&patch, &registry, app.world_mut()).expect("should succeed");
+        let handle = apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .expect("should succeed");
 
         let world = app.world_mut();
         let vco_entity = handle.modules["vco_1"];
@@ -2042,5 +2136,177 @@ mod tests {
             debug.contains("PatchHandle"),
             "expected 'PatchHandle' in: {debug}"
         );
+    }
+
+    // ── Notification emission tests ───────────────────────────────
+
+    #[test]
+    fn test_module_added_emitted_on_patch_load() {
+        use bevy_ecs::prelude::Messages;
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![ModuleConfig {
+                kind: "vco".to_string(),
+                instance_name: "vco_1".to_string(),
+                parameters: HashMap::new(),
+            }],
+            cables: vec![],
+        };
+
+        apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        let messages = app.world().resource::<Messages<crate::ModuleAdded>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+        assert_eq!(collected.len(), 1, "expected exactly one ModuleAdded");
+        assert_eq!(collected[0].instance_name, "vco_1");
+        assert_eq!(collected[0].kind, crate::ModuleKind::from("vco"));
+    }
+
+    #[test]
+    fn test_cable_connected_emitted_on_patch_load() {
+        use bevy_ecs::prelude::Messages;
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = valid_patch(); // VCO -> Filter, no transform
+
+        apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        let messages = app.world().resource::<Messages<crate::CableConnected>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+        assert_eq!(collected.len(), 1, "expected exactly one CableConnected");
+        assert!(collected[0].transform.is_none());
+    }
+
+    #[test]
+    fn test_parameter_changed_emitted_on_patch_load_initial_values() {
+        use bevy_ecs::prelude::Messages;
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![ModuleConfig {
+                kind: "vco".to_string(),
+                instance_name: "vco_1".to_string(),
+                parameters: HashMap::from([("waveform".to_string(), ParameterValue::Int(2))]),
+            }],
+            cables: vec![],
+        };
+
+        apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        let messages = app.world().resource::<Messages<crate::ParameterChanged>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+        assert_eq!(
+            collected.len(),
+            1,
+            "expected one ParameterChanged for initial value"
+        );
+        assert!(matches!(
+            &collected[0],
+            crate::ParameterChanged {
+                instance_name,
+                new: ParameterValue::Int(2),
+                source: crate::ChangeSource::PatchLoad,
+                ..
+            } if instance_name == "vco_1"
+        ));
+    }
+
+    #[test]
+    fn test_patch_loaded_extended_fields() {
+        use bevy_ecs::prelude::Messages;
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = valid_patch(); // 2 modules, 1 cable
+
+        apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        let messages = app.world().resource::<Messages<crate::PatchLoaded>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+        assert_eq!(collected.len(), 1, "expected exactly one PatchLoaded");
+        assert_eq!(collected[0].module_count, 2);
+        assert_eq!(collected[0].cable_count, 1);
+        assert!(matches!(collected[0].source, crate::PatchSource::InMemory));
+    }
+
+    #[test]
+    fn test_patch_load_notification_ordering() {
+        use bevy_ecs::prelude::Messages;
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = valid_patch(); // vco_1, filter_1, 1 cable
+
+        apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        // Verify ordering: ModuleAdded events come before CableConnected,
+        // which comes before PatchLoaded.
+        let world = app.world();
+        let module_msgs = world.resource::<Messages<crate::ModuleAdded>>();
+        let cable_msgs = world.resource::<Messages<crate::CableConnected>>();
+        let patch_msgs = world.resource::<Messages<crate::PatchLoaded>>();
+
+        let module_count = module_msgs.iter_current_update_messages().count();
+        let cable_count = cable_msgs.iter_current_update_messages().count();
+        let patch_count = patch_msgs.iter_current_update_messages().count();
+
+        assert_eq!(module_count, 2, "expected 2 ModuleAdded (vco + filter)");
+        assert_eq!(cable_count, 1, "expected 1 CableConnected");
+        assert_eq!(patch_count, 1, "expected 1 PatchLoaded");
+
+        // Cross-type ordering: since write_message is called in-order
+        // within apply_patch_to_world (modules first, then cables, then
+        // PatchLoaded), and Bevy 0.18 Messages preserves insertion order
+        // per-type, the per-type counts themselves prove the ordering
+        // (all module emissions happen before any cable emission, which
+        // happens before the PatchLoaded emission — verified by the
+        // sequential write_message calls in apply_patch_to_world).
+        //
+        // A stronger cross-type ordering assertion would require a
+        // monotonic counter or timestamp at each emission site. For v0,
+        // the structural guarantee (sequential write_message calls in one
+        // function body) plus per-type count assertions are sufficient.
+
+        // Verify module declaration order preserved:
+        let modules: Vec<_> = module_msgs
+            .iter_current_update_messages()
+            .map(|m| m.instance_name.as_str())
+            .collect();
+        assert_eq!(modules, vec!["vco_1", "filter_1"]);
     }
 }

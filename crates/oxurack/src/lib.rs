@@ -99,7 +99,12 @@ impl Oxurack {
         self.app
             .world_mut()
             .resource_scope::<oxurack_core::ModuleRegistry, _>(|world, registry| {
-                let handle = oxurack_core::apply_patch_to_world(&patch, &registry, world)?;
+                let handle = oxurack_core::apply_patch_to_world(
+                    &patch,
+                    &registry,
+                    world,
+                    oxurack_core::PatchSource::File(path.to_path_buf()),
+                )?;
                 world.insert_resource(handle);
                 Ok::<(), oxurack_core::CoreError>(())
             })?;
