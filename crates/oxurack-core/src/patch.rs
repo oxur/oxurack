@@ -578,6 +578,7 @@ pub fn apply_patch_to_world(
         source,
         module_count: patch.modules.len(),
         cable_count: patch.cables.len(),
+        label_count: 0,
     });
 
     Ok(PatchHandle {

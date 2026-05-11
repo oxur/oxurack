@@ -94,6 +94,8 @@ pub struct PatchLoaded {
     pub module_count: usize,
     /// Number of cables in the loaded patch.
     pub cable_count: usize,
+    /// Number of label-change notifications emitted in this batch.
+    pub label_count: usize,
 }
 
 /// Provenance for a [`PatchLoaded`] notification.
@@ -208,6 +210,53 @@ pub enum ChangeSource {
     /// Patch-load initialization. One `ParameterChanged` per
     /// parameter set during patch load.
     PatchLoad,
+}
+
+/// Emitted when an instance-level label or rack-level metadata changes.
+///
+/// `entity` is `None` for rack-level changes ([`RackMeta`](crate::RackMeta))
+/// and `Some(e)` for entity-level changes. `previous` is `Some(prev)` when
+/// overwriting an existing label, `None` for first-time set during patch load.
+#[derive(Message, Clone, Debug)]
+pub struct LabelChanged {
+    /// Target entity, or `None` for rack-level metadata.
+    pub entity: Option<Entity>,
+    /// Instance name (empty string for rack-level).
+    pub instance_name: String,
+    /// Which label field changed.
+    pub kind: LabelKind,
+    /// Previous value, if overwriting.
+    pub previous: Option<LabelValue>,
+    /// New value.
+    pub new: LabelValue,
+    /// Provenance.
+    pub source: ChangeSource,
+}
+
+/// Discriminant for which label field changed.
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum LabelKind {
+    /// Instance or rack display name.
+    DisplayName,
+    /// Instance or rack description.
+    Description,
+    /// Instance or rack tags.
+    Tags,
+    /// Rack-level notes.
+    Notes,
+}
+
+/// Payload for a label-change notification.
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum LabelValue {
+    /// A text value (display name or description).
+    Text(String),
+    /// A tag set.
+    Tags(std::collections::BTreeSet<crate::label::Tag>),
+    /// A notes list (rack-level only).
+    Notes(Vec<String>),
 }
 
 /// Non-fatal warning reported by the real-time thread.
@@ -524,6 +573,7 @@ mod tests {
             source: PatchSource::InMemory,
             module_count: 2,
             cable_count: 1,
+        label_count: 0,
         };
         let debug = format!("{evt:?}");
         assert!(
@@ -539,6 +589,7 @@ mod tests {
             source: PatchSource::InMemory,
             module_count: 1,
             cable_count: 0,
+        label_count: 0,
         };
         let cloned = evt.clone();
         assert_eq!(cloned.patch_name, "test_patch");

@@ -38,6 +38,7 @@
 pub mod cable;
 pub mod error;
 pub mod event;
+pub mod label;
 pub mod module;
 pub mod parameter;
 pub mod port;
@@ -70,9 +71,13 @@ pub use tick::{
 // Phase 4
 pub use event::dispatch_core_command;
 pub use event::{
-    CableConnected, CableDisconnected, ChangeSource, CoreCommand, MidiInReceived, ModuleAdded,
-    ModuleRemoved, ParameterChanged, PatchLoaded, PatchSource, RtWarning, RtWarningCode,
-    SongPositionChanged, TransportChanged, TransportState,
+    CableConnected, CableDisconnected, ChangeSource, CoreCommand, LabelChanged, LabelKind,
+    LabelValue, MidiInReceived, ModuleAdded, ModuleRemoved, ParameterChanged, PatchLoaded,
+    PatchSource, RtWarning, RtWarningCode, SongPositionChanged, TransportChanged, TransportState,
+};
+pub use label::{
+    Description, DisplayName, DisplayNameFormatter, RackMeta, Tag, TagError, Tags,
+    display_name_of,
 };
 pub use module::{ModuleRegistration, ModuleRegistry, ModuleSpawner, OxurackModule, PortSchema};
 pub use parameter::{ParameterName, ParameterRegistry, ParameterSchema, ParameterValue};
