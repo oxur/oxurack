@@ -505,7 +505,7 @@ pub fn apply_patch_to_world(
                 param: crate::ParameterName::from(param_name.as_str()),
                 // TODO(bucket-getter): Populate when ParameterRegistry
                 // getter machinery lands.
-                old: None,
+                previous: None,
                 new: param_value.clone(),
                 source: crate::ChangeSource::PatchLoad,
             });

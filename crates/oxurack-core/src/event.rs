@@ -190,7 +190,7 @@ pub struct ParameterChanged {
     /// Previous value, if available.
     // TODO(bucket-getter): Populate when ParameterRegistry getter
     // machinery lands. Currently None at all emission sites.
-    pub old: Option<crate::ParameterValue>,
+    pub previous: Option<crate::ParameterValue>,
     /// New value that was written.
     pub new: crate::ParameterValue,
     /// Provenance: what triggered this change.
@@ -354,7 +354,7 @@ fn dispatch_set_parameter(
             param: crate::ParameterName::from(param),
             // TODO(bucket-getter): Populate when ParameterRegistry
             // getter machinery lands.
-            old: None,
+            previous: None,
             new: value.clone(),
             source: ChangeSource::Command,
         });
@@ -675,7 +675,7 @@ mod tests {
             ParameterChanged {
                 instance_name,
                 param,
-                old: None,
+                previous: None,
                 new: crate::ParameterValue::Float(v),
                 source: ChangeSource::Command,
                 ..

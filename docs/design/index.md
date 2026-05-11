@@ -6,6 +6,7 @@ This index is automatically generated. Do not edit manually.
 
 | Number | Title | State | Updated |
 |--------|-------|-------|----------|
+| 0013 | Literate Patching (Bucket 3.5) — Design Memo | Active | 2026-05-10 |
 | 0012 | Event Substrate (Bucket 3.25) — Design Memo | Draft | 2026-05-10 |
 | 0011 | RackGraph — Design Memo (v0) | Draft | 2026-04-21 |
 | 0010 | oxurack Public API Design (v0) | Draft | 2026-04-20 |
@@ -20,6 +21,10 @@ This index is automatically generated. Do not edit manually.
 | 0001 | Turing Machine to MIDI - Module Design Doc | Final | 2026-04-18 |
 
 ## Documents by State
+
+### Active
+
+- [0013 - Literate Patching (Bucket 3.5) — Design Memo](05-active/0013-literate-patching-bucket-3.5-design-memo.md)
 
 ### Draft
 
