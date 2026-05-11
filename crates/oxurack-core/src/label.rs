@@ -298,8 +298,7 @@ mod tests {
     #[test]
     fn test_formatter_runtime_extension() {
         let mut fmt = DisplayNameFormatter::default();
-        fmt.acronyms
-            .insert("osc".to_string(), "OSC".to_string());
+        fmt.acronyms.insert("osc".to_string(), "OSC".to_string());
         assert_eq!(fmt.format("osc_1"), "OSC 1");
     }
 

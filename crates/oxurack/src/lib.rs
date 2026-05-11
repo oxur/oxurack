@@ -244,18 +244,28 @@ mod tests {
                     kind: "test_gen".to_string(),
                     instance_name: "gen_1".to_string(),
                     parameters: HashMap::new(),
+                    display_name: String::new(),
+                    description: String::new(),
+                    tags: vec![],
                 },
                 ModuleConfig {
                     kind: "test_sink".to_string(),
                     instance_name: "sink_1".to_string(),
                     parameters: HashMap::new(),
+                    display_name: String::new(),
+                    description: String::new(),
+                    tags: vec![],
                 },
             ],
             cables: vec![CableConfig {
                 source: ("gen_1".to_string(), "out".to_string()),
                 target: ("sink_1".to_string(), "in".to_string()),
                 transform: None,
+                display_name: String::new(),
+                description: String::new(),
+                tags: vec![],
             }],
+            rack: None,
         }
     }
 

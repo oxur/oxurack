@@ -10,7 +10,7 @@
 //! are registered, all cable endpoints reference existing ports, merge
 //! policies are compatible, and the module graph is acyclic.
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 
 use bevy_ecs::prelude::Entity;
 use bevy_ecs::world::World;
@@ -35,6 +35,31 @@ pub struct Patch {
     pub modules: Vec<ModuleConfig>,
     /// The cables connecting module ports.
     pub cables: Vec<CableConfig>,
+
+    /// Rack-level metadata. Omitted from pre-3.5 patch files;
+    /// loads as `None` and produces `RackMeta::default()`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rack: Option<RackConfig>,
+}
+
+/// Rack-level metadata for a patch file.
+///
+/// All fields are optional (empty = absent). A pre-3.5 patch file
+/// deserializes as `RackConfig::default()` (all fields empty).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct RackConfig {
+    /// Rack display name.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub display_name: String,
+    /// Rack description.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub description: String,
+    /// Free-form notes (one string per note).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub notes: Vec<String>,
+    /// Rack-level tags (validated to [`Tag`](crate::Tag) at apply time).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
 }
 
 /// Configuration for a single module instance within a patch.
@@ -42,7 +67,7 @@ pub struct Patch {
 /// Pairs a module kind (looked up in the
 /// [`ModuleRegistry`](crate::ModuleRegistry)) with an instance name and
 /// optional parameter overrides.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub struct ModuleConfig {
     /// The module kind name (e.g. `"vco"`, `"turing_machine"`).
     pub kind: String,
@@ -50,13 +75,23 @@ pub struct ModuleConfig {
     pub instance_name: String,
     /// Parameter overrides (name -> value).
     pub parameters: HashMap<String, crate::ParameterValue>,
+
+    /// Optional instance display name.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub display_name: String,
+    /// Optional instance description.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub description: String,
+    /// Optional instance tags (validated to [`Tag`](crate::Tag) at apply time).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
 }
 
 /// Configuration for a single cable connection within a patch.
 ///
 /// Describes a connection from a source port on one module to a target
 /// port on another module, with an optional inline transform.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub struct CableConfig {
     /// `(module_instance_name, port_name)` of the source.
     pub source: (String, String),
@@ -64,6 +99,16 @@ pub struct CableConfig {
     pub target: (String, String),
     /// Optional signal transform applied on the cable.
     pub transform: Option<crate::CableTransform>,
+
+    /// Optional cable display name.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub display_name: String,
+    /// Optional cable description.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub description: String,
+    /// Optional cable tags (validated to [`Tag`](crate::Tag) at apply time).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
 }
 
 // ── Patch validation ─────────────────────────────────────────────────
@@ -463,14 +508,23 @@ pub struct PatchHandle {
 /// # Workflow
 ///
 /// 1. Validates the patch against the registry.
-/// 2. Spawns each module using the registered spawner function.
-/// 3. Spawns cables connecting the appropriate port entities.
-/// 4. Updates the [`CableIndex`](crate::CableIndex) resource.
+/// 2. Spawns each module, inserts label components (`DisplayName`,
+///    `Description`, `Tags`) where non-empty, emits `ModuleAdded`,
+///    `LabelChanged` per non-empty label (DisplayName → Description →
+///    Tags), then `ParameterChanged` per initial parameter.
+/// 3. Spawns cables, inserts label components where non-empty, emits
+///    `CableConnected` then `LabelChanged` per non-empty cable label.
+/// 4. If `patch.rack` is `Some`, validates tags, inserts `RackMeta`
+///    resource, and emits `LabelChanged` per non-empty rack field
+///    (DisplayName → Description → Notes → Tags).
+/// 5. Emits `PatchLoaded` with `label_count` equal to the total number
+///    of `LabelChanged` events emitted in this batch.
 ///
 /// # Errors
 ///
-/// Returns [`CoreError`](crate::CoreError) if validation fails or a
-/// module spawner returns an error.
+/// Returns [`CoreError`](crate::CoreError) if validation fails, a
+/// module spawner returns an error, or a tag fails validation
+/// ([`PatchError::InvalidTag`](crate::PatchError::InvalidTag)).
 pub fn apply_patch_to_world(
     patch: &Patch,
     registry: &crate::ModuleRegistry,
@@ -480,7 +534,11 @@ pub fn apply_patch_to_world(
     // 1. Validate the patch against the registry.
     validate_patch(patch, registry)?;
 
-    // 2. Spawn modules and emit ModuleAdded + ParameterChanged per module.
+    // Label emission counter — incremented at every LabelChanged emission
+    // site, used to populate PatchLoaded.label_count.
+    let mut label_count: usize = 0;
+
+    // 2. Spawn modules and emit ModuleAdded + LabelChanged + ParameterChanged per module.
     let mut module_entities: HashMap<String, Entity> = HashMap::new();
     for module_config in &patch.modules {
         let kind = crate::ModuleKind::from(module_config.kind.as_str());
@@ -497,6 +555,63 @@ pub fn apply_patch_to_world(
             instance_name: module_config.instance_name.clone(),
             kind: kind.clone(),
         });
+
+        // Insert label components and emit LabelChanged per non-empty label.
+        if !module_config.display_name.is_empty() {
+            world
+                .entity_mut(entity)
+                .insert(crate::DisplayName(module_config.display_name.clone()));
+            world.write_message(crate::LabelChanged {
+                entity: Some(entity),
+                instance_name: module_config.instance_name.clone(),
+                kind: crate::LabelKind::DisplayName,
+                previous: None,
+                new: crate::LabelValue::Text(module_config.display_name.clone()),
+                source: crate::ChangeSource::PatchLoad,
+            });
+            label_count += 1;
+        }
+
+        if !module_config.description.is_empty() {
+            world
+                .entity_mut(entity)
+                .insert(crate::Description(module_config.description.clone()));
+            world.write_message(crate::LabelChanged {
+                entity: Some(entity),
+                instance_name: module_config.instance_name.clone(),
+                kind: crate::LabelKind::Description,
+                previous: None,
+                new: crate::LabelValue::Text(module_config.description.clone()),
+                source: crate::ChangeSource::PatchLoad,
+            });
+            label_count += 1;
+        }
+
+        if !module_config.tags.is_empty() {
+            let mut tag_set = BTreeSet::new();
+            for tag_str in &module_config.tags {
+                let tag = crate::Tag::new(tag_str.clone()).map_err(|e| {
+                    crate::CoreError::Patch(crate::PatchError::InvalidTag {
+                        context: format!("module '{}'", module_config.instance_name),
+                        tag: tag_str.clone(),
+                        reason: e,
+                    })
+                })?;
+                tag_set.insert(tag);
+            }
+            world
+                .entity_mut(entity)
+                .insert(crate::Tags(tag_set.clone()));
+            world.write_message(crate::LabelChanged {
+                entity: Some(entity),
+                instance_name: module_config.instance_name.clone(),
+                kind: crate::LabelKind::Tags,
+                previous: None,
+                new: crate::LabelValue::Tags(tag_set),
+                source: crate::ChangeSource::PatchLoad,
+            });
+            label_count += 1;
+        }
 
         for (param_name, param_value) in &module_config.parameters {
             world.write_message(crate::ParameterChanged {
@@ -558,12 +673,156 @@ pub fn apply_patch_to_world(
             target_port,
             transform: cable_config.transform,
         });
+
+        // Insert label components and emit LabelChanged per non-empty cable label.
+        let cable_instance_name = format!(
+            "{}.{} -> {}.{}",
+            cable_config.source.0,
+            cable_config.source.1,
+            cable_config.target.0,
+            cable_config.target.1,
+        );
+
+        if !cable_config.display_name.is_empty() {
+            world
+                .entity_mut(cable_entity)
+                .insert(crate::DisplayName(cable_config.display_name.clone()));
+            world.write_message(crate::LabelChanged {
+                entity: Some(cable_entity),
+                instance_name: cable_instance_name.clone(),
+                kind: crate::LabelKind::DisplayName,
+                previous: None,
+                new: crate::LabelValue::Text(cable_config.display_name.clone()),
+                source: crate::ChangeSource::PatchLoad,
+            });
+            label_count += 1;
+        }
+
+        if !cable_config.description.is_empty() {
+            world
+                .entity_mut(cable_entity)
+                .insert(crate::Description(cable_config.description.clone()));
+            world.write_message(crate::LabelChanged {
+                entity: Some(cable_entity),
+                instance_name: cable_instance_name.clone(),
+                kind: crate::LabelKind::Description,
+                previous: None,
+                new: crate::LabelValue::Text(cable_config.description.clone()),
+                source: crate::ChangeSource::PatchLoad,
+            });
+            label_count += 1;
+        }
+
+        if !cable_config.tags.is_empty() {
+            let mut tag_set = BTreeSet::new();
+            for tag_str in &cable_config.tags {
+                let tag = crate::Tag::new(tag_str.clone()).map_err(|e| {
+                    crate::CoreError::Patch(crate::PatchError::InvalidTag {
+                        context: format!(
+                            "cable from '{}.{}' to '{}.{}'",
+                            cable_config.source.0,
+                            cable_config.source.1,
+                            cable_config.target.0,
+                            cable_config.target.1,
+                        ),
+                        tag: tag_str.clone(),
+                        reason: e,
+                    })
+                })?;
+                tag_set.insert(tag);
+            }
+            world
+                .entity_mut(cable_entity)
+                .insert(crate::Tags(tag_set.clone()));
+            world.write_message(crate::LabelChanged {
+                entity: Some(cable_entity),
+                instance_name: cable_instance_name,
+                kind: crate::LabelKind::Tags,
+                previous: None,
+                new: crate::LabelValue::Tags(tag_set),
+                source: crate::ChangeSource::PatchLoad,
+            });
+            label_count += 1;
+        }
     }
 
     // Mark the propagation order dirty so it gets rebuilt on the next tick.
     world.resource_mut::<crate::PropagationOrderDirty>().0 = true;
 
-    // 5. Emit PatchLoaded as the final batch-summary notification.
+    // 5. Rack-level metadata: validate tags, insert RackMeta resource,
+    //    emit LabelChanged per non-empty field (DisplayName → Description
+    //    → Notes → Tags).
+    if let Some(rack_config) = &patch.rack {
+        let mut rack_tags = BTreeSet::new();
+        for tag_str in &rack_config.tags {
+            let tag = crate::Tag::new(tag_str.clone()).map_err(|e| {
+                crate::CoreError::Patch(crate::PatchError::InvalidTag {
+                    context: "rack".to_string(),
+                    tag: tag_str.clone(),
+                    reason: e,
+                })
+            })?;
+            rack_tags.insert(tag);
+        }
+
+        let rack_meta = crate::RackMeta {
+            display_name: rack_config.display_name.clone(),
+            description: rack_config.description.clone(),
+            notes: rack_config.notes.clone(),
+            tags: rack_tags.clone(),
+        };
+        world.insert_resource(rack_meta);
+
+        if !rack_config.display_name.is_empty() {
+            world.write_message(crate::LabelChanged {
+                entity: None,
+                instance_name: String::new(),
+                kind: crate::LabelKind::DisplayName,
+                previous: None,
+                new: crate::LabelValue::Text(rack_config.display_name.clone()),
+                source: crate::ChangeSource::PatchLoad,
+            });
+            label_count += 1;
+        }
+
+        if !rack_config.description.is_empty() {
+            world.write_message(crate::LabelChanged {
+                entity: None,
+                instance_name: String::new(),
+                kind: crate::LabelKind::Description,
+                previous: None,
+                new: crate::LabelValue::Text(rack_config.description.clone()),
+                source: crate::ChangeSource::PatchLoad,
+            });
+            label_count += 1;
+        }
+
+        if !rack_config.notes.is_empty() {
+            world.write_message(crate::LabelChanged {
+                entity: None,
+                instance_name: String::new(),
+                kind: crate::LabelKind::Notes,
+                previous: None,
+                new: crate::LabelValue::Notes(rack_config.notes.clone()),
+                source: crate::ChangeSource::PatchLoad,
+            });
+            label_count += 1;
+        }
+
+        if !rack_tags.is_empty() {
+            world.write_message(crate::LabelChanged {
+                entity: None,
+                instance_name: String::new(),
+                kind: crate::LabelKind::Tags,
+                previous: None,
+                new: crate::LabelValue::Tags(rack_tags),
+                source: crate::ChangeSource::PatchLoad,
+            });
+            label_count += 1;
+        }
+    }
+
+    // 6. Emit PatchLoaded as the final batch-summary notification.
     let patch_name = match &source {
         crate::PatchSource::File(path) => path
             .file_stem()
@@ -578,7 +837,7 @@ pub fn apply_patch_to_world(
         source,
         module_count: patch.modules.len(),
         cable_count: patch.cables.len(),
-        label_count: 0,
+        label_count,
     });
 
     Ok(PatchHandle {
@@ -846,18 +1105,22 @@ mod tests {
                     kind: "vco".to_string(),
                     instance_name: "vco_1".to_string(),
                     parameters: HashMap::from([("waveform".to_string(), ParameterValue::Int(1))]),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "filter".to_string(),
                     instance_name: "filter_1".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
             ],
             cables: vec![CableConfig {
                 source: ("vco_1".to_string(), "out".to_string()),
                 target: ("filter_1".to_string(), "in".to_string()),
                 transform: None,
+                ..Default::default()
             }],
+            rack: None,
         }
     }
 
@@ -918,6 +1181,7 @@ mod tests {
                     kind: "vco".to_string(),
                     instance_name: "vco_1".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "filter".to_string(),
@@ -926,6 +1190,7 @@ mod tests {
                         "resonance".to_string(),
                         ParameterValue::Float(0.5),
                     )]),
+                    ..Default::default()
                 },
             ],
             cables: vec![CableConfig {
@@ -935,7 +1200,9 @@ mod tests {
                     factor: 0.5,
                     offset: 0.25,
                 }),
+                ..Default::default()
             }],
+            rack: None,
         };
 
         let ron_str = serialize_patch(&patch).expect("serialisation should succeed");
@@ -974,8 +1241,10 @@ mod tests {
                 kind: "reverb".to_string(),
                 instance_name: "reverb_1".to_string(),
                 parameters: HashMap::new(),
+                ..Default::default()
             }],
             cables: vec![],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -998,14 +1267,17 @@ mod tests {
                     kind: "vco".to_string(),
                     instance_name: "osc".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "vco".to_string(),
                     instance_name: "osc".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
             ],
             cables: vec![],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -1028,18 +1300,22 @@ mod tests {
                     kind: "vco".to_string(),
                     instance_name: "vco_1".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "filter".to_string(),
                     instance_name: "filter_1".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
             ],
             cables: vec![CableConfig {
                 source: ("vco_1".to_string(), "nonexistent".to_string()),
                 target: ("filter_1".to_string(), "in".to_string()),
                 transform: None,
+                ..Default::default()
             }],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -1061,12 +1337,15 @@ mod tests {
                 kind: "vco".to_string(),
                 instance_name: "vco_1".to_string(),
                 parameters: HashMap::new(),
+                ..Default::default()
             }],
             cables: vec![CableConfig {
                 source: ("missing_module".to_string(), "out".to_string()),
                 target: ("vco_1".to_string(), "pitch".to_string()),
                 transform: None,
+                ..Default::default()
             }],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -1090,18 +1369,22 @@ mod tests {
                     kind: "vco".to_string(),
                     instance_name: "vco_1".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "filter".to_string(),
                     instance_name: "filter_1".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
             ],
             cables: vec![CableConfig {
                 source: ("vco_1".to_string(), "out".to_string()),
                 target: ("filter_1".to_string(), "cutoff".to_string()),
                 transform: None,
+                ..Default::default()
             }],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -1125,18 +1408,22 @@ mod tests {
                     kind: "vco".to_string(),
                     instance_name: "vco_1".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "filter".to_string(),
                     instance_name: "filter_1".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
             ],
             cables: vec![CableConfig {
                 source: ("vco_1".to_string(), "out".to_string()),
                 target: ("filter_1".to_string(), "cutoff".to_string()),
                 transform: Some(crate::CableTransform::Bipolarize),
+                ..Default::default()
             }],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -1158,16 +1445,19 @@ mod tests {
                     kind: "vco".to_string(),
                     instance_name: "vco_1".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "vco".to_string(),
                     instance_name: "vco_2".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "mixer".to_string(),
                     instance_name: "mixer_1".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
             ],
             cables: vec![
@@ -1175,13 +1465,16 @@ mod tests {
                     source: ("vco_1".to_string(), "out".to_string()),
                     target: ("mixer_1".to_string(), "in".to_string()),
                     transform: None,
+                    ..Default::default()
                 },
                 CableConfig {
                     source: ("vco_2".to_string(), "out".to_string()),
                     target: ("mixer_1".to_string(), "in".to_string()),
                     transform: None,
+                    ..Default::default()
                 },
             ],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -1205,16 +1498,19 @@ mod tests {
                     kind: "vco".to_string(),
                     instance_name: "vco_1".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "vco".to_string(),
                     instance_name: "vco_2".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "filter".to_string(),
                     instance_name: "filter_1".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
             ],
             cables: vec![
@@ -1223,13 +1519,16 @@ mod tests {
                     target: ("filter_1".to_string(), "cutoff".to_string()),
                     // Bipolar -> Float requires a transform.
                     transform: Some(crate::CableTransform::Bipolarize),
+                    ..Default::default()
                 },
                 CableConfig {
                     source: ("vco_2".to_string(), "out".to_string()),
                     target: ("filter_1".to_string(), "cutoff".to_string()),
                     transform: Some(crate::CableTransform::Bipolarize),
+                    ..Default::default()
                 },
             ],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -1251,11 +1550,13 @@ mod tests {
                     kind: "vco".to_string(),
                     instance_name: "a".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "filter".to_string(),
                     instance_name: "b".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
             ],
             cables: vec![
@@ -1263,14 +1564,17 @@ mod tests {
                     source: ("a".to_string(), "out".to_string()),
                     target: ("b".to_string(), "in".to_string()),
                     transform: None,
+                    ..Default::default()
                 },
                 CableConfig {
                     source: ("b".to_string(), "out".to_string()),
                     target: ("a".to_string(), "pitch".to_string()),
                     // Bipolar -> Float requires transform.
                     transform: Some(crate::CableTransform::Bipolarize),
+                    ..Default::default()
                 },
             ],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -1294,16 +1598,19 @@ mod tests {
                     kind: "vco".to_string(),
                     instance_name: "a".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "filter".to_string(),
                     instance_name: "b".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "mixer".to_string(),
                     instance_name: "c".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
             ],
             cables: vec![
@@ -1311,13 +1618,16 @@ mod tests {
                     source: ("a".to_string(), "out".to_string()),
                     target: ("b".to_string(), "in".to_string()),
                     transform: None,
+                    ..Default::default()
                 },
                 CableConfig {
                     source: ("b".to_string(), "out".to_string()),
                     target: ("c".to_string(), "in".to_string()),
                     transform: None,
+                    ..Default::default()
                 },
             ],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -1335,6 +1645,7 @@ mod tests {
             bpm: 120.0,
             modules: vec![],
             cables: vec![],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -1353,8 +1664,10 @@ mod tests {
                 kind: "vco".to_string(),
                 instance_name: "vco_1".to_string(),
                 parameters: HashMap::from([("gain".to_string(), ParameterValue::Float(f32::NAN))]),
+                ..Default::default()
             }],
             cables: vec![],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -1379,8 +1692,10 @@ mod tests {
                     "freq".to_string(),
                     ParameterValue::Float(f32::INFINITY),
                 )]),
+                ..Default::default()
             }],
             cables: vec![],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -1405,8 +1720,10 @@ mod tests {
                     "detune".to_string(),
                     ParameterValue::Float(f32::NEG_INFINITY),
                 )]),
+                ..Default::default()
             }],
             cables: vec![],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -1426,6 +1743,7 @@ mod tests {
             bpm: 0.0,
             modules: vec![],
             cables: vec![],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -1445,6 +1763,7 @@ mod tests {
             bpm: -120.0,
             modules: vec![],
             cables: vec![],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -1464,6 +1783,7 @@ mod tests {
             bpm: f32::INFINITY,
             modules: vec![],
             cables: vec![],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -1483,6 +1803,7 @@ mod tests {
             bpm: f32::NAN,
             modules: vec![],
             cables: vec![],
+            rack: None,
         };
         let registry = test_registry();
         let result = validate_patch(&patch, &registry);
@@ -1562,8 +1883,10 @@ mod tests {
                         ParameterValue::Scale(crate::Scale::major(2)),
                     ),
                 ]),
+                ..Default::default()
             }],
             cables: vec![],
+            rack: None,
         };
         let path = std::env::temp_dir().join("oxurack_test_patch_params.ron");
 
@@ -1601,18 +1924,22 @@ mod tests {
                         kind: "vco".to_string(),
                         instance_name: "vco_1".to_string(),
                         parameters: HashMap::new(),
+                        ..Default::default()
                     },
                     ModuleConfig {
                         kind: "filter".to_string(),
                         instance_name: "filter_1".to_string(),
                         parameters: HashMap::new(),
+                        ..Default::default()
                     },
                 ],
                 cables: vec![CableConfig {
                     source: ("vco_1".to_string(), "out".to_string()),
                     target: ("filter_1".to_string(), "in".to_string()),
                     transform,
+                    ..Default::default()
                 }],
+                rack: None,
             };
 
             let ron_str = serialize_patch(&patch)
@@ -1638,12 +1965,15 @@ mod tests {
                 kind: "filter".to_string(),
                 instance_name: "f".to_string(),
                 parameters: HashMap::new(),
+                ..Default::default()
             }],
             cables: vec![CableConfig {
                 source: ("f".to_string(), "out".to_string()),
                 target: ("f".to_string(), "in".to_string()),
                 transform: None,
+                ..Default::default()
             }],
+            rack: None,
         };
         let result = check_patch_cycles(&patch);
         assert!(
@@ -1663,16 +1993,19 @@ mod tests {
                     kind: "vco".to_string(),
                     instance_name: "a".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "filter".to_string(),
                     instance_name: "b".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "mixer".to_string(),
                     instance_name: "c".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
             ],
             cables: vec![
@@ -1680,18 +2013,22 @@ mod tests {
                     source: ("a".to_string(), "out".to_string()),
                     target: ("b".to_string(), "in".to_string()),
                     transform: None,
+                    ..Default::default()
                 },
                 CableConfig {
                     source: ("b".to_string(), "out".to_string()),
                     target: ("c".to_string(), "in".to_string()),
                     transform: None,
+                    ..Default::default()
                 },
                 CableConfig {
                     source: ("c".to_string(), "out".to_string()),
                     target: ("a".to_string(), "pitch".to_string()),
                     transform: None,
+                    ..Default::default()
                 },
             ],
+            rack: None,
         };
         let result = check_patch_cycles(&patch);
         assert!(result.is_err(), "A->B->C->A should be detected as a cycle");
@@ -1716,21 +2053,25 @@ mod tests {
                     kind: "vco".to_string(),
                     instance_name: "a".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "filter".to_string(),
                     instance_name: "b".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "mixer".to_string(),
                     instance_name: "c".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "mixer".to_string(),
                     instance_name: "d".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
             ],
             cables: vec![
@@ -1739,26 +2080,31 @@ mod tests {
                     source: ("a".to_string(), "out".to_string()),
                     target: ("b".to_string(), "in".to_string()),
                     transform: None,
+                    ..Default::default()
                 },
                 // B -> A (creates cycle)
                 CableConfig {
                     source: ("b".to_string(), "out".to_string()),
                     target: ("a".to_string(), "pitch".to_string()),
                     transform: None,
+                    ..Default::default()
                 },
                 // B -> C (downstream of cycle)
                 CableConfig {
                     source: ("b".to_string(), "out".to_string()),
                     target: ("c".to_string(), "in".to_string()),
                     transform: None,
+                    ..Default::default()
                 },
                 // C -> D (downstream of cycle)
                 CableConfig {
                     source: ("c".to_string(), "out".to_string()),
                     target: ("d".to_string(), "in".to_string()),
                     transform: None,
+                    ..Default::default()
                 },
             ],
+            rack: None,
         };
         let result = check_patch_cycles(&patch);
         assert!(result.is_err(), "should detect cycle");
@@ -1933,8 +2279,10 @@ mod tests {
                 kind: "nonexistent".to_string(),
                 instance_name: "bad".to_string(),
                 parameters: HashMap::new(),
+                ..Default::default()
             }],
             cables: vec![],
+            rack: None,
         };
 
         let result = apply_patch_to_world(
@@ -1996,18 +2344,22 @@ mod tests {
                     kind: "vco".to_string(),
                     instance_name: "vco_1".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
                 ModuleConfig {
                     kind: "filter".to_string(),
                     instance_name: "filter_1".to_string(),
                     parameters: HashMap::new(),
+                    ..Default::default()
                 },
             ],
             cables: vec![CableConfig {
                 source: ("vco_1".to_string(), "out".to_string()),
                 target: ("filter_1".to_string(), "cutoff".to_string()),
                 transform: Some(crate::CableTransform::Bipolarize),
+                ..Default::default()
             }],
+            rack: None,
         };
 
         let handle = apply_patch_to_world(
@@ -2047,6 +2399,7 @@ mod tests {
             bpm: 120.0,
             modules: vec![],
             cables: vec![],
+            rack: None,
         };
 
         let handle = apply_patch_to_world(
@@ -2100,8 +2453,10 @@ mod tests {
                 kind: "vco".to_string(),
                 instance_name: "vco_1".to_string(),
                 parameters: HashMap::new(),
+                ..Default::default()
             }],
             cables: vec![],
+            rack: None,
         };
 
         let handle = apply_patch_to_world(
@@ -2154,8 +2509,10 @@ mod tests {
                 kind: "vco".to_string(),
                 instance_name: "vco_1".to_string(),
                 parameters: HashMap::new(),
+                ..Default::default()
             }],
             cables: vec![],
+            rack: None,
         };
 
         apply_patch_to_world(
@@ -2207,8 +2564,10 @@ mod tests {
                 kind: "vco".to_string(),
                 instance_name: "vco_1".to_string(),
                 parameters: HashMap::from([("waveform".to_string(), ParameterValue::Int(2))]),
+                ..Default::default()
             }],
             cables: vec![],
+            rack: None,
         };
 
         apply_patch_to_world(
@@ -2309,5 +2668,547 @@ mod tests {
             .map(|m| m.instance_name.as_str())
             .collect();
         assert_eq!(modules, vec!["vco_1", "filter_1"]);
+    }
+
+    // ── Label emission tests (bucket 3.5 part 2) ──────────────────
+
+    #[test]
+    fn test_label_changed_emitted_on_patch_load_module_with_display_name() {
+        use bevy_ecs::prelude::Messages;
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![ModuleConfig {
+                kind: "vco".to_string(),
+                instance_name: "vco_1".to_string(),
+                parameters: HashMap::new(),
+                display_name: "My VCO".to_string(),
+                ..Default::default()
+            }],
+            cables: vec![],
+            rack: None,
+        };
+
+        apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        let messages = app.world().resource::<Messages<crate::LabelChanged>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+        assert_eq!(collected.len(), 1, "expected exactly one LabelChanged");
+        assert!(matches!(
+            &collected[0],
+            crate::LabelChanged {
+                entity: Some(_),
+                instance_name,
+                kind: crate::LabelKind::DisplayName,
+                previous: None,
+                new: crate::LabelValue::Text(text),
+                source: crate::ChangeSource::PatchLoad,
+            } if instance_name == "vco_1" && text == "My VCO"
+        ));
+    }
+
+    #[test]
+    fn test_label_changed_emitted_on_patch_load_module_with_description() {
+        use bevy_ecs::prelude::Messages;
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![ModuleConfig {
+                kind: "vco".to_string(),
+                instance_name: "vco_1".to_string(),
+                parameters: HashMap::new(),
+                description: "Main oscillator".to_string(),
+                ..Default::default()
+            }],
+            cables: vec![],
+            rack: None,
+        };
+
+        apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        let messages = app.world().resource::<Messages<crate::LabelChanged>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+        assert_eq!(collected.len(), 1, "expected exactly one LabelChanged");
+        assert!(matches!(
+            &collected[0],
+            crate::LabelChanged {
+                entity: Some(_),
+                kind: crate::LabelKind::Description,
+                previous: None,
+                new: crate::LabelValue::Text(text),
+                source: crate::ChangeSource::PatchLoad,
+                ..
+            } if text == "Main oscillator"
+        ));
+    }
+
+    #[test]
+    fn test_label_changed_emitted_on_patch_load_module_with_tags() {
+        use bevy_ecs::prelude::Messages;
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![ModuleConfig {
+                kind: "vco".to_string(),
+                instance_name: "vco_1".to_string(),
+                parameters: HashMap::new(),
+                tags: vec!["lead".to_string(), "analog".to_string()],
+                ..Default::default()
+            }],
+            cables: vec![],
+            rack: None,
+        };
+
+        apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        let messages = app.world().resource::<Messages<crate::LabelChanged>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+        assert_eq!(
+            collected.len(),
+            1,
+            "expected exactly one LabelChanged for tags"
+        );
+        assert!(matches!(&collected[0].kind, crate::LabelKind::Tags));
+        if let crate::LabelValue::Tags(tags) = &collected[0].new {
+            let tag_strs: Vec<&str> = tags.iter().map(|t| t.as_str()).collect();
+            assert_eq!(tag_strs, vec!["analog", "lead"]); // BTreeSet sorts
+        } else {
+            panic!("expected LabelValue::Tags, got: {:?}", collected[0].new);
+        }
+    }
+
+    #[test]
+    fn test_label_changed_emitted_on_patch_load_cable_with_label() {
+        use bevy_ecs::prelude::Messages;
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![
+                ModuleConfig {
+                    kind: "vco".to_string(),
+                    instance_name: "vco_1".to_string(),
+                    parameters: HashMap::new(),
+                    ..Default::default()
+                },
+                ModuleConfig {
+                    kind: "filter".to_string(),
+                    instance_name: "filter_1".to_string(),
+                    parameters: HashMap::new(),
+                    ..Default::default()
+                },
+            ],
+            cables: vec![CableConfig {
+                source: ("vco_1".to_string(), "out".to_string()),
+                target: ("filter_1".to_string(), "in".to_string()),
+                transform: None,
+                display_name: "Main Path".to_string(),
+                ..Default::default()
+            }],
+            rack: None,
+        };
+
+        apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        let messages = app.world().resource::<Messages<crate::LabelChanged>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+        assert_eq!(
+            collected.len(),
+            1,
+            "expected exactly one LabelChanged for cable"
+        );
+        assert!(matches!(
+            &collected[0],
+            crate::LabelChanged {
+                entity: Some(_),
+                kind: crate::LabelKind::DisplayName,
+                new: crate::LabelValue::Text(text),
+                source: crate::ChangeSource::PatchLoad,
+                ..
+            } if text == "Main Path"
+        ));
+    }
+
+    #[test]
+    fn test_label_changed_rack_level_emissions() {
+        use bevy_ecs::prelude::Messages;
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![],
+            cables: vec![],
+            rack: Some(RackConfig {
+                display_name: "Berlin School".to_string(),
+                description: "A classic sequence patch".to_string(),
+                notes: vec!["Inspired by Tangerine Dream".to_string()],
+                tags: vec!["ambient".to_string(), "berlin".to_string()],
+            }),
+        };
+
+        apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        let messages = app.world().resource::<Messages<crate::LabelChanged>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+        assert_eq!(collected.len(), 4, "expected 4 LabelChanged for rack");
+
+        // Verify ordering: DisplayName → Description → Notes → Tags
+        assert!(matches!(&collected[0].kind, crate::LabelKind::DisplayName));
+        assert!(matches!(&collected[1].kind, crate::LabelKind::Description));
+        assert!(matches!(&collected[2].kind, crate::LabelKind::Notes));
+        assert!(matches!(&collected[3].kind, crate::LabelKind::Tags));
+
+        // All rack-level emissions have entity: None
+        for evt in &collected {
+            assert!(
+                evt.entity.is_none(),
+                "rack-level emissions must have entity: None"
+            );
+            assert!(
+                evt.instance_name.is_empty(),
+                "rack-level instance_name must be empty"
+            );
+            assert!(evt.previous.is_none());
+            assert!(matches!(evt.source, crate::ChangeSource::PatchLoad));
+        }
+    }
+
+    #[test]
+    fn test_label_changed_not_emitted_when_labels_empty() {
+        use bevy_ecs::prelude::Messages;
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = valid_patch(); // no labels
+
+        apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        let messages = app.world().resource::<Messages<crate::LabelChanged>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+        assert_eq!(collected.len(), 0, "no LabelChanged for unlabeled patch");
+    }
+
+    #[test]
+    fn test_label_changed_module_label_order() {
+        use bevy_ecs::prelude::Messages;
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![ModuleConfig {
+                kind: "vco".to_string(),
+                instance_name: "vco_1".to_string(),
+                parameters: HashMap::new(),
+                display_name: "VCO".to_string(),
+                description: "Main osc".to_string(),
+                tags: vec!["lead".to_string()],
+            }],
+            cables: vec![],
+            rack: None,
+        };
+
+        apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        let messages = app.world().resource::<Messages<crate::LabelChanged>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+        assert_eq!(collected.len(), 3, "expected 3 LabelChanged");
+        assert!(matches!(&collected[0].kind, crate::LabelKind::DisplayName));
+        assert!(matches!(&collected[1].kind, crate::LabelKind::Description));
+        assert!(matches!(&collected[2].kind, crate::LabelKind::Tags));
+    }
+
+    // ── RackMeta loading tests ────────────────────────────────────
+
+    #[test]
+    fn test_rack_meta_loaded_from_patch() {
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![],
+            cables: vec![],
+            rack: Some(RackConfig {
+                display_name: "My Rack".to_string(),
+                description: "Test rack".to_string(),
+                notes: vec!["note1".to_string()],
+                tags: vec!["test".to_string()],
+            }),
+        };
+
+        apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        let meta = app.world().resource::<crate::RackMeta>();
+        assert_eq!(meta.display_name, "My Rack");
+        assert_eq!(meta.description, "Test rack");
+        assert_eq!(meta.notes, vec!["note1".to_string()]);
+        assert_eq!(meta.tags.len(), 1);
+        assert_eq!(meta.tags.iter().next().unwrap().as_str(), "test");
+    }
+
+    #[test]
+    fn test_rack_meta_default_when_section_absent() {
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = valid_patch(); // rack: None
+
+        apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        let meta = app.world().resource::<crate::RackMeta>();
+        assert!(meta.display_name.is_empty());
+        assert!(meta.description.is_empty());
+        assert!(meta.notes.is_empty());
+        assert!(meta.tags.is_empty());
+    }
+
+    #[test]
+    fn test_rack_meta_invalid_tag_returns_error() {
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![],
+            cables: vec![],
+            rack: Some(RackConfig {
+                tags: vec![" bad".to_string()],
+                ..Default::default()
+            }),
+        };
+
+        let result = apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        );
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(
+            err,
+            crate::CoreError::Patch(crate::PatchError::InvalidTag {
+                ref context,
+                ref tag,
+                reason: crate::TagError::LeadingOrTrailingWhitespace,
+            }) if context == "rack" && tag == " bad"
+        ));
+    }
+
+    // ── PatchLoaded.label_count tests ─────────────────────────────
+
+    #[test]
+    fn test_patch_loaded_label_count_zero_for_unlabeled_patch() {
+        use bevy_ecs::prelude::Messages;
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = valid_patch();
+
+        apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        let messages = app.world().resource::<Messages<crate::PatchLoaded>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+        assert_eq!(collected.len(), 1);
+        assert_eq!(collected[0].label_count, 0);
+    }
+
+    #[test]
+    fn test_patch_loaded_label_count_counts_all_emissions() {
+        use bevy_ecs::prelude::Messages;
+        let mut app = test_app();
+        let registry = test_registry();
+        // 3 module labels + 4 rack labels = 7
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![ModuleConfig {
+                kind: "vco".to_string(),
+                instance_name: "vco_1".to_string(),
+                parameters: HashMap::new(),
+                display_name: "VCO".to_string(),
+                description: "Osc".to_string(),
+                tags: vec!["lead".to_string()],
+            }],
+            cables: vec![],
+            rack: Some(RackConfig {
+                display_name: "R".to_string(),
+                description: "D".to_string(),
+                notes: vec!["N".to_string()],
+                tags: vec!["t".to_string()],
+            }),
+        };
+
+        apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        let patch_msgs = app.world().resource::<Messages<crate::PatchLoaded>>();
+        let patch_loaded: Vec<_> = patch_msgs.iter_current_update_messages().cloned().collect();
+        assert_eq!(patch_loaded.len(), 1);
+        assert_eq!(patch_loaded[0].label_count, 7);
+
+        // Cross-check: actual LabelChanged emission count matches
+        let label_msgs = app.world().resource::<Messages<crate::LabelChanged>>();
+        let label_count = label_msgs.iter_current_update_messages().count();
+        assert_eq!(
+            label_count, patch_loaded[0].label_count,
+            "label_count must match actual LabelChanged emission count"
+        );
+    }
+
+    // ── Backward compatibility ────────────────────────────────────
+
+    #[test]
+    fn test_legacy_patch_files_load_unchanged() {
+        use bevy_ecs::prelude::Messages;
+        let mut app = test_app();
+        let registry = test_registry();
+
+        // Construct a pre-3.5-shaped patch (rack: None, all label fields empty).
+        let patch = valid_patch();
+
+        // Round-trip through file I/O to exercise serde with missing fields.
+        let path = std::env::temp_dir().join("oxurack_test_legacy_roundtrip.ron");
+        save_patch_to_file(&patch, &path).expect("save should succeed");
+        let reloaded = load_patch_from_file(&path).expect("load should succeed");
+        assert_eq!(patch, reloaded, "pre-3.5 patch should round-trip unchanged");
+
+        // Load into world and verify no label emissions.
+        apply_patch_to_world(
+            &reloaded,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        let label_msgs = app.world().resource::<Messages<crate::LabelChanged>>();
+        let label_count = label_msgs.iter_current_update_messages().count();
+        assert_eq!(label_count, 0, "no LabelChanged for pre-3.5 patch");
+
+        let patch_msgs = app.world().resource::<Messages<crate::PatchLoaded>>();
+        let patch_loaded: Vec<_> = patch_msgs.iter_current_update_messages().cloned().collect();
+        assert_eq!(patch_loaded[0].label_count, 0);
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    // ── Error path ────────────────────────────────────────────────
+
+    #[test]
+    fn test_module_invalid_tag_returns_error() {
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = Patch {
+            version: "1.0".to_string(),
+            master_seed: 0,
+            bpm: 120.0,
+            modules: vec![ModuleConfig {
+                kind: "vco".to_string(),
+                instance_name: "vco_1".to_string(),
+                parameters: HashMap::new(),
+                tags: vec!["bad ".to_string()],
+                ..Default::default()
+            }],
+            cables: vec![],
+            rack: None,
+        };
+
+        let result = apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        );
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(
+            err,
+            crate::CoreError::Patch(crate::PatchError::InvalidTag {
+                ref context,
+                ref tag,
+                reason: crate::TagError::LeadingOrTrailingWhitespace,
+            }) if context == "module 'vco_1'" && tag == "bad "
+        ));
     }
 }

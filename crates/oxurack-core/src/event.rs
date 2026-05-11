@@ -573,7 +573,7 @@ mod tests {
             source: PatchSource::InMemory,
             module_count: 2,
             cable_count: 1,
-        label_count: 0,
+            label_count: 0,
         };
         let debug = format!("{evt:?}");
         assert!(
@@ -589,7 +589,7 @@ mod tests {
             source: PatchSource::InMemory,
             module_count: 1,
             cable_count: 0,
-        label_count: 0,
+            label_count: 0,
         };
         let cloned = evt.clone();
         assert_eq!(cloned.patch_name, "test_patch");

@@ -76,15 +76,14 @@ pub use event::{
     PatchSource, RtWarning, RtWarningCode, SongPositionChanged, TransportChanged, TransportState,
 };
 pub use label::{
-    Description, DisplayName, DisplayNameFormatter, RackMeta, Tag, TagError, Tags,
-    display_name_of,
+    Description, DisplayName, DisplayNameFormatter, RackMeta, Tag, TagError, Tags, display_name_of,
 };
 pub use module::{ModuleRegistration, ModuleRegistry, ModuleSpawner, OxurackModule, PortSchema};
 pub use parameter::{ParameterName, ParameterRegistry, ParameterSchema, ParameterValue};
 pub use patch::{
-    CableConfig, ModuleConfig, Patch, PatchHandle, apply_patch_to_world, deserialize_patch,
-    load_patch_from_file, load_patch_into_world, save_patch_to_file, serialize_patch,
-    validate_patch,
+    CableConfig, ModuleConfig, Patch, PatchHandle, RackConfig, apply_patch_to_world,
+    deserialize_patch, load_patch_from_file, load_patch_into_world, save_patch_to_file,
+    serialize_patch, validate_patch,
 };
 pub use scale::Scale;
 
@@ -178,6 +177,9 @@ fn build_core_plugin(app: &mut App, schedule: impl ScheduleLabel + Clone) {
         .add_message::<CableConnected>()
         .add_message::<CableDisconnected>()
         .add_message::<ParameterChanged>()
+        .add_message::<LabelChanged>()
+        .init_resource::<RackMeta>()
+        .init_resource::<DisplayNameFormatter>()
         .configure_sets(
             schedule.clone(),
             (TickPhase::Produce, TickPhase::Propagate, TickPhase::Consume).chain(),

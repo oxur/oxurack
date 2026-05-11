@@ -244,18 +244,28 @@ fn test_patch() -> Patch {
                 kind: "test_counter".to_string(),
                 instance_name: "counter_1".to_string(),
                 parameters: HashMap::new(),
+                display_name: String::new(),
+                description: String::new(),
+                tags: vec![],
             },
             ModuleConfig {
                 kind: "test_accumulator".to_string(),
                 instance_name: "acc_1".to_string(),
                 parameters: HashMap::new(),
+                display_name: String::new(),
+                description: String::new(),
+                tags: vec![],
             },
         ],
         cables: vec![CableConfig {
             source: ("counter_1".to_string(), "out".to_string()),
             target: ("acc_1".to_string(), "in".to_string()),
             transform: None,
+            display_name: String::new(),
+            description: String::new(),
+            tags: vec![],
         }],
+        rack: None,
     }
 }
 

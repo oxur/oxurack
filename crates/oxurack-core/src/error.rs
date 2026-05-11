@@ -4,7 +4,7 @@
 //! domain-specific [`PatchError`] and [`TickError`] enums. All errors
 //! use `thiserror` for ergonomic `Display` and `From` implementations.
 
-use crate::{MergePolicy, ValueKind};
+use crate::{MergePolicy, TagError, ValueKind};
 
 /// Top-level error type for the core crate.
 #[non_exhaustive]
@@ -117,6 +117,18 @@ pub enum PatchError {
         module: String,
         /// Parameter name.
         parameter: String,
+    },
+
+    /// A tag in the patch file failed validation.
+    #[error("invalid tag '{tag}' on {context}: {reason}")]
+    InvalidTag {
+        /// Human-readable context (e.g. `"module 'vco_1'"`, `"rack"`).
+        context: String,
+        /// The offending tag string.
+        tag: String,
+        /// Why it failed (the underlying [`TagError`]).
+        #[source]
+        reason: TagError,
     },
 
     /// Failed to deserialize a RON patch description.
@@ -344,6 +356,19 @@ mod tests {
         );
         assert!(msg.contains("cutoff"), "expected 'cutoff' in: {msg}");
         assert!(msg.contains("vco_1"), "expected 'vco_1' in: {msg}");
+    }
+
+    #[test]
+    fn test_patch_error_invalid_tag_display() {
+        let err = PatchError::InvalidTag {
+            context: "rack".to_string(),
+            tag: "bad ".to_string(),
+            reason: TagError::LeadingOrTrailingWhitespace,
+        };
+        assert_eq!(
+            format!("{err}"),
+            "invalid tag 'bad ' on rack: tag must not have leading or trailing whitespace"
+        );
     }
 
     #[test]
