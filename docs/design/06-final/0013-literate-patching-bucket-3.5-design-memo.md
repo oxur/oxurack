@@ -5,8 +5,8 @@ author: "treating each"
 component: All
 tags: [change-me]
 created: 2026-05-10
-updated: 2026-05-10
-state: Active
+updated: 2026-05-12
+state: Final
 supersedes: null
 superseded-by: null
 version: 1.0

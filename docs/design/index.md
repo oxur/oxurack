@@ -6,9 +6,9 @@ This index is automatically generated. Do not edit manually.
 
 | Number | Title | State | Updated |
 |--------|-------|-------|----------|
-| 0013 | Literate Patching (Bucket 3.5) — Design Memo | Active | 2026-05-10 |
-| 0012 | Event Substrate (Bucket 3.25) — Design Memo | Draft | 2026-05-10 |
-| 0011 | RackGraph — Design Memo (v0) | Draft | 2026-04-21 |
+| 0013 | Literate Patching (Bucket 3.5) — Design Memo | Final | 2026-05-12 |
+| 0012 | Event Substrate (Bucket 3.25) — Design Memo | Final | 2026-05-12 |
+| 0011 | RackGraph — Design Memo (v0) | Active | 2026-05-12 |
 | 0010 | oxurack Public API Design (v0) | Draft | 2026-04-20 |
 | 0009 | Module Catalog and Build Order (v2) | Draft | 2026-04-18 |
 | 0008 | oxurack Module Infrastructure: Authoring Modules on Bevy | Draft | 2026-04-18 |
@@ -24,12 +24,10 @@ This index is automatically generated. Do not edit manually.
 
 ### Active
 
-- [0013 - Literate Patching (Bucket 3.5) — Design Memo](05-active/0013-literate-patching-bucket-3.5-design-memo.md)
+- [0011 - RackGraph — Design Memo (v0)](05-active/0011-rackgraph-design-memo-v0.md)
 
 ### Draft
 
-- [0012 - Event Substrate (Bucket 3.25) — Design Memo](01-draft/0012-event-substrate-bucket-3.25-design-memo.md)
-- [0011 - RackGraph — Design Memo (v0)](01-draft/0011-rackgraph-design-memo-v0.md)
 - [0010 - oxurack Public API Design (v0)](01-draft/0010-oxurack-public-api-design-v0.md)
 - [0009 - Module Catalog and Build Order (v2)](01-draft/0009-module-catalog-and-build-order-v2.md)
 - [0008 - oxurack Module Infrastructure: Authoring Modules on Bevy](01-draft/0008-oxurack-module-infrastructure-authoring-modules-on-bevy.md)
@@ -38,6 +36,8 @@ This index is automatically generated. Do not edit manually.
 
 ### Final
 
+- [0013 - Literate Patching (Bucket 3.5) — Design Memo](06-final/0013-literate-patching-bucket-3.5-design-memo.md)
+- [0012 - Event Substrate (Bucket 3.25) — Design Memo](06-final/0012-event-substrate-bucket-3.25-design-memo.md)
 - [0006 - Oxurack-rt: The Real-Time Thread](06-final/0006-oxurack-rt-the-real-time-thread.md)
 - [0001 - Turing Machine to MIDI - Module Design Doc](06-final/0001-turing-machine-to-midi-module-design-doc.md)
 
