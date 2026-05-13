@@ -24,8 +24,10 @@ use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_ecs::schedule::ScheduleLabel;
 use petgraph::stable_graph::{EdgeIndex, NodeIndex, StableDiGraph};
-use petgraph::visit::EdgeRef;
+use petgraph::visit::{Dfs, EdgeRef, Reversed, Walker};
 use serde::{Deserialize, Serialize};
+
+use std::collections::HashSet;
 
 use oxurack_core::{
     CableConnected, CableDisconnected, CableTransform, Description, DisplayName,
@@ -185,6 +187,18 @@ pub struct PortSet {
     pub outputs: Vec<PortInfo>,
 }
 
+/// Error returned by [`GraphView::topological_order`] when the graph
+/// contains cycles.
+///
+/// Each inner `Vec<String>` lists the instance names of modules in one
+/// cycle. Self-loops appear as single-element vectors.
+#[derive(thiserror::Error, Debug, Clone, PartialEq, Eq)]
+pub enum CycleError {
+    /// The graph contains one or more cycles.
+    #[error("graph contains {} cycle(s)", .0.len())]
+    Cycles(Vec<Vec<String>>),
+}
+
 // ── Result-type builders ───────────────────────────────────────────────
 
 fn convert_direction(d: oxurack_core::PortDirection) -> PortDirection {
@@ -339,14 +353,33 @@ impl<'w> GraphView<'w> {
         modules
     }
 
-    /// All cables in the graph, with labels resolved. `O(m)`.
+    /// All cables in the graph, with labels resolved.
+    ///
+    /// Sorted by `(source_module_instance, source_port_name,
+    /// target_module_instance, target_port_name)` for deterministic
+    /// output. `O(m log m)`.
     pub fn cables(&self) -> Vec<CableInfo> {
         let graph = self.raw();
-        graph
+        let mut cables: Vec<CableInfo> = graph
             .inner
             .edge_weights()
             .map(|edge| build_cable_info(self.world, edge))
-            .collect()
+            .collect();
+        cables.sort_by(|a, b| {
+            (
+                &a.source_module_instance,
+                &a.source_port_name,
+                &a.target_module_instance,
+                &a.target_port_name,
+            )
+                .cmp(&(
+                    &b.source_module_instance,
+                    &b.source_port_name,
+                    &b.target_module_instance,
+                    &b.target_port_name,
+                ))
+        });
+        cables
     }
 
     /// Histogram of module kinds present in the graph. `O(n)`.
@@ -499,6 +532,230 @@ impl<'w> GraphView<'w> {
             .edges_directed(idx, petgraph::Direction::Outgoing)
             .map(|e| build_cable_info(self.world, e.weight()))
             .collect()
+    }
+
+    // ── Diagnostics ────────────────────────────────────────────────
+
+    /// Modules with no incident cables (neither incoming nor outgoing).
+    ///
+    /// `O(n)` — iterates all nodes once.
+    pub fn dangling_modules(&self) -> Vec<ModuleInfo> {
+        let graph = self.raw();
+        let mut result: Vec<ModuleInfo> = graph
+            .inner
+            .node_indices()
+            .filter(|&idx| {
+                graph
+                    .inner
+                    .edges_directed(idx, petgraph::Direction::Incoming)
+                    .next()
+                    .is_none()
+                    && graph
+                        .inner
+                        .edges_directed(idx, petgraph::Direction::Outgoing)
+                        .next()
+                        .is_none()
+            })
+            .filter_map(|idx| graph.inner.node_weight(idx))
+            .map(|node| build_module_info(self.world, node))
+            .collect();
+        result.sort_by(|a, b| a.instance_name.cmp(&b.instance_name));
+        result
+    }
+
+    /// Output ports with no outgoing cable, and input ports with no
+    /// incoming cable, grouped by their parent module.
+    ///
+    /// Sorted by `(instance_name, port_name)`. `O(n * k + m)` where
+    /// `n` is modules, `k` is ports per module, `m` is cables.
+    pub fn dangling_ports(&self) -> Vec<(ModuleInfo, PortInfo)> {
+        let graph = self.raw();
+
+        // Build sets of connected port entities for O(1) lookup.
+        let mut connected_sources: HashSet<Entity> = HashSet::new();
+        let mut connected_targets: HashSet<Entity> = HashSet::new();
+        for edge in graph.inner.edge_weights() {
+            connected_sources.insert(edge.source_port);
+            connected_targets.insert(edge.target_port);
+        }
+
+        let mut result = Vec::new();
+        for node in graph.inner.node_weights() {
+            let module_info = build_module_info(self.world, node);
+            if let Some(children) = self.world.get::<bevy_ecs::hierarchy::Children>(node.entity) {
+                for child in children.iter() {
+                    if let Some(port) = self.world.get::<Port>(child) {
+                        let is_dangling = match port.direction {
+                            oxurack_core::PortDirection::Output => {
+                                !connected_sources.contains(&child)
+                            }
+                            oxurack_core::PortDirection::Input => {
+                                !connected_targets.contains(&child)
+                            }
+                            _ => false,
+                        };
+                        if is_dangling {
+                            result.push((module_info.clone(), build_port_info(port)));
+                        }
+                    }
+                }
+            }
+        }
+        result
+            .sort_by(|a, b| (&a.0.instance_name, &a.1.name).cmp(&(&b.0.instance_name, &b.1.name)));
+        result
+    }
+
+    // ── Ordering ───────────────────────────────────────────────────
+
+    /// Topological order of modules.
+    ///
+    /// Treats all cables as flow edges (`CableKind` distinction
+    /// deferred). Returns `Err(CycleError)` listing all cycles if the
+    /// graph contains any.
+    ///
+    /// `O(n + m)`.
+    pub fn topological_order(&self) -> Result<Vec<ModuleInfo>, CycleError> {
+        let graph = self.raw();
+        match petgraph::algo::toposort(&graph.inner, None) {
+            Ok(order) => Ok(order
+                .into_iter()
+                .filter_map(|idx| graph.inner.node_weight(idx))
+                .map(|node| build_module_info(self.world, node))
+                .collect()),
+            Err(_) => {
+                let cycle_names: Vec<Vec<String>> = self
+                    .cycles()
+                    .into_iter()
+                    .map(|cycle| cycle.into_iter().map(|m| m.instance_name).collect())
+                    .collect();
+                Err(CycleError::Cycles(cycle_names))
+            }
+        }
+    }
+
+    // ── Cycles ─────────────────────────────────────────────────────
+
+    /// All cycles in the graph.
+    ///
+    /// Each inner `Vec<ModuleInfo>` is one cycle, sorted by instance
+    /// name. Includes self-loops as single-element vectors. Empty when
+    /// the graph is acyclic.
+    ///
+    /// The outer list is sorted by the first member's instance name
+    /// for deterministic output.
+    ///
+    /// `O(n + m)` via Tarjan's SCC algorithm.
+    pub fn cycles(&self) -> Vec<Vec<ModuleInfo>> {
+        let graph = self.raw();
+        let sccs = petgraph::algo::tarjan_scc(&graph.inner);
+        let mut result: Vec<Vec<ModuleInfo>> = sccs
+            .into_iter()
+            .filter(|component| {
+                if component.len() > 1 {
+                    return true;
+                }
+                // Singleton SCC: only a cycle if it has a self-loop.
+                let node = component[0];
+                graph.inner.edges_connecting(node, node).next().is_some()
+            })
+            .map(|component| {
+                let mut modules: Vec<ModuleInfo> = component
+                    .iter()
+                    .filter_map(|&idx| graph.inner.node_weight(idx))
+                    .map(|node| build_module_info(self.world, node))
+                    .collect();
+                modules.sort_by(|a, b| a.instance_name.cmp(&b.instance_name));
+                modules
+            })
+            .collect();
+        result.sort_by(|a, b| {
+            a.first()
+                .map(|m| m.instance_name.as_str())
+                .cmp(&b.first().map(|m| m.instance_name.as_str()))
+        });
+        result
+    }
+
+    // ── Reachability ───────────────────────────────────────────────
+
+    /// All modules reachable downstream from the given module
+    /// (following outgoing edges). Includes the starting module.
+    ///
+    /// Returns empty if the entity is not a registered module.
+    /// Sorted by instance name. `O(n + m)`.
+    pub fn downstream_closure(&self, module_entity: Entity) -> Vec<ModuleInfo> {
+        let graph = self.raw();
+        let Some(&start_idx) = graph.node_by_entity.get(&module_entity) else {
+            return Vec::new();
+        };
+        let dfs = Dfs::new(&graph.inner, start_idx);
+        let mut result: Vec<ModuleInfo> = dfs
+            .iter(&graph.inner)
+            .filter_map(|idx| graph.inner.node_weight(idx))
+            .map(|node| build_module_info(self.world, node))
+            .collect();
+        result.sort_by(|a, b| a.instance_name.cmp(&b.instance_name));
+        result
+    }
+
+    /// All modules reachable upstream from the given module
+    /// (following incoming edges). Includes the starting module.
+    ///
+    /// Returns empty if the entity is not a registered module.
+    /// Sorted by instance name. `O(n + m)`.
+    pub fn upstream_closure(&self, module_entity: Entity) -> Vec<ModuleInfo> {
+        let graph = self.raw();
+        let Some(&start_idx) = graph.node_by_entity.get(&module_entity) else {
+            return Vec::new();
+        };
+        let reversed = Reversed(&graph.inner);
+        let dfs = Dfs::new(&reversed, start_idx);
+        let mut result: Vec<ModuleInfo> = dfs
+            .iter(&reversed)
+            .filter_map(|idx| graph.inner.node_weight(idx))
+            .map(|node| build_module_info(self.world, node))
+            .collect();
+        result.sort_by(|a, b| a.instance_name.cmp(&b.instance_name));
+        result
+    }
+
+    // ── Connection discovery ───────────────────────────────────────
+
+    /// Input ports in the rack that could legally accept a cable from
+    /// the given output port (by matching `ValueKind`).
+    ///
+    /// Includes same-module inputs (self-connection is allowed).
+    /// Returns empty if the entity is not a port or has no `Port`
+    /// component. Sorted by `(instance_name, port_name)`.
+    ///
+    /// `O(n * k)` where `n` is modules and `k` is ports per module.
+    pub fn compatible_inputs_for(&self, output_port: Entity) -> Vec<(ModuleInfo, PortInfo)> {
+        let Some(source_port) = self.world.get::<Port>(output_port) else {
+            return Vec::new();
+        };
+        let source_kind = source_port.value_kind;
+
+        let graph = self.raw();
+        let mut result = Vec::new();
+
+        for node in graph.inner.node_weights() {
+            if let Some(children) = self.world.get::<bevy_ecs::hierarchy::Children>(node.entity) {
+                for child in children.iter() {
+                    if let Some(port) = self.world.get::<Port>(child)
+                        && port.direction == oxurack_core::PortDirection::Input
+                        && port.value_kind == source_kind
+                    {
+                        let module_info = build_module_info(self.world, node);
+                        result.push((module_info, build_port_info(port)));
+                    }
+                }
+            }
+        }
+
+        result
+            .sort_by(|a, b| (&a.0.instance_name, &a.1.name).cmp(&(&b.0.instance_name, &b.1.name)));
+        result
     }
 }
 
@@ -1448,5 +1705,865 @@ mod tests {
         let modules = view.modules();
         let names: Vec<&str> = modules.iter().map(|m| m.instance_name.as_str()).collect();
         assert_eq!(names, vec!["alpha_1", "middle_1", "zebra_1"]);
+    }
+
+    // ── Dangling modules (#1–#3) ──────────────────────────────────
+
+    #[test]
+    fn test_dangling_modules_empty_graph() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let view = GraphView::new(app.world());
+        assert!(view.dangling_modules().is_empty());
+    }
+
+    #[test]
+    fn test_dangling_modules_all_connected() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let vco = spawn_module(
+            &mut app,
+            "vco_1",
+            "vco",
+            &[("out", oxurack_core::PortDirection::Output)],
+        );
+        let filter = spawn_module(
+            &mut app,
+            "filter_1",
+            "filter",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        let out = spawn_module(
+            &mut app,
+            "out_1",
+            "output",
+            &[("in", oxurack_core::PortDirection::Input)],
+        );
+        app.update();
+
+        let vco_out = find_port(&mut app, vco, "out");
+        let filter_in = find_port(&mut app, filter, "in");
+        let filter_out = find_port(&mut app, filter, "out");
+        let out_in = find_port(&mut app, out, "in");
+        connect_cable(&mut app, vco_out, filter_in);
+        connect_cable(&mut app, filter_out, out_in);
+        app.update();
+
+        let view = GraphView::new(app.world());
+        assert!(view.dangling_modules().is_empty());
+    }
+
+    #[test]
+    fn test_dangling_modules_finds_isolated() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let src = spawn_module(
+            &mut app,
+            "gen_1",
+            "gen",
+            &[("out", oxurack_core::PortDirection::Output)],
+        );
+        let sink = spawn_module(
+            &mut app,
+            "sink_1",
+            "sink",
+            &[("in", oxurack_core::PortDirection::Input)],
+        );
+        spawn_module(&mut app, "lonely_1", "lonely", &[]);
+        app.update();
+
+        let gen_out = find_port(&mut app, src, "out");
+        let sink_in = find_port(&mut app, sink, "in");
+        connect_cable(&mut app, gen_out, sink_in);
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let dangling = view.dangling_modules();
+        assert_eq!(dangling.len(), 1);
+        assert_eq!(dangling[0].instance_name, "lonely_1");
+    }
+
+    // ── Dangling ports (#4–#7) ────────────────────────────────────
+
+    #[test]
+    fn test_dangling_ports_empty_graph() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let view = GraphView::new(app.world());
+        assert!(view.dangling_ports().is_empty());
+    }
+
+    #[test]
+    fn test_dangling_ports_all_wired() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let src = spawn_module(
+            &mut app,
+            "gen_1",
+            "gen",
+            &[("out", oxurack_core::PortDirection::Output)],
+        );
+        let sink = spawn_module(
+            &mut app,
+            "sink_1",
+            "sink",
+            &[("in", oxurack_core::PortDirection::Input)],
+        );
+        app.update();
+
+        let gen_out = find_port(&mut app, src, "out");
+        let sink_in = find_port(&mut app, sink, "in");
+        connect_cable(&mut app, gen_out, sink_in);
+        app.update();
+
+        let view = GraphView::new(app.world());
+        assert!(view.dangling_ports().is_empty());
+    }
+
+    #[test]
+    fn test_dangling_ports_finds_unwired_output() {
+        let mut app = graph_test_app();
+        app.update();
+
+        spawn_module(
+            &mut app,
+            "gen_1",
+            "gen",
+            &[("out", oxurack_core::PortDirection::Output)],
+        );
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let dangling = view.dangling_ports();
+        assert_eq!(dangling.len(), 1);
+        assert_eq!(dangling[0].0.instance_name, "gen_1");
+        assert_eq!(dangling[0].1.name, "out");
+        assert_eq!(dangling[0].1.direction, PortDirection::Output);
+    }
+
+    #[test]
+    fn test_dangling_ports_finds_unwired_input() {
+        let mut app = graph_test_app();
+        app.update();
+
+        spawn_module(
+            &mut app,
+            "sink_1",
+            "sink",
+            &[("in", oxurack_core::PortDirection::Input)],
+        );
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let dangling = view.dangling_ports();
+        assert_eq!(dangling.len(), 1);
+        assert_eq!(dangling[0].0.instance_name, "sink_1");
+        assert_eq!(dangling[0].1.name, "in");
+        assert_eq!(dangling[0].1.direction, PortDirection::Input);
+    }
+
+    // ── Topological order (#8–#11) ────────────────────────────────
+
+    #[test]
+    fn test_topological_order_linear_chain() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let a = spawn_module(
+            &mut app,
+            "a",
+            "mod",
+            &[("out", oxurack_core::PortDirection::Output)],
+        );
+        let b = spawn_module(
+            &mut app,
+            "b",
+            "mod",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        let c = spawn_module(
+            &mut app,
+            "c",
+            "mod",
+            &[("in", oxurack_core::PortDirection::Input)],
+        );
+        app.update();
+
+        let a_out = find_port(&mut app, a, "out");
+        let b_in = find_port(&mut app, b, "in");
+        let b_out = find_port(&mut app, b, "out");
+        let c_in = find_port(&mut app, c, "in");
+        connect_cable(&mut app, a_out, b_in);
+        connect_cable(&mut app, b_out, c_in);
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let order = view.topological_order().expect("acyclic");
+        let names: Vec<&str> = order.iter().map(|m| m.instance_name.as_str()).collect();
+        assert_eq!(names, vec!["a", "b", "c"]);
+    }
+
+    #[test]
+    fn test_topological_order_diamond() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let a = spawn_module(
+            &mut app,
+            "a",
+            "mod",
+            &[("out", oxurack_core::PortDirection::Output)],
+        );
+        let b = spawn_module(
+            &mut app,
+            "b",
+            "mod",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        let c = spawn_module(
+            &mut app,
+            "c",
+            "mod",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        let d = spawn_module(
+            &mut app,
+            "d",
+            "mod",
+            &[
+                ("in_b", oxurack_core::PortDirection::Input),
+                ("in_c", oxurack_core::PortDirection::Input),
+            ],
+        );
+        app.update();
+
+        let a_out = find_port(&mut app, a, "out");
+        let b_in = find_port(&mut app, b, "in");
+        let b_out = find_port(&mut app, b, "out");
+        let c_in = find_port(&mut app, c, "in");
+        let c_out = find_port(&mut app, c, "out");
+        let d_in_b = find_port(&mut app, d, "in_b");
+        let d_in_c = find_port(&mut app, d, "in_c");
+
+        connect_cable(&mut app, a_out, b_in);
+        connect_cable(&mut app, a_out, c_in);
+        connect_cable(&mut app, b_out, d_in_b);
+        connect_cable(&mut app, c_out, d_in_c);
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let order = view.topological_order().expect("acyclic");
+        let names: Vec<&str> = order.iter().map(|m| m.instance_name.as_str()).collect();
+        let a_pos = names.iter().position(|&n| n == "a").unwrap();
+        let d_pos = names.iter().position(|&n| n == "d").unwrap();
+        assert_eq!(a_pos, 0, "a must be first");
+        assert_eq!(d_pos, 3, "d must be last");
+    }
+
+    #[test]
+    fn test_topological_order_returns_cycle_error() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let a = spawn_module(
+            &mut app,
+            "a",
+            "mod",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        let b = spawn_module(
+            &mut app,
+            "b",
+            "mod",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        app.update();
+
+        let a_out = find_port(&mut app, a, "out");
+        let b_in = find_port(&mut app, b, "in");
+        let b_out = find_port(&mut app, b, "out");
+        let a_in = find_port(&mut app, a, "in");
+        connect_cable(&mut app, a_out, b_in);
+        connect_cable(&mut app, b_out, a_in);
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let result = view.topological_order();
+        assert!(matches!(result, Err(CycleError::Cycles(ref c)) if !c.is_empty()));
+        if let Err(CycleError::Cycles(cycles)) = result {
+            assert_eq!(cycles.len(), 1);
+            let mut cycle = cycles[0].clone();
+            cycle.sort();
+            assert_eq!(cycle, vec!["a", "b"]);
+        }
+    }
+
+    #[test]
+    fn test_topological_order_empty_graph() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let order = view.topological_order().expect("empty is acyclic");
+        assert!(order.is_empty());
+    }
+
+    // ── Cycle detection (#12–#16) ─────────────────────────────────
+
+    #[test]
+    fn test_cycles_empty_graph() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let view = GraphView::new(app.world());
+        assert!(view.cycles().is_empty());
+    }
+
+    #[test]
+    fn test_cycles_acyclic_graph() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let a = spawn_module(
+            &mut app,
+            "a",
+            "mod",
+            &[("out", oxurack_core::PortDirection::Output)],
+        );
+        let b = spawn_module(
+            &mut app,
+            "b",
+            "mod",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        let c = spawn_module(
+            &mut app,
+            "c",
+            "mod",
+            &[("in", oxurack_core::PortDirection::Input)],
+        );
+        app.update();
+
+        let a_out = find_port(&mut app, a, "out");
+        let b_in = find_port(&mut app, b, "in");
+        let b_out = find_port(&mut app, b, "out");
+        let c_in = find_port(&mut app, c, "in");
+        connect_cable(&mut app, a_out, b_in);
+        connect_cable(&mut app, b_out, c_in);
+        app.update();
+
+        let view = GraphView::new(app.world());
+        assert!(view.cycles().is_empty());
+    }
+
+    #[test]
+    fn test_cycles_finds_two_node_cycle() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let a = spawn_module(
+            &mut app,
+            "a",
+            "mod",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        let b = spawn_module(
+            &mut app,
+            "b",
+            "mod",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        app.update();
+
+        let a_out = find_port(&mut app, a, "out");
+        let b_in = find_port(&mut app, b, "in");
+        let b_out = find_port(&mut app, b, "out");
+        let a_in = find_port(&mut app, a, "in");
+        connect_cable(&mut app, a_out, b_in);
+        connect_cable(&mut app, b_out, a_in);
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let cycles = view.cycles();
+        assert_eq!(cycles.len(), 1);
+        let names: Vec<&str> = cycles[0].iter().map(|m| m.instance_name.as_str()).collect();
+        assert_eq!(names, vec!["a", "b"]);
+    }
+
+    #[test]
+    fn test_cycles_finds_self_loop() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let a = spawn_module(
+            &mut app,
+            "a",
+            "mod",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        app.update();
+
+        let a_out = find_port(&mut app, a, "out");
+        let a_in = find_port(&mut app, a, "in");
+        connect_cable(&mut app, a_out, a_in);
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let cycles = view.cycles();
+        assert_eq!(cycles.len(), 1);
+        assert_eq!(cycles[0].len(), 1);
+        assert_eq!(cycles[0][0].instance_name, "a");
+    }
+
+    #[test]
+    fn test_cycles_multiple_disjoint() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let a = spawn_module(
+            &mut app,
+            "a",
+            "mod",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        let b = spawn_module(
+            &mut app,
+            "b",
+            "mod",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        let c = spawn_module(
+            &mut app,
+            "c",
+            "mod",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        let d = spawn_module(
+            &mut app,
+            "d",
+            "mod",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        app.update();
+
+        let a_out = find_port(&mut app, a, "out");
+        let b_in = find_port(&mut app, b, "in");
+        let b_out = find_port(&mut app, b, "out");
+        let a_in = find_port(&mut app, a, "in");
+        connect_cable(&mut app, a_out, b_in);
+        connect_cable(&mut app, b_out, a_in);
+
+        let c_out = find_port(&mut app, c, "out");
+        let d_in = find_port(&mut app, d, "in");
+        let d_out = find_port(&mut app, d, "out");
+        let c_in = find_port(&mut app, c, "in");
+        connect_cable(&mut app, c_out, d_in);
+        connect_cable(&mut app, d_out, c_in);
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let cycles = view.cycles();
+        assert_eq!(cycles.len(), 2);
+    }
+
+    // ── Reachability (#17–#21) ────────────────────────────────────
+
+    #[test]
+    fn test_downstream_closure_linear_chain() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let a = spawn_module(
+            &mut app,
+            "a",
+            "mod",
+            &[("out", oxurack_core::PortDirection::Output)],
+        );
+        let b = spawn_module(
+            &mut app,
+            "b",
+            "mod",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        let c = spawn_module(
+            &mut app,
+            "c",
+            "mod",
+            &[("in", oxurack_core::PortDirection::Input)],
+        );
+        app.update();
+
+        let a_out = find_port(&mut app, a, "out");
+        let b_in = find_port(&mut app, b, "in");
+        let b_out = find_port(&mut app, b, "out");
+        let c_in = find_port(&mut app, c, "in");
+        connect_cable(&mut app, a_out, b_in);
+        connect_cable(&mut app, b_out, c_in);
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let closure = view.downstream_closure(a);
+        let names: Vec<&str> = closure.iter().map(|m| m.instance_name.as_str()).collect();
+        assert_eq!(names, vec!["a", "b", "c"]);
+    }
+
+    #[test]
+    fn test_downstream_closure_diamond() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let a = spawn_module(
+            &mut app,
+            "a",
+            "mod",
+            &[("out", oxurack_core::PortDirection::Output)],
+        );
+        let b = spawn_module(
+            &mut app,
+            "b",
+            "mod",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        let c = spawn_module(
+            &mut app,
+            "c",
+            "mod",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        let d = spawn_module(
+            &mut app,
+            "d",
+            "mod",
+            &[
+                ("in_b", oxurack_core::PortDirection::Input),
+                ("in_c", oxurack_core::PortDirection::Input),
+            ],
+        );
+        app.update();
+
+        let a_out = find_port(&mut app, a, "out");
+        let b_in = find_port(&mut app, b, "in");
+        let b_out = find_port(&mut app, b, "out");
+        let c_in = find_port(&mut app, c, "in");
+        let c_out = find_port(&mut app, c, "out");
+        let d_in_b = find_port(&mut app, d, "in_b");
+        let d_in_c = find_port(&mut app, d, "in_c");
+        connect_cable(&mut app, a_out, b_in);
+        connect_cable(&mut app, a_out, c_in);
+        connect_cable(&mut app, b_out, d_in_b);
+        connect_cable(&mut app, c_out, d_in_c);
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let all = view.downstream_closure(a);
+        assert_eq!(all.len(), 4);
+
+        let from_b = view.downstream_closure(b);
+        let names: Vec<&str> = from_b.iter().map(|m| m.instance_name.as_str()).collect();
+        assert_eq!(names, vec!["b", "d"]);
+    }
+
+    #[test]
+    fn test_downstream_closure_isolated() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let a = spawn_module(&mut app, "lonely_1", "mod", &[]);
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let closure = view.downstream_closure(a);
+        assert_eq!(closure.len(), 1);
+        assert_eq!(closure[0].instance_name, "lonely_1");
+    }
+
+    #[test]
+    fn test_upstream_closure_linear_chain() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let a = spawn_module(
+            &mut app,
+            "a",
+            "mod",
+            &[("out", oxurack_core::PortDirection::Output)],
+        );
+        let b = spawn_module(
+            &mut app,
+            "b",
+            "mod",
+            &[
+                ("in", oxurack_core::PortDirection::Input),
+                ("out", oxurack_core::PortDirection::Output),
+            ],
+        );
+        let c = spawn_module(
+            &mut app,
+            "c",
+            "mod",
+            &[("in", oxurack_core::PortDirection::Input)],
+        );
+        app.update();
+
+        let a_out = find_port(&mut app, a, "out");
+        let b_in = find_port(&mut app, b, "in");
+        let b_out = find_port(&mut app, b, "out");
+        let c_in = find_port(&mut app, c, "in");
+        connect_cable(&mut app, a_out, b_in);
+        connect_cable(&mut app, b_out, c_in);
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let closure = view.upstream_closure(c);
+        let names: Vec<&str> = closure.iter().map(|m| m.instance_name.as_str()).collect();
+        assert_eq!(names, vec!["a", "b", "c"]);
+    }
+
+    #[test]
+    fn test_upstream_closure_unknown_entity() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let unknown = app.world_mut().spawn_empty().id();
+
+        let view = GraphView::new(app.world());
+        assert!(view.upstream_closure(unknown).is_empty());
+    }
+
+    // ── Compatibility filter (#22–#25) ────────────────────────────
+
+    #[test]
+    fn test_compatible_inputs_finds_matching_kind() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let src = spawn_module(
+            &mut app,
+            "gen_1",
+            "gen",
+            &[("out", oxurack_core::PortDirection::Output)],
+        );
+        spawn_module(
+            &mut app,
+            "sink_a",
+            "sink",
+            &[("in", oxurack_core::PortDirection::Input)],
+        );
+        spawn_module(
+            &mut app,
+            "sink_b",
+            "sink",
+            &[("in", oxurack_core::PortDirection::Input)],
+        );
+        app.update();
+
+        let gen_out = find_port(&mut app, src, "out");
+
+        let view = GraphView::new(app.world());
+        let compatible = view.compatible_inputs_for(gen_out);
+        assert_eq!(compatible.len(), 2);
+    }
+
+    #[test]
+    fn test_compatible_inputs_excludes_mismatched_kind() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let src = spawn_module(
+            &mut app,
+            "gen_1",
+            "gen",
+            &[("out", oxurack_core::PortDirection::Output)],
+        );
+        // Float output port (default from spawn_module)
+
+        // Spawn a module with a Gate input manually
+        let gate_sink =
+            oxurack_core::spawn_module_entity(app.world_mut(), "gate_sink", "gate_sink_1");
+        oxurack_core::spawn_port_on_module(
+            app.world_mut(),
+            gate_sink,
+            "gate_in",
+            oxurack_core::PortDirection::Input,
+            oxurack_core::ValueKind::Gate,
+            oxurack_core::MergePolicy::LastWins,
+        );
+        app.world_mut().write_message(ModuleAdded {
+            entity: gate_sink,
+            instance_name: "gate_sink_1".to_string(),
+            kind: ModuleKind::from("gate_sink"),
+        });
+
+        // Also add a Float input
+        spawn_module(
+            &mut app,
+            "float_sink",
+            "sink",
+            &[("in", oxurack_core::PortDirection::Input)],
+        );
+        app.update();
+
+        let gen_out = find_port(&mut app, src, "out");
+
+        let view = GraphView::new(app.world());
+        let compatible = view.compatible_inputs_for(gen_out);
+        assert_eq!(compatible.len(), 1);
+        assert_eq!(compatible[0].0.instance_name, "float_sink");
+    }
+
+    #[test]
+    fn test_compatible_inputs_includes_same_module() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let m = spawn_module(
+            &mut app,
+            "self_mod",
+            "mod",
+            &[
+                ("out", oxurack_core::PortDirection::Output),
+                ("in", oxurack_core::PortDirection::Input),
+            ],
+        );
+        app.update();
+
+        let m_out = find_port(&mut app, m, "out");
+
+        let view = GraphView::new(app.world());
+        let compatible = view.compatible_inputs_for(m_out);
+        assert_eq!(compatible.len(), 1);
+        assert_eq!(compatible[0].0.instance_name, "self_mod");
+        assert_eq!(compatible[0].1.name, "in");
+    }
+
+    #[test]
+    fn test_compatible_inputs_unknown_port() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let unknown = app.world_mut().spawn_empty().id();
+
+        let view = GraphView::new(app.world());
+        assert!(view.compatible_inputs_for(unknown).is_empty());
+    }
+
+    // ── Cables sort (#26) ─────────────────────────────────────────
+
+    #[test]
+    fn test_cables_sorted_by_endpoints() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let vco = spawn_module(
+            &mut app,
+            "vco_1",
+            "vco",
+            &[("out", oxurack_core::PortDirection::Output)],
+        );
+        let lfo = spawn_module(
+            &mut app,
+            "lfo_1",
+            "lfo",
+            &[("out", oxurack_core::PortDirection::Output)],
+        );
+        let filter = spawn_module(
+            &mut app,
+            "filter_1",
+            "filter",
+            &[("in", oxurack_core::PortDirection::Input)],
+        );
+        let vca = spawn_module(
+            &mut app,
+            "vca_1",
+            "vca",
+            &[("cv", oxurack_core::PortDirection::Input)],
+        );
+        app.update();
+
+        // Connect lfo first (alphabetically later source) to verify sort
+        let lfo_out = find_port(&mut app, lfo, "out");
+        let vca_cv = find_port(&mut app, vca, "cv");
+        connect_cable(&mut app, lfo_out, vca_cv);
+
+        let vco_out = find_port(&mut app, vco, "out");
+        let filter_in = find_port(&mut app, filter, "in");
+        connect_cable(&mut app, vco_out, filter_in);
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let cables = view.cables();
+        assert_eq!(cables.len(), 2);
+        assert_eq!(cables[0].source_module_instance, "lfo_1");
+        assert_eq!(cables[1].source_module_instance, "vco_1");
+    }
+
+    // ── CycleError Display (#16b) ─────────────────────────────────
+
+    #[test]
+    fn test_cycle_error_display() {
+        let err = CycleError::Cycles(vec![vec!["a".to_string(), "b".to_string()]]);
+        assert_eq!(format!("{err}"), "graph contains 1 cycle(s)");
+
+        let err2 = CycleError::Cycles(vec![
+            vec!["a".to_string()],
+            vec!["c".to_string(), "d".to_string()],
+        ]);
+        assert_eq!(format!("{err2}"), "graph contains 2 cycle(s)");
     }
 }
