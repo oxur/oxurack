@@ -86,11 +86,26 @@ impl Oxurack {
         self
     }
 
+    /// Access the rack's graph view for navigation queries.
+    ///
+    /// Returns a [`GraphView`](oxurack_graph::GraphView) over the rack's
+    /// ECS world. All query methods resolve labels fresh at call time.
+    ///
+    /// Available only with the `graph` Cargo feature (enabled by default).
+    #[cfg(feature = "graph")]
+    pub fn graph(&self) -> oxurack_graph::GraphView<'_> {
+        oxurack_graph::GraphView::new(self.app.world())
+    }
+
     /// Loads a patch from a RON file and applies it to the world.
     ///
     /// On success, the resulting [`PatchHandle`](oxurack_core::PatchHandle)
     /// is stored as a resource. If a handle from a previous load exists,
     /// it is replaced.
+    ///
+    /// When the `graph` feature is enabled, the [`GraphMaintenance`](oxurack_graph::GraphMaintenance)
+    /// schedule runs synchronously after the patch is applied, so
+    /// `rack.graph().modules()` reflects the just-loaded patch immediately.
     ///
     /// # Errors
     ///
@@ -115,6 +130,14 @@ impl Oxurack {
                 world.insert_resource(handle);
                 Ok::<(), oxurack_core::CoreError>(())
             })?;
+
+        // Freshness contract: run graph maintenance synchronously so
+        // rack.graph().modules() reflects the just-loaded patch.
+        #[cfg(feature = "graph")]
+        self.app
+            .world_mut()
+            .run_schedule(oxurack_graph::GraphMaintenance);
+
         Ok(())
     }
 
@@ -528,5 +551,55 @@ mod tests {
         let mut oxa = Oxurack::new();
         oxa.step();
         oxa.step();
+    }
+
+    // ── Graph tests (feature-gated) ───────────────────────────────
+
+    #[cfg(feature = "graph")]
+    #[test]
+    fn test_graph_accessor_returns_view() {
+        let mut oxa = Oxurack::new();
+        oxa.install::<TestGen>();
+        oxa.install::<TestSink>();
+
+        let path = save_patch_to_temp(&two_module_patch(), "oxurack_test_graph_view.ron");
+        oxa.load_patch(&path).expect("load should succeed");
+        let _ = std::fs::remove_file(&path);
+
+        let view = oxa.graph();
+        assert_eq!(view.module_count(), 2);
+        assert!(view.module_by_name("gen_1").is_some());
+        assert!(view.module_by_name("sink_1").is_some());
+    }
+
+    #[cfg(feature = "graph")]
+    #[test]
+    fn test_load_patch_makes_graph_current_synchronously() {
+        let mut oxa = Oxurack::new();
+        oxa.install::<TestGen>();
+        oxa.install::<TestSink>();
+
+        let path = save_patch_to_temp(&two_module_patch(), "oxurack_test_graph_freshness.ron");
+        oxa.load_patch(&path).expect("load should succeed");
+        let _ = std::fs::remove_file(&path);
+
+        // Freshness contract: the graph is current immediately after
+        // load_patch returns — no app.update() needed. This works
+        // because load_patch runs GraphMaintenance synchronously.
+        let graph = oxa.world().resource::<oxurack_graph::RackGraph>();
+        assert_eq!(
+            graph.module_count(),
+            2,
+            "graph should have 2 modules immediately after load_patch (no update needed)"
+        );
+        assert_eq!(
+            graph.cable_count(),
+            1,
+            "graph should have 1 cable immediately after load_patch (no update needed)"
+        );
+
+        // Also verify via the GraphView query surface.
+        let modules = oxa.graph().modules();
+        assert_eq!(modules.len(), 2);
     }
 }
