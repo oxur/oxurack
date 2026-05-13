@@ -1014,6 +1014,7 @@ dependencies = [
  "bevy_ecs",
  "bevy_time",
  "oxurack-core",
+ "oxurack-graph",
  "pretty_assertions",
 ]
 
@@ -1033,6 +1034,19 @@ dependencies = [
  "serde",
  "smallvec",
  "thiserror 2.0.18",
+]
+
+[[package]]
+name = "oxurack-graph"
+version = "0.1.0"
+dependencies = [
+ "bevy_app",
+ "bevy_ecs",
+ "oxurack-core",
+ "petgraph",
+ "pretty_assertions",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -1092,6 +1106,16 @@ dependencies = [
  "redox_syscall",
  "smallvec",
  "windows-link",
+]
+
+[[package]]
+name = "petgraph"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3672b37090dbd86368a4145bc067582552b29c27377cad4e0a306c97f9bd7772"
+dependencies = [
+ "fixedbitset",
+ "indexmap",
 ]
 
 [[package]]

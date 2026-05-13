@@ -11,6 +11,10 @@ use bevy_app::prelude::App;
 use bevy_ecs::prelude::Resource;
 use bevy_time::prelude::{Fixed, Time};
 
+// ── Re-exports from oxurack-graph (feature-gated) ──────────────────
+#[cfg(feature = "graph")]
+pub use oxurack_graph;
+
 // ── Re-exports from oxurack-core ────────────────────────────────────
 //
 // Curated public surface. Users import from `oxurack::`, not
@@ -57,6 +61,9 @@ impl Oxurack {
 
         app.add_plugins(bevy_time::TimePlugin);
         app.add_plugins(oxurack_core::CorePlugin::fixed());
+
+        #[cfg(feature = "graph")]
+        app.add_plugins(oxurack_graph::RackGraphPlugin);
 
         app.world_mut()
             .resource_mut::<Time<Fixed>>()

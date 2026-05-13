@@ -6,11 +6,16 @@ description = "Umbrella crate for the oxurack modular MIDI rack: app bootstrap, 
 license     = "MIT OR Apache-2.0"
 repository  = "https://github.com/oxur/oxurack"
 
+[features]
+default = ["graph"]
+graph   = ["dep:oxurack-graph"]
+
 [dependencies]
-oxurack-core = { version = "0.1.0", path = "../oxurack-core" }
-bevy_app     = { version = "0.18", default-features = false, features = ["std"] }
-bevy_ecs     = { version = "0.18", default-features = false, features = ["std"] }
-bevy_time    = { version = "0.18", default-features = false, features = ["std"] }
+oxurack-core  = { version = "0.1.0", path = "../oxurack-core" }
+oxurack-graph = { version = "0.1.0", path = "../oxurack-graph", optional = true }
+bevy_app      = { version = "0.18", default-features = false, features = ["std"] }
+bevy_ecs      = { version = "0.18", default-features = false, features = ["std"] }
+bevy_time     = { version = "0.18", default-features = false, features = ["std"] }
 
 [dev-dependencies]
 pretty_assertions = "1"
