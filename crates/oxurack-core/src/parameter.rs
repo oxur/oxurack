@@ -89,13 +89,22 @@ pub struct ParameterSchema {
 /// value is rejected.
 pub type ParameterSetter = fn(&mut World, Entity, ParameterValue) -> Result<(), crate::CoreError>;
 
-/// Registry mapping `(ModuleKind, ParameterName)` to setter functions.
+/// Getter function signature for reading parameter values from module
+/// entities.
+///
+/// Symmetric with [`ParameterSetter`]. Takes a shared `&World`
+/// reference (read-only) and returns the current value.
+pub type ParameterGetter = fn(&World, Entity) -> Result<ParameterValue, crate::CoreError>;
+
+/// Registry mapping `(ModuleKind, ParameterName)` to setter and getter
+/// functions.
 ///
 /// Inserted as a Bevy [`Resource`] by [`CorePlugin`](crate::CorePlugin).
-/// Module plugins register their setters during app build.
+/// Module plugins register their setters and getters during app build.
 #[derive(Resource, Default)]
 pub struct ParameterRegistry {
     setters: HashMap<(crate::ModuleKind, ParameterName), ParameterSetter>,
+    getters: HashMap<(crate::ModuleKind, ParameterName), ParameterGetter>,
 }
 
 impl ParameterRegistry {
@@ -108,6 +117,40 @@ impl ParameterRegistry {
     ) {
         self.setters
             .insert((module_kind, param_name.into()), setter);
+    }
+
+    /// Register a getter for a `(module_kind, param_name)` pair.
+    pub fn register_getter(
+        &mut self,
+        module_kind: crate::ModuleKind,
+        param_name: impl Into<ParameterName>,
+        getter: ParameterGetter,
+    ) {
+        self.getters
+            .insert((module_kind, param_name.into()), getter);
+    }
+
+    /// Look up and invoke the getter for the given module and parameter.
+    ///
+    /// Returns [`CoreError::UnknownParameter`](crate::CoreError::UnknownParameter)
+    /// if no getter is registered for the `(module_kind, param_name)` pair.
+    /// Errors from the getter itself propagate.
+    pub fn get_parameter(
+        &self,
+        world: &World,
+        module_entity: Entity,
+        module_kind: &crate::ModuleKind,
+        param_name: &str,
+    ) -> Result<ParameterValue, crate::CoreError> {
+        let key = (module_kind.clone(), ParameterName::from(param_name));
+        let getter = self
+            .getters
+            .get(&key)
+            .ok_or_else(|| crate::CoreError::UnknownParameter {
+                module: module_kind.to_string(),
+                param: param_name.to_string(),
+            })?;
+        getter(world, module_entity)
     }
 
     /// Look up and invoke the setter for the given module and parameter.
@@ -368,5 +411,84 @@ mod tests {
             matches!(err, crate::CoreError::InvalidParameterValue { .. }),
             "expected InvalidParameterValue, got: {err:?}"
         );
+    }
+
+    // ── ParameterGetter tests ───────────────────────────────────
+
+    fn test_getter(world: &World, entity: Entity) -> Result<ParameterValue, crate::CoreError> {
+        let param =
+            world
+                .get::<TestParam>(entity)
+                .ok_or_else(|| crate::CoreError::UnknownParameter {
+                    module: "test".into(),
+                    param: "gain".into(),
+                })?;
+        Ok(ParameterValue::Float(param.value))
+    }
+
+    #[test]
+    fn test_get_parameter_returns_current_value() {
+        let mut world = World::new();
+        let entity = world.spawn(TestParam { value: 0.0 }).id();
+
+        let mut registry = ParameterRegistry::default();
+        let kind = crate::ModuleKind::from("test_module");
+        registry.register(kind.clone(), "gain", test_setter);
+        registry.register_getter(kind.clone(), "gain", test_getter);
+
+        registry
+            .set_parameter(
+                &mut world,
+                entity,
+                &kind,
+                "gain",
+                ParameterValue::Float(0.42),
+            )
+            .unwrap();
+
+        let result = registry.get_parameter(&world, entity, &kind, "gain");
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), ParameterValue::Float(0.42));
+    }
+
+    #[test]
+    fn test_get_parameter_returns_unknown_for_unregistered() {
+        let mut world = World::new();
+        let entity = world.spawn_empty().id();
+
+        let registry = ParameterRegistry::default();
+        let kind = crate::ModuleKind::from("test_module");
+
+        let result = registry.get_parameter(&world, entity, &kind, "nonexistent");
+        assert!(matches!(
+            result,
+            Err(crate::CoreError::UnknownParameter {
+                ref module,
+                ref param,
+            }) if module == "test_module" && param == "nonexistent"
+        ));
+    }
+
+    #[test]
+    fn test_get_parameter_propagates_getter_error() {
+        fn failing_getter(
+            _world: &World,
+            _entity: Entity,
+        ) -> Result<ParameterValue, crate::CoreError> {
+            Err(crate::CoreError::UnknownParameter {
+                module: "test".into(),
+                param: "broken".into(),
+            })
+        }
+
+        let mut world = World::new();
+        let entity = world.spawn_empty().id();
+
+        let mut registry = ParameterRegistry::default();
+        let kind = crate::ModuleKind::from("test_module");
+        registry.register_getter(kind.clone(), "broken", failing_getter);
+
+        let result = registry.get_parameter(&world, entity, &kind, "broken");
+        assert!(result.is_err());
     }
 }

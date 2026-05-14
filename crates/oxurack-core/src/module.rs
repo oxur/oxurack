@@ -164,6 +164,26 @@ pub trait OxurackModule: Send + Sync + 'static {
         instance_name: &str,
         parameters: &HashMap<String, crate::ParameterValue>,
     ) -> Result<Entity, crate::CoreError>;
+
+    /// Returns setter functions for each declared parameter.
+    ///
+    /// Each entry is a `(name, setter_fn)` pair. The registration
+    /// mechanism keys by name into the [`ParameterRegistry`](crate::ParameterRegistry).
+    /// Default empty: modules opt in to setter registration at their
+    /// own pace.
+    fn parameter_setters() -> &'static [(&'static str, crate::ParameterSetter)] {
+        &[]
+    }
+
+    /// Returns getter functions for each declared parameter.
+    ///
+    /// Symmetric with [`parameter_setters`](OxurackModule::parameter_setters).
+    /// Default empty: modules without getters report `current: None`
+    /// in [`ParameterInfo`](crate::ParameterValue) results from
+    /// `GraphView::parameters_of`.
+    fn parameter_getters() -> &'static [(&'static str, crate::ParameterGetter)] {
+        &[]
+    }
 }
 
 // ── ModuleSpawner ────────────────────────────────────────────────
@@ -270,6 +290,14 @@ impl ModuleRegistry {
     #[must_use]
     pub fn contains(&self, kind: &ModuleKind) -> bool {
         self.registrations.contains_key(kind)
+    }
+
+    /// Insert a pre-built registration directly.
+    ///
+    /// Primarily useful in tests that need to register a module kind
+    /// without going through the [`OxurackModule`] trait.
+    pub fn insert(&mut self, kind: ModuleKind, registration: ModuleRegistration) {
+        self.registrations.insert(kind, registration);
     }
 
     /// Returns an iterator over all registered module kinds.

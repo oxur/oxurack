@@ -190,8 +190,10 @@ pub struct ParameterChanged {
     /// The parameter that changed.
     pub param: crate::ParameterName,
     /// Previous value, if available.
-    // TODO(bucket-getter): Populate when ParameterRegistry getter
-    // machinery lands. Currently None at all emission sites.
+    ///
+    /// Populated via the registered getter for `ChangeSource::Command`.
+    /// `None` for `ChangeSource::PatchLoad` (initialization, not
+    /// change-from-prior) and when no getter is registered.
     pub previous: Option<crate::ParameterValue>,
     /// New value that was written.
     pub new: crate::ParameterValue,
@@ -375,6 +377,10 @@ fn dispatch_set_parameter(
 
     let result = world.resource_scope(
         |world, registry: bevy_ecs::change_detection::Mut<crate::ParameterRegistry>| {
+            // Read previous value via getter. Getter failure is swallowed
+            // to None — a missing getter does not fail the SetParameter.
+            let previous = registry.get_parameter(world, entity, &kind, param).ok();
+
             registry
                 .set_parameter(world, entity, &kind, param, value.clone())
                 .map_err(|e| match e {
@@ -392,24 +398,26 @@ fn dispatch_set_parameter(
                         }
                     }
                     other => other,
-                })
+                })?;
+
+            Ok::<Option<crate::ParameterValue>, crate::CoreError>(previous)
         },
     );
 
-    if result.is_ok() {
-        world.write_message(ParameterChanged {
-            entity,
-            instance_name: instance_name.to_string(),
-            param: crate::ParameterName::from(param),
-            // TODO(bucket-getter): Populate when ParameterRegistry
-            // getter machinery lands.
-            previous: None,
-            new: value.clone(),
-            source: ChangeSource::Command,
-        });
+    match result {
+        Ok(previous) => {
+            world.write_message(ParameterChanged {
+                entity,
+                instance_name: instance_name.to_string(),
+                param: crate::ParameterName::from(param),
+                previous,
+                new: value.clone(),
+                source: ChangeSource::Command,
+            });
+            Ok(())
+        }
+        Err(e) => Err(e),
     }
-
-    result
 }
 
 #[cfg(test)]
@@ -656,6 +664,19 @@ mod tests {
         }
     }
 
+    fn test_gain_getter(
+        world: &bevy_ecs::world::World,
+        entity: bevy_ecs::prelude::Entity,
+    ) -> Result<crate::ParameterValue, crate::CoreError> {
+        let state = world.get::<TestParamState>(entity).ok_or_else(|| {
+            crate::CoreError::UnknownParameter {
+                module: "test_gen".into(),
+                param: "gain".into(),
+            }
+        })?;
+        Ok(crate::ParameterValue::Float(state.gain))
+    }
+
     fn setup_set_parameter_world() -> bevy_ecs::world::World {
         let mut world = bevy_ecs::world::World::new();
 
@@ -675,6 +696,11 @@ mod tests {
             crate::ModuleKind::from("test_gen"),
             "gain",
             test_gain_setter,
+        );
+        registry.register_getter(
+            crate::ModuleKind::from("test_gen"),
+            "gain",
+            test_gain_getter,
         );
         world.insert_resource(registry);
 
@@ -726,12 +752,13 @@ mod tests {
             ParameterChanged {
                 instance_name,
                 param,
-                previous: None,
+                previous: Some(crate::ParameterValue::Float(prev)),
                 new: crate::ParameterValue::Float(v),
                 source: ChangeSource::Command,
                 ..
             } if instance_name == "gen_1"
               && param.as_ref() == "gain"
+              && (*prev - 0.0).abs() < f32::EPSILON
               && (*v - 0.9).abs() < f32::EPSILON
         ));
     }
@@ -886,5 +913,144 @@ mod tests {
             matches!(result, Err(crate::CoreError::NotImplemented("RemoveCable"))),
             "RemoveCable should return NotImplemented: {result:?}"
         );
+    }
+
+    // ── Getter-driven previous-value tests ────────────────────────
+
+    #[test]
+    fn test_dispatch_set_parameter_emits_previous_value() {
+        let mut world = setup_set_parameter_world();
+        world.init_resource::<bevy_ecs::prelude::Messages<ParameterChanged>>();
+
+        // Set to 0.5 first, then 0.9. Both emit ParameterChanged.
+        dispatch_core_command(
+            &mut world,
+            &CoreCommand::SetParameter {
+                module: "gen_1".into(),
+                param: "gain".into(),
+                value: crate::ParameterValue::Float(0.5),
+            },
+        )
+        .unwrap();
+
+        dispatch_core_command(
+            &mut world,
+            &CoreCommand::SetParameter {
+                module: "gen_1".into(),
+                param: "gain".into(),
+                value: crate::ParameterValue::Float(0.9),
+            },
+        )
+        .unwrap();
+
+        let messages = world.resource::<bevy_ecs::prelude::Messages<ParameterChanged>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+        assert_eq!(collected.len(), 2);
+        // Second event should have previous=0.5, new=0.9.
+        assert!(matches!(
+            &collected[1],
+            ParameterChanged {
+                instance_name,
+                param,
+                previous: Some(crate::ParameterValue::Float(prev)),
+                new: crate::ParameterValue::Float(new_val),
+                source: ChangeSource::Command,
+                ..
+            } if instance_name == "gen_1"
+              && param.as_ref() == "gain"
+              && (*prev - 0.5).abs() < f32::EPSILON
+              && (*new_val - 0.9).abs() < f32::EPSILON
+        ));
+    }
+
+    #[test]
+    fn test_dispatch_set_parameter_previous_equals_new_when_same_value() {
+        let mut world = setup_set_parameter_world();
+        world.init_resource::<bevy_ecs::prelude::Messages<ParameterChanged>>();
+
+        // Set to 0.5 first, then 0.5 again.
+        dispatch_core_command(
+            &mut world,
+            &CoreCommand::SetParameter {
+                module: "gen_1".into(),
+                param: "gain".into(),
+                value: crate::ParameterValue::Float(0.5),
+            },
+        )
+        .unwrap();
+
+        dispatch_core_command(
+            &mut world,
+            &CoreCommand::SetParameter {
+                module: "gen_1".into(),
+                param: "gain".into(),
+                value: crate::ParameterValue::Float(0.5),
+            },
+        )
+        .unwrap();
+
+        let messages = world.resource::<bevy_ecs::prelude::Messages<ParameterChanged>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+        assert_eq!(collected.len(), 2);
+        // Second event: previous == new (D5).
+        assert!(matches!(
+            &collected[1],
+            ParameterChanged {
+                previous: Some(crate::ParameterValue::Float(prev)),
+                new: crate::ParameterValue::Float(new_val),
+                source: ChangeSource::Command,
+                ..
+            } if (*prev - 0.5).abs() < f32::EPSILON
+              && (*new_val - 0.5).abs() < f32::EPSILON
+        ));
+    }
+
+    #[test]
+    fn test_dispatch_set_parameter_previous_none_when_getter_missing() {
+        let mut world = bevy_ecs::world::World::new();
+
+        let module_entity = crate::spawn_module_entity(&mut world, "test_gen", "gen_1");
+        world
+            .entity_mut(module_entity)
+            .insert(TestParamState { gain: 0.0 });
+
+        let mut handle = crate::PatchHandle {
+            modules: std::collections::HashMap::new(),
+        };
+        handle.modules.insert("gen_1".to_string(), module_entity);
+        world.insert_resource(handle);
+
+        // Register setter ONLY — no getter.
+        let mut registry = crate::ParameterRegistry::default();
+        registry.register(
+            crate::ModuleKind::from("test_gen"),
+            "gain",
+            test_gain_setter,
+        );
+        world.insert_resource(registry);
+
+        world.init_resource::<bevy_ecs::prelude::Messages<ParameterChanged>>();
+
+        dispatch_core_command(
+            &mut world,
+            &CoreCommand::SetParameter {
+                module: "gen_1".into(),
+                param: "gain".into(),
+                value: crate::ParameterValue::Float(0.5),
+            },
+        )
+        .unwrap();
+
+        let messages = world.resource::<bevy_ecs::prelude::Messages<ParameterChanged>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+        assert_eq!(collected.len(), 1);
+        assert!(matches!(
+            &collected[0],
+            ParameterChanged {
+                previous: None,
+                source: ChangeSource::Command,
+                ..
+            }
+        ));
     }
 }

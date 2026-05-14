@@ -187,6 +187,23 @@ pub struct PortSet {
     pub outputs: Vec<PortInfo>,
 }
 
+/// Snapshot of a parameter on a module, including its current value
+/// when a getter is available.
+///
+/// The `value_kind` field is derived from the parameter's default
+/// value in the schema (stringified variant name).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ParameterInfo {
+    /// Parameter name.
+    pub name: String,
+    /// Value kind, derived from the schema default's variant.
+    pub value_kind: String,
+    /// Current value, if the getter is registered and returns
+    /// successfully. `None` when no getter is registered or the
+    /// getter fails.
+    pub current: Option<oxurack_core::ParameterValue>,
+}
+
 /// Error returned by [`GraphView::topological_order`] when the graph
 /// contains cycles.
 ///
@@ -756,6 +773,65 @@ impl<'w> GraphView<'w> {
         result
             .sort_by(|a, b| (&a.0.instance_name, &a.1.name).cmp(&(&b.0.instance_name, &b.1.name)));
         result
+    }
+
+    // ── Parameters ─────────────────────────────────────────────────
+
+    /// All parameters declared by the module at this entity, with
+    /// current values when getters are available.
+    ///
+    /// Returns empty if the entity is not a registered module or the
+    /// module kind has no `ModuleRegistration` in the `ModuleRegistry`.
+    /// For each parameter in the schema, the getter is invoked to
+    /// populate `current`; if the getter is missing or fails, `current`
+    /// is `None`.
+    ///
+    /// Sorted by parameter name. `O(p)` where `p` is the number of
+    /// declared parameters. Expects a **module entity**.
+    pub fn parameters_of(&self, module_entity: Entity) -> Vec<ParameterInfo> {
+        let graph = self.raw();
+
+        let Some(&node_idx) = graph.node_by_entity.get(&module_entity) else {
+            return Vec::new();
+        };
+        let Some(node) = graph.inner.node_weight(node_idx) else {
+            return Vec::new();
+        };
+
+        let module_registry = self.world.resource::<oxurack_core::ModuleRegistry>();
+        let Some(registration) = module_registry.get(&node.kind) else {
+            return Vec::new();
+        };
+
+        let param_registry = self.world.resource::<oxurack_core::ParameterRegistry>();
+
+        let mut result: Vec<ParameterInfo> = registration
+            .parameter_schemas
+            .iter()
+            .map(|schema| {
+                let current = param_registry
+                    .get_parameter(self.world, module_entity, &node.kind, schema.name)
+                    .ok();
+                ParameterInfo {
+                    name: schema.name.to_string(),
+                    value_kind: parameter_value_kind_str(&schema.default),
+                    current,
+                }
+            })
+            .collect();
+        result.sort_by(|a, b| a.name.cmp(&b.name));
+        result
+    }
+}
+
+fn parameter_value_kind_str(value: &oxurack_core::ParameterValue) -> String {
+    match value {
+        oxurack_core::ParameterValue::Float(_) => "Float".to_string(),
+        oxurack_core::ParameterValue::Int(_) => "Int".to_string(),
+        oxurack_core::ParameterValue::Bool(_) => "Bool".to_string(),
+        oxurack_core::ParameterValue::String(_) => "String".to_string(),
+        oxurack_core::ParameterValue::Scale(_) => "Scale".to_string(),
+        _ => "Unknown".to_string(),
     }
 }
 
@@ -2565,5 +2641,259 @@ mod tests {
             vec!["c".to_string(), "d".to_string()],
         ]);
         assert_eq!(format!("{err2}"), "graph contains 2 cycle(s)");
+    }
+
+    // ── Parameters tests (#8–#13) ─────────────────────────────────
+
+    // A test module with a declared parameter, setter, and getter.
+    #[derive(bevy_ecs::prelude::Component, Debug, Clone)]
+    struct TestGainState {
+        gain: f32,
+    }
+
+    fn test_gain_setter(
+        world: &mut bevy_ecs::world::World,
+        entity: Entity,
+        value: oxurack_core::ParameterValue,
+    ) -> Result<(), oxurack_core::CoreError> {
+        match value {
+            oxurack_core::ParameterValue::Float(f) => {
+                world
+                    .entity_mut(entity)
+                    .get_mut::<TestGainState>()
+                    .expect("TestGainState should exist")
+                    .gain = f;
+                Ok(())
+            }
+            _ => Err(oxurack_core::CoreError::InvalidParameterValue {
+                module: "test".into(),
+                param: "gain".into(),
+                reason: "expected Float".into(),
+            }),
+        }
+    }
+
+    fn test_gain_getter(
+        world: &bevy_ecs::world::World,
+        entity: Entity,
+    ) -> Result<oxurack_core::ParameterValue, oxurack_core::CoreError> {
+        let state = world.get::<TestGainState>(entity).ok_or_else(|| {
+            oxurack_core::CoreError::UnknownParameter {
+                module: "test".into(),
+                param: "gain".into(),
+            }
+        })?;
+        Ok(oxurack_core::ParameterValue::Float(state.gain))
+    }
+
+    /// Spawn a module with a declared parameter schema, setter, getter,
+    /// and initial component state.
+    fn spawn_param_module(app: &mut App, instance_name: &str) -> Entity {
+        let entity = oxurack_core::spawn_module_entity(app.world_mut(), "param_mod", instance_name);
+        app.world_mut()
+            .entity_mut(entity)
+            .insert(TestGainState { gain: 0.0 });
+
+        // Register module kind with parameter schema.
+        {
+            let mut module_reg = app
+                .world_mut()
+                .resource_mut::<oxurack_core::ModuleRegistry>();
+            if !module_reg.contains(&oxurack_core::ModuleKind::from("param_mod")) {
+                // Manually insert a registration with parameter schema.
+                let kind = oxurack_core::ModuleKind::from("param_mod");
+                let reg = oxurack_core::ModuleRegistration {
+                    kind: kind.clone(),
+                    display_name: "ParamMod".to_string(),
+                    description: String::new(),
+                    port_schemas: vec![],
+                    parameter_schemas: vec![oxurack_core::ParameterSchema {
+                        name: "gain",
+                        description: "Gain level",
+                        default: oxurack_core::ParameterValue::Float(0.0),
+                    }],
+                    spawner: |_world, _name, _params| {
+                        panic!("not used in this test");
+                    },
+                };
+                module_reg.insert(kind, reg);
+            }
+        }
+
+        // Register setter and getter.
+        {
+            let mut param_reg = app
+                .world_mut()
+                .resource_mut::<oxurack_core::ParameterRegistry>();
+            param_reg.register(
+                oxurack_core::ModuleKind::from("param_mod"),
+                "gain",
+                test_gain_setter,
+            );
+            param_reg.register_getter(
+                oxurack_core::ModuleKind::from("param_mod"),
+                "gain",
+                test_gain_getter,
+            );
+        }
+
+        // Emit ModuleAdded for the graph.
+        app.world_mut().write_message(ModuleAdded {
+            entity,
+            instance_name: instance_name.to_string(),
+            kind: oxurack_core::ModuleKind::from("param_mod"),
+        });
+
+        entity
+    }
+
+    #[test]
+    fn test_parameters_of_returns_schema() {
+        let mut app = graph_test_app();
+        app.update();
+        let e = spawn_param_module(&mut app, "mod_1");
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let params = view.parameters_of(e);
+        assert_eq!(params.len(), 1);
+        assert_eq!(params[0].name, "gain");
+        assert_eq!(params[0].value_kind, "Float");
+    }
+
+    #[test]
+    fn test_parameters_of_includes_current_value() {
+        let mut app = graph_test_app();
+        app.update();
+        let e = spawn_param_module(&mut app, "mod_1");
+        app.update();
+
+        // Set gain to 0.42 via direct component mutation.
+        app.world_mut().get_mut::<TestGainState>(e).unwrap().gain = 0.42;
+
+        let view = GraphView::new(app.world());
+        let params = view.parameters_of(e);
+        assert_eq!(params.len(), 1);
+        assert_eq!(
+            params[0].current,
+            Some(oxurack_core::ParameterValue::Float(0.42))
+        );
+    }
+
+    #[test]
+    fn test_parameters_of_current_none_when_getter_missing() {
+        let mut app = graph_test_app();
+        app.update();
+
+        // Spawn module with schema but without getter.
+        let entity = oxurack_core::spawn_module_entity(app.world_mut(), "no_getter_mod", "ng_1");
+
+        {
+            let mut module_reg = app
+                .world_mut()
+                .resource_mut::<oxurack_core::ModuleRegistry>();
+            let kind = oxurack_core::ModuleKind::from("no_getter_mod");
+            let reg = oxurack_core::ModuleRegistration {
+                kind: kind.clone(),
+                display_name: "NoGetter".to_string(),
+                description: String::new(),
+                port_schemas: vec![],
+                parameter_schemas: vec![oxurack_core::ParameterSchema {
+                    name: "level",
+                    description: "Level",
+                    default: oxurack_core::ParameterValue::Float(0.0),
+                }],
+                spawner: |_world, _name, _params| {
+                    panic!("not used");
+                },
+            };
+            module_reg.insert(kind, reg);
+        }
+
+        app.world_mut().write_message(ModuleAdded {
+            entity,
+            instance_name: "ng_1".to_string(),
+            kind: oxurack_core::ModuleKind::from("no_getter_mod"),
+        });
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let params = view.parameters_of(entity);
+        assert_eq!(params.len(), 1);
+        assert_eq!(params[0].name, "level");
+        assert_eq!(params[0].current, None);
+    }
+
+    #[test]
+    fn test_parameters_of_empty_for_unknown_entity() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let unknown = app.world_mut().spawn_empty().id();
+
+        let view = GraphView::new(app.world());
+        assert!(view.parameters_of(unknown).is_empty());
+    }
+
+    #[test]
+    fn test_parameters_of_sorted_by_name() {
+        let mut app = graph_test_app();
+        app.update();
+
+        let entity = oxurack_core::spawn_module_entity(app.world_mut(), "multi_param", "mp_1");
+
+        {
+            let mut module_reg = app
+                .world_mut()
+                .resource_mut::<oxurack_core::ModuleRegistry>();
+            let kind = oxurack_core::ModuleKind::from("multi_param");
+            let reg = oxurack_core::ModuleRegistration {
+                kind: kind.clone(),
+                display_name: "MultiParam".to_string(),
+                description: String::new(),
+                port_schemas: vec![],
+                parameter_schemas: vec![
+                    oxurack_core::ParameterSchema {
+                        name: "zebra",
+                        description: "",
+                        default: oxurack_core::ParameterValue::Float(0.0),
+                    },
+                    oxurack_core::ParameterSchema {
+                        name: "alpha",
+                        description: "",
+                        default: oxurack_core::ParameterValue::Int(0),
+                    },
+                ],
+                spawner: |_world, _name, _params| {
+                    panic!("not used");
+                },
+            };
+            module_reg.insert(kind, reg);
+        }
+
+        app.world_mut().write_message(ModuleAdded {
+            entity,
+            instance_name: "mp_1".to_string(),
+            kind: oxurack_core::ModuleKind::from("multi_param"),
+        });
+        app.update();
+
+        let view = GraphView::new(app.world());
+        let params = view.parameters_of(entity);
+        assert_eq!(params.len(), 2);
+        assert_eq!(params[0].name, "alpha");
+        assert_eq!(params[1].name, "zebra");
+    }
+
+    #[test]
+    fn test_parameter_info_serde_roundtrip() {
+        let info = ParameterInfo {
+            name: "gain".to_string(),
+            value_kind: "Float".to_string(),
+            current: Some(oxurack_core::ParameterValue::Float(0.75)),
+        };
+        let json = serde_json::to_string(&info).expect("serialize");
+        let de: ParameterInfo = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(info, de);
     }
 }

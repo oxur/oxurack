@@ -83,6 +83,17 @@ impl Oxurack {
             .world_mut()
             .resource_mut::<oxurack_core::ModuleRegistry>()
             .register::<M>();
+
+        let kind = oxurack_core::ModuleKind::from(M::KIND);
+        let world = self.app.world_mut();
+        let mut param_reg = world.resource_mut::<oxurack_core::ParameterRegistry>();
+        for &(name, setter) in M::parameter_setters() {
+            param_reg.register(kind.clone(), name, setter);
+        }
+        for &(name, getter) in M::parameter_getters() {
+            param_reg.register_getter(kind.clone(), name, getter);
+        }
+
         self
     }
 

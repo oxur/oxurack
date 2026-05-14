@@ -618,8 +618,9 @@ pub fn apply_patch_to_world(
                 entity,
                 instance_name: module_config.instance_name.clone(),
                 param: crate::ParameterName::from(param_name.as_str()),
-                // TODO(bucket-getter): Populate when ParameterRegistry
-                // getter machinery lands.
+                // `previous` is intentionally `None` for PatchLoad:
+                // during patch load, parameters are being initialized,
+                // not changed-from-prior-value.
                 previous: None,
                 new: param_value.clone(),
                 source: crate::ChangeSource::PatchLoad,

@@ -79,7 +79,10 @@ pub use label::{
     Description, DisplayName, DisplayNameFormatter, RackMeta, Tag, TagError, Tags, display_name_of,
 };
 pub use module::{ModuleRegistration, ModuleRegistry, ModuleSpawner, OxurackModule, PortSchema};
-pub use parameter::{ParameterName, ParameterRegistry, ParameterSchema, ParameterValue};
+pub use parameter::{
+    ParameterGetter, ParameterName, ParameterRegistry, ParameterSchema, ParameterSetter,
+    ParameterValue,
+};
 pub use patch::{
     CableConfig, ModuleConfig, Patch, PatchHandle, RackConfig, apply_patch_to_world,
     deserialize_patch, load_patch_from_file, load_patch_into_world, save_patch_to_file,
