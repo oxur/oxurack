@@ -5,8 +5,8 @@ author: "patch cables"
 component: All
 tags: [change-me]
 created: 2026-04-18
-updated: 2026-04-18
-state: Draft
+updated: 2026-05-13
+state: Final
 supersedes: 2
 superseded-by: null
 version: 1.0
