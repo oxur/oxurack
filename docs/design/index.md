@@ -6,7 +6,7 @@ This index is automatically generated. Do not edit manually.
 
 | Number | Title | State | Updated |
 |--------|-------|-------|----------|
-| 0014 | Open Work Inventory — Post-Bucket-4 Snapshot | Draft | 2026-05-13 |
+| 0014 | Open Work Inventory — Post-Bucket-4 Snapshot | Active | 2026-05-13 |
 | 0013 | Literate Patching (Bucket 3.5) — Design Memo | Final | 2026-05-12 |
 | 0012 | Event Substrate (Bucket 3.25) — Design Memo | Final | 2026-05-12 |
 | 0011 | RackGraph — Design Memo (v0) | Final | 2026-05-13 |
@@ -23,9 +23,12 @@ This index is automatically generated. Do not edit manually.
 
 ## Documents by State
 
+### Active
+
+- [0014 - Open Work Inventory — Post-Bucket-4 Snapshot](05-active/0014-open-work-inventory-post-bucket-4-snapshot.md)
+
 ### Draft
 
-- [0014 - Open Work Inventory — Post-Bucket-4 Snapshot](01-draft/0014-open-work-inventory-post-bucket-4-snapshot.md)
 - [0010 - oxurack Public API Design (v0)](01-draft/0010-oxurack-public-api-design-v0.md)
 - [0009 - Module Catalog and Build Order (v2)](01-draft/0009-module-catalog-and-build-order-v2.md)
 

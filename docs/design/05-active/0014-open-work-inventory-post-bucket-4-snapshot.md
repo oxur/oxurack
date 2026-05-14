@@ -6,7 +6,7 @@ component: All
 tags: [roadmap,inventory]
 created: 2026-05-13
 updated: 2026-05-13
-state: Draft
+state: Active
 supersedes: null
 superseded-by: null
 version: 1.0
