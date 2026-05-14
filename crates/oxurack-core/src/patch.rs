@@ -3212,4 +3212,44 @@ mod tests {
             }) if context == "module 'vco_1'" && tag == "bad "
         ));
     }
+
+    // ── D6 regression guard: PatchLoad previous is always None ────
+
+    #[test]
+    fn test_parameter_changed_patch_load_previous_is_none() {
+        let mut app = test_app();
+        let registry = test_registry();
+        let patch = valid_patch();
+
+        apply_patch_to_world(
+            &patch,
+            &registry,
+            app.world_mut(),
+            crate::PatchSource::InMemory,
+        )
+        .unwrap();
+
+        let messages = app
+            .world()
+            .resource::<bevy_ecs::prelude::Messages<crate::ParameterChanged>>();
+        let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
+
+        assert!(
+            !collected.is_empty(),
+            "expected ParameterChanged events for patch-load"
+        );
+
+        for event in &collected {
+            assert!(
+                matches!(event.source, crate::ChangeSource::PatchLoad),
+                "expected ChangeSource::PatchLoad, got {:?}",
+                event.source
+            );
+            assert!(
+                event.previous.is_none(),
+                "PatchLoad source must have previous: None (D6); got {:?}",
+                event.previous
+            );
+        }
+    }
 }
