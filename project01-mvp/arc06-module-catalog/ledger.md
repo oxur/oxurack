@@ -10,3 +10,12 @@ Implementation status and commit pointers are in the project backlog.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | A-06-01 | Baseline musical modules work standalone and in a seeded rack | Per-module tests and composed TuringMachine-to-MIDI-out then representative multi-module patches | correctness-grade | Project roadmap; historical plans | open | — | Standalone Turing Machine and shared MIDI types do not satisfy rack integration |
 | A-06-02 | Child work and deferred findings are accounted for at arc composition | Walk current child ledgers and project backlog; compare delivered scope with arc capability | serious | Framework composition discipline | open | — | Historical children remain unaccepted; future children planned only as needed |
+
+## Restart disposition — 2026-09-17
+
+Both rows remain open pending CRC assembly and CDC independent arc review.
+Candidate disposition is `deferred` for both; evidence is insufficient for a
+`done` claim. The [restart register](../arc08-validation-and-release/slice01-restart-baseline/artifacts/carryover-register.tsv)
+retains each row, original capability owner, receiving R-02 and re-entry condition.
+Source criteria are preserved. CRC must account for children before writing the
+arc close; CDC verifies the carryover rather than signing off its own proposal.

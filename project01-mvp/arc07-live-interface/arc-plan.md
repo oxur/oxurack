@@ -28,3 +28,16 @@ The sibling [ledger](ledger.md) records the composition checks to establish on r
 
 - v1.0 — 2026-09-17: Reconstructed capability and document ownership during the
   Operator-authorized planning migration; future slice detail deliberately deferred.
+
+## Operator priority amendment — v1.1, 2026-09-17
+
+Following audible TM integration, prioritize the smallest workbench that can
+control and inspect Clock/LFO/Scope with simulation-time capture and MIDI traces.
+Scope capture belongs to arc06; presentation belongs here. Full four-pane TUI,
+GUI and general REPL/controller features remain later unless specifically selected.
+See the [dependency map](../arc08-validation-and-release/slice01-restart-baseline/artifacts/turing-machine-dependency-map.md).
+
+### Version History — priority amendment
+
+- v1.1 — 2026-09-17: Operator's TM-first/workbench-second decision sets interface
+  sequencing; arc08 planning exposed the need to decouple display from capture.

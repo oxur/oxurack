@@ -607,3 +607,17 @@ I'll do trust-but-verify: confirm `GraphView::modules()` returns labeled results
 ## Version History
 
 - 2026-09-17 — Planning migration: renamed `0006-bucket-4-part-2-essential-navigation-surface.md` (formerly `docs/dev/0006-bucket-4-part-2-essential-navigation-surface.md`) to `slice-plan.md` in `arc04-rackgraph/slice02-navigation`. Original content retained as historical planning; this rename does not establish current implementation or acceptance status. See the project plan and migration report for the current baseline.
+
+## Current restart disposition — v2.0, 2026-09-17
+
+The preceding implementation instructions are preserved historical text, not a
+current CC assignment. Proposed close: carried over, pending CRC verification.
+See [closing-report.md](closing-report.md) for both row dispositions. Remaining
+reconciliation is assigned to [arc08-validation-and-release/slice01-restart-baseline](../../arc08-validation-and-release/slice01-restart-baseline/slice-plan.md), R-02;
+this is a transfer of unresolved work, not behavioral acceptance or reimplementation.
+No historical prompt has been reissued. No iteration count is inferred or reset.
+
+### Version History — restart amendment
+
+- v2.0 — 2026-09-17: Operator-authorized carryover candidate; arc08 restart
+  baseline receives reconciliation because migration supplied no current review.

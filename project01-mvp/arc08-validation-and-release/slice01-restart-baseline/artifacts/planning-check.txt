@@ -1,0 +1,20 @@
+2026-09-17 CDC planning self-check
+Source: a7ce6e61536ca96b6aeb2227ee06e430ed8df162
+Planning predecessor: f0cf3a5172e02c717c7f924c84156f5fe0405733
+Cwd: /Users/oubiwann/lab/oxur/oxurack/.worktrees/planning
+Command: python3 project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/verify-planning.py
+Exit: 0
+PASS: 23 migrated documents retained; imported plan text preserved as prefix
+PASS: 6 historical slices / 6 started arcs / 24 distinct rows; all criteria preserved
+PASS: current open set, initial directive, 8 arcs / 7 slices, 170 local links
+SELF-CHECKED structural planning only; CRC/CDC review and all behavioral gates remain pending
+
+Command: git diff --check
+Exit: 0
+
+Earlier setup attempt used a repository-relative path while already inside the planning worktree; file creation/check failed with ENOENT and exit 2. Corrected paths, then the checker passed. No failed behavioral test is being hidden.
+
+Rust tests/build/coverage/hardware: not run in this CDC planning pass; assigned to CC where applicable.
+Commit scope: exact 50 paths in planning-files.txt. No implementation files changed.
+
+Git staging first failed at index.lock with sandbox Operation not permitted (exit 128). Retried through the standard approved escalation; explicit-path staging and cached diff checks passed.

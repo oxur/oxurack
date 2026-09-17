@@ -1,5 +1,11 @@
 # project01-mvp — status
 
+> Current: Three-Contributor Workflow, Expedited Mode. TM-in-rack MIDI playback
+> first; Clock/LFO/Scope workbench second. See the priority decision at the end
+> and [current CDC directive](../project01-mvp/cdc-directive02.md). The original
+> estimate and One-Contributor snapshot below are historical. Formal carryover
+> closures and current behavioral validation remain pending.
+
 **Best estimate: approximately 45% of the reconstructed MVP implemented**
 (plausible range **35–55%**). The infrastructure is much further along than the
 musician-facing product: a substantial engine exists, but a usable rack with
@@ -299,3 +305,41 @@ forthcoming status specification.
 - v0.1 — 2026-09-17: Initial Operator-requested project status snapshot; summarized
   six started areas, estimated broad-MVP progress, reconciled stale completion
   claims and retained newly recovered gaps, deferrals and scope questions.
+
+## Current restart update — 2026-09-17
+
+This section supersedes the snapshot's One-Contributor mode and unassigned restart.
+Three contributors and Expedited Mode are selected. CDC/Sofie authored the first
+baseline slice; CRC/CC contexts await Operator relay/acknowledgement. Active prompt:
+`arc08-validation-and-release/slice01-restart-baseline/cc-prompt.md` (relative to project01-mvp).
+
+Six historical slices have carryover closure candidates; arcs01–06 have carryover
+proposals awaiting child review and CRC/CDC arc gates. They are **not formally
+closed or behaviorally accepted**. All 24 historical rows remain open and appear
+in the receiving slice's register. Arc07 stays planned; arc08 is active for early
+baseline collection, while final system acceptance still waits for the product.
+
+No Rust tests were run during this planning pass. The 45% estimate and its
+uncertainty remain the earlier source-based estimate, not refreshed acceptance.
+The broader MIDI scope remains unchanged; alternate milestone selection remains
+with Duncan/CDC. Next: relay `project01-mvp/cdc-directive01.md` to CRC, execute
+the named CC baseline assignment, then review carryovers and select the first
+feature slice. The Makefile dependency gate's suppressed error path is a baseline
+reliability finding to document, not silently repair in a documentation slice.
+
+### Priority decision received — 2026-09-17
+
+Duncan selected **TM loaded in the Bevy framework and producing MIDI**, then
+**Clock/LFO/Scope as a testing workbench**, retaining other features. This resolves
+the pending milestone choice above. Current relay: `project01-mvp/cdc-directive02.md`;
+current CC prompt relative to project01-mvp:
+`arc08-validation-and-release/slice01-restart-baseline/cc-prompt-iteration01.md`.
+The initial packet/prompt are preserved, superseded before execution.
+
+[The dependency map](../project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/turing-machine-dependency-map.md)
+records hidden execution registration, seed handoff, musical versus simulation
+clocking, phase/edge latency, ordered MIDI/note cleanup and bounded observation
+needs. Source findings are not reproduced behavior. Full live editing, Chord/state,
+other modules and final quality/hardware obligations stay tracked later. Scope is
+an explicitly requested diagnostic addition; the old 45% estimate is historical,
+not a completion metric for these focused milestones.

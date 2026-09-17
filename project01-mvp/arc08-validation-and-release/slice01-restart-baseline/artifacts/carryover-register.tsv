@@ -1,0 +1,25 @@
+source_ledger	row_id	kind	capability_owner	receiving_row	reentry
+arc03-events-and-literate-patching/slice01-notifications/ledger.md	S-01	historical-slice	arc03-events-and-literate-patching	R-02	CRC review after R-01 baseline; CDC assigns concrete successor work before feature execution
+arc03-events-and-literate-patching/slice01-notifications/ledger.md	S-02	historical-slice	arc03-events-and-literate-patching	R-02	CRC review after R-01 baseline; CDC assigns concrete successor work before feature execution
+arc03-events-and-literate-patching/slice02-literate-patching/ledger.md	S-01	historical-slice	arc03-events-and-literate-patching	R-02	CRC review after R-01 baseline; CDC assigns concrete successor work before feature execution
+arc03-events-and-literate-patching/slice02-literate-patching/ledger.md	S-02	historical-slice	arc03-events-and-literate-patching	R-02	CRC review after R-01 baseline; CDC assigns concrete successor work before feature execution
+arc04-rackgraph/slice01-foundation/ledger.md	S-01	historical-slice	arc04-rackgraph	R-02	CRC review after R-01 baseline; CDC assigns concrete successor work before feature execution
+arc04-rackgraph/slice01-foundation/ledger.md	S-02	historical-slice	arc04-rackgraph	R-02	CRC review after R-01 baseline; CDC assigns concrete successor work before feature execution
+arc04-rackgraph/slice02-navigation/ledger.md	S-01	historical-slice	arc04-rackgraph	R-02	CRC review after R-01 baseline; CDC assigns concrete successor work before feature execution
+arc04-rackgraph/slice02-navigation/ledger.md	S-02	historical-slice	arc04-rackgraph	R-02	CRC review after R-01 baseline; CDC assigns concrete successor work before feature execution
+arc04-rackgraph/slice03-diagnostics/ledger.md	S-01	historical-slice	arc04-rackgraph	R-02	CRC review after R-01 baseline; CDC assigns concrete successor work before feature execution
+arc04-rackgraph/slice03-diagnostics/ledger.md	S-02	historical-slice	arc04-rackgraph	R-02	CRC review after R-01 baseline; CDC assigns concrete successor work before feature execution
+arc06-module-catalog/slice01-turing-machine/ledger.md	S-01	historical-slice	arc06-module-catalog	R-02	CRC review after R-01 baseline; CDC assigns concrete successor work before feature execution
+arc06-module-catalog/slice01-turing-machine/ledger.md	S-02	historical-slice	arc06-module-catalog	R-02	CRC review after R-01 baseline; CDC assigns concrete successor work before feature execution
+arc01-realtime-midi/ledger.md	A-01-01	historical-arc	arc01-realtime-midi	R-02	Child carryover review, then CRC assembly and independent CDC disposition; successor arc/slice assigned before feature execution
+arc01-realtime-midi/ledger.md	A-01-02	historical-arc	arc01-realtime-midi	R-02	Child carryover review, then CRC assembly and independent CDC disposition; successor arc/slice assigned before feature execution
+arc02-core-and-persistence/ledger.md	A-02-01	historical-arc	arc02-core-and-persistence	R-02	Child carryover review, then CRC assembly and independent CDC disposition; successor arc/slice assigned before feature execution
+arc02-core-and-persistence/ledger.md	A-02-02	historical-arc	arc02-core-and-persistence	R-02	Child carryover review, then CRC assembly and independent CDC disposition; successor arc/slice assigned before feature execution
+arc03-events-and-literate-patching/ledger.md	A-03-01	historical-arc	arc03-events-and-literate-patching	R-02	Child carryover review, then CRC assembly and independent CDC disposition; successor arc/slice assigned before feature execution
+arc03-events-and-literate-patching/ledger.md	A-03-02	historical-arc	arc03-events-and-literate-patching	R-02	Child carryover review, then CRC assembly and independent CDC disposition; successor arc/slice assigned before feature execution
+arc04-rackgraph/ledger.md	A-04-01	historical-arc	arc04-rackgraph	R-02	Child carryover review, then CRC assembly and independent CDC disposition; successor arc/slice assigned before feature execution
+arc04-rackgraph/ledger.md	A-04-02	historical-arc	arc04-rackgraph	R-02	Child carryover review, then CRC assembly and independent CDC disposition; successor arc/slice assigned before feature execution
+arc05-public-api/ledger.md	A-05-01	historical-arc	arc05-public-api	R-02	Child carryover review, then CRC assembly and independent CDC disposition; successor arc/slice assigned before feature execution
+arc05-public-api/ledger.md	A-05-02	historical-arc	arc05-public-api	R-02	Child carryover review, then CRC assembly and independent CDC disposition; successor arc/slice assigned before feature execution
+arc06-module-catalog/ledger.md	A-06-01	historical-arc	arc06-module-catalog	R-02	Child carryover review, then CRC assembly and independent CDC disposition; successor arc/slice assigned before feature execution
+arc06-module-catalog/ledger.md	A-06-02	historical-arc	arc06-module-catalog	R-02	Child carryover review, then CRC assembly and independent CDC disposition; successor arc/slice assigned before feature execution

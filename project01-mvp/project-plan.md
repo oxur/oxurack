@@ -3,11 +3,11 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — resuming; historical implementation requires re-baselining |
+| status | active — arc08/slice01 restart baseline; historical closures pending independent review |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
-| source baseline | `5cad90a6b8904a3ae615bcbd9ed3e277bd94d95a` on `main` |
+| source baseline | `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` on `main`; original migration baseline retained below |
 | planning home | `planning` branch, `.worktrees/planning/project01-mvp` |
 
 ## Purpose and definition of done
@@ -55,7 +55,7 @@ not an independently reproduced acceptance result. [The project ledger](ledger.m
 tracks composition; [the status and backlog register](artifacts/status-and-backlog.md)
 accounts for the old inventory, remaining work, and explicit deferrals.
 
-## Recommended restart
+## Superseded migration restart suggestion
 
 Begin by selecting a bounded arc05 runtime-operation slice with the Operator,
 likely cable add/remove. The old inventory's first priority, bucket-getter, is
@@ -79,7 +79,7 @@ Their paths and supersession state are retained in [the manifest](artifacts/migr
 Read this roadmap, the implementation repository README, and Git history first.
 Existing `workbench/` material was outside the requested migration and stays put.
 
-## Workflow and authority
+## Superseded migration workflow and authority
 
 The Operator explicitly selected One-Contributor mode on 2026-09-17: Sofie handles
 design, implementation, and self-review in this conversation; Duncan is Operator.
@@ -101,3 +101,103 @@ reimplementing completed work or inventing old acceptance records.
 - v1.0 — 2026-09-17: Initial reconstructed roadmap and layout, based on README,
   legacy docs and Git through `5cad90a`. Grouped eight arcs; corrected stale
   getter and module-status assumptions; retained future inventory items explicitly.
+
+## Current plan — v2.0, 2026-09-17
+
+The Operator requested reconciliation/closure of open slices and arcs, explicitly
+allowed carried-over closure, and selected **Three-Contributor Workflow in
+Expedited Mode**. This supersedes the one-contributor and cable-first suggestions
+above. The existing planning layout is confirmed by the Operator's request and
+on-disk migration; no parallel planning tree is introduced.
+
+Active work: [arc08/slice01 restart baseline](arc08-validation-and-release/slice01-restart-baseline/slice-plan.md).
+This uses the validation arc early to gather evidence; final arc08 acceptance
+still depends on arcs01–07 and all inherited system gates. Arcs01–06 are carryover
+closure candidates, not accepted capabilities. Six historical slices have explicit
+candidate reports; 24 historical ledger rows remain open pending review.
+Arc07 remains planned. No new product scope is selected by this restart.
+The reconstructed MIDI MVP remains the scope baseline unless the Operator changes
+it. Science-rig and Chord alternatives stay candidates; CDC/Operator settle the
+next feature milestone after baseline evidence, before a feature assignment.
+
+### Roles, evidence and approvals
+
+- CDC: Sofie, current restart-planning conversation; project/arc design,
+  first-slice preparation, design escalation and independent arc composition review.
+- CRC: separate Operator-selected review context, not yet acknowledged; independent
+  CC review, historical carryover review, routine approved slice advancement.
+- CC: separate Operator-selected execution context, not yet assigned; execute the
+  named prompt and return evidence through Duncan. Context identity is recorded at
+  handoff; this plan does not silently launch contributor sessions.
+- Operator: Duncan; relay packets, decide scope/milestone and retain release,
+  musical acceptance and any existing hardware/approval gates.
+
+CC evidence is attested until CRC reproduces it. New slice reviews use
+`crc-verification.md`; arcs/project require CRC plus independent CDC records.
+CDC cannot accept its own carryover assembly: CRC checks the administrative
+proposal before CDC considers a separately assembled arc packet. Existing
+historical evidence is preserved without upgrading its strength.
+
+Expedited Mode: each contributor commits its own explicit file list; never use
+blanket staging. CC commits before review; CRC commits review/planning changes.
+Preserve issued prompts and use numbered refinements, at most five executed
+refinement passes. Close/advance when evidence permits; stop affected work at
+independent review, unresolved design changes or Operator gates. No push, merge,
+release, dependency modernization, hardware interaction or scope reduction is
+implied by this documentation assignment.
+
+### Transition state and design handoff history
+
+Source `a7ce6e61536ca96b6aeb2227ee06e430ed8df162`; planning predecessor `f0cf3a5172e02c717c7f924c84156f5fe0405733`. No current behavioral
+acceptance or live CC assignment existed in the reconstructed tree. All original
+project/arc/slice rows and findings remain tracked; no prior iteration budget is
+invented. Initial active prompt is `arc08-validation-and-release/slice01-restart-baseline/cc-prompt.md`.
+
+| Date | Packet | Predecessor | Status | Affected rows / authority | Next action |
+| --- | --- | --- | --- | --- | --- |
+| 2026-09-17 | [cdc-directive01.md](cdc-directive01.md) | none; Operator restart request | issued, awaiting CRC acknowledgement | R-01–R-06 and 24 inherited rows; carryover permitted, evidence gates retained | Operator relays to CRC; CRC acknowledges source/plan state before coordinating CC |
+
+### Version History — restart amendment
+
+- v2.0 — 2026-09-17: Arc08 restart planning receives missing evidence and unresolved
+  scope sequencing from arcs01–06/status; enables three contributors and Expedited
+  Mode, prepares carryover candidates and first baseline slice. No MVP acceptance,
+  timeline, scope reduction or release authority is inferred.
+
+## Operator priority amendment — v2.1, 2026-09-17
+
+The Operator selected **Turing Machine inside the Bevy rack producing MIDI first**,
+then **Clock, LFO and Scope as a testing workbench**. This supersedes the unresolved
+milestone choice above. Retain all other MVP capabilities as later work. Scope is
+an explicitly selected diagnostic addition; a full TUI/GUI, Chord/state extension
+or general cable-editing API is not automatically required for the first milestone.
+
+The [dependency and execution map](arc08-validation-and-release/slice01-restart-baseline/artifacts/turing-machine-dependency-map.md) records source-supported hidden
+prerequisites: module system installation, tick/edge/phase ownership, patch seed
+handoff, ordered MIDI events and note cleanup, RT lifetime/backpressure, then bounded
+Scope capture and a minimal observation interface. The next issued slice remains
+arc08/slice01 baseline; it now validates these TM-first dependencies. Following
+baseline, CDC details the smallest prerequisite implementation slice(s), then the
+adapter and MIDI-out path. CRC may not invent the cross-arc API contracts.
+
+Historical carryover candidates remain pending independent review. Capability
+ownership remains with the named domains until a recorded successor assignment;
+reopening the same arc with a new slice is allowed and does not resurrect an old
+prompt. No original requirement is removed by focusing this sequence.
+
+### Version History — priority amendment
+
+- v2.1 — 2026-09-17: Operator response during arc08/slice01 preparation selected
+  TM-to-MIDI, then Clock/LFO/Scope; dependency inspection showed execution/seed/event
+  contracts must precede a useful adapter. Original broader backlog retained.
+
+### Design handoff history — priority update
+
+Current directive: `cdc-directive02.md`; current CC assignment:
+`arc08-validation-and-release/slice01-restart-baseline/cc-prompt-iteration01.md`.
+The preceding directive01/initial-prompt entries are preserved and superseded
+before execution; neither was acknowledged or executed in this planning context.
+
+| Date | Packet | Predecessor | Status | Affected rows / authority | Next action |
+| --- | --- | --- | --- | --- | --- |
+| 2026-09-17 | [cdc-directive02.md](cdc-directive02.md) | cdc-directive01.md | issued, awaiting CRC acknowledgement | R-03 focused; R-01–R-06 still open; Operator selected TM-first/Clock-LFO-Scope-second | Duncan relays directive02 to CRC, then iteration01 to CC after acknowledgement |

@@ -30,3 +30,19 @@ From the planning worktree, check the migration with:
 ```sh
 python3 project01-mvp/artifacts/verify-migration.py
 ```
+
+## Current restart
+
+The outline-only statement above describes migration. Active work is now
+[arc08/slice01](arc08-validation-and-release/slice01-restart-baseline/slice-plan.md); read [CDC's initial directive](cdc-directive02.md).
+The migration validator checks a frozen migration shape (six slices and exact
+import hashes), so it is not a validator for evolved plans. Preserve it as
+historical evidence; use the restart planning checker below for the current tree:
+
+```sh
+python3 arc08-validation-and-release/slice01-restart-baseline/artifacts/verify-planning.py
+```
+
+The current checker separately proves imported text/artifacts were preserved,
+checks carryover row coverage and current planning links, and verifies the open
+set. It provides structural self-checks only, not behavioral or independent acceptance.

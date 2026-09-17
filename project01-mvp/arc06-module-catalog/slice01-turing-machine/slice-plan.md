@@ -23,3 +23,17 @@ Artifacts belong in this slice's `artifacts/`. No independent review is claimed.
 
 - v1.0 — 2026-09-17: Added a minimal historical wrapper around the unchanged design;
   distinguished the implemented standalone engine from the remaining rack adapter.
+
+## Current restart disposition — v2.0, 2026-09-17
+
+The preceding implementation instructions are preserved historical text, not a
+current CC assignment. Proposed close: carried over, pending CRC verification.
+See [closing-report.md](closing-report.md) for both row dispositions. Remaining
+reconciliation is assigned to [arc08-validation-and-release/slice01-restart-baseline](../../arc08-validation-and-release/slice01-restart-baseline/slice-plan.md), R-02;
+this is a transfer of unresolved work, not behavioral acceptance or reimplementation.
+No historical prompt has been reissued. No iteration count is inferred or reset.
+
+### Version History — restart amendment
+
+- v2.0 — 2026-09-17: Operator-authorized carryover candidate; arc08 restart
+  baseline receives reconciliation because migration supplied no current review.

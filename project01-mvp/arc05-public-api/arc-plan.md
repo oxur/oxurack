@@ -28,3 +28,57 @@ The sibling [ledger](ledger.md) records the composition checks to establish on r
 
 - v1.0 — 2026-09-17: Reconstructed capability and document ownership during the
   Operator-authorized planning migration; future slice detail deliberately deferred.
+
+## Current restart disposition — v2.0, 2026-09-17
+
+**Carryover closure proposed; arc remains unaccepted.** Was: retrospective
+implementation/reconciliation with no active assignment. Operator authorized
+carrying unfinished work forward on 2026-09-17. Historical requirements above
+remain the scope record. Child inventory: No document-backed child slices; historical phase requirements remain in the arc plan.
+
+Both arc ledger rows remain open. CRC first reviews any child carryover reports,
+then assembles this arc's `closing-report.md` and `crc-verification.md`; CDC
+independently checks the actual transfer/composition disposition in
+`cdc-verification.md`. Reports are created when those checks occur. No hardware,
+feature or integrated-capability acceptance is inferred from administrative closure.
+
+The receiving reconciliation home is
+[arc08/slice01](../arc08-validation-and-release/slice01-restart-baseline/slice-plan.md), R-02, with every existing ledger
+row retained in its carryover register. Capability responsibility remains this
+arc's named domain; CDC must assign each remaining feature to a concrete successor
+arc/slice before implementation. Until then, the original criterion and source
+ledger remain authoritative, owned by CDC for design and CRC for tracking.
+Re-entry: restart baseline and milestone decision, then recorded successor plan.
+
+### Version History — restart amendment
+
+- v2.0 — 2026-09-17: Historical children and migration evidence surfaced missing
+  acceptance; proposed carried-over closure and transferred reconciliation to
+  arc08/slice01 without claiming delivered capability or removing scope.
+
+## Operator priority amendment — v2.1, 2026-09-17
+
+The Operator selected **Turing Machine inside the Bevy rack producing MIDI first**,
+then **Clock, LFO and Scope as a testing workbench**. This supersedes the unresolved
+milestone choice above. Retain all other MVP capabilities as later work. Scope is
+an explicitly selected diagnostic addition; a full TUI/GUI, Chord/state extension
+or general cable-editing API is not automatically required for the first milestone.
+
+The [dependency and execution map](../arc08-validation-and-release/slice01-restart-baseline/artifacts/turing-machine-dependency-map.md) records source-supported hidden
+prerequisites: module system installation, tick/edge/phase ownership, patch seed
+handoff, ordered MIDI events and note cleanup, RT lifetime/backpressure, then bounded
+Scope capture and a minimal observation interface. The next issued slice remains
+arc08/slice01 baseline; it now validates these TM-first dependencies. Following
+baseline, CDC details the smallest prerequisite implementation slice(s), then the
+adapter and MIDI-out path. CRC may not invent the cross-arc API contracts.
+
+Historical carryover candidates remain pending independent review. Capability
+ownership remains with the named domains until a recorded successor assignment;
+reopening the same arc with a new slice is allowed and does not resurrect an old
+prompt. No original requirement is removed by focusing this sequence.
+
+### Version History — priority amendment
+
+- v2.1 — 2026-09-17: Operator response during arc08/slice01 preparation selected
+  TM-to-MIDI, then Clock/LFO/Scope; dependency inspection showed execution/seed/event
+  contracts must precede a useful adapter. Original broader backlog retained.

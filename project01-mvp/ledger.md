@@ -14,3 +14,11 @@ Implementation status and commit pointers are in the project backlog.
 | P-04 | Modules, persistence and live controls support real musical work | Operator records a session using saved patches, runtime edits and controller mapping | serious | README; catalog success criteria | open | — | Operator musical acceptance remains explicit |
 | P-05 | Quality, documentation and resource obligations are dispositioned | Current workspace gates, inherited 95% coverage target, 10/50/100-module benchmarks, 24h soak, module examples and error review | correctness-grade | Legacy plans; catalog phase 8 | open | — | Record failures/unrun checks; do not infer release authority |
 | P-06 | All legacy requirements and deferrals have current owners | Compare migration manifest, catalog phase mapping and inventory A–I disposition against plans | serious | Migration request; scope discipline | open | — | All retained; speculative extensions require an explicit scope decision |
+
+## Restart assignment — 2026-09-17
+
+The prior One-Contributor paragraph describes the migration only. Three contributors
+and Expedited Mode now apply. P-01–P-06 remain open without upgraded evidence.
+[Arc08/slice01](arc08-validation-and-release/slice01-restart-baseline/slice-plan.md) supplies current baseline and reconciliation
+input for P-05/P-06; it cannot close P-01–P-04 or the project. Retiring historical
+work as carried over does not satisfy P-01's capability-composition criterion.
