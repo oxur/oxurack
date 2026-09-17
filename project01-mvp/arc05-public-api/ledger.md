@@ -8,8 +8,8 @@ Implementation status and commit pointers are in the project backlog.
 
 | ID | Criterion | Verify | Significance | Origin | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| A-05-01 | Public runtime patching, lifecycle and parameter surfaces operate coherently | Exercise cable add/remove, queued load/save, handles, transport and reset end to end | correctness-grade | Project roadmap; historical plans | open | — | Detail tests with each selected future slice |
-| A-05-02 | Child work and deferred findings are accounted for at arc composition | Walk current child ledgers and project backlog; compare delivered scope with arc capability | serious | Framework composition discipline | open | — | Historical children remain unaccepted; future children planned only as needed |
+| A-05-01 | Public runtime patching, lifecycle and parameter surfaces operate coherently | Exercise cable add/remove, queued load/save, handles, transport and reset end to end | correctness-grade | Project roadmap; historical plans | deferred | `cdc-verification.md`; `crc-verification.md`; reproduced transfer accounting | Capability/reconciliation not accepted; successor IDs and re-entry in CDC record and project cdc-successors03.tsv |
+| A-05-02 | Child work and deferred findings are accounted for at arc composition | Walk current child ledgers and project backlog; compare delivered scope with arc capability | serious | Framework composition discipline | deferred | `cdc-verification.md`; `crc-verification.md`; reproduced transfer accounting | Capability/reconciliation not accepted; successor IDs and re-entry in CDC record and project cdc-successors03.tsv |
 
 ## Restart disposition — 2026-09-17
 
@@ -26,3 +26,10 @@ CRC assembled and self-checked the two-row proposed close in
 `closing-report.md` and `crc-verification.md`. Actual children: 0.
 Both A rows remain **open** until independent CDC review. Their proposed
 disposition is deferred, retaining this arc as owner and its original criteria.
+
+## CDC final disposition — 2026-09-17
+
+Both rows are deferred; arc closed-carried-over under the Operator's retirement
+authorization. [CDC verification](cdc-verification.md) checks CRC's actual packet.
+The preceding open/pending statements are preserved historical states, superseded
+by this disposition. Original criteria remain binding in the named successors.

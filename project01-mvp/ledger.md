@@ -22,3 +22,14 @@ and Expedited Mode now apply. P-01–P-06 remain open without upgraded evidence.
 [Arc08/slice01](arc08-validation-and-release/slice01-restart-baseline/slice-plan.md) supplies current baseline and reconciliation
 input for P-05/P-06; it cannot close P-01–P-04 or the project. Retiring historical
 work as carried over does not satisfy P-01's capability-composition criterion.
+
+## Scope and execution amendment — 2026-09-17
+
+P-01 still concerns all eight inherited capabilities; carried-over closure does
+not satisfy it. Successor arcs09–13 plus retained arcs07/08 now own that delivery.
+The explicitly selected Scope workbench adds the milestone criterion below.
+No original criterion, target or verifier is removed.
+
+| ID | Criterion | Verify | Significance | Origin | Status | Evidence | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| P-07 | TM plays through the Bevy rack and Clock/LFO/Scope make it observable | Reproduce seeded static-patch MIDI stream, witness selected physical endpoint playback, then inspect known signals and MIDI with bounded workbench capture | correctness-grade | Operator TM-first/workbench-second selection; CDC directive03 | open | — | M1 precedes M2; physical observation and final timing gates remain distinct |

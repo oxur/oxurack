@@ -19,3 +19,9 @@ not independent composition or musical acceptance. No source or dependency
 change, scope deletion, target reduction, publication or release is authorized.
 CRC's assembly check is in `crc-verification.md`; only CDC can perform the
 second, independent arc review and finalize status.
+
+## CDC disposition — 2026-09-17
+
+CRC's proposed assembly above is preserved. [CDC verification](cdc-verification.md)
+now accepts carried-over closure, both rows deferred, with exact successor routing.
+The project plan has received the unmet capabilities; composition is not certified.

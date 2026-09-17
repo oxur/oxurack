@@ -31,18 +31,33 @@ From the planning worktree, check the migration with:
 python3 project01-mvp/artifacts/verify-migration.py
 ```
 
-## Current restart
+## Restart history
 
-The outline-only statement above describes migration. Active work is now
-[arc08/slice01](arc08-validation-and-release/slice01-restart-baseline/slice-plan.md); read [CDC's initial directive](cdc-directive02.md).
+The outline-only statement above describes migration. The restart baseline was
+[arc08/slice01](arc08-validation-and-release/slice01-restart-baseline/slice-plan.md),
+governed by [directive02](cdc-directive02.md); that observation slice is now accepted.
 The migration validator checks a frozen migration shape (six slices and exact
 import hashes), so it is not a validator for evolved plans. Preserve it as
-historical evidence; use the restart planning checker below for the current tree:
+historical evidence. The restart checker below applies to its recorded baseline tree:
 
 ```sh
 python3 arc08-validation-and-release/slice01-restart-baseline/artifacts/verify-planning.py
 ```
 
-The current checker separately proves imported text/artifacts were preserved,
-checks carryover row coverage and current planning links, and verifies the open
-set. It provides structural self-checks only, not behavioral or independent acceptance.
+That checker separately proved imported text/artifacts were preserved,
+checked carryover row coverage and planning links, and verified its open set.
+Those are structural self-checks only, not behavioral or independent acceptance.
+
+## Current implementation handoff
+
+The baseline slice and its checker are preserved evidence of the restart shape.
+Current assignment is [arc09/slice01](arc09-executable-rack/slice01-module-behavior-installation/slice-plan.md),
+with [directive03](cdc-directive03.md) and exact successor routing for all deferred
+historical rows. Current structural command from the planning worktree:
+
+```sh
+python3 project01-mvp/arc09-executable-rack/slice01-module-behavior-installation/artifacts/verify-planning.py
+```
+
+Run earlier snapshot checkers only against their recorded commits; their fixed
+arc/slice counts are historical assertions, not constraints on authorized new work.

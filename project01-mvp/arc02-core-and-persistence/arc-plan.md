@@ -494,3 +494,17 @@ prompt. No original requirement is removed by focusing this sequence.
 - v2.1 — 2026-09-17: Operator response during arc08/slice01 preparation selected
   TM-to-MIDI, then Clock/LFO/Scope; dependency inspection showed execution/seed/event
   contracts must precede a useful adapter. Original broader backlog retained.
+
+## Current disposition — v3.0, 2026-09-17
+
+**Closed, carried over.** [CDC verification](cdc-verification.md) independently
+checked CRC's assembly and 0 child dispositions. Both A rows are deferred;
+capability delivery remains unaccepted. [Successor routing](../artifacts/cdc-successors03.tsv)
+assigns all inherited rows explicitly. Current successor IDs: `arc09-executable-rack/slice02-simulation-samples; arc09-executable-rack/slice03-seeded-spawn-context; arc12-live-rack-operations/slice01-live-persistence`.
+Re-entry: Execution/seed work follows slice01; live snapshot work re-enters after M1/M2 when runtime persistence is selected. Historical requirements above are preserved.
+
+### Version History — CDC closure
+
+- v3.0 — 2026-09-17: CRC escalation03 and child carryover reviews completed the
+  administrative evidence; CDC closed this work as carried over and assigned
+  successors without accepting its unproved capability or weakening its criteria.

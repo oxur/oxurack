@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — arc08/slice01 restart baseline; historical closures pending independent review |
+| status | active — arc09/slice01 behavior installation; historical arcs01–06 closed-carried-over |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
@@ -220,3 +220,63 @@ does not create the next implementation slice or accept an arc capability.
 | Date | Packet | Predecessor | Status | Affected rows / authority | Next action |
 | --- | --- | --- | --- | --- | --- |
 | 2026-09-17 | [crc-escalation03.md](crc-escalation03.md) | cdc-directive02.md and CC `df6ec0a` | sent for Operator relay to CDC | R-01–R-06 done as evidence; 12 S rows deferred; 12 A rows open | CDC independently reviews six arc assemblies and designs TM prerequisite slice(s) |
+
+## Current roadmap — v3.0, 2026-09-17
+
+CDC reviewed CRC's actual `390d2aa` packet and resolved escalation03 through
+[cdc-directive03.md](cdc-directive03.md). All six historical slices and arcs01–06
+are now **closed, carried over**. Their 24 rows are deferred, not delivered;
+[exact successor routing](artifacts/cdc-successors03.tsv) preserves every original
+criterion and concrete re-entry. The earlier active/pending statements are history.
+P-01–P-06 remain open. Arc08/slice01 is accepted as observation evidence only.
+
+| Current owner | Scope / concrete next identifiers | State and dependency |
+| --- | --- | --- |
+| [Arc09 executable rack](arc09-executable-rack/arc-plan.md) | slice01-module-behavior-installation; slice02-simulation-samples; slice03-seeded-spawn-context | Active, first slice issued; establishes behavior, sample/phase and seed contracts |
+| arc10-turing-machine-midi | slice01-musical-clock; slice02-turing-machine-adapter; slice03-midi-output; slice04-output-runtime; slice05-endpoint-acceptance | Planned after arc09; internal Clock is pulled forward because M1 needs a real pulse source |
+| arc11-observation-workbench | slice01-lfo; slice02-scope-capture; slice03-workbench-integration | Planned after M1; enrich existing Clock, bounded scalar/event observation and minimal inspection |
+| arc12-live-rack-operations | slice01-live-persistence; slice02-events-and-metadata; slice03-graph-composition; slice04-runtime-api | Retains remaining original arcs02–05 obligations after M1/M2; original requirements remain the input when detailed |
+| arc13-remaining-module-catalog | slice01-catalog-reentry, then per-module slices selected from the retained catalog | Planned after M2; preserves the original eleven-module denominator, standalone compatibility, MIDI-in and extension deferrals |
+| Arc07 live interface | Minimal workbench presentation, then full approved CLI/REPL/controller needs | Existing planned domain; no mandatory four-pane UI or broader feature expansion |
+| Arc08 validation | slice02-coverage-provenance; slice03-coverage-hardening; slice04-hardware-timing; later system/soak/resource validation | Existing active validation domain; no global quality target is lowered |
+
+Only arc09's new directory/open set is created now. Arc10–13 and unissued slice IDs
+above are reserved roadmap destinations, not empty plans or implementation prompts.
+Dependencies, not arc numbers, set execution order. Feature completion of old arcs
+is not a prerequisite fiction: known source foundations can be used with exact
+current validation, while missing acceptance remains explicitly tracked.
+
+CDC chose the contracts in the [execution design](arc09-executable-rack/slice01-module-behavior-installation/artifacts/execution-contract.md).
+First slice is bounded to behavior installation plus its strict documentation gate;
+seed/time/MIDI are separate reviewable changes. The P99 target, 95% target,
+benchmarks, soak and real musical acceptance remain project gates. M1 audible
+sample-quantized playback does not claim final low-jitter release readiness.
+
+### Quality dispositions
+
+- Q-01: arc09/slice01 owns 11 observed rustdoc diagnostics (3 unresolved, 8
+  redundant) and its new API docs. CDC reproduced the failure; preserve earlier
+  two-link reports as observations, not the complete error inventory.
+- Q-02: arc08/slice02-coverage-provenance owns the nine profile mismatches, precise
+  tool/source/denominator accounting and trusted reproducibility. Start before
+  using coverage to select hardening work; no exclusions or warning suppression.
+- Q-03: arc08/slice03-coverage-hardening owns behavior-based coverage remediation
+  against the unchanged 95% floor after Q-02. CRC's 93.47% remains a failing,
+  qualified observation. New code must have meaningful tests immediately.
+
+### Design handoff history — current
+
+Current directive: `cdc-directive03.md`. Current CC assignment:
+`arc09-executable-rack/slice01-module-behavior-installation/cc-prompt.md`.
+Baseline iteration01 is accepted/complete as observation work, not a live assignment.
+
+| Date | Packet | Predecessor | Status | Affected rows / authority | Next action |
+| --- | --- | --- | --- | --- | --- |
+| 2026-09-17 | [cdc-directive03.md](cdc-directive03.md) | crc-escalation03.md / directive02 | issued; awaiting CRC acknowledgement | 12 A rows now deferred; 24 exact successors; E-01–04 and I-01–06 newly open | Duncan relays to CRC; CRC acknowledges then relays the initial implementation prompt to CC |
+
+### Version History — CDC design return
+
+- v3.0 — 2026-09-17: CRC escalation03 and accepted baseline led to independent
+  carried-over arc closure, concrete successor arcs/slices, executable-rack
+  contracts and first implementation assignment. CDC rustdoc reproduction enlarged
+  Q-01's known failure set; original quality/capability obligations retained.

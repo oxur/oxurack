@@ -59,3 +59,17 @@ Re-entry: restart baseline and milestone decision, then recorded successor plan.
 - v2.0 — 2026-09-17: Historical children and migration evidence surfaced missing
   acceptance; proposed carried-over closure and transferred reconciliation to
   arc08/slice01 without claiming delivered capability or removing scope.
+
+## Current disposition — v3.0, 2026-09-17
+
+**Closed, carried over.** [CDC verification](cdc-verification.md) independently
+checked CRC's assembly and 3 child dispositions. Both A rows are deferred;
+capability delivery remains unaccepted. [Successor routing](../artifacts/cdc-successors03.tsv)
+assigns all inherited rows explicitly. Current successor IDs: `arc12-live-rack-operations/slice03-graph-composition`.
+Re-entry: Before accepting runtime mutation APIs; include all historical graph queries/getter feature modes and freshness. Historical requirements above are preserved.
+
+### Version History — CDC closure
+
+- v3.0 — 2026-09-17: CRC escalation03 and child carryover reviews completed the
+  administrative evidence; CDC closed this work as carried over and assigned
+  successors without accepting its unproved capability or weakening its criteria.

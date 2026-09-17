@@ -1,0 +1,163 @@
+ Documenting oxurack-mod-turingmachine v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/crates/oxurack-mod-turingmachine)
+    Checking oxurack-graph v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/crates/oxurack-graph)
+ Documenting oxurack-graph v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/crates/oxurack-graph)
+error: unresolved link to `NonZeroUsize`
+  --> crates/oxurack-mod-turingmachine/src/length.rs:67:40
+   |
+67 |     /// Returns the loop length as a [`NonZeroUsize`].
+   |                                        ^^^^^^^^^^^^ no item named `NonZeroUsize` in scope
+   |
+   = help: to escape `[` and `]` characters, add '\' before them like `\[` or `\]`
+   = note: `-D rustdoc::broken-intra-doc-links` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(rustdoc::broken_intra_doc_links)]`
+
+error: unresolved link to `self.probability`
+  --> crates/oxurack-mod-turingmachine/src/write_knob.rs:36:28
+   |
+36 |     /// With probability [`self.probability`], the `feedback_bit` is returned
+   |                            ^^^^^^^^^^^^^^^^ no item named `self.probability` in scope
+   |
+   = help: to escape `[` and `]` characters, add '\' before them like `\[` or `\]`
+
+error: could not document `oxurack-mod-turingmachine`
+warning: build failed, waiting for other jobs to finish...
+error: unresolved link to `Oxurack::graph`
+   --> crates/oxurack-graph/src/lib.rs:311:41
+    |
+311 | /// Created via [`GraphView::new`] or [`Oxurack::graph`]. All query
+    |                                         ^^^^^^^^^^^^^^ no item named `Oxurack` in scope
+    |
+    = note: `-D rustdoc::broken-intra-doc-links` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(rustdoc::broken_intra_doc_links)]`
+
+error: redundant explicit link target
+ --> crates/oxurack-graph/src/lib.rs:6:21
+  |
+6 | //! [`ModuleAdded`](oxurack_core::ModuleAdded),
+  |      -------------  ^^^^^^^^^^^^^^^^^^^^^^^^^ explicit target is redundant
+  |      |
+  |      because label contains path that resolves to same destination
+  |
+  = note: when a link's destination is not specified,
+          the label is used to resolve intra-doc links
+  = note: `-D rustdoc::redundant-explicit-links` implied by `-D warnings`
+  = help: to override `-D warnings` add `#[allow(rustdoc::redundant_explicit_links)]`
+help: remove explicit link target
+  |
+6 - //! [`ModuleAdded`](oxurack_core::ModuleAdded),
+6 + //! [`ModuleAdded`],
+  |
+
+error: redundant explicit link target
+ --> crates/oxurack-graph/src/lib.rs:7:23
+  |
+7 | //! [`ModuleRemoved`](oxurack_core::ModuleRemoved),
+  |      ---------------  ^^^^^^^^^^^^^^^^^^^^^^^^^^^ explicit target is redundant
+  |      |
+  |      because label contains path that resolves to same destination
+  |
+  = note: when a link's destination is not specified,
+          the label is used to resolve intra-doc links
+help: remove explicit link target
+  |
+7 - //! [`ModuleRemoved`](oxurack_core::ModuleRemoved),
+7 + //! [`ModuleRemoved`],
+  |
+
+error: redundant explicit link target
+ --> crates/oxurack-graph/src/lib.rs:8:24
+  |
+8 | //! [`CableConnected`](oxurack_core::CableConnected), and
+  |      ----------------  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ explicit target is redundant
+  |      |
+  |      because label contains path that resolves to same destination
+  |
+  = note: when a link's destination is not specified,
+          the label is used to resolve intra-doc links
+help: remove explicit link target
+  |
+8 - //! [`CableConnected`](oxurack_core::CableConnected), and
+8 + //! [`CableConnected`], and
+  |
+
+error: redundant explicit link target
+ --> crates/oxurack-graph/src/lib.rs:9:27
+  |
+9 | //! [`CableDisconnected`](oxurack_core::CableDisconnected) notifications
+  |      -------------------  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ explicit target is redundant
+  |      |
+  |      because label contains path that resolves to same destination
+  |
+  = note: when a link's destination is not specified,
+          the label is used to resolve intra-doc links
+help: remove explicit link target
+  |
+9 - //! [`CableDisconnected`](oxurack_core::CableDisconnected) notifications
+9 + //! [`CableDisconnected`] notifications
+  |
+
+error: redundant explicit link target
+   --> crates/oxurack-graph/src/lib.rs:855:23
+    |
+855 | /// - [`ModuleAdded`](oxurack_core::ModuleAdded) → add a node
+    |        -------------  ^^^^^^^^^^^^^^^^^^^^^^^^^ explicit target is redundant
+    |        |
+    |        because label contains path that resolves to same destination
+    |
+    = note: when a link's destination is not specified,
+            the label is used to resolve intra-doc links
+help: remove explicit link target
+    |
+855 - /// - [`ModuleAdded`](oxurack_core::ModuleAdded) → add a node
+855 + /// - [`ModuleAdded`] → add a node
+    |
+
+error: redundant explicit link target
+   --> crates/oxurack-graph/src/lib.rs:856:25
+    |
+856 | /// - [`ModuleRemoved`](oxurack_core::ModuleRemoved) → remove a node
+    |        ---------------  ^^^^^^^^^^^^^^^^^^^^^^^^^^^ explicit target is redundant
+    |        |
+    |        because label contains path that resolves to same destination
+    |
+    = note: when a link's destination is not specified,
+            the label is used to resolve intra-doc links
+help: remove explicit link target
+    |
+856 - /// - [`ModuleRemoved`](oxurack_core::ModuleRemoved) → remove a node
+856 + /// - [`ModuleRemoved`] → remove a node
+    |
+
+error: redundant explicit link target
+   --> crates/oxurack-graph/src/lib.rs:858:26
+    |
+858 | /// - [`CableConnected`](oxurack_core::CableConnected) → add an edge
+    |        ----------------  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ explicit target is redundant
+    |        |
+    |        because label contains path that resolves to same destination
+    |
+    = note: when a link's destination is not specified,
+            the label is used to resolve intra-doc links
+help: remove explicit link target
+    |
+858 - /// - [`CableConnected`](oxurack_core::CableConnected) → add an edge
+858 + /// - [`CableConnected`] → add an edge
+    |
+
+error: redundant explicit link target
+   --> crates/oxurack-graph/src/lib.rs:859:29
+    |
+859 | /// - [`CableDisconnected`](oxurack_core::CableDisconnected) → remove
+    |        -------------------  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ explicit target is redundant
+    |        |
+    |        because label contains path that resolves to same destination
+    |
+    = note: when a link's destination is not specified,
+            the label is used to resolve intra-doc links
+help: remove explicit link target
+    |
+859 - /// - [`CableDisconnected`](oxurack_core::CableDisconnected) → remove
+859 + /// - [`CableDisconnected`] → remove
+    |
+
+error: could not document `oxurack-graph`

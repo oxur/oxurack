@@ -1,11 +1,10 @@
 # project01-mvp — status
 
-> Current: Three-Contributor Workflow, Expedited Mode. TM-in-rack MIDI playback
-> first; Clock/LFO/Scope workbench second. See the priority decision at the end
-> and [current CDC directive](../project01-mvp/cdc-directive02.md). The original
-> estimate and One-Contributor snapshot below are historical. Restart baseline
-> evidence is CRC-accepted; six historical slices closed carried over; six arc
-> assemblies await independent CDC review. Product validation remains open.
+> Current: Three contributors, Expedited Mode. Historical arcs01–06 are
+> closed-carried-over, with all unmet criteria retained. Active assignment is
+> arc09/slice01 behavior installation; [CDC directive03](../project01-mvp/cdc-directive03.md)
+> governs. TM-to-MIDI remains first, Clock/LFO/Scope second. Earlier estimates and
+> status snapshots below are historical; see the final CDC return for current detail.
 
 **Best estimate: approximately 45% of the reconstructed MVP implemented**
 (plausible range **35–55%**). The infrastructure is much further along than the
@@ -364,3 +363,29 @@ assemblies. The exact review paths and cross-arc TM-first design boundary are
 in [crc-escalation03.md](../project01-mvp/crc-escalation03.md). The next
 implementation slice awaits CDC design/issuance; this CRC pass made no Rust,
 dependency or acceptance-target change.
+
+## CDC return on escalation03 — current, 2026-09-17
+
+Reviewed planning `390d2aa2c3449f8a6e4bbaff3df6c64d821ce4ea` and unchanged source
+`a7ce6e61536ca96b6aeb2227ee06e430ed8df162`. Six historical slices and arcs01–06
+are now **closed, carried over**, all 24 inherited rows deferred with exact
+[successor routing](../project01-mvp/artifacts/cdc-successors03.tsv). No historical
+capability was upgraded to delivered/accepted. Arc08 baseline is observation-complete.
+
+Active implementation assignment: arc09/slice01 module behavior installation,
+with default system hook, idempotent type/kind registration, pre-mutation conflict
+error and bounded strict-doc repairs. Next arc09 slices establish sample/phase
+semantics and seed delivery; arc10 TM+MIDI follows, then arc11 workbench.
+Other original operations/modules remain assigned to arcs12/13 and retained07/08.
+
+CDC independently reproduced 11 rustdoc link diagnostics (three unresolved and
+eight redundant), a larger observed set than the earlier two TM links. Raw log
+retained. Q-01 is in the first implementation slice; coverage provenance and
+95%-target hardening have separate arc08 successors. CDC did not rerun coverage
+or claim MIDI/timing/soak acceptance; CRC's qualified 93.47% report remains open.
+
+Relay [cdc-directive03.md](../project01-mvp/cdc-directive03.md) to CRC; after
+acknowledgement relay the current CC prompt relative to project01-mvp:
+`arc09-executable-rack/slice01-module-behavior-installation/cc-prompt.md`.
+Earlier prompt/directive/status entries above are historical. Implementation code
+has not changed during this CDC planning/review pass.

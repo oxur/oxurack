@@ -76,3 +76,25 @@ prompt. No original requirement is removed by focusing this sequence.
 - v2.1 — 2026-09-17: Operator response during arc08/slice01 preparation selected
   TM-to-MIDI, then Clock/LFO/Scope; dependency inspection showed execution/seed/event
   contracts must precede a useful adapter. Original broader backlog retained.
+
+## Quality successor assignment — v2.2, 2026-09-17
+
+Slice01 is accepted for observation evidence; no product quality gate thereby
+passes. CRC escalation03 and CDC reproduction assign the following bounded work:
+
+| ID | Scope / exit | Re-entry / owner |
+| --- | --- | --- |
+| Q-01, arc09/slice01 | Repair observed rustdoc links and prove strict all-feature and feature-off docs pass | First implementation slice, CC repair / CRC reproduction; CDC found 11 diagnostics |
+| slice02-coverage-provenance (Q-02) | Diagnose 9 mismatched-profile functions, isolate generated outputs and pin tools/source/features; explain or eliminate warnings before trusting coverage | CRC prepares within this evidence contract when scheduled; unexplained mismatch blocks authoritative percentage |
+| slice03-coverage-hardening (Q-03) | Use trusted report to close real behavioral coverage gaps against the retained 95% target | After Q-02; scope tests by actual missing behavior, escalate cross-arc repairs, no padding/exclusions |
+| slice04-hardware-timing | Named endpoint/DAW master/slave transport, P99 <500 microseconds and explicit ignored-test dispositions | After playback implementation and Operator-provided hardware/setup |
+
+10/50/100-module resource work, 24h soak and Operator musical-use acceptance remain
+in A-08-01 and P-03/P-05; detail later slices when their products and hardware exist.
+No future slice directory is created before its open set is ready.
+
+### Version History — quality return
+
+- v2.2 — 2026-09-17: CRC escalation03 retained below-target coverage and profile
+  warnings; CDC reproduced a larger docs error set. Assigned bounded owners and
+  re-entry without weakening targets or authorizing dependency modernization.

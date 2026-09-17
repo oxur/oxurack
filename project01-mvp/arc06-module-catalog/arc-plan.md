@@ -84,3 +84,17 @@ prompt. No original requirement is removed by focusing this sequence.
 - v2.1 — 2026-09-17: Operator response during arc08/slice01 preparation selected
   TM-to-MIDI, then Clock/LFO/Scope; dependency inspection showed execution/seed/event
   contracts must precede a useful adapter. Original broader backlog retained.
+
+## Current disposition — v3.0, 2026-09-17
+
+**Closed, carried over.** [CDC verification](cdc-verification.md) independently
+checked CRC's assembly and 1 child dispositions. Both A rows are deferred;
+capability delivery remains unaccepted. [Successor routing](../artifacts/cdc-successors03.tsv)
+assigns all inherited rows explicitly. Current successor IDs: `arc10-turing-machine-midi/slice02-turing-machine-adapter; arc11-observation-workbench/slice01-lfo; arc11-observation-workbench/slice02-scope-capture; arc13-remaining-module-catalog/slice01-catalog-reentry`.
+Re-entry: TM after executable-rack contracts; workbench after M1; remaining catalog after M2 with original eleven-module inventory. Historical requirements above are preserved.
+
+### Version History — CDC closure
+
+- v3.0 — 2026-09-17: CRC escalation03 and child carryover reviews completed the
+  administrative evidence; CDC closed this work as carried over and assigned
+  successors without accepting its unproved capability or weakening its criteria.
