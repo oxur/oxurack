@@ -1,0 +1,11 @@
+{
+  "source_ref": "5cad90a6b8904a3ae615bcbd9ed3e277bd94d95a",
+  "filtered_ref": "e0765574d959aee34d2190283754a92c9871faa6",
+  "date": "2026-09-17",
+  "source_commit_count": 73,
+  "filtered_commit_count": 17,
+  "excluded": [
+    "docs/design/index.md"
+  ],
+  "filter_regex": "^docs/(?!([^/]+/)*index[.]md$).*[.]md$"
+}

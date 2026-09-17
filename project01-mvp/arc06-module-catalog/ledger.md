@@ -1,0 +1,12 @@
+# arc06-module-catalog — ledger
+
+Opened 2026-09-17 during retrospective migration. These are current reconciliation
+and composition obligations, not reconstructed historical acceptance records.
+All rows start open. One-Contributor checks will be recorded as attested; any
+required independent or Operator acceptance must be attributed when it occurs.
+Implementation status and commit pointers are in the project backlog.
+
+| ID | Criterion | Verify | Significance | Origin | Status | Evidence | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| A-06-01 | Baseline musical modules work standalone and in a seeded rack | Per-module tests and composed TuringMachine-to-MIDI-out then representative multi-module patches | correctness-grade | Project roadmap; historical plans | open | — | Standalone Turing Machine and shared MIDI types do not satisfy rack integration |
+| A-06-02 | Child work and deferred findings are accounted for at arc composition | Walk current child ledgers and project backlog; compare delivered scope with arc capability | serious | Framework composition discipline | open | — | Historical children remain unaccepted; future children planned only as needed |
