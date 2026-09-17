@@ -1,0 +1,5 @@
+command: awk -F '\t' 'NF != 9 { print "bad line " NR ": " NF " fields"; bad=1 } END { print "rows=" NR - 1; exit bad }' project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/validation-results.tsv
+cwd: /Users/oubiwann/lab/oxur/oxurack/.worktrees/planning
+started_at: 2026-09-17T18:17:49.607Z
+exit_code: 0
+rows=53

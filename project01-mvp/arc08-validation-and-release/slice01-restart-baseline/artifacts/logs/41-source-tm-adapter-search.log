@@ -1,0 +1,69 @@
++command: rg -n -e 'OxurackModule|ModuleRegistry|pub fn install|pub fn with_seed|pub fn tick|pub struct StepOutputs|TickNow|fixed' crates/oxurack-core/src/module.rs crates/oxurack/src/lib.rs crates/oxurack-mod-turingmachine/src crates/oxurack-mod-turingmachine/Cargo.toml crates/oxurack-core/src/tick.rs
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T18:08:05.239Z
+exit_code: 0
+crates/oxurack-core/src/tick.rs:16://! - [`TickNow`] -- event signalling that a tick should execute.
+crates/oxurack-core/src/tick.rs:94:// ── TickNow ───────────────────────────────────────────────────────
+crates/oxurack-core/src/tick.rs:101:pub struct TickNow {
+crates/oxurack-core/src/tick.rs:765:    // ── TickNow tests ─────────────────────────────────────────────
+crates/oxurack-core/src/tick.rs:769:        let tick = TickNow { frame: 100 };
+crates/oxurack-core/src/module.rs:7://! The [`OxurackModule`] trait is implemented by every concrete module
+crates/oxurack-core/src/module.rs:9://! [`ModuleRegistry`] collects these registrations so that the patch
+crates/oxurack-core/src/module.rs:125:// ── OxurackModule trait ──────────────────────────────────────────
+crates/oxurack-core/src/module.rs:130:/// [`ModuleRegistry`] at app build time. Concrete module types
+crates/oxurack-core/src/module.rs:132:/// and register themselves via `ModuleRegistry::register::<M>()`.
+crates/oxurack-core/src/module.rs:134:/// The [`spawn`](OxurackModule::spawn) method instantiates a module
+crates/oxurack-core/src/module.rs:137:pub trait OxurackModule: Send + Sync + 'static {
+crates/oxurack-core/src/module.rs:159:    /// [`port_schema`](OxurackModule::port_schema) via
+crates/oxurack-core/src/module.rs:180:    /// Symmetric with [`parameter_setters`](OxurackModule::parameter_setters).
+crates/oxurack-core/src/module.rs:194:/// of [`OxurackModule::spawn`] that can be called dynamically by
+crates/oxurack-core/src/module.rs:204:/// Registration entry for a module kind in the [`ModuleRegistry`].
+crates/oxurack-core/src/module.rs:207:/// [`OxurackModule`] implementation, including a spawner function
+crates/oxurack-core/src/module.rs:250:// ── ModuleRegistry ───────────────────────────────────────────────
+crates/oxurack-core/src/module.rs:254:/// Module plugins call [`register`](ModuleRegistry::register) during
+crates/oxurack-core/src/module.rs:258:pub struct ModuleRegistry {
+crates/oxurack-core/src/module.rs:262:impl ModuleRegistry {
+crates/oxurack-core/src/module.rs:265:    /// Collects the static metadata from the [`OxurackModule`]
+crates/oxurack-core/src/module.rs:267:    /// Also captures the module's [`spawn`](OxurackModule::spawn)
+crates/oxurack-core/src/module.rs:270:    pub fn register<M: OxurackModule>(&mut self) {
+crates/oxurack-core/src/module.rs:298:    /// without going through the [`OxurackModule`] trait.
+crates/oxurack-core/src/module.rs:524:    // ── OxurackModule / ModuleRegistry tests ──────────────────────
+crates/oxurack-core/src/module.rs:529:    impl OxurackModule for DummyVco {
+crates/oxurack-core/src/module.rs:584:    impl OxurackModule for DummyFilter {
+crates/oxurack-core/src/module.rs:618:        let mut registry = ModuleRegistry::default();
+crates/oxurack-core/src/module.rs:631:        let mut registry = ModuleRegistry::default();
+crates/oxurack-core/src/module.rs:640:        let mut registry = ModuleRegistry::default();
+crates/oxurack-core/src/module.rs:651:        let registry = ModuleRegistry::default();
+crates/oxurack-core/src/module.rs:657:        let mut registry = ModuleRegistry::default();
+crates/oxurack-core/src/module.rs:671:        let mut registry = ModuleRegistry::default();
+crates/oxurack-core/src/module.rs:686:        let mut registry = ModuleRegistry::default();
+crates/oxurack-core/src/module.rs:697:        let mut registry = ModuleRegistry::default();
+crates/oxurack-core/src/module.rs:701:            debug.contains("ModuleRegistry"),
+crates/oxurack-core/src/module.rs:702:            "expected 'ModuleRegistry' in: {debug}"
+crates/oxurack-core/src/module.rs:708:        let mut registry = ModuleRegistry::default();
+crates/oxurack/src/lib.rs:23:pub use oxurack_core::OxurackModule as Module;
+crates/oxurack/src/lib.rs:49:/// Internally wraps a Bevy [`App`] with fixed-timestep simulation
+crates/oxurack/src/lib.rs:58:    /// Build a new rack with fixed-timestep simulation at 1000 Hz.
+crates/oxurack/src/lib.rs:63:        app.add_plugins(oxurack_core::CorePlugin::fixed());
+crates/oxurack/src/lib.rs:81:    pub fn install<M: oxurack_core::OxurackModule>(&mut self) -> &mut Self {
+crates/oxurack/src/lib.rs:84:            .resource_mut::<oxurack_core::ModuleRegistry>()
+crates/oxurack/src/lib.rs:129:        // resource_scope temporarily removes ModuleRegistry from the
+crates/oxurack/src/lib.rs:134:            .resource_scope::<oxurack_core::ModuleRegistry, _>(|world, registry| {
+crates/oxurack/src/lib.rs:157:    /// In fixed-timestep mode, this advances `Time<Fixed>` and may
+crates/oxurack/src/lib.rs:158:    /// trigger zero or more fixed-update steps depending on elapsed
+crates/oxurack/src/lib.rs:190:        CableConfig, CoreError, MergePolicy, ModuleConfig, ModuleRegistry, OxurackModule,
+crates/oxurack/src/lib.rs:200:    impl OxurackModule for TestGen {
+crates/oxurack/src/lib.rs:240:    impl OxurackModule for TestSink {
+crates/oxurack/src/lib.rs:332:    fn test_new_has_time_fixed_at_1ms() {
+crates/oxurack/src/lib.rs:349:            oxa.world().get_resource::<ModuleRegistry>().is_some(),
+crates/oxurack/src/lib.rs:350:            "ModuleRegistry should be present"
+crates/oxurack/src/lib.rs:359:        let registry = oxa.world().get_resource::<ModuleRegistry>().unwrap();
+crates/oxurack/src/lib.rs:517:    fn test_propagation_runs_in_fixed_update_not_update() {
+crates/oxurack/src/lib.rs:539:        // app.update(), not by CorePlugin::fixed() which targets FixedUpdate).
+crates/oxurack/src/lib.rs:552:        let after_fixed = find_port_value(&mut oxa, sink_entity, "in");
+crates/oxurack/src/lib.rs:554:            after_fixed,
+crates/oxurack-mod-turingmachine/src/engine.rs:62:    pub fn with_seed(seed: u64) -> Self {
+crates/oxurack-mod-turingmachine/src/engine.rs:95:    pub fn tick(&mut self) -> StepOutputs {
+crates/oxurack-mod-turingmachine/src/outputs.rs:8:pub struct StepOutputs {
+crates/oxurack-mod-turingmachine/src/clock.rs:31:    pub fn tick(&mut self) -> bool {
+crates/oxurack-mod-turingmachine/src/midi_io.rs:83:    pub fn tick(&mut self) -> Result<StepOutputs, Error> {

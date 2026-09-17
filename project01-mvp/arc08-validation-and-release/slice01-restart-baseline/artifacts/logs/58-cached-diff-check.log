@@ -1,0 +1,4 @@
+command: git diff --cached --check
+cwd: /Users/oubiwann/lab/oxur/oxurack/.worktrees/planning
+started_at: 2026-09-17T18:21:47.360Z
+exit_code: 0

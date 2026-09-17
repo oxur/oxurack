@@ -1,0 +1,109 @@
++command: rg -n -e 'pub enum Value|MidiMessage|SendMidi|flush_midi_output_system|parameters_of|GraphMaintenance|PatchLoaded|test_parameters_of|MIDI initialization failed' crates/oxurack-core/src/value.rs crates/oxurack-midi/src/lib.rs crates/oxurack-rt/src/messages.rs crates/oxurack-rt/src/bridge.rs crates/oxurack-rt/src/midi_io.rs crates/oxurack-graph/src/lib.rs crates/oxurack/src/lib.rs
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T18:08:05.484Z
+exit_code: 2
+rg: crates/oxurack-rt/src/bridge.rs: No such file or directory (os error 2)
+crates/oxurack/src/lib.rs:117:    /// When the `graph` feature is enabled, the [`GraphMaintenance`](oxurack_graph::GraphMaintenance)
+crates/oxurack/src/lib.rs:150:            .run_schedule(oxurack_graph::GraphMaintenance);
+crates/oxurack/src/lib.rs:599:        // because load_patch runs GraphMaintenance synchronously.
+crates/oxurack-graph/src/lib.rs:791:    pub fn parameters_of(&self, module_entity: Entity) -> Vec<ParameterInfo> {
+crates/oxurack-graph/src/lib.rs:838:// ── GraphMaintenance schedule ──────────────────────────────────────────
+crates/oxurack-graph/src/lib.rs:843:/// invoked synchronously via `world.run_schedule(GraphMaintenance)`
+crates/oxurack-graph/src/lib.rs:846:pub struct GraphMaintenance;
+crates/oxurack-graph/src/lib.rs:862:/// Maintenance systems run in the [`GraphMaintenance`] schedule,
+crates/oxurack-graph/src/lib.rs:871:                GraphMaintenance,
+crates/oxurack-graph/src/lib.rs:885:    world.run_schedule(GraphMaintenance);
+crates/oxurack-graph/src/lib.rs:2751:    fn test_parameters_of_returns_schema() {
+crates/oxurack-graph/src/lib.rs:2758:        let params = view.parameters_of(e);
+crates/oxurack-graph/src/lib.rs:2765:    fn test_parameters_of_includes_current_value() {
+crates/oxurack-graph/src/lib.rs:2775:        let params = view.parameters_of(e);
+crates/oxurack-graph/src/lib.rs:2784:    fn test_parameters_of_current_none_when_getter_missing() {
+crates/oxurack-graph/src/lib.rs:2821:        let params = view.parameters_of(entity);
+crates/oxurack-graph/src/lib.rs:2828:    fn test_parameters_of_empty_for_unknown_entity() {
+crates/oxurack-graph/src/lib.rs:2835:        assert!(view.parameters_of(unknown).is_empty());
+crates/oxurack-graph/src/lib.rs:2839:    fn test_parameters_of_sorted_by_name() {
+crates/oxurack-graph/src/lib.rs:2882:        let params = view.parameters_of(entity);
+crates/oxurack-rt/src/messages.rs:32:        message: MidiMessage,
+crates/oxurack-rt/src/messages.rs:61:pub type MidiMessage = oxurack_midi::MidiWire;
+crates/oxurack-rt/src/messages.rs:67:    SendMidi {
+crates/oxurack-rt/src/messages.rs:71:        message: MidiMessage,
+crates/oxurack-rt/src/messages.rs:93:// MidiMessage constructors and methods (note_on, note_off, cc,
+crates/oxurack-rt/src/messages.rs:95:// by oxurack_midi::MidiWire, which is re-exported above as MidiMessage.
+crates/oxurack-rt/src/messages.rs:123:    Channel(MidiMessage),
+crates/oxurack-rt/src/messages.rs:148:/// Status bytes `0x80..=0xEF` are delegated to [`MidiMessage::from_bytes`].
+crates/oxurack-rt/src/messages.rs:171:            // Channel messages: delegate to MidiMessage::from_bytes.
+crates/oxurack-rt/src/messages.rs:172:            let msg = MidiMessage::from_bytes(bytes)?;
+crates/oxurack-rt/src/messages.rs:206:        assert_eq!(std::mem::size_of::<MidiMessage>(), 4);
+crates/oxurack-rt/src/messages.rs:237:        let msg = MidiMessage::note_on(0, 60, 100);
+crates/oxurack-rt/src/messages.rs:246:        let msg = MidiMessage::note_off(1, 64, 0);
+crates/oxurack-rt/src/messages.rs:255:        let msg = MidiMessage::cc(2, 74, 127);
+crates/oxurack-rt/src/messages.rs:264:        let msg = MidiMessage::program_change(5, 42);
+crates/oxurack-rt/src/messages.rs:273:        let msg = MidiMessage::pitch_bend(0, 0, 64);
+crates/oxurack-rt/src/messages.rs:284:        let original = MidiMessage::note_on(3, 72, 110);
+crates/oxurack-rt/src/messages.rs:286:        let reconstructed = MidiMessage::from_bytes(&bytes);
+crates/oxurack-rt/src/messages.rs:292:        let original = MidiMessage::program_change(7, 99);
+crates/oxurack-rt/src/messages.rs:294:        let reconstructed = MidiMessage::from_bytes(&bytes);
+crates/oxurack-rt/src/messages.rs:300:        assert_eq!(MidiMessage::from_bytes(&[]), None);
+crates/oxurack-rt/src/messages.rs:305:        assert_eq!(MidiMessage::from_bytes(&[0x7F, 0x60, 0x40]), None);
+crates/oxurack-rt/src/messages.rs:310:        assert_eq!(MidiMessage::from_bytes(&[0xF0, 0x7E, 0x7F]), None);
+crates/oxurack-rt/src/messages.rs:317:        let msg = MidiMessage::program_change(0, 5);
+crates/oxurack-rt/src/messages.rs:364:            Some(MidiClassification::Channel(MidiMessage {
+crates/oxurack-rt/src/messages.rs:377:            Some(MidiClassification::Channel(MidiMessage {
+crates/oxurack-rt/src/messages.rs:436:        let msg = MidiMessage::from_bytes(&[0x90, 60]);
+crates/oxurack-rt/src/messages.rs:449:        let msg = MidiMessage::from_bytes(&[0x90]);
+crates/oxurack-rt/src/messages.rs:461:        let msg = MidiMessage::from_bytes(&[0xC0]);
+crates/oxurack-rt/src/messages.rs:474:        let msg = MidiMessage::note_on(0, 60, 100);
+crates/oxurack-rt/src/messages.rs:480:        let msg = MidiMessage::note_off(1, 64, 0);
+crates/oxurack-rt/src/messages.rs:486:        let msg = MidiMessage::cc(2, 74, 127);
+crates/oxurack-rt/src/messages.rs:492:        let msg = MidiMessage::program_change(5, 42);
+crates/oxurack-rt/src/messages.rs:498:        let msg = MidiMessage::pitch_bend(0, 0, 64);
+crates/oxurack-rt/src/messages.rs:538:            Some(MidiClassification::Channel(MidiMessage {
+crates/oxurack-core/src/value.rs:9:/// Re-exported from [`oxurack_midi::MidiMessage`]. For the compact
+crates/oxurack-core/src/value.rs:11:pub use oxurack_midi::MidiMessage;
+crates/oxurack-core/src/value.rs:21:pub enum Value {
+crates/oxurack-core/src/value.rs:29:    Midi(MidiMessage),
+crates/oxurack-core/src/value.rs:40:pub enum ValueKind {
+crates/oxurack-core/src/value.rs:121:            ValueKind::Midi => Self::Midi(MidiMessage::Clock),
+crates/oxurack-core/src/value.rs:152:        assert_eq!(Value::Midi(MidiMessage::Clock).kind(), ValueKind::Midi);
+crates/oxurack-core/src/value.rs:184:            Value::Midi(MidiMessage::Clock)
+crates/oxurack-core/src/value.rs:215:        let v = Value::Midi(MidiMessage::Start);
+crates/oxurack-core/src/value.rs:374:            Value::Midi(MidiMessage::Clock).try_coerce(ValueKind::Float),
+crates/oxurack-core/src/value.rs:382:            Value::Midi(MidiMessage::Clock).try_coerce(ValueKind::Gate),
+crates/oxurack-core/src/value.rs:390:            Value::Midi(MidiMessage::Clock).try_coerce(ValueKind::Bipolar),
+crates/oxurack-core/src/value.rs:398:            Value::Midi(MidiMessage::Clock).try_coerce(ValueKind::Raw),
+crates/oxurack-core/src/value.rs:437:    // ── MidiMessage coverage ────────────────────────────────────────
+crates/oxurack-core/src/value.rs:442:            MidiMessage::NoteOn {
+crates/oxurack-core/src/value.rs:447:            MidiMessage::NoteOff {
+crates/oxurack-core/src/value.rs:452:            MidiMessage::ControlChange {
+crates/oxurack-core/src/value.rs:457:            MidiMessage::PitchBend {
+crates/oxurack-core/src/value.rs:461:            MidiMessage::ProgramChange {
+crates/oxurack-core/src/value.rs:465:            MidiMessage::ChannelPressure {
+crates/oxurack-core/src/value.rs:469:            MidiMessage::PolyKeyPressure {
+crates/oxurack-core/src/value.rs:474:            MidiMessage::Clock,
+crates/oxurack-core/src/value.rs:475:            MidiMessage::Start,
+crates/oxurack-core/src/value.rs:476:            MidiMessage::Stop,
+crates/oxurack-core/src/value.rs:477:            MidiMessage::Continue,
+crates/oxurack-core/src/value.rs:478:            MidiMessage::SongPosition { position: 42 },
+crates/oxurack-core/src/value.rs:479:            MidiMessage::SystemExclusive,
+crates/oxurack-midi/src/lib.rs:5://! - [`MidiMessage`] -- a structured enum with named fields per message
+crates/oxurack-midi/src/lib.rs:13://! - [`MidiMessage::to_wire`] -- structured to compact.
+crates/oxurack-midi/src/lib.rs:18://! - **`reflect`** -- derives [`bevy_reflect::Reflect`] on [`MidiMessage`].
+crates/oxurack-midi/src/lib.rs:20://!   on [`MidiMessage`].
+crates/oxurack-midi/src/lib.rs:25:pub use message::MidiMessage;
+crates/oxurack-midi/src/lib.rs:44:    // ── Roundtrip: MidiMessage -> MidiWire -> MidiMessage ──────────
+crates/oxurack-midi/src/lib.rs:48:        let msg = MidiMessage::NoteOn {
+crates/oxurack-midi/src/lib.rs:60:        let msg = MidiMessage::NoteOff {
+crates/oxurack-midi/src/lib.rs:72:        let msg = MidiMessage::ControlChange {
+crates/oxurack-midi/src/lib.rs:84:        let msg = MidiMessage::ProgramChange {
+crates/oxurack-midi/src/lib.rs:95:        let msg = MidiMessage::PitchBend {
+crates/oxurack-midi/src/lib.rs:106:        let msg = MidiMessage::PitchBend {
+crates/oxurack-midi/src/lib.rs:117:        let msg = MidiMessage::PitchBend {
+crates/oxurack-midi/src/lib.rs:128:        let msg = MidiMessage::ChannelPressure {
+crates/oxurack-midi/src/lib.rs:141:        let msg = MidiMessage::PolyKeyPressure {
+crates/oxurack-midi/src/lib.rs:157:        assert!(MidiMessage::Clock.to_wire().is_none());
+crates/oxurack-midi/src/lib.rs:158:        assert!(MidiMessage::Start.to_wire().is_none());
+crates/oxurack-midi/src/lib.rs:159:        assert!(MidiMessage::Stop.to_wire().is_none());
+crates/oxurack-midi/src/lib.rs:160:        assert!(MidiMessage::Continue.to_wire().is_none());
+crates/oxurack-midi/src/lib.rs:162:            MidiMessage::SongPosition { position: 0 }
+crates/oxurack-midi/src/lib.rs:166:        assert!(MidiMessage::SystemExclusive.to_wire().is_none());
+crates/oxurack-midi/src/lib.rs:195:            MidiMessage::NoteOff {

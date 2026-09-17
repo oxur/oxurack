@@ -1,0 +1,12 @@
+command: git status --short
+cwd: /Users/oubiwann/lab/oxur/oxurack/.worktrees/planning
+started_at: 2026-09-17T18:17:49.767Z
+exit_code: 0
+ M project01-mvp/arc08-validation-and-release/slice01-restart-baseline/ledger.md
+ M project01-mvp/arc08-validation-and-release/slice01-restart-baseline/slice-plan.md
+?? project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/baseline-findings.md
+?? project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/environment.md
+?? project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/
+?? project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/reconciliation.md
+?? project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/validation-results.tsv
+?? project01-mvp/arc08-validation-and-release/slice01-restart-baseline/closing-report.md

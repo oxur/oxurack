@@ -1,0 +1,130 @@
+command: sed -n '300,425p' crates/oxurack-core/src/event.rs
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T18:08:43.385Z
+exit_code: 0
+
+/// Dispatches a [`CoreCommand`] against the world.
+///
+/// Called by the REPL, umbrella crate's command handler, or any other
+/// system that processes [`CoreCommand`] messages. This is a standalone
+/// function (not a Bevy system) because several commands require
+/// exclusive `&mut World` access.
+///
+/// # Currently implemented
+///
+/// - [`CoreCommand::SetParameter`] -- resolves the target module by
+///   instance name via [`PatchHandle`](crate::PatchHandle), reads the
+///   [`ModuleKind`](crate::ModuleKind) from the entity's
+///   [`Module`](crate::Module) component, and invokes the registered
+///   setter via [`ParameterRegistry`](crate::ParameterRegistry).
+/// - [`CoreCommand::Panic`] -- returns `Ok(())` (module reset will be
+///   implemented when concrete modules exist).
+/// - [`CoreCommand::SetBpm`] -- returns `Ok(())` (tempo propagation
+///   will be wired when the RT bridge is integrated into the umbrella
+///   crate).
+///
+/// # Emits
+///
+/// - `SetParameter` (on success): [`ParameterChanged`] with
+///   `source: ChangeSource::Command`.
+///
+/// # Not yet implemented
+///
+/// The following commands return
+/// [`Err(NotImplemented(..))`](crate::CoreError::NotImplemented)
+/// because they require infrastructure provided by the umbrella crate:
+///
+/// - [`CoreCommand::LoadPatch`]
+/// - [`CoreCommand::SavePatch`]
+/// - [`CoreCommand::AddCable`] / [`CoreCommand::RemoveCable`]
+pub fn dispatch_core_command(
+    world: &mut bevy_ecs::world::World,
+    command: &CoreCommand,
+) -> Result<(), crate::CoreError> {
+    match command {
+        CoreCommand::Panic | CoreCommand::SetBpm(_) => Ok(()),
+        CoreCommand::SetParameter {
+            module,
+            param,
+            value,
+        } => dispatch_set_parameter(world, module, param, value),
+        CoreCommand::LoadPatch(_) => Err(crate::CoreError::NotImplemented("LoadPatch")),
+        CoreCommand::SavePatch(_) => Err(crate::CoreError::NotImplemented("SavePatch")),
+        CoreCommand::AddCable { .. } => Err(crate::CoreError::NotImplemented("AddCable")),
+        CoreCommand::RemoveCable { .. } => Err(crate::CoreError::NotImplemented("RemoveCable")),
+    }
+}
+
+fn dispatch_set_parameter(
+    world: &mut bevy_ecs::world::World,
+    instance_name: &str,
+    param: &str,
+    value: &crate::ParameterValue,
+) -> Result<(), crate::CoreError> {
+    let entity = world
+        .get_resource::<crate::PatchHandle>()
+        .ok_or(crate::CoreError::NoPatchLoaded)?
+        .modules
+        .get(instance_name)
+        .copied()
+        .ok_or_else(|| crate::CoreError::UnknownModule(instance_name.to_string()))?;
+
+    let kind = world
+        .get::<crate::Module>(entity)
+        .ok_or_else(|| crate::CoreError::UnknownModule(instance_name.to_string()))?
+        .kind
+        .clone();
+
+    // TODO(bucket-4): Centralise schema validation here once
+    // OxurackModule exposes per-parameter setters via the trait and
+    // install() wires them with schemas into ParameterRegistry.
+    // Currently, validation is the responsibility of each setter fn.
+
+    let result = world.resource_scope(
+        |world, registry: bevy_ecs::change_detection::Mut<crate::ParameterRegistry>| {
+            // Read previous value via getter. Getter failure is swallowed
+            // to None — a missing getter does not fail the SetParameter.
+            let previous = registry.get_parameter(world, entity, &kind, param).ok();
+
+            registry
+                .set_parameter(world, entity, &kind, param, value.clone())
+                .map_err(|e| match e {
+                    crate::CoreError::UnknownParameter { param, .. } => {
+                        crate::CoreError::UnknownParameter {
+                            module: instance_name.to_string(),
+                            param,
+                        }
+                    }
+                    crate::CoreError::InvalidParameterValue { param, reason, .. } => {
+                        crate::CoreError::InvalidParameterValue {
+                            module: instance_name.to_string(),
+                            param,
+                            reason,
+                        }
+                    }
+                    other => other,
+                })?;
+
+            Ok::<Option<crate::ParameterValue>, crate::CoreError>(previous)
+        },
+    );
+
+    match result {
+        Ok(previous) => {
+            world.write_message(ParameterChanged {
+                entity,
+                instance_name: instance_name.to_string(),
+                param: crate::ParameterName::from(param),
+                previous,
+                new: value.clone(),
+                source: ChangeSource::Command,
+            });
+            Ok(())
+        }
+        Err(e) => Err(e),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;

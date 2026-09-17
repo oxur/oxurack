@@ -1,0 +1,356 @@
+command: rg -n -i -C 3 'hardware|jitter|soak|benchmark|permission|requires RT|physical|DAW' crates
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T18:00:47.173Z
+exit_code: 0
+crates/oxurack-rt/src/timing.rs-48-    /// clock was created.
+crates/oxurack-rt/src/timing.rs-49-    ///
+crates/oxurack-rt/src/timing.rs-50-    /// The value is derived from [`quanta::Clock::delta_as_nanos`],
+crates/oxurack-rt/src/timing.rs:51:    /// which converts raw hardware ticks into calibrated nanoseconds
+crates/oxurack-rt/src/timing.rs-52-    /// with minimal overhead.
+crates/oxurack-rt/src/timing.rs-53-    pub(crate) fn now(&self) -> u64 {
+crates/oxurack-rt/src/timing.rs-54-        self.clock.delta_as_nanos(self.epoch, self.clock.raw())
+--
+crates/oxurack-rt/src/clock/slave.rs-204-/// schedules based on the tempo estimator's output.
+crates/oxurack-rt/src/clock/slave.rs-205-///
+crates/oxurack-rt/src/clock/slave.rs-206-/// Rather than forwarding raw external clock timestamps (which carry
+crates/oxurack-rt/src/clock/slave.rs:207:/// USB and OS jitter), the oscillator maintains its own internal tick
+crates/oxurack-rt/src/clock/slave.rs-208-/// timeline and applies proportional phase corrections when external
+crates/oxurack-rt/src/clock/slave.rs-209-/// ticks arrive, producing a much smoother output stream.
+crates/oxurack-rt/src/clock/slave.rs-210-#[derive(Debug)]
+--
+crates/oxurack-rt/src/clock/slave.rs-568-    }
+crates/oxurack-rt/src/clock/slave.rs-569-
+crates/oxurack-rt/src/clock/slave.rs-570-    #[test]
+crates/oxurack-rt/src/clock/slave.rs:571:    fn test_estimator_smooths_jitter() {
+crates/oxurack-rt/src/clock/slave.rs-572-        let mut estimator = TempoEstimator::new(8);
+crates/oxurack-rt/src/clock/slave.rs-573-
+crates/oxurack-rt/src/clock/slave.rs:574:        // Feed 48 ticks at 120 BPM with alternating +/- 500us jitter.
+crates/oxurack-rt/src/clock/slave.rs:575:        let jitter_ns: i64 = 500_000; // 500 us
+crates/oxurack-rt/src/clock/slave.rs-576-        for i in 0..48 {
+crates/oxurack-rt/src/clock/slave.rs-577-            let ideal_time = i as u64 * INTERVAL_120_BPM_NS;
+crates/oxurack-rt/src/clock/slave.rs:578:            let jitter = if i % 2 == 0 { jitter_ns } else { -jitter_ns };
+crates/oxurack-rt/src/clock/slave.rs:579:            let timestamp = (ideal_time as i64 + jitter) as u64;
+crates/oxurack-rt/src/clock/slave.rs-580-            estimator.feed_tick(timestamp);
+crates/oxurack-rt/src/clock/slave.rs-581-        }
+crates/oxurack-rt/src/clock/slave.rs-582-
+--
+crates/oxurack-rt/src/clock/slave.rs-872-        );
+crates/oxurack-rt/src/clock/slave.rs-873-    }
+crates/oxurack-rt/src/clock/slave.rs-874-
+crates/oxurack-rt/src/clock/slave.rs:875:    // ── Synthetic jitter test ───────────────────────────────────────
+crates/oxurack-rt/src/clock/slave.rs-876-
+crates/oxurack-rt/src/clock/slave.rs-877-    #[test]
+crates/oxurack-rt/src/clock/slave.rs:878:    fn test_slave_output_jitter_within_budget() {
+crates/oxurack-rt/src/clock/slave.rs:879:        // Simple deterministic LCG for pseudo-random jitter.
+crates/oxurack-rt/src/clock/slave.rs-880-        // Parameters from Numerical Recipes.
+crates/oxurack-rt/src/clock/slave.rs-881-        let mut rng_state: u64 = 42;
+crates/oxurack-rt/src/clock/slave.rs-882-        let lcg_next = |state: &mut u64| -> i64 {
+--
+crates/oxurack-rt/src/clock/slave.rs-896-
+crates/oxurack-rt/src/clock/slave.rs-897-        for i in 0..240u64 {
+crates/oxurack-rt/src/clock/slave.rs-898-            let ideal = i * INTERVAL_120_BPM_NS;
+crates/oxurack-rt/src/clock/slave.rs:899:            let jitter = lcg_next(&mut rng_state);
+crates/oxurack-rt/src/clock/slave.rs:900:            let timestamp = (ideal as i64 + jitter).max(0) as u64;
+crates/oxurack-rt/src/clock/slave.rs-901-            // Ensure monotonicity of external timestamps.
+crates/oxurack-rt/src/clock/slave.rs-902-            let timestamp = timestamp.max(last_external + 1);
+crates/oxurack-rt/src/clock/slave.rs-903-            last_external = timestamp;
+--
+crates/oxurack-rt/src/clock/slave.rs-911-            }
+crates/oxurack-rt/src/clock/slave.rs-912-        }
+crates/oxurack-rt/src/clock/slave.rs-913-
+crates/oxurack-rt/src/clock/slave.rs:914:        // We need enough internal ticks to measure jitter.
+crates/oxurack-rt/src/clock/slave.rs-915-        assert!(
+crates/oxurack-rt/src/clock/slave.rs-916-            internal_ticks.len() >= 100,
+crates/oxurack-rt/src/clock/slave.rs-917-            "expected at least 100 internal ticks, got {}",
+crates/oxurack-rt/src/clock/slave.rs-918-            internal_ticks.len()
+crates/oxurack-rt/src/clock/slave.rs-919-        );
+crates/oxurack-rt/src/clock/slave.rs-920-
+crates/oxurack-rt/src/clock/slave.rs:921:        // Compute jitter: deviation of internal tick intervals from
+crates/oxurack-rt/src/clock/slave.rs-922-        // the ideal 120 BPM interval.
+crates/oxurack-rt/src/clock/slave.rs:923:        let mut jitters_ns: Vec<u64> = Vec::new();
+crates/oxurack-rt/src/clock/slave.rs-924-        for window in internal_ticks.windows(2) {
+crates/oxurack-rt/src/clock/slave.rs-925-            let actual_interval = window[1].saturating_sub(window[0]);
+crates/oxurack-rt/src/clock/slave.rs:926:            let jitter = actual_interval.abs_diff(INTERVAL_120_BPM_NS);
+crates/oxurack-rt/src/clock/slave.rs:927:            jitters_ns.push(jitter);
+crates/oxurack-rt/src/clock/slave.rs-928-        }
+crates/oxurack-rt/src/clock/slave.rs-929-
+crates/oxurack-rt/src/clock/slave.rs:930:        jitters_ns.sort_unstable();
+crates/oxurack-rt/src/clock/slave.rs-931-
+crates/oxurack-rt/src/clock/slave.rs:932:        let median_idx = jitters_ns.len() / 2;
+crates/oxurack-rt/src/clock/slave.rs:933:        let p99_idx = (jitters_ns.len() as f64 * 0.99) as usize;
+crates/oxurack-rt/src/clock/slave.rs:934:        let p99_idx = p99_idx.min(jitters_ns.len() - 1);
+crates/oxurack-rt/src/clock/slave.rs-935-
+crates/oxurack-rt/src/clock/slave.rs:936:        let median_us = jitters_ns[median_idx] / 1_000;
+crates/oxurack-rt/src/clock/slave.rs:937:        let p99_us = jitters_ns[p99_idx] / 1_000;
+crates/oxurack-rt/src/clock/slave.rs-938-
+crates/oxurack-rt/src/clock/slave.rs-939-        eprintln!(
+crates/oxurack-rt/src/clock/slave.rs:940:            "Jitter test: {} ticks, median = {}us, P99 = {}us",
+crates/oxurack-rt/src/clock/slave.rs:941:            jitters_ns.len(),
+crates/oxurack-rt/src/clock/slave.rs-942-            median_us,
+crates/oxurack-rt/src/clock/slave.rs-943-            p99_us,
+crates/oxurack-rt/src/clock/slave.rs-944-        );
+crates/oxurack-rt/src/clock/slave.rs-945-
+crates/oxurack-rt/src/clock/slave.rs-946-        assert!(
+crates/oxurack-rt/src/clock/slave.rs-947-            median_us < 500,
+crates/oxurack-rt/src/clock/slave.rs:948:            "median jitter {median_us}us exceeds 500us threshold"
+crates/oxurack-rt/src/clock/slave.rs-949-        );
+crates/oxurack-rt/src/clock/slave.rs-950-        assert!(
+crates/oxurack-rt/src/clock/slave.rs-951-            p99_us < 2000,
+crates/oxurack-rt/src/clock/slave.rs:952:            "P99 jitter {p99_us}us exceeds 2000us threshold"
+crates/oxurack-rt/src/clock/slave.rs-953-        );
+crates/oxurack-rt/src/clock/slave.rs-954-    }
+crates/oxurack-rt/src/clock/slave.rs-955-
+--
+crates/oxurack-rt/src/clock/passthrough.rs-4-//! Unlike the [`super::slave::SlaveClock`], passthrough mode does not
+crates/oxurack-rt/src/clock/passthrough.rs-5-//! apply PLL smoothing or oscillator interpolation. It forwards clock
+crates/oxurack-rt/src/clock/passthrough.rs-6-//! ticks directly and is suitable for deterministic clock distribution
+crates/oxurack-rt/src/clock/passthrough.rs:7://! chains where jitter smoothing is undesirable.
+crates/oxurack-rt/src/clock/passthrough.rs-8-
+crates/oxurack-rt/src/clock/passthrough.rs-9-/// Passthrough clock state.
+crates/oxurack-rt/src/clock/passthrough.rs-10-///
+--
+crates/oxurack-rt/src/messages.rs-190-    /// The slave clock detected a dropout in the external clock signal.
+crates/oxurack-rt/src/messages.rs-191-    ClockDropout,
+crates/oxurack-rt/src/messages.rs-192-    /// RT priority elevation failed; the thread is running at normal
+crates/oxurack-rt/src/messages.rs:193:    /// OS priority. Timing jitter may be higher than expected.
+crates/oxurack-rt/src/messages.rs-194-    PriorityElevationFailed,
+crates/oxurack-rt/src/messages.rs-195-}
+crates/oxurack-rt/src/messages.rs-196-
+--
+crates/oxurack-rt/src/lib.rs-81-    },
+crates/oxurack-rt/src/lib.rs-82-
+crates/oxurack-rt/src/lib.rs-83-    /// This system tracks an external MIDI clock source on the given
+crates/oxurack-rt/src/lib.rs:84:    /// input port, using a PLL to smooth jitter.
+crates/oxurack-rt/src/lib.rs-85-    Slave {
+crates/oxurack-rt/src/lib.rs-86-        /// Name (or substring) of the MIDI input port carrying the
+crates/oxurack-rt/src/lib.rs-87-        /// external clock.
+--
+crates/oxurack-rt/src/lib.rs-97-    /// Unlike [`Slave`](ClockMode::Slave), passthrough mode does not
+crates/oxurack-rt/src/lib.rs-98-    /// apply PLL smoothing or oscillator interpolation. It forwards
+crates/oxurack-rt/src/lib.rs-99-    /// clock ticks directly, making it suitable for deterministic clock
+crates/oxurack-rt/src/lib.rs:100:    /// distribution chains where jitter smoothing is undesirable.
+crates/oxurack-rt/src/lib.rs-101-    Passthrough {
+crates/oxurack-rt/src/lib.rs-102-        /// Name (or substring) of the MIDI input port carrying the
+crates/oxurack-rt/src/lib.rs-103-        /// external clock.
+--
+crates/oxurack-rt/src/thread.rs-691-///
+crates/oxurack-rt/src/thread.rs-692-/// Scheduling uses a **drift-preventing** strategy: each target wake-up
+crates/oxurack-rt/src/thread.rs-693-/// is computed from the *scheduled* (ideal) time, not the actual wake-up
+crates/oxurack-rt/src/thread.rs:694:/// time. This mirrors the master-clock design and prevents jitter from
+crates/oxurack-rt/src/thread.rs-695-/// accumulating into long-term drift.
+crates/oxurack-rt/src/thread.rs-696-///
+crates/oxurack-rt/src/thread.rs-697-/// # Arguments
+--
+crates/oxurack-rt/src/thread.rs-710-    let clock = MonotonicClock::new();
+crates/oxurack-rt/src/thread.rs-711-
+crates/oxurack-rt/src/thread.rs-712-    // Best-effort RT priority elevation; ignore failures (e.g. in CI
+crates/oxurack-rt/src/thread.rs:713:    // sandboxes where the calling thread may lack permissions).
+crates/oxurack-rt/src/thread.rs-714-    let _rt_priority_handle = crate::priority::elevate_rt_priority().ok();
+crates/oxurack-rt/src/thread.rs-715-
+crates/oxurack-rt/src/thread.rs-716-    let mut intervals: Vec<u64> = Vec::with_capacity(iterations as usize);
+--
+crates/oxurack-rt/src/thread.rs-738-mod tests {
+crates/oxurack-rt/src/thread.rs-739-    use super::*;
+crates/oxurack-rt/src/thread.rs-740-
+crates/oxurack-rt/src/thread.rs:741:    /// Validates that the RT timing loop achieves sub-millisecond jitter.
+crates/oxurack-rt/src/thread.rs-742-    ///
+crates/oxurack-rt/src/thread.rs-743-    /// Runs 1 000 iterations at a 1 ms interval on a dedicated thread
+crates/oxurack-rt/src/thread.rs:744:    /// with RT priority, then checks that the median jitter is under
+crates/oxurack-rt/src/thread.rs:745:    /// 200 us and the P99 jitter is under 1 ms.
+crates/oxurack-rt/src/thread.rs-746-    ///
+crates/oxurack-rt/src/thread.rs-747-    /// Marked `#[ignore]` because results are timing-sensitive and may
+crates/oxurack-rt/src/thread.rs-748-    /// vary across machines and CI environments.
+crates/oxurack-rt/src/thread.rs-749-    #[test]
+crates/oxurack-rt/src/thread.rs-750-    #[ignore]
+crates/oxurack-rt/src/thread.rs:751:    fn test_timing_loop_jitter() {
+crates/oxurack-rt/src/thread.rs-752-        let handle = std::thread::spawn(|| run_timing_test(1_000, 1_000_000));
+crates/oxurack-rt/src/thread.rs-753-        let intervals = handle.join().expect("timing test thread panicked");
+crates/oxurack-rt/src/thread.rs-754-
+crates/oxurack-rt/src/thread.rs-755-        let expected_ns: u64 = 1_000_000;
+crates/oxurack-rt/src/thread.rs-756-
+crates/oxurack-rt/src/thread.rs:757:        let mut jitters: Vec<u64> = intervals
+crates/oxurack-rt/src/thread.rs-758-            .iter()
+crates/oxurack-rt/src/thread.rs-759-            .map(|&iv| iv.abs_diff(expected_ns))
+crates/oxurack-rt/src/thread.rs-760-            .collect();
+crates/oxurack-rt/src/thread.rs-761-
+crates/oxurack-rt/src/thread.rs:762:        jitters.sort_unstable();
+crates/oxurack-rt/src/thread.rs-763-
+crates/oxurack-rt/src/thread.rs:764:        let median = jitters[500];
+crates/oxurack-rt/src/thread.rs:765:        let p99 = jitters[990];
+crates/oxurack-rt/src/thread.rs:766:        let max = *jitters.last().expect("jitters should not be empty");
+crates/oxurack-rt/src/thread.rs-767-
+crates/oxurack-rt/src/thread.rs-768-        eprintln!(
+crates/oxurack-rt/src/thread.rs:769:            "Timing test: median jitter = {}us, P99 = {}us, max = {}us",
+crates/oxurack-rt/src/thread.rs-770-            median / 1_000,
+crates/oxurack-rt/src/thread.rs-771-            p99 / 1_000,
+crates/oxurack-rt/src/thread.rs-772-            max / 1_000,
+--
+crates/oxurack-rt/src/thread.rs-774-
+crates/oxurack-rt/src/thread.rs-775-        assert!(
+crates/oxurack-rt/src/thread.rs-776-            median < 200_000,
+crates/oxurack-rt/src/thread.rs:777:            "median jitter {median} ns ({} us) exceeds 200 us threshold",
+crates/oxurack-rt/src/thread.rs-778-            median / 1_000,
+crates/oxurack-rt/src/thread.rs-779-        );
+crates/oxurack-rt/src/thread.rs-780-        assert!(
+crates/oxurack-rt/src/thread.rs-781-            p99 < 2_000_000,
+crates/oxurack-rt/src/thread.rs:782:            "P99 jitter {p99} ns ({} us) exceeds 2 ms threshold",
+crates/oxurack-rt/src/thread.rs-783-            p99 / 1_000,
+crates/oxurack-rt/src/thread.rs-784-        );
+crates/oxurack-rt/src/thread.rs-785-    }
+--
+crates/oxurack-rt/src/thread.rs-824-    /// Helper to build a minimal `RuntimeConfig` for testing (no MIDI
+crates/oxurack-rt/src/thread.rs-825-    /// ports, master clock mode). Sets `allow_normal_priority: true` so
+crates/oxurack-rt/src/thread.rs-826-    /// tests do not fail in CI sandboxes that lack RT scheduling
+crates/oxurack-rt/src/thread.rs:827:    /// permissions.
+crates/oxurack-rt/src/thread.rs-828-    fn test_config(tempo_bpm: f64) -> crate::RuntimeConfig {
+crates/oxurack-rt/src/thread.rs-829-        crate::RuntimeConfig {
+crates/oxurack-rt/src/thread.rs-830-            clock_mode: crate::ClockMode::Master {
+--
+crates/oxurack-rt/src/midi_io.rs-1-//! MIDI port discovery and I/O using `midir`.
+crates/oxurack-rt/src/midi_io.rs-2-//!
+crates/oxurack-rt/src/midi_io.rs:3://! Manages connections to physical and virtual MIDI input and output
+crates/oxurack-rt/src/midi_io.rs-4-//! ports. Output port operations run directly on the RT thread; input
+crates/oxurack-rt/src/midi_io.rs-5-//! ports use `midir`'s callback threads to capture events into per-port
+crates/oxurack-rt/src/midi_io.rs-6-//! `rtrb` queues, which the RT thread drains each iteration.
+--
+crates/oxurack-rt/src/priority.rs-1-//! OS-level real-time thread priority elevation.
+crates/oxurack-rt/src/priority.rs-2-//!
+crates/oxurack-rt/src/priority.rs-3-//! Uses `audio_thread_priority` to request real-time scheduling for the
+crates/oxurack-rt/src/priority.rs:4://! MIDI thread, reducing latency jitter from OS preemption.
+crates/oxurack-rt/src/priority.rs-5-
+crates/oxurack-rt/src/priority.rs-6-/// Buffer size in frames passed to the OS scheduler.
+crates/oxurack-rt/src/priority.rs-7-///
+--
+crates/oxurack-rt/src/priority.rs-25-/// # Errors
+crates/oxurack-rt/src/priority.rs-26-///
+crates/oxurack-rt/src/priority.rs-27-/// Returns [`crate::Error::PriorityElevation`] if the OS refuses the
+crates/oxurack-rt/src/priority.rs:28:/// priority elevation (e.g., insufficient permissions).
+crates/oxurack-rt/src/priority.rs-29-pub(crate) fn elevate_rt_priority() -> Result<audio_thread_priority::RtPriorityHandle, crate::Error>
+crates/oxurack-rt/src/priority.rs-30-{
+crates/oxurack-rt/src/priority.rs-31-    audio_thread_priority::promote_current_thread_to_real_time(RT_BUFFER_FRAMES, RT_SAMPLE_RATE_HZ)
+--
+crates/oxurack-rt/src/priority.rs-89-
+crates/oxurack-rt/src/priority.rs-90-    #[cfg(unix)]
+crates/oxurack-rt/src/priority.rs-91-    #[test]
+crates/oxurack-rt/src/priority.rs:92:    #[ignore = "requires RT scheduling permissions; run with `cargo test -- --ignored`"]
+crates/oxurack-rt/src/priority.rs-93-    fn test_priority_elevation_effects_on_scheduler() {
+crates/oxurack-rt/src/priority.rs-94-        let handle = std::thread::spawn(|| {
+crates/oxurack-rt/src/priority.rs-95-            let before = current_scheduler_state();
+--
+crates/oxurack-mod-turingmachine/src/length.rs-1-/// Models the 9-position rotary switch for loop length on a MIDI Turing
+crates/oxurack-mod-turingmachine/src/length.rs-2-/// Machine.
+crates/oxurack-mod-turingmachine/src/length.rs-3-///
+crates/oxurack-mod-turingmachine/src/length.rs:4:/// The physical switch selects among nine discrete loop lengths:
+crates/oxurack-mod-turingmachine/src/length.rs-5-/// `[2, 3, 4, 5, 6, 8, 10, 12, 16]`, mapped to positions 0 through 8.
+crates/oxurack-mod-turingmachine/src/length.rs-6-#[derive(Debug, Clone, PartialEq, Eq)]
+crates/oxurack-mod-turingmachine/src/length.rs-7-pub struct LengthSelector {
+--
+crates/oxurack-mod-turingmachine/src/shift_register.rs-56-    /// The DAC reads the top 8 bits of the active loop window, i.e.
+crates/oxurack-mod-turingmachine/src/shift_register.rs-57-    /// bits `[length-1, length-2, …, length-8]`.  When `length < 8`
+crates/oxurack-mod-turingmachine/src/shift_register.rs-58-    /// the lower bits come from below the loop window, matching the
+crates/oxurack-mod-turingmachine/src/shift_register.rs:59:    /// hardware behaviour.
+crates/oxurack-mod-turingmachine/src/shift_register.rs-60-    #[must_use]
+crates/oxurack-mod-turingmachine/src/shift_register.rs-61-    pub fn dac_byte(&self, length: NonZeroUsize) -> u8 {
+crates/oxurack-mod-turingmachine/src/shift_register.rs-62-        ((self.bits >> length.get().saturating_sub(8)) & 0xFF) as u8
+crates/oxurack-mod-turingmachine/src/shift_register.rs-63-    }
+crates/oxurack-mod-turingmachine/src/shift_register.rs-64-
+crates/oxurack-mod-turingmachine/src/shift_register.rs-65-    /// Returns the MSB (bit 7) of [`dac_byte`](Self::dac_byte), which
+crates/oxurack-mod-turingmachine/src/shift_register.rs:66:    /// drives the pulse output on the hardware.
+crates/oxurack-mod-turingmachine/src/shift_register.rs-67-    #[must_use]
+crates/oxurack-mod-turingmachine/src/shift_register.rs-68-    pub fn pulse_bit(&self, length: NonZeroUsize) -> bool {
+crates/oxurack-mod-turingmachine/src/shift_register.rs-69-        (self.dac_byte(length) >> 7) & 1 == 1
+--
+crates/oxurack-core/src/error.rs-373-
+crates/oxurack-core/src/error.rs-374-    #[test]
+crates/oxurack-core/src/error.rs-375-    fn test_patch_error_io_from_conversion() {
+crates/oxurack-core/src/error.rs:376:        let io_err = std::io::Error::new(std::io::ErrorKind::PermissionDenied, "access denied");
+crates/oxurack-core/src/error.rs-377-        let patch_err: PatchError = io_err.into();
+crates/oxurack-core/src/error.rs-378-        assert!(
+crates/oxurack-core/src/error.rs-379-            matches!(patch_err, PatchError::Io(_)),
+--
+crates/oxurack-mod-turingmachine/src/outputs.rs-1-/// Snapshot of all outputs produced by a single step of the Turing Machine.
+crates/oxurack-mod-turingmachine/src/outputs.rs-2-///
+crates/oxurack-mod-turingmachine/src/outputs.rs:3:/// Each field corresponds to a physical or virtual output jack on the
+crates/oxurack-mod-turingmachine/src/outputs.rs-4-/// module.  The struct is marked `#[non_exhaustive]` so that new outputs
+crates/oxurack-mod-turingmachine/src/outputs.rs-5-/// can be added in future versions without a breaking change.
+crates/oxurack-mod-turingmachine/src/outputs.rs-6-#[derive(Debug, Clone, Default, PartialEq)]
+--
+crates/oxurack-mod-turingmachine/README.md-8-
+crates/oxurack-mod-turingmachine/README.md-9-The library is designed for two primary use cases:
+crates/oxurack-mod-turingmachine/README.md-10-
+crates/oxurack-mod-turingmachine/README.md:11:1. Embedding in an application (DAW plugin, standalone sequencer).
+crates/oxurack-mod-turingmachine/README.md-12-2. Live-coding / REPL experimentation with a minimal-ceremony API.
+crates/oxurack-mod-turingmachine/README.md-13-
+crates/oxurack-mod-turingmachine/README.md-14-## Signal chain
+crates/oxurack-mod-turingmachine/README.md-15-
+crates/oxurack-mod-turingmachine/README.md:16:The diagram below shows the hardware signal path and its Rust equivalent.
+crates/oxurack-mod-turingmachine/README.md-17-Each box is a struct re-exported at the crate root.
+crates/oxurack-mod-turingmachine/README.md-18-
+crates/oxurack-mod-turingmachine/README.md-19-```
+--
+crates/oxurack-mod-turingmachine/README.md-194-
+crates/oxurack-mod-turingmachine/README.md-195-## Parameter reference
+crates/oxurack-mod-turingmachine/README.md-196-
+crates/oxurack-mod-turingmachine/README.md:197:| Method                          | Hardware equivalent                | Description                                       |
+crates/oxurack-mod-turingmachine/README.md-198-|---------------------------------|------------------------------------|---------------------------------------------------|
+crates/oxurack-mod-turingmachine/README.md-199-| `set_write(f32)`                | WRITE knob (TL072 + CD4016)       | Probability of keeping the feedback bit. 0.0 = fully random, 1.0 = locked loop, 0.5 = coin flip. |
+crates/oxurack-mod-turingmachine/README.md-200-| `modulate_write(f32)`           | CV_IN jack (R22/R23 attenuverter) | Signed offset applied to write probability. Clamped to 0.0--1.0 after application. |
+crates/oxurack-mod-turingmachine/README.md-201-| `set_length(usize)`             | LENGTH rotary (ALPS-SR8V)         | Sets loop length to the nearest valid value: 2, 3, 4, 5, 6, 8, 10, 12, or 16. |
+crates/oxurack-mod-turingmachine/README.md-202-| `set_length_position(usize)`    | LENGTH rotary position (0--8)     | Sets the rotary switch position directly. 0 = length 2, 8 = length 16. |
+crates/oxurack-mod-turingmachine/README.md:203:| `set_scale(Scale)`              | *(no hardware equivalent)*        | Replaces the main quantizer's musical scale.       |
+crates/oxurack-mod-turingmachine/README.md:204:| `set_root(u8)`                  | *(no hardware equivalent)*        | Root note for quantization. 0 = C, 1 = C#, ..., 11 = B. Clamped to 0--11. |
+crates/oxurack-mod-turingmachine/README.md:205:| `set_note_range(RangeInclusive<u8>)` | *(no hardware equivalent)*   | MIDI note output range. Default is `36..=84` (C2--C6). |
+crates/oxurack-mod-turingmachine/README.md-206-| `set_scale_output_scale(Scale)` | Volts expander resistor network   | Independent scale for the secondary quantizer output. |
+crates/oxurack-mod-turingmachine/README.md-207-| `set_scale_output_root(u8)`     | Volts expander resistor network   | Independent root note for the secondary quantizer. |
+crates/oxurack-mod-turingmachine/README.md-208-| `reset()`                       | RESET jack (async reset to CD4015)| Clears the shift register, resets clock dividers, zeroes step count. |
+--
+crates/oxurack-mod-turingmachine/README.md-234-## Output reference
+crates/oxurack-mod-turingmachine/README.md-235-
+crates/oxurack-mod-turingmachine/README.md-236-Every call to `tick()` returns a `StepOutputs` struct. The table below lists
+crates/oxurack-mod-turingmachine/README.md:237:each field with its type and the hardware jack it models.
+crates/oxurack-mod-turingmachine/README.md-238-
+crates/oxurack-mod-turingmachine/README.md:239:| Field              | Type             | Hardware equivalent                        | Description |
+crates/oxurack-mod-turingmachine/README.md-240-|--------------------|------------------|--------------------------------------------|-------------|
+crates/oxurack-mod-turingmachine/README.md-241-| `note`             | `Option<u8>`     | CV OUT (DAC0808 + TL074 output amp)        | Quantized MIDI note number (0--127). |
+crates/oxurack-mod-turingmachine/README.md-242-| `velocity`         | `Option<u8>`     | *(derived from DAC byte)*                  | MIDI velocity (1--127, never 0). |
+--
+crates/oxurack-mod-turingmachine/README.md-251-| `length`           | `usize`          | LENGTH rotary readback                     | Active loop length at this step. |
+crates/oxurack-mod-turingmachine/README.md-252-| `write_probability`| `f32`            | WRITE knob readback                        | Active write probability at this step. |
+crates/oxurack-mod-turingmachine/README.md-253-
+crates/oxurack-mod-turingmachine/README.md:254:## Hardware-to-MIDI mapping
+crates/oxurack-mod-turingmachine/README.md-255-
+crates/oxurack-mod-turingmachine/README.md:256:For the complete mapping between hardware signals and this crate's types:
+crates/oxurack-mod-turingmachine/README.md-257-
+crates/oxurack-mod-turingmachine/README.md:258:| Hardware signal          | Hardware component             | MIDI equivalent in this crate       |
+crates/oxurack-mod-turingmachine/README.md-259-|--------------------------|-------------------------------|--------------------------------------|
+crates/oxurack-mod-turingmachine/README.md-260-| CV_OUT (0--5V, 8-bit DAC)| DAC0808 + TL074 output amp    | `StepOutputs::note` (quantized)      |
+crates/oxurack-mod-turingmachine/README.md-261-| PULSE_OUT (bit 7 gate)   | CD4050 buffer BUFFER2F        | `StepOutputs::gate`                  |
+--
+crates/oxurack-mod-turingmachine/README.md-264-| WRITE knob               | TL072 comparator + CD4016     | `WriteKnob::probability` (0.0--1.0)  |
+crates/oxurack-mod-turingmachine/README.md-265-| CV_IN (write mod)        | R22/R23 attenuverter          | `TuringMachine::modulate_write()`    |
+crates/oxurack-mod-turingmachine/README.md-266-| RESET jack               | Async reset to CD4015         | `TuringMachine::reset()`             |
+crates/oxurack-mod-turingmachine/README.md:267:| MOVE jack/button (VCV)   | Not on hardware; VCV addition | `TuringMachine::move_step()`         |
+crates/oxurack-mod-turingmachine/README.md-268-| SCALE out (VCV)          | Volts expander resistor net   | `StepOutputs::scale_note`            |
+crates/oxurack-mod-turingmachine/README.md-269-| PULSE1--PULSE6 (expander)| CD4081 AND gates (TuringBack) | `StepOutputs::pulses[0..5]`          |
+crates/oxurack-mod-turingmachine/README.md-270-| GATE1--GATE8 (expander)  | CD4050 buffers (TuringBack)   | `StepOutputs::gates[0..7]`           |
+crates/oxurack-mod-turingmachine/README.md:271:| 1/2 clock out (VCV)      | Not on hardware; VCV addition | `StepOutputs::div2`                  |
+crates/oxurack-mod-turingmachine/README.md:272:| 1/4 clock out (VCV)      | Not on hardware; VCV addition | `StepOutputs::div4`                  |
+crates/oxurack-mod-turingmachine/README.md-273-
+crates/oxurack-mod-turingmachine/README.md-274-## Features
+crates/oxurack-mod-turingmachine/README.md-275-
+--
+crates/oxurack-core/src/event.rs-27-/// A MIDI message received from an external input port.
+crates/oxurack-core/src/event.rs-28-#[derive(Message, Debug, Clone, Copy, PartialEq)]
+crates/oxurack-core/src/event.rs-29-pub struct MidiInReceived {
+crates/oxurack-core/src/event.rs:30:    /// Index of the physical input port (0-based).
+crates/oxurack-core/src/event.rs-31-    pub port_index: u8,
+crates/oxurack-core/src/event.rs-32-    /// Timestamp in nanoseconds (relative to audio callback start).
+crates/oxurack-core/src/event.rs-33-    pub timestamp_ns: u64,
+--
+crates/oxurack-core/src/event.rs-275-/// Classification of non-fatal warnings from the RT thread.
+crates/oxurack-core/src/event.rs-276-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+crates/oxurack-core/src/event.rs-277-pub enum RtWarningCode {
+crates/oxurack-core/src/event.rs:278:    /// RT priority elevation failed; timing jitter may be higher.
+crates/oxurack-core/src/event.rs-279-    PriorityElevationFailed,
+crates/oxurack-core/src/event.rs-280-    /// The slave clock detected a dropout in the external clock signal.
+crates/oxurack-core/src/event.rs-281-    ClockDropout,

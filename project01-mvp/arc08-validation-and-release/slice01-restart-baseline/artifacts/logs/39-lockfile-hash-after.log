@@ -1,0 +1,5 @@
+command: git hash-object Cargo.lock
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T18:00:48.626Z
+exit_code: 0
+fcc8f7816cc14a1cb5f0df72016b13115404f85f

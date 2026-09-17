@@ -1,0 +1,21 @@
+command: make info
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T17:54:58.317Z
+exit_code: 0
+[1;36m╔══════════════════════════════════════════════════════════╗[0m
+[1;36m║[0m  [1;34mBuild Information[0m                                       [1;36m║[0m
+[1;36m╚══════════════════════════════════════════════════════════╝[0m
+[1;32mProject:[0m
+  Name:           Oxurack
+  Build Time:     2026-09-17T17:54:58Z
+  Workspace:      /Users/oubiwann/lab/oxur/oxurack
+
+[1;32mGit:[0m
+  Branch:         main
+  Commit:         a7ce6e6
+
+[1;32mTools:[0m
+  Rust:           rustc 1.98.0 (88d9e12ae 2026-08-18)
+  Cargo:          cargo 1.98.0 (797e8a9bc 2026-08-05)
+  Rustfmt:        rustfmt 1.9.0-stable (88d9e12ae1 2026-08-18)
+  Clippy:         clippy 0.1.98 (88d9e12ae1 2026-08-18)

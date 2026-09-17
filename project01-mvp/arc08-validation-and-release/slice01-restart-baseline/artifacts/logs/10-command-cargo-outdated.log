@@ -1,0 +1,5 @@
+command: command -v cargo-outdated
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T17:54:59.388Z
+exit_code: 0
+/Users/oubiwann/.cargo/bin/cargo-outdated

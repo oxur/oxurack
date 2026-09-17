@@ -1,0 +1,47 @@
+command: cargo outdated --root-deps-only --ignore-external-rel
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T17:59:07.906Z
+exit_code: 0
+sandbox_permissions: require_escalated
+oxurack-core
+================
+Name       Project  Compat  Latest   Kind    Platform
+----       -------  ------  ------   ----    --------
+rand       0.10.1   ---     0.10.2   Normal  ---
+rtrb       0.3.3    ---     0.3.5    Normal  ---
+serde      1.0.228  ---     1.0.229  Normal  ---
+smallvec   1.15.1   ---     1.16.1   Normal  ---
+thiserror  2.0.18   ---     2.0.20   Normal  ---
+
+oxurack-midi
+================
+Name       Project  Compat  Latest   Kind    Platform
+----       -------  ------  ------   ----    --------
+serde      1.0.228  ---     1.0.229  Normal  ---
+thiserror  2.0.18   ---     2.0.20   Normal  ---
+
+oxurack-rt
+================
+Name                   Project  Compat  Latest   Kind         Platform
+----                   -------  ------  ------   ----         --------
+audio_thread_priority  0.34.0   ---     0.35.1   Normal       ---
+libc                   0.2.184  ---     0.2.189  Development  ---
+rtrb                   0.3.3    ---     0.3.5    Normal       ---
+thiserror              2.0.18   ---     2.0.20   Normal       ---
+
+oxurack-graph
+================
+Name        Project  Compat  Latest   Kind         Platform
+----        -------  ------  ------   ----         --------
+petgraph    0.7.1    ---     0.8.3    Normal       ---
+serde       1.0.228  ---     1.0.229  Normal       ---
+serde_json  1.0.149  ---     1.0.151  Development  ---
+thiserror   2.0.18   ---     2.0.20   Normal       ---
+
+oxurack-mod-turingmachine
+================
+Name       Project  Compat  Latest   Kind    Platform
+----       -------  ------  ------   ----    --------
+rand       0.10.1   ---     0.10.2   Normal  ---
+serde      1.0.228  ---     1.0.229  Normal  ---
+thiserror  2.0.18   ---     2.0.20   Normal  ---

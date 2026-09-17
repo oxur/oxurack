@@ -1,0 +1,105 @@
+command: sed -n '90,190p' crates/oxurack-core/src/bridge.rs
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T18:08:43.469Z
+exit_code: 0
+            oxurack_rt::RtErrorCode::InputPortLost => Self::InputPortLost,
+        }
+    }
+}
+
+// ── Systems ─────────────────────────────────────────────────────────
+
+/// Drains RT events from the queue and emits core ECS messages.
+///
+/// Runs in `PreUpdate`. Converts:
+///
+/// - `ClockTick` into [`TickNow`](crate::TickNow) (every tick, not just subdivision 0)
+/// - `Transport` into [`TransportChanged`](crate::TransportChanged)
+/// - `MidiInput` into [`MidiInReceived`](crate::MidiInReceived)
+///
+/// If the [`RtBridge`] resource is not present, this system is a no-op.
+pub fn drain_rt_events_system(
+    bridge: Option<NonSendMut<RtBridge>>,
+    mut tick_writer: MessageWriter<crate::TickNow>,
+    mut transport_writer: MessageWriter<crate::TransportChanged>,
+    mut midi_writer: MessageWriter<crate::MidiInReceived>,
+    mut warning_writer: MessageWriter<crate::RtWarning>,
+    mut spp_writer: MessageWriter<crate::SongPositionChanged>,
+) {
+    let Some(mut bridge) = bridge else { return };
+    while let Ok(event) = bridge.events.pop() {
+        match event {
+            oxurack_rt::RtEvent::ClockTick {
+                beat, subdivision, ..
+            } => {
+                let frame = beat.wrapping_mul(24).wrapping_add(subdivision as u64);
+                tick_writer.write(crate::TickNow { frame });
+            }
+            oxurack_rt::RtEvent::Transport(t) => {
+                let state = match t {
+                    oxurack_rt::TransportEvent::Start => crate::TransportState::Started,
+                    oxurack_rt::TransportEvent::Stop => crate::TransportState::Stopped,
+                    oxurack_rt::TransportEvent::Continue => crate::TransportState::Continued,
+                };
+                transport_writer.write(crate::TransportChanged(state));
+            }
+            oxurack_rt::RtEvent::MidiInput {
+                input_port_index,
+                timestamp_ns,
+                message,
+            } => {
+                if let Some(core_msg) = convert_rt_midi(&message) {
+                    midi_writer.write(crate::MidiInReceived {
+                        port_index: input_port_index,
+                        timestamp_ns,
+                        message: core_msg,
+                    });
+                }
+            }
+            oxurack_rt::RtEvent::NonFatalError(code) => {
+                warning_writer.write(crate::RtWarning {
+                    code: crate::RtWarningCode::from(code),
+                });
+            }
+            oxurack_rt::RtEvent::SongPosition { position } => {
+                spp_writer.write(crate::SongPositionChanged { position });
+            }
+        }
+    }
+}
+
+/// Flushes buffered MIDI output commands to the RT thread.
+///
+/// Runs in `PostUpdate`. Drains the [`MidiOutputQueue`] and pushes
+/// each command to the RT thread's command queue via [`RtBridge`].
+///
+/// Commands that cannot be pushed (queue full) are silently dropped
+/// to avoid blocking the game loop. If the [`RtBridge`] resource is
+/// not present, this system is a no-op.
+pub fn flush_midi_output_system(
+    bridge: Option<NonSendMut<RtBridge>>,
+    mut queue: ResMut<MidiOutputQueue>,
+    mut warning_writer: MessageWriter<crate::RtWarning>,
+) {
+    let Some(mut bridge) = bridge else { return };
+    let mut dropped = 0u32;
+    for cmd in queue.commands.drain(..) {
+        if bridge.commands.push(cmd).is_err() {
+            dropped += 1;
+        }
+    }
+    if dropped > 0 {
+        warning_writer.write(crate::RtWarning {
+            code: crate::RtWarningCode::OutputQueueFull,
+        });
+    }
+}
+
+// ── Tests ───────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    // ── convert_rt_midi ─────────────────────────────────────────

@@ -1,0 +1,34 @@
+command: make help
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T17:54:58.070Z
+exit_code: 0
+[1;36m╔══════════════════════════════════════════════════════════╗[0m
+[1;36m║[0m [1;34mOxurack Build System[0m                                     [1;36m║[0m
+[1;36m╚══════════════════════════════════════════════════════════╝[0m
+
+[1;32mBuilding:[0m
+  [1;33mmake build[0m            - Build the library
+  [1;33mmake build-release[0m    - Build optimized release
+  [1;33mmake docs[0m             - Generate API documentation
+
+[1;32mTesting & Quality:[0m
+  [1;33mmake test[0m             - Run all tests
+  [1;33mmake lint[0m             - Run clippy and format check
+  [1;33mmake format[0m           - Format all code with rustfmt
+  [1;33mmake coverage[0m         - Generate test coverage report
+  [1;33mmake check[0m            - Build + lint + test
+  [1;33mmake check-all[0m        - Build + lint + coverage
+
+[1;32mCleaning:[0m
+  [1;33mmake clean[0m            - Clean build artifacts (cargo clean)
+
+[1;32mUtilities:[0m
+  [1;33mmake push[0m             - Pushes to Codeberg and Github
+  [1;33mmake publish[0m          - WIP: Publishes all crates to crates.io
+  [1;33mmake tracked-files[0m    - Save list of tracked files
+
+[1;32mInformation:[0m
+  [1;33mmake info[0m             - Show build information
+  [1;33mmake check-tools[0m      - Verify required tools are installed
+
+[1;36mCurrent status:[0m Branch: main | Commit: a7ce6e6

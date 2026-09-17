@@ -1,0 +1,25 @@
++command: rg --files crates | rg -i '(^|/)(clock|lfo|scope|midi.?out)(/|[._-])|turingmachine|midi'
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T18:08:05.320Z
+exit_code: 0
+crates/oxurack-rt/src/clock/master.rs
+crates/oxurack-rt/src/clock/slave.rs
+crates/oxurack-rt/src/clock/passthrough.rs
+crates/oxurack-rt/src/clock/mod.rs
+crates/oxurack-rt/src/midi_io.rs
+crates/oxurack-midi/src/wire.rs
+crates/oxurack-midi/src/lib.rs
+crates/oxurack-midi/src/message.rs
+crates/oxurack-midi/Cargo.toml
+crates/oxurack-mod-turingmachine/src/engine.rs
+crates/oxurack-mod-turingmachine/src/write_knob.rs
+crates/oxurack-mod-turingmachine/src/outputs.rs
+crates/oxurack-mod-turingmachine/src/lib.rs
+crates/oxurack-mod-turingmachine/src/error.rs
+crates/oxurack-mod-turingmachine/src/clock.rs
+crates/oxurack-mod-turingmachine/src/midi_io.rs
+crates/oxurack-mod-turingmachine/src/length.rs
+crates/oxurack-mod-turingmachine/src/shift_register.rs
+crates/oxurack-mod-turingmachine/src/quantizer.rs
+crates/oxurack-mod-turingmachine/README.md
+crates/oxurack-mod-turingmachine/Cargo.toml

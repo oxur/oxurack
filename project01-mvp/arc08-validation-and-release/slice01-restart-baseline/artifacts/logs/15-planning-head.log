@@ -1,0 +1,5 @@
+command: git -C .worktrees/planning rev-parse HEAD
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T17:54:59.739Z
+exit_code: 0
+c6130506287f1304a4b1af69ad9234d15e58a072

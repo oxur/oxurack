@@ -1,0 +1,5 @@
+command: cargo -V
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T17:54:59.007Z
+exit_code: 0
+cargo 1.98.0 (797e8a9bc 2026-08-05)

@@ -1,0 +1,142 @@
++command: rg -n -e 'master_seed|save_patch_to_file|load_patch_into_world|apply_patch_to_world|NotImplemented|Panic|SetBpm|schema validation|TODO' crates/oxurack-core/src/patch.rs crates/oxurack-core/src/event.rs crates/oxurack-core/src/rng.rs
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T18:08:05.400Z
+exit_code: 0
+crates/oxurack-core/src/rng.rs:15:/// Derive a deterministic seed by hashing `master_seed` and
+crates/oxurack-core/src/rng.rs:18:/// The same `(master_seed, instance_name)` pair always produces the
+crates/oxurack-core/src/rng.rs:20:pub fn derive_seed(master_seed: u64, instance_name: &str) -> u64 {
+crates/oxurack-core/src/rng.rs:22:    master_seed.hash(&mut hasher);
+crates/oxurack-core/src/rng.rs:31:/// given the same `(master_seed, instance_name)` pair.
+crates/oxurack-core/src/rng.rs:42:pub fn derive_module_rng(master_seed: u64, instance_name: &str) -> SmallRng {
+crates/oxurack-core/src/rng.rs:43:    let seed = derive_seed(master_seed, instance_name);
+crates/oxurack-core/src/rng.rs:69:    fn test_derive_seed_differs_for_different_master_seeds() {
+crates/oxurack-core/src/rng.rs:112:    fn test_derive_module_rng_different_master_seed() {
+crates/oxurack-core/src/event.rs:75:    SetBpm(f32),
+crates/oxurack-core/src/event.rs:76:    /// Panic: silence all voices and reset all modules.
+crates/oxurack-core/src/event.rs:77:    Panic,
+crates/oxurack-core/src/event.rs:117:/// Producers: [`apply_patch_to_world`](crate::apply_patch_to_world)
+crates/oxurack-core/src/event.rs:144:/// Producers: [`apply_patch_to_world`](crate::apply_patch_to_world)
+crates/oxurack-core/src/event.rs:146:/// `NotImplemented`).
+crates/oxurack-core/src/event.rs:162:/// `NotImplemented`).
+crates/oxurack-core/src/event.rs:315:/// - [`CoreCommand::Panic`] -- returns `Ok(())` (module reset will be
+crates/oxurack-core/src/event.rs:317:/// - [`CoreCommand::SetBpm`] -- returns `Ok(())` (tempo propagation
+crates/oxurack-core/src/event.rs:329:/// [`Err(NotImplemented(..))`](crate::CoreError::NotImplemented)
+crates/oxurack-core/src/event.rs:340:        CoreCommand::Panic | CoreCommand::SetBpm(_) => Ok(()),
+crates/oxurack-core/src/event.rs:346:        CoreCommand::LoadPatch(_) => Err(crate::CoreError::NotImplemented("LoadPatch")),
+crates/oxurack-core/src/event.rs:347:        CoreCommand::SavePatch(_) => Err(crate::CoreError::NotImplemented("SavePatch")),
+crates/oxurack-core/src/event.rs:348:        CoreCommand::AddCable { .. } => Err(crate::CoreError::NotImplemented("AddCable")),
+crates/oxurack-core/src/event.rs:349:        CoreCommand::RemoveCable { .. } => Err(crate::CoreError::NotImplemented("RemoveCable")),
+crates/oxurack-core/src/event.rs:373:    // TODO(bucket-4): Centralise schema validation here once
+crates/oxurack-core/src/event.rs:555:        let cmd = CoreCommand::SetBpm(120.0);
+crates/oxurack-core/src/event.rs:557:        assert!(debug.contains("SetBpm"), "expected 'SetBpm' in: {debug}");
+crates/oxurack-core/src/event.rs:562:        let cmd = CoreCommand::Panic;
+crates/oxurack-core/src/event.rs:564:        assert!(debug.contains("Panic"), "expected 'Panic' in: {debug}");
+crates/oxurack-core/src/event.rs:569:        let cmd = CoreCommand::SetBpm(140.0);
+crates/oxurack-core/src/event.rs:611:        let result = dispatch_core_command(&mut world, &CoreCommand::Panic);
+crates/oxurack-core/src/event.rs:612:        assert!(result.is_ok(), "Panic command should return Ok: {result:?}");
+crates/oxurack-core/src/event.rs:618:        let result = dispatch_core_command(&mut world, &CoreCommand::SetBpm(140.0));
+crates/oxurack-core/src/event.rs:621:            "SetBpm command should return Ok: {result:?}"
+crates/oxurack-core/src/event.rs:633:            matches!(result, Err(crate::CoreError::NotImplemented("LoadPatch"))),
+crates/oxurack-core/src/event.rs:634:            "LoadPatch should return NotImplemented: {result:?}"
+crates/oxurack-core/src/event.rs:880:            matches!(result, Err(crate::CoreError::NotImplemented("SavePatch"))),
+crates/oxurack-core/src/event.rs:881:            "SavePatch should return NotImplemented: {result:?}"
+crates/oxurack-core/src/event.rs:897:            matches!(result, Err(crate::CoreError::NotImplemented("AddCable"))),
+crates/oxurack-core/src/event.rs:898:            "AddCable should return NotImplemented: {result:?}"
+crates/oxurack-core/src/event.rs:913:            matches!(result, Err(crate::CoreError::NotImplemented("RemoveCable"))),
+crates/oxurack-core/src/event.rs:914:            "RemoveCable should return NotImplemented: {result:?}"
+crates/oxurack-core/src/patch.rs:31:    pub master_seed: u64,
+crates/oxurack-core/src/patch.rs:478:pub fn save_patch_to_file(patch: &Patch, path: &std::path::Path) -> Result<(), crate::CoreError> {
+crates/oxurack-core/src/patch.rs:497:/// Handle returned by [`apply_patch_to_world`], mapping instance names
+crates/oxurack-core/src/patch.rs:528:pub fn apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:889:/// [`apply_patch_to_world`].
+crates/oxurack-core/src/patch.rs:895:pub fn load_patch_into_world(
+crates/oxurack-core/src/patch.rs:901:    apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:1102:            master_seed: 42,
+crates/oxurack-core/src/patch.rs:1178:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1239:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1264:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1297:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1335:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1366:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1405:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1442:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1495:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1547:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1595:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1645:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1662:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1687:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1715:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1743:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1763:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1783:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1803:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1826:        save_patch_to_file(&patch, &path).expect("save should succeed");
+crates/oxurack-core/src/patch.rs:1869:            master_seed: 99,
+crates/oxurack-core/src/patch.rs:1894:        save_patch_to_file(&patch, &path).expect("save should succeed");
+crates/oxurack-core/src/patch.rs:1921:                master_seed: 0,
+crates/oxurack-core/src/patch.rs:1963:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:1990:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:2050:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:2124:    // ── apply_patch_to_world tests ──────────────────────────────
+crates/oxurack-core/src/patch.rs:2137:    fn test_apply_patch_to_world_spawns_modules() {
+crates/oxurack-core/src/patch.rs:2142:        let handle = apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2169:    fn test_apply_patch_to_world_spawns_ports() {
+crates/oxurack-core/src/patch.rs:2174:        let handle = apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2202:    fn test_apply_patch_to_world_spawns_cable() {
+crates/oxurack-core/src/patch.rs:2207:        let handle = apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2244:    fn test_apply_patch_to_world_module_ids_deterministic() {
+crates/oxurack-core/src/patch.rs:2249:        let handle = apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2272:    fn test_apply_patch_to_world_validation_failure() {
+crates/oxurack-core/src/patch.rs:2277:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:2289:        let result = apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2299:    fn test_apply_patch_to_world_propagation_integration() {
+crates/oxurack-core/src/patch.rs:2304:        let handle = apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2334:    fn test_apply_patch_to_world_with_transform() {
+crates/oxurack-core/src/patch.rs:2341:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:2366:        let handle = apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2394:    fn test_apply_patch_to_world_empty_patch() {
+crates/oxurack-core/src/patch.rs:2399:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:2406:        let handle = apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2417:    fn test_load_patch_into_world_nonexistent_file() {
+crates/oxurack-core/src/patch.rs:2422:        let result = load_patch_into_world(path, &registry, app.world_mut());
+crates/oxurack-core/src/patch.rs:2427:    fn test_load_patch_into_world_roundtrip() {
+crates/oxurack-core/src/patch.rs:2433:        save_patch_to_file(&patch, &path).expect("save should succeed");
+crates/oxurack-core/src/patch.rs:2436:            load_patch_into_world(&path, &registry, app.world_mut()).expect("should succeed");
+crates/oxurack-core/src/patch.rs:2451:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:2463:        let handle = apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2507:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:2519:        apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2541:        apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2562:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:2574:        apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2607:        apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2630:        apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2654:        // within apply_patch_to_world (modules first, then cables, then
+crates/oxurack-core/src/patch.rs:2659:        // sequential write_message calls in apply_patch_to_world).
+crates/oxurack-core/src/patch.rs:2683:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:2696:        apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2727:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:2740:        apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2771:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:2784:        apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2815:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:2841:        apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2875:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:2887:        apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2927:        apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2947:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:2961:        apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:2985:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:2997:        apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:3019:        apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:3040:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:3050:        let result = apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:3077:        apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:3099:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:3118:        apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:3153:        save_patch_to_file(&patch, &path).expect("save should succeed");
+crates/oxurack-core/src/patch.rs:3158:        apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:3185:            master_seed: 0,
+crates/oxurack-core/src/patch.rs:3198:        let result = apply_patch_to_world(
+crates/oxurack-core/src/patch.rs:3224:        apply_patch_to_world(

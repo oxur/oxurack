@@ -1,0 +1,62 @@
+command: rg -n -C 8 '#\[ignore' crates
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T18:00:47.014Z
+exit_code: 0
+crates/oxurack-rt/src/thread.rs-739-    use super::*;
+crates/oxurack-rt/src/thread.rs-740-
+crates/oxurack-rt/src/thread.rs-741-    /// Validates that the RT timing loop achieves sub-millisecond jitter.
+crates/oxurack-rt/src/thread.rs-742-    ///
+crates/oxurack-rt/src/thread.rs-743-    /// Runs 1 000 iterations at a 1 ms interval on a dedicated thread
+crates/oxurack-rt/src/thread.rs-744-    /// with RT priority, then checks that the median jitter is under
+crates/oxurack-rt/src/thread.rs-745-    /// 200 us and the P99 jitter is under 1 ms.
+crates/oxurack-rt/src/thread.rs-746-    ///
+crates/oxurack-rt/src/thread.rs:747:    /// Marked `#[ignore]` because results are timing-sensitive and may
+crates/oxurack-rt/src/thread.rs-748-    /// vary across machines and CI environments.
+crates/oxurack-rt/src/thread.rs-749-    #[test]
+crates/oxurack-rt/src/thread.rs:750:    #[ignore]
+crates/oxurack-rt/src/thread.rs-751-    fn test_timing_loop_jitter() {
+crates/oxurack-rt/src/thread.rs-752-        let handle = std::thread::spawn(|| run_timing_test(1_000, 1_000_000));
+crates/oxurack-rt/src/thread.rs-753-        let intervals = handle.join().expect("timing test thread panicked");
+crates/oxurack-rt/src/thread.rs-754-
+crates/oxurack-rt/src/thread.rs-755-        let expected_ns: u64 = 1_000_000;
+crates/oxurack-rt/src/thread.rs-756-
+crates/oxurack-rt/src/thread.rs-757-        let mut jitters: Vec<u64> = intervals
+crates/oxurack-rt/src/thread.rs-758-            .iter()
+--
+crates/oxurack-rt/src/thread.rs-786-
+crates/oxurack-rt/src/thread.rs-787-    /// Validates that the scheduled-to-scheduled timing strategy prevents
+crates/oxurack-rt/src/thread.rs-788-    /// cumulative drift.
+crates/oxurack-rt/src/thread.rs-789-    ///
+crates/oxurack-rt/src/thread.rs-790-    /// Runs 1 000 iterations at a 1 ms interval and checks that the
+crates/oxurack-rt/src/thread.rs-791-    /// total elapsed time is within 1 % of the expected 1 000 ms
+crates/oxurack-rt/src/thread.rs-792-    /// (i.e. drift < 10 ms over one second).
+crates/oxurack-rt/src/thread.rs-793-    ///
+crates/oxurack-rt/src/thread.rs:794:    /// Marked `#[ignore]` because results are timing-sensitive.
+crates/oxurack-rt/src/thread.rs-795-    #[test]
+crates/oxurack-rt/src/thread.rs:796:    #[ignore]
+crates/oxurack-rt/src/thread.rs-797-    fn test_timing_loop_no_drift() {
+crates/oxurack-rt/src/thread.rs-798-        let handle = std::thread::spawn(|| run_timing_test(1_000, 1_000_000));
+crates/oxurack-rt/src/thread.rs-799-        let intervals = handle.join().expect("timing test thread panicked");
+crates/oxurack-rt/src/thread.rs-800-
+crates/oxurack-rt/src/thread.rs-801-        let total_ns: u64 = intervals.iter().sum();
+crates/oxurack-rt/src/thread.rs-802-        let expected_total_ns: u64 = 1_000 * 1_000_000;
+crates/oxurack-rt/src/thread.rs-803-
+crates/oxurack-rt/src/thread.rs-804-        let drift_ns = total_ns.abs_diff(expected_total_ns);
+--
+crates/oxurack-rt/src/priority.rs-84-                policy,
+crates/oxurack-rt/src/priority.rs-85-                priority: param.sched_priority,
+crates/oxurack-rt/src/priority.rs-86-            }
+crates/oxurack-rt/src/priority.rs-87-        }
+crates/oxurack-rt/src/priority.rs-88-    }
+crates/oxurack-rt/src/priority.rs-89-
+crates/oxurack-rt/src/priority.rs-90-    #[cfg(unix)]
+crates/oxurack-rt/src/priority.rs-91-    #[test]
+crates/oxurack-rt/src/priority.rs:92:    #[ignore = "requires RT scheduling permissions; run with `cargo test -- --ignored`"]
+crates/oxurack-rt/src/priority.rs-93-    fn test_priority_elevation_effects_on_scheduler() {
+crates/oxurack-rt/src/priority.rs-94-        let handle = std::thread::spawn(|| {
+crates/oxurack-rt/src/priority.rs-95-            let before = current_scheduler_state();
+crates/oxurack-rt/src/priority.rs-96-            let during = {
+crates/oxurack-rt/src/priority.rs-97-                let _rt_handle = elevate_rt_priority().expect("elevation should succeed");
+crates/oxurack-rt/src/priority.rs-98-                current_scheduler_state()
+crates/oxurack-rt/src/priority.rs-99-                // _rt_handle dropped here at end of block
+crates/oxurack-rt/src/priority.rs-100-            };

@@ -1,0 +1,57 @@
+command: find project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs -type f -name '*.log'
+cwd: /Users/oubiwann/lab/oxur/oxurack/.worktrees/planning
+started_at: 2026-09-17T18:17:49.689Z
+exit_code: 0
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/01-make-help.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/34-ignored-tests-inventory.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/10-command-cargo-outdated.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/49-source-rng-lines.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/25-cargo-test-locked-core-no-defaults.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/17-make-check-offline-escalated.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/24-cargo-test-locked-oxurack-no-defaults.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/29-cargo-doc-locked-all-features.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/05-cargo-version.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/39-lockfile-hash-after.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/26-cargo-test-locked-core-rt-bridge.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/47-source-patch-rng-lines.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/16-make-check-offline.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/46-source-midi-graph-search-corrected.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/51-source-patch-lines.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/41-source-tm-adapter-search.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/14-planning-status-before.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/37-planning-diff-check.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/11-lockfile-status-before.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/31-cargo-outdated-direct-escalated.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/22-cargo-test-locked-workspace-defaults.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/43-source-persistence-command-search.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/35-hardware-and-soak-markers.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/12-lockfile-hash-before.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/08-cargo-metadata.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/45-source-ignored-tests.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/18-cargo-build-locked-workspace.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/06-implementation-status-before.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/50-source-tm-engine-lines.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/23-cargo-test-locked-workspace-no-defaults.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/19-cargo-clippy-locked-all-features.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/28-cargo-test-locked-tm-midi-io.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/09-command-cargo-binstall.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/30-cargo-outdated-direct.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/53-source-core-bridge-lines.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/02-make-info.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/13-lockfile-diff-before.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/03-make-check-tools.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/33-cargo-llvm-cov-locked-workspace.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/20-cargo-fmt-check.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/36-verify-planning.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/07-implementation-head.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/38-lockfile-status-after.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/44-source-midi-graph-search.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/42-source-workbench-inventory.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/40-implementation-status-after.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/48-source-event-bridge-lines.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/52-source-event-lines.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/32-make-coverage.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/04-rustc-version.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/15-planning-head.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/21-cargo-test-locked-all-features.log
+project01-mvp/arc08-validation-and-release/slice01-restart-baseline/artifacts/logs/27-cargo-test-locked-tm-serde.log

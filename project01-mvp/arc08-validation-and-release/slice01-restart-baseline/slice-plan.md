@@ -130,9 +130,9 @@ Current assignment: `arc08-validation-and-release/slice01-restart-baseline/cc-pr
 | --- | --- | --- | --- | --- |
 | 2026-09-17 | cc-prompt.md | none | Establish current evidence before feature work and historical closure | superseded before execution by iteration01; no refinement consumed |
 
-| 2026-09-17 | cc-prompt-iteration01.md | cc-prompt.md | Operator selected TM-first and workbench-second; focus dependency observations | active; awaiting Operator relay/CC execution |
+| 2026-09-17 | cc-prompt-iteration01.md | cc-prompt.md | Operator selected TM-first and workbench-second; focus dependency observations | returned for CRC review; CC evidence packet recorded |
 
-Refinements executed: 0 of maximum 5. No historical budget is reset by this new
+Refinements executed: 1 of maximum 5. No historical budget is reset by this new
 slice; any discovered prior open refinement remains tracked in reconciliation.
 
 ## Version History

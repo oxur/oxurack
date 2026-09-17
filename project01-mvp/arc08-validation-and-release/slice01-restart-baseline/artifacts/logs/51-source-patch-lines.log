@@ -1,0 +1,223 @@
+command: sed -n '21,55p;455,555p;826,910p' crates/oxurack-core/src/patch.rs
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T18:08:43.300Z
+exit_code: 0
+/// A complete rack configuration that can be saved and loaded.
+///
+/// Contains the full description of a rack: which modules are
+/// instantiated, how they are parameterised, and how they are wired
+/// together.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct Patch {
+    /// Schema version for forward compatibility.
+    pub version: String,
+    /// Master RNG seed for deterministic randomness.
+    pub master_seed: u64,
+    /// Global tempo in beats per minute.
+    pub bpm: f32,
+    /// The modules in the rack.
+    pub modules: Vec<ModuleConfig>,
+    /// The cables connecting module ports.
+    pub cables: Vec<CableConfig>,
+    /// Rack-level metadata. Omitted from pre-3.5 patch files;
+    /// loads as `None` and produces `RackMeta::default()`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rack: Option<RackConfig>,
+}
+
+/// Rack-level metadata for a patch file.
+///
+/// All fields are optional (empty = absent). A pre-3.5 patch file
+/// deserializes as `RackConfig::default()` (all fields empty).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct RackConfig {
+    /// Rack display name.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub display_name: String,
+    /// Rack description.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+pub fn serialize_patch(patch: &Patch) -> Result<String, crate::CoreError> {
+    ron::ser::to_string_pretty(patch, ron::ser::PrettyConfig::default())
+        .map_err(|e| crate::CoreError::Patch(crate::PatchError::Serialize(e.to_string())))
+}
+
+/// Deserialises a [`Patch`] from a RON string.
+///
+/// # Errors
+///
+/// Returns [`PatchError::Deserialize`](crate::PatchError::Deserialize)
+/// if the input is not valid RON or does not match the `Patch` schema.
+pub fn deserialize_patch(ron_str: &str) -> Result<Patch, crate::PatchError> {
+    ron::from_str(ron_str).map_err(|e| crate::PatchError::Deserialize(e.to_string()))
+}
+
+/// Saves a patch to a file in RON format.
+///
+/// Creates or overwrites the file at `path`.
+///
+/// # Errors
+///
+/// Returns [`CoreError`](crate::CoreError) on serialisation or I/O
+/// failure.
+pub fn save_patch_to_file(patch: &Patch, path: &std::path::Path) -> Result<(), crate::CoreError> {
+    let ron_str = serialize_patch(patch)?;
+    std::fs::write(path, ron_str).map_err(|e| crate::CoreError::Patch(crate::PatchError::Io(e)))?;
+    Ok(())
+}
+
+/// Loads a patch from a RON file.
+///
+/// # Errors
+///
+/// Returns [`CoreError`](crate::CoreError) on I/O or parse failure.
+pub fn load_patch_from_file(path: &std::path::Path) -> Result<Patch, crate::CoreError> {
+    let ron_str = std::fs::read_to_string(path)
+        .map_err(|e| crate::CoreError::Patch(crate::PatchError::Io(e)))?;
+    deserialize_patch(&ron_str).map_err(crate::CoreError::Patch)
+}
+
+// ── Patch application ────────────────────────────────────────────────
+
+/// Handle returned by [`apply_patch_to_world`], mapping instance names
+/// to the ECS entities that were spawned.
+#[derive(bevy_ecs::prelude::Resource, Debug, Clone)]
+pub struct PatchHandle {
+    /// Map from module instance name to the spawned module entity.
+    pub modules: HashMap<String, Entity>,
+}
+
+/// Applies a validated patch to the ECS world, spawning all modules
+/// and cables.
+///
+/// # Workflow
+///
+/// 1. Validates the patch against the registry.
+/// 2. Spawns each module, inserts label components (`DisplayName`,
+///    `Description`, `Tags`) where non-empty, emits `ModuleAdded`,
+///    `LabelChanged` per non-empty label (DisplayName → Description →
+///    Tags), then `ParameterChanged` per initial parameter.
+/// 3. Spawns cables, inserts label components where non-empty, emits
+///    `CableConnected` then `LabelChanged` per non-empty cable label.
+/// 4. If `patch.rack` is `Some`, validates tags, inserts `RackMeta`
+///    resource, and emits `LabelChanged` per non-empty rack field
+///    (DisplayName → Description → Notes → Tags).
+/// 5. Emits `PatchLoaded` with `label_count` equal to the total number
+///    of `LabelChanged` events emitted in this batch.
+///
+/// # Errors
+///
+/// Returns [`CoreError`](crate::CoreError) if validation fails, a
+/// module spawner returns an error, or a tag fails validation
+/// ([`PatchError::InvalidTag`](crate::PatchError::InvalidTag)).
+pub fn apply_patch_to_world(
+    patch: &Patch,
+    registry: &crate::ModuleRegistry,
+    world: &mut World,
+    source: crate::PatchSource,
+) -> Result<PatchHandle, crate::CoreError> {
+    // 1. Validate the patch against the registry.
+    validate_patch(patch, registry)?;
+
+    // Label emission counter — incremented at every LabelChanged emission
+    // site, used to populate PatchLoaded.label_count.
+    let mut label_count: usize = 0;
+
+    // 2. Spawn modules and emit ModuleAdded + LabelChanged + ParameterChanged per module.
+    let mut module_entities: HashMap<String, Entity> = HashMap::new();
+    for module_config in &patch.modules {
+        let kind = crate::ModuleKind::from(module_config.kind.as_str());
+        let reg = registry.get(&kind).expect("validated");
+        let entity = (reg.spawner)(
+            world,
+            &module_config.instance_name,
+            &module_config.parameters,
+        )?;
+        module_entities.insert(module_config.instance_name.clone(), entity);
+
+        world.write_message(crate::ModuleAdded {
+            entity,
+            instance_name: module_config.instance_name.clone(),
+    // 6. Emit PatchLoaded as the final batch-summary notification.
+    let patch_name = match &source {
+        crate::PatchSource::File(path) => path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("unknown")
+            .to_string(),
+        crate::PatchSource::InMemory => String::new(),
+        crate::PatchSource::Other(name) => name.clone(),
+    };
+    world.write_message(crate::PatchLoaded {
+        patch_name,
+        source,
+        module_count: patch.modules.len(),
+        cable_count: patch.cables.len(),
+        label_count,
+    });
+
+    Ok(PatchHandle {
+        modules: module_entities,
+    })
+}
+
+/// Builds a lookup map from `(module_entity, port_name)` to port entity
+/// for all ports in the world that belong to the given module set.
+fn build_port_map(
+    world: &mut World,
+    module_entities: &HashMap<String, Entity>,
+) -> HashMap<(Entity, String), Entity> {
+    let module_set: std::collections::HashSet<Entity> = module_entities.values().copied().collect();
+    let mut query = world.query::<(Entity, &crate::Port, &bevy_ecs::hierarchy::ChildOf)>();
+    query
+        .iter(world)
+        .filter_map(|(entity, port, child_of)| {
+            if module_set.contains(&child_of.0) {
+                Some(((child_of.0, port.name.as_ref().to_owned()), entity))
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+/// Finds a port entity by name among the children of a module entity.
+///
+/// Iterates all entities with [`Port`](crate::Port) and
+/// [`ChildOf`](bevy_ecs::hierarchy::ChildOf) components, returning the
+/// first whose parent is `module_entity` and whose port name matches.
+#[cfg(test)]
+fn find_port_entity(world: &mut World, module_entity: Entity, port_name: &str) -> Option<Entity> {
+    let mut query = world.query::<(Entity, &crate::Port, &bevy_ecs::hierarchy::ChildOf)>();
+    query.iter(world).find_map(|(entity, port, child_of)| {
+        if child_of.0 == module_entity && port.name.as_ref() == port_name {
+            Some(entity)
+        } else {
+            None
+        }
+    })
+}
+
+/// Loads a patch from a RON file and applies it to the ECS world.
+///
+/// Convenience wrapper combining [`load_patch_from_file`] and
+/// [`apply_patch_to_world`].
+///
+/// # Errors
+///
+/// Returns [`CoreError`](crate::CoreError) on I/O, parse, validation,
+/// or spawn failure.
+pub fn load_patch_into_world(
+    path: &std::path::Path,
+    registry: &crate::ModuleRegistry,
+    world: &mut World,
+) -> Result<PatchHandle, crate::CoreError> {
+    let patch = load_patch_from_file(path)?;
+    apply_patch_to_world(
+        &patch,
+        registry,
+        world,
+        crate::PatchSource::File(path.to_path_buf()),
+    )
+}
+
+// ── Tests ────────────────────────────────────────────────────────────

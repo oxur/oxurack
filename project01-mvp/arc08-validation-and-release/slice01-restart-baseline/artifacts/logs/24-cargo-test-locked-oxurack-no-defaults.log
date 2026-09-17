@@ -1,0 +1,44 @@
+command: cargo test --locked -p oxurack --no-default-features
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T17:57:58.655Z
+exit_code: 0
+   Compiling crossbeam-utils v0.8.21
+   Compiling indexmap v2.13.1
+   Compiling once_cell v1.21.4
+   Compiling rand v0.10.1
+   Compiling ahash v0.8.12
+   Compiling ron v0.12.1
+   Compiling toml_edit v0.23.10+spec-1.0.0
+   Compiling crossbeam-queue v0.3.12
+   Compiling concurrent-queue v2.5.0
+   Compiling crossbeam-channel v0.5.15
+   Compiling bevy_tasks v0.18.1
+   Compiling bevy_macro_utils v0.18.1
+   Compiling bevy_ecs_macros v0.18.1
+   Compiling bevy_derive v0.18.1
+   Compiling bevy_ecs v0.18.1
+   Compiling bevy_app v0.18.1
+   Compiling oxurack-core v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/crates/oxurack-core)
+   Compiling bevy_time v0.18.1
+   Compiling oxurack v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/crates/oxurack)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 9.52s
+     Running unittests src/lib.rs (target/debug/deps/oxurack-56d62c29fc453dad)
+running 10 tests
+test tests::test_new_has_module_registry ... ok
+test tests::test_new_has_time_fixed_at_1ms ... ok
+test tests::test_new_has_simulation_running_false ... ok
+test tests::test_install_populates_registry ... ok
+test tests::test_step_does_not_panic ... ok
+test tests::test_load_patch_unregistered_kind_errors ... ok
+test tests::test_install_then_apply_patch_spawns_entities ... ok
+test tests::test_load_patch_stores_handle ... ok
+test tests::test_load_patch_replaces_previous_handle ... ok
+test tests::test_propagation_runs_in_fixed_update_not_update ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests oxurack
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

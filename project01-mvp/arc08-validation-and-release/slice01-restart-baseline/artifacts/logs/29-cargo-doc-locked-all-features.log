@@ -1,0 +1,29 @@
+command: RUSTDOCFLAGS=-Dwarnings cargo doc --locked --all-features --no-deps --workspace
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T17:58:49.096Z
+exit_code: 101
+    Checking oxurack-midi v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/crates/oxurack-midi)
+ Documenting oxurack-midi v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/crates/oxurack-midi)
+ Documenting oxurack-mod-turingmachine v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/crates/oxurack-mod-turingmachine)
+    Checking oxurack-rt v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/crates/oxurack-rt)
+ Documenting oxurack-rt v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/crates/oxurack-rt)
+error: unresolved link to `NonZeroUsize`
+  --> crates/oxurack-mod-turingmachine/src/length.rs:67:40
+   |
+67 |     /// Returns the loop length as a [`NonZeroUsize`].
+   |                                        ^^^^^^^^^^^^ no item named `NonZeroUsize` in scope
+   |
+   = help: to escape `[` and `]` characters, add '\' before them like `\[` or `\]`
+   = note: `-D rustdoc::broken-intra-doc-links` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(rustdoc::broken_intra_doc_links)]`
+
+error: unresolved link to `self.probability`
+  --> crates/oxurack-mod-turingmachine/src/write_knob.rs:36:28
+   |
+36 |     /// With probability [`self.probability`], the `feedback_bit` is returned
+   |                            ^^^^^^^^^^^^^^^^ no item named `self.probability` in scope
+   |
+   = help: to escape `[` and `]` characters, add '\' before them like `\[` or `\]`
+
+error: could not document `oxurack-mod-turingmachine`
+warning: build failed, waiting for other jobs to finish...

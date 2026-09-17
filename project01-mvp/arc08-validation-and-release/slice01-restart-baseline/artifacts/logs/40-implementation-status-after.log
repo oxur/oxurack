@@ -1,0 +1,6 @@
+command: git status --short
+cwd: /Users/oubiwann/lab/oxur/oxurack
+started_at: 2026-09-17T18:00:48.781Z
+exit_code: 0
+
+(no output)
