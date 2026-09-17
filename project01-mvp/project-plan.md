@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — arc09/slice01 behavior installation; historical arcs01–06 closed-carried-over |
+| status | active — arc09/slice01; CRC prompt authoring under directive04 before CC relay |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
@@ -280,3 +280,19 @@ Baseline iteration01 is accepted/complete as observation work, not a live assign
   carried-over arc closure, concrete successor arcs/slices, executable-rack
   contracts and first implementation assignment. CDC rustdoc reproduction enlarged
   Q-01's known failure set; original quality/capability obligations retained.
+
+## Prompt-authoring amendment — v3.1, 2026-09-17
+
+Current directive: [cdc-directive04.md](cdc-directive04.md), initiated by Duncan's
+request to apply the newly installed implementation-prompt-authoring guide. CRC
+now prepares a detailed preserved replacement for arc09/slice01's initial prompt
+before CC relay/execution. Prior current-assignment statements describe historical
+handoffs; the initial prompt is held and no replacement is issued yet.
+Directive03's architecture, successor ownership, criteria and validation still govern.
+
+| Date | Packet | Predecessor | Status | Affected rows / authority | Next action |
+| --- | --- | --- | --- | --- | --- |
+| 2026-09-17 | cdc-directive04.md | cdc-directive03.md | issued; awaiting CRC acknowledgement | I-01–I-06 remain open; Operator requested improved authoring | CRC investigates source, applies guides, authors preserved replacement and records six readiness results before relay |
+
+- v3.1 — 2026-09-17: Added guide-based CRC authoring assignment and held the earlier
+  CC handoff. No behavioral contract, ledger status or acceptance gate changed.

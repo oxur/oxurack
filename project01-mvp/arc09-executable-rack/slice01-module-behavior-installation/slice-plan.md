@@ -1,6 +1,6 @@
 # Slice01 — module behavior installation
 
-Version 1.0, 2026-09-17. Status: open; initial assignment issued for Operator relay.
+Version 1.1, 2026-09-17. Status: open; CRC preparing detailed replacement under directive04.
 Workflow: CDC design / CRC independent review / CC implementation; Expedited Mode.
 Source baseline: `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` (main).
 Planning predecessor: `390d2aa2c3449f8a6e4bbaff3df6c64d821ce4ea`; authority is the
@@ -115,11 +115,14 @@ verification. No close or verifier placeholders at opening.
 
 ## Assignment history
 
-Current assignment: `arc09-executable-rack/slice01-module-behavior-installation/cc-prompt.md`.
+Current assignment: `arc09-executable-rack/slice01-module-behavior-installation/cc-prompt.md` — held for relay/execution pending
+CRC authoring under [directive04](../../cdc-directive04.md). No replacement has been
+issued; its intended next-unused path is cc-prompt-iteration01.md. Read the current
+authoring amendment below before acting on the historical initial assignment.
 
 | Date | Prompt | Predecessor | Reason | Disposition |
 | --- | --- | --- | --- | --- |
-| 2026-09-17 | cc-prompt.md | none | CDC response to escalation03; first TM prerequisite implementation | active; awaiting Operator relay |
+| 2026-09-17 | cc-prompt.md | none | CDC response to escalation03; first TM prerequisite implementation | held by directive04; replacement preparation assigned to CRC |
 
 Executed refinements: 0 of 5. Preserve later cc-prompt-iterationNN.md files.
 CC owns execution; CRC checks exact commits, reproduces I-01–I-06 and records
@@ -130,3 +133,16 @@ design. New arc, altered contract or unresolved failure returns through Duncan.
 
 - v1.0 — 2026-09-17: First implementation open set after the accepted baseline;
   bounded registration and doc repair, explicit negatives, no seed/timing scope creep.
+
+## Authoring amendment — 2026-09-17
+
+[Directive04](../../cdc-directive04.md) authorizes CRC to expand the existing design
+using the installed implementation-prompt-authoring guide/template. CRC owns source
+reconnaissance, applied domain guidance, concrete implementation/test recipes and
+a six-part readiness record here before issuing the replacement. This is pending
+author work, not a completed readiness claim. Initial prompt/design preserved;
+I-01–I-06, eight source paths and all validation requirements remain unchanged.
+CRC must reconcile any intervening execution and record actual refinement counts.
+
+- v1.1 — 2026-09-17: Operator requested guide-based CRC prompt authoring; hold the
+  earlier handoff for a detailed preserved replacement without changing design scope.

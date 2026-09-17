@@ -51,9 +51,11 @@ Those are structural self-checks only, not behavioral or independent acceptance.
 ## Current implementation handoff
 
 The baseline slice and its checker are preserved evidence of the restart shape.
-Current assignment is [arc09/slice01](arc09-executable-rack/slice01-module-behavior-installation/slice-plan.md),
-with [directive03](cdc-directive03.md) and exact successor routing for all deferred
-historical rows. Current structural command from the planning worktree:
+Current slice is [arc09/slice01](arc09-executable-rack/slice01-module-behavior-installation/slice-plan.md),
+with [directive04](cdc-directive04.md) assigning CRC to author the detailed
+replacement prompt before relay. Directive03 and exact successor routing still
+govern the design and deferred historical rows. Current structural command from
+the planning worktree:
 
 ```sh
 python3 project01-mvp/arc09-executable-rack/slice01-module-behavior-installation/artifacts/verify-planning.py
