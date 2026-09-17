@@ -23,6 +23,7 @@ target
 /.claude
 /assets/ai/ai-rust
 /assets/ai/rust
+/.worktrees/
 
 # OS
 .DS_Store

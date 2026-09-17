@@ -30,7 +30,21 @@ cargo test module::tests::specific_test
 
 ## Architecture
 
-See `./docs/design/01-draft/0005-oxurack-system-architecture.md`
+See `.worktrees/planning/project01-mvp/artifacts/0005-oxurack-system-architecture.md`.
+
+## Planning
+
+Planning artifacts live on branch `planning`, worktree `.worktrees/planning`,
+under `project01-mvp/`, per the Operator's 2026-09-17 migration request.
+The branch preserves filtered documentation history instead of starting empty.
+Start with its `project-plan.md`, this repository's README, and Git history;
+legacy documents are archaeology, not current assignments. Supporting artifacts
+belong at the closest project/arc/slice level in `artifacts/`.
+
+The Operator selected One-Contributor mode: Sofie handles design, implementation
+and self-review; Duncan is Operator. Report self-checks as attested and preserve
+any existing independent/Operator gates. Follow the collaboration-framework for
+new planning and implementation work. Do not merge `planning` into `main`.
 
 ## Writing Code
 

@@ -82,9 +82,12 @@ like `app.add_plugins(TuringMachineModule)`. The rack loads patches from
 RON files, drives them from its clock, and routes values between
 modules every tick.
 
-See the documents under [docs/design/](docs/design/index.md) for the full
-architecture: the ECS world, the RT thread, the module-authoring
-interface, and the build roadmap.
+Planning lives on the dedicated `planning` branch in `.worktrees/planning`.
+Start with [project01-mvp](.worktrees/planning/project01-mvp/project-plan.md)
+for the current roadmap and reconstructed status. The historical design and
+implementation documents are preserved there with their Git history.
+If the worktree is absent, create it with
+`git worktree add .worktrees/planning planning` after fetching the branch.
 
 ## Current state
 
