@@ -594,3 +594,8 @@ If recon reveals that `Oxurack::new()` has shape different from this doc's assum
 ## After you report
 
 I'll do trust-but-verify: confirm the plugin install actually lands in `Oxurack::new()`; verify feature-gate test matrix exercises both modes (build a no-default-features compilation); check that `module_count` and `cable_count` agree with petgraph's own counts after a series of add-remove operations; verify the chosen port → module resolution approach is internally consistent; check that the `LookupMaps invariant` (lookup maps and petgraph storage stay in sync) is held under module-removal-with-incident-edges. Then we sign off or loop back; part 2 spec follows.
+
+
+## Version History
+
+- 2026-09-17 — Planning migration: renamed `0005-bucket-4-part-1-rackgraph-foundation.md` (formerly `docs/dev/0005-bucket-4-part-1-rackgraph-foundation.md`) to `slice-plan.md` in `arc04-rackgraph/slice01-foundation`. Original content retained as historical planning; this rename does not establish current implementation or acceptance status. See the project plan and migration report for the current baseline.

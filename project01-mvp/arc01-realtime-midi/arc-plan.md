@@ -323,3 +323,8 @@ After all phases complete:
 4. Manual: start runtime in master mode, verify 0xF8 on IAC bus via MIDI Monitor
 5. Manual: start runtime in slave mode with Logic Pro as master, verify ClockTick events track tempo
 6. Manual: jitter measurement against known source meets P99 < 500us budget
+
+
+## Version History
+
+- 2026-09-17 — Planning migration: renamed `0001-project-plan-oxurack-rt-crate-implementation.md` (formerly `docs/dev/0001-project-plan-oxurack-rt-crate-implementation.md`) to `arc-plan.md` in `arc01-realtime-midi`. Original content retained as historical planning; this rename does not establish current implementation or acceptance status. See the project plan and migration report for the current baseline.

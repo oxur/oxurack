@@ -435,3 +435,8 @@ Coverage target: 95%+ per module. All tests run without hardware.
 7. All merge policies correct for valid kind/policy pairs
 8. Topological sort deterministic across runs
 9. `derive_seed` consistent across runs and platforms
+
+
+## Version History
+
+- 2026-09-17 — Planning migration: renamed `0002-project-plan-oxurack-core-crate-implementation.md` (formerly `docs/dev/0002-project-plan-oxurack-core-crate-implementation.md`) to `arc-plan.md` in `arc02-core-and-persistence`. Original content retained as historical planning; this rename does not establish current implementation or acceptance status. See the project plan and migration report for the current baseline.

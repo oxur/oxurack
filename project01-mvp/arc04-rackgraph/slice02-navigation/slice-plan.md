@@ -602,3 +602,8 @@ If recon reveals that `Oxurack::load_patch` has a different signature or wraps `
 ## After you report
 
 I'll do trust-but-verify: confirm `GraphView::modules()` returns labeled results (not placeholder strings or empty `display_name`); verify the freshness test actually proves the synchronous schedule run is what makes it pass (not incidental `update()` calls); check that `--no-default-features` build still compiles after the new `Oxurack::graph()` is added (must be `#[cfg]` gated); verify the in-Update wrapper for `GraphMaintenance` runs the schedule exactly once per tick; check that builder logic handles missing `DisplayName` / `Description` / `Tags` components correctly (fallback to formatter / `None` / empty vec respectively). Then we sign off or loop back; part 3 spec follows.
+
+
+## Version History
+
+- 2026-09-17 — Planning migration: renamed `0006-bucket-4-part-2-essential-navigation-surface.md` (formerly `docs/dev/0006-bucket-4-part-2-essential-navigation-surface.md`) to `slice-plan.md` in `arc04-rackgraph/slice02-navigation`. Original content retained as historical planning; this rename does not establish current implementation or acceptance status. See the project plan and migration report for the current baseline.

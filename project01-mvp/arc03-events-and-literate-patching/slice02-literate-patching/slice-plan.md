@@ -726,3 +726,8 @@ If recon reveals the existing `apply_patch_to_world` has changed shape since the
 ## After you report
 
 I'll do trust-but-verify: confirm Decision 1's choice is consistent with the commit shape; grep for `pub struct Tag(pub String)` (zero hits expected); read the `apply_patch_to_world` emission section and confirm the order matches the spec; check that backward-compat test loads a genuinely-old patch file and not a synthesized "old-shaped" struct; verify `label_count` matches actual emission count; check that the four `NotImplemented` arms are preserved; verify the `ParameterChanged.previous` rename is complete. Then we sign off or loop back.
+
+
+## Version History
+
+- 2026-09-17 — Planning migration: renamed `0004-bucket-3.5-literate-patching.md` (formerly `docs/dev/0004-bucket-3.5-literate-patching.md`) to `slice-plan.md` in `arc03-events-and-literate-patching/slice02-literate-patching`. Original content retained as historical planning; this rename does not establish current implementation or acceptance status. See the project plan and migration report for the current baseline.

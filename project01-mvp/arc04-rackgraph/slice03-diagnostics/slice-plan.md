@@ -476,3 +476,8 @@ If recon reveals that `ValueKind` doesn't derive `PartialEq` or that any other p
 ## After you report
 
 I'll do trust-but-verify: confirm `cycles()` reports self-loops via test #15 inspection; verify `topological_order`'s error path uses `cycles()` (read the implementation, not just trust the report); check `compatible_inputs_for` does direct `ValueKind` comparison; verify `cables()` is sorted via the test #26 assertion + reading the implementation; spot-check that no `.unwrap()` lurks in closure-traversal lookups (returning empty is the spec'd behavior for missing entities). Then we sign off and bucket 4 is closed.
+
+
+## Version History
+
+- 2026-09-17 — Planning migration: renamed `0007-bucket-4-part-3-diagnostic-queries.md` (formerly `docs/dev/0007-bucket-4-part-3-diagnostic-queries.md`) to `slice-plan.md` in `arc04-rackgraph/slice03-diagnostics`. Original content retained as historical planning; this rename does not establish current implementation or acceptance status. See the project plan and migration report for the current baseline.
