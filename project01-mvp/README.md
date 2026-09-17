@@ -1,7 +1,9 @@
 # project01-mvp
 
-Start with [project-plan.md](project-plan.md), then
-[status-and-backlog.md](artifacts/status-and-backlog.md). The implementation
+Start with [current status](../status/project01-mvp.md), then
+[project-plan.md](project-plan.md). The migration's
+[status-and-backlog.md](artifacts/status-and-backlog.md) retains the original
+inventory mapping as a dated baseline. The implementation
 README and source history live on `main` in the repository root.
 
 This is a best-effort reconstruction, not retrospective process certification.
@@ -15,7 +17,8 @@ The [migration report](artifacts/migration-report.md),
 [commit map](artifacts/history-commit-map.txt) preserve provenance. Historical
 links remain verbatim and can be resolved through the manifest or source Git
 history; this migration does not promise they resolve from their new locations.
-The generated `docs/design/index.md` was excluded and remains on `main`.
+The generated `docs/design/index.md` was excluded from migration and subsequently
+removed from `main` in `a7ce6e6`.
 
 Arcs01/02 retain their old phase/milestone breakdowns; no individual phase files
 existed to move into slices. Their current interpretation is in the project
