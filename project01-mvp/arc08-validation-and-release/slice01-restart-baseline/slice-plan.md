@@ -1,6 +1,6 @@
 # Slice01 — restart baseline
 
-Version 1.1 — 2026-09-17. Status: open, iteration01 acknowledged for Operator relay.
+Version 1.2 — 2026-09-17. Status: closed, baseline evidence accepted by CRC.
 Project01 MVP / arc08 validation and release. CDC: Sofie, restart-planning context.
 CRC: Sofie in Duncan's GPT-5.6 Sol forked review context. CC: separate context
 to be selected/identified by Duncan at handoff.
@@ -130,7 +130,7 @@ Current assignment: `arc08-validation-and-release/slice01-restart-baseline/cc-pr
 | --- | --- | --- | --- | --- |
 | 2026-09-17 | cc-prompt.md | none | Establish current evidence before feature work and historical closure | superseded before execution by iteration01; no refinement consumed |
 
-| 2026-09-17 | cc-prompt-iteration01.md | cc-prompt.md | Operator selected TM-first and workbench-second; focus dependency observations | returned for CRC review; CC evidence packet recorded |
+| 2026-09-17 | cc-prompt-iteration01.md | cc-prompt.md | Operator selected TM-first and workbench-second; focus dependency observations | accepted as an evidence baseline by CRC; CC `df6ec0a`, see crc-verification.md |
 
 Refinements executed: 1 of maximum 5. No historical budget is reset by this new
 slice; any discovered prior open refinement remains tracked in reconciliation.
@@ -151,3 +151,5 @@ consumed no executed refinement pass.
 
 - v1.1 — 2026-09-17: Operator chose TM-in-framework with MIDI, then Clock/LFO/Scope;
   preserved initial prompt and issued iteration01 for focused baseline evidence.
+- v1.2 — 2026-09-17: CRC independently checked the CC packet and closed this
+  observation slice; docs, coverage, hardware and product capabilities remain open.

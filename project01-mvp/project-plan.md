@@ -208,3 +208,15 @@ ledger, and source/planning revisions agree. The active CC prompt remains
 `arc08-validation-and-release/slice01-restart-baseline/cc-prompt-iteration01.md`.
 No ledger row, historical carryover, implementation behavior, or hardware result
 is accepted by this acknowledgement.
+
+### CRC return — 2026-09-17
+
+CRC accepted the restart observation slice, closed all six historical slices as
+carried over with twelve deferred S rows, and assembled six arc packets with
+twelve A rows still open pending independent CDC review. The new design and
+quality findings are in [crc-escalation03.md](crc-escalation03.md). This return
+does not create the next implementation slice or accept an arc capability.
+
+| Date | Packet | Predecessor | Status | Affected rows / authority | Next action |
+| --- | --- | --- | --- | --- | --- |
+| 2026-09-17 | [crc-escalation03.md](crc-escalation03.md) | cdc-directive02.md and CC `df6ec0a` | sent for Operator relay to CDC | R-01–R-06 done as evidence; 12 S rows deferred; 12 A rows open | CDC independently reviews six arc assemblies and designs TM prerequisite slice(s) |

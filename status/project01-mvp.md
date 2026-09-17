@@ -3,8 +3,9 @@
 > Current: Three-Contributor Workflow, Expedited Mode. TM-in-rack MIDI playback
 > first; Clock/LFO/Scope workbench second. See the priority decision at the end
 > and [current CDC directive](../project01-mvp/cdc-directive02.md). The original
-> estimate and One-Contributor snapshot below are historical. Formal carryover
-> closures and current behavioral validation remain pending.
+> estimate and One-Contributor snapshot below are historical. Restart baseline
+> evidence is CRC-accepted; six historical slices closed carried over; six arc
+> assemblies await independent CDC review. Product validation remains open.
 
 **Best estimate: approximately 45% of the reconstructed MVP implemented**
 (plausible range **35–55%**). The infrastructure is much further along than the
@@ -343,3 +344,23 @@ needs. Source findings are not reproduced behavior. Full live editing, Chord/sta
 other modules and final quality/hardware obligations stay tracked later. Scope is
 an explicitly requested diagnostic addition; the old 45% estimate is historical,
 not a completion metric for these focused milestones.
+
+### CRC baseline and carryover update — 2026-09-17
+
+CC's evidence-only packet at `df6ec0a6906c2b16c049db8f267145861b623c41`
+was independently reviewed. Arc08/slice01 is closed with R-01–R-06 done as
+**baseline observations**, not as product acceptance. Build, lint, format and
+workspace/feature tests were reproduced with normal MIDI access. Rustdoc still
+fails two links. Clean direct coverage was 93.47% line coverage (886 missed of
+13,560), below the inherited 95% target, with nine mismatched-data-function
+warnings. Three RT tests remain ignored; physical MIDI, timing, benchmarks,
+soak and Operator music session are unrun. Keep project P-03/P-05 open.
+
+The six historical slices are closed carried over with all twelve S rows
+deferred, original criteria and named domain owners retained. Six arc closing
+packets account for actual children 0/0/2/3/0/1 and propose deferring twelve
+A rows; **all six arcs remain open** until CDC independently verifies the CRC
+assemblies. The exact review paths and cross-arc TM-first design boundary are
+in [crc-escalation03.md](../project01-mvp/crc-escalation03.md). The next
+implementation slice awaits CDC design/issuance; this CRC pass made no Rust,
+dependency or acceptance-target change.

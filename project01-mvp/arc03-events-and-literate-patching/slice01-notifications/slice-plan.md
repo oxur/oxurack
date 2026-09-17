@@ -528,3 +528,12 @@ No historical prompt has been reissued. No iteration count is inferred or reset.
 
 - v2.0 — 2026-09-17: Operator-authorized carryover candidate; arc08 restart
   baseline receives reconciliation because migration supplied no current review.
+
+## CRC closure — v2.1, 2026-09-17
+
+Status: **closed, carried over**. CRC accepted the administrative transfer in
+[crc-verification.md](crc-verification.md). Both S rows are deferred, with their
+original criteria preserved; the owning arc and CDC successor work retain the
+behavioral obligations. No original implementation instruction was reissued.
+
+- v2.1 — 2026-09-17: Recorded independently reviewed carryover closure.

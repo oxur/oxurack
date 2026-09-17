@@ -19,3 +19,10 @@ Candidate disposition is `deferred` for both; evidence is insufficient for a
 retains each row, original capability owner, receiving R-02 and re-entry condition.
 Source criteria are preserved. CRC must account for children before writing the
 arc close; CDC verifies the carryover rather than signing off its own proposal.
+
+## CRC assembly — 2026-09-17
+
+CRC assembled and self-checked the two-row proposed close in
+`closing-report.md` and `crc-verification.md`. Actual children: 1.
+Both A rows remain **open** until independent CDC review. Their proposed
+disposition is deferred, retaining this arc as owner and its original criteria.
