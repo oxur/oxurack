@@ -1,8 +1,9 @@
 # Slice01 — restart baseline
 
-Version 1.1 — 2026-09-17. Status: open, initial assignment issued for Operator relay.
+Version 1.1 — 2026-09-17. Status: open, iteration01 acknowledged for Operator relay.
 Project01 MVP / arc08 validation and release. CDC: Sofie, restart-planning context.
-CC and CRC: separate contexts to be selected/identified by Duncan at handoff.
+CRC: Sofie in Duncan's GPT-5.6 Sol forked review context. CC: separate context
+to be selected/identified by Duncan at handoff.
 Source: main `a7ce6e61536ca96b6aeb2227ee06e430ed8df162`.
 Planning predecessor: `f0cf3a5172e02c717c7f924c84156f5fe0405733`; governing state is
 the planning commit introducing this open set, plus any explicitly reviewed changes.
@@ -17,7 +18,7 @@ checks and preserves unresolved requirements; it does not audit every historical
 feature to completion or repair every failure it discovers.
 
 Read [project plan](../../project-plan.md), [arc plan](../arc-plan.md),
-[ledger](ledger.md), [CDC directive](../../cdc-directive01.md), and the current
+[ledger](ledger.md), [current CDC directive](../../cdc-directive02.md), and the current
 [status](../../../status/project01-mvp.md). The source scope is the entire six-crate
 workspace at the pinned revision, Cargo manifests/lockfile, Makefile and existing
 tests/docs; the reconciliation scope is the six historical slices and arcs01–06.

@@ -124,8 +124,9 @@ next feature milestone after baseline evidence, before a feature assignment.
 
 - CDC: Sofie, current restart-planning conversation; project/arc design,
   first-slice preparation, design escalation and independent arc composition review.
-- CRC: separate Operator-selected review context, not yet acknowledged; independent
-  CC review, historical carryover review, routine approved slice advancement.
+- CRC: Sofie in the Operator-selected GPT-5.6 Sol forked review context; directive02
+  acknowledged at planning commit `cc41597`; independent CC review, historical
+  carryover review, and routine approved slice advancement.
 - CC: separate Operator-selected execution context, not yet assigned; execute the
   named prompt and return evidence through Duncan. Context identity is recorded at
   handoff; this plan does not silently launch contributor sessions.
@@ -155,7 +156,7 @@ invented. Initial active prompt is `arc08-validation-and-release/slice01-restart
 
 | Date | Packet | Predecessor | Status | Affected rows / authority | Next action |
 | --- | --- | --- | --- | --- | --- |
-| 2026-09-17 | [cdc-directive01.md](cdc-directive01.md) | none; Operator restart request | issued, awaiting CRC acknowledgement | R-01–R-06 and 24 inherited rows; carryover permitted, evidence gates retained | Operator relays to CRC; CRC acknowledges source/plan state before coordinating CC |
+| 2026-09-17 | [cdc-directive01.md](cdc-directive01.md) | none; Operator restart request | superseded before CRC acknowledgement | R-01–R-06 and 24 inherited rows; carryover permitted, evidence gates retained | See directive02; no execution occurred under this packet |
 
 ### Version History — restart amendment
 
@@ -200,4 +201,10 @@ before execution; neither was acknowledged or executed in this planning context.
 
 | Date | Packet | Predecessor | Status | Affected rows / authority | Next action |
 | --- | --- | --- | --- | --- | --- |
-| 2026-09-17 | [cdc-directive02.md](cdc-directive02.md) | cdc-directive01.md | issued, awaiting CRC acknowledgement | R-03 focused; R-01–R-06 still open; Operator selected TM-first/Clock-LFO-Scope-second | Duncan relays directive02 to CRC, then iteration01 to CC after acknowledgement |
+| 2026-09-17 | [cdc-directive02.md](cdc-directive02.md) | cdc-directive01.md | acknowledged by CRC against source `a7ce6e6` and planning `cc41597` | R-03 focused; R-01–R-06 still open; Operator selected TM-first/Clock-LFO-Scope-second | Duncan relays iteration01 to CC; CRC reviews the returned commit and evidence |
+
+CRC acknowledgement: the directive, dependency map, active assignment, six-row
+ledger, and source/planning revisions agree. The active CC prompt remains
+`arc08-validation-and-release/slice01-restart-baseline/cc-prompt-iteration01.md`.
+No ledger row, historical carryover, implementation behavior, or hardware result
+is accepted by this acknowledgement.
