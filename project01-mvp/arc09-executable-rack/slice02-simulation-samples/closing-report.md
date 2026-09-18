@@ -22,8 +22,9 @@ The implementation is on branch
 The source worktree was clean at iteration01 intake and is clean at the final
 source revision. The planning worktree was at
 `881b834a83aaed1ed7663fa393074574b543dd6e` at intake. The iteration01
-planning evidence commit is `733327f`; this metadata-only follow-up records
-the final planning provenance.
+planning evidence commit is
+`733327f8af80c0f49bf8459fe7527cf82931cb23` and the metadata-only provenance
+follow-up is `e82637dbd98df1e95f67794deb1895372d4d183a`.
 
 The source diff stayed within the iteration01 allowlist and contains only test
 changes:
