@@ -144,7 +144,7 @@ Current assignment: `arc09-executable-rack/slice02-simulation-samples/cc-prompt.
 
 | Date | Prompt | Predecessor | Reason | Disposition |
 | --- | --- | --- | --- | --- |
-| 2026-09-17 | cc-prompt.md | accepted slice01 / CDC contract §2 | First exact-sample and phase implementation | Issued for CC relay; no execution or acceptance yet |
+| 2026-09-17 | cc-prompt.md | accepted slice01 / CDC contract §2 | First exact-sample and phase implementation | CC proposed-done at source `8a73d33`; CRC reproduction pending; no acceptance or advancement |
 
 Executed corrective refinements: 0 of 5. Preserve this prompt and every later
 iteration. CC proposes completion; CRC independently reviews. Arc09/slice03

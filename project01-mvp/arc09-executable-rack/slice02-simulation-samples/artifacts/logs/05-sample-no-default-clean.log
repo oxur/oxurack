@@ -1,0 +1,25 @@
+cwd: /Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+head: 8a73d33ad17cfad849db34d10b672fa4d894a79a
+branch: codex/oxurack-module-behavior-installation
+source_worktree: /Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+source_state: clean
+toolchain:
+rustc 1.98.0 (88d9e12ae 2026-08-18)
+cargo 1.98.0 (797e8a9bc 2026-08-05)
+stable-aarch64-apple-darwin (default)
+command: cargo test --locked -p oxurack --no-default-features --test sample_pipeline
+--- raw output ---
+   Compiling oxurack v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.52s
+     Running tests/sample_pipeline.rs (target/debug/deps/sample_pipeline-6624c25bbf84ca9c)
+
+running 4 tests
+test last_wins_is_name_stable_with_spawn_permutation_and_unrelated_entity ... ok
+test stopped_manual_and_live_requests_do_not_change_sample_state ... ok
+test manual_pipeline_has_indexed_latency_and_phase_order ... ok
+test manual_and_controlled_live_drives_match_grouping ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+--- result ---
+exit: 0
