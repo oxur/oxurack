@@ -1,0 +1,50 @@
+(
+    version: "1.0",
+    master_seed: 42,
+    bpm: 120.0,
+    modules: [
+        (
+            kind: "sample_producer",
+            instance_name: "producer",
+            parameters: {},
+            display_name: "",
+            description: "",
+            tags: [],
+        ),
+        (
+            kind: "sample_relay",
+            instance_name: "relay",
+            parameters: {},
+            display_name: "",
+            description: "",
+            tags: [],
+        ),
+        (
+            kind: "sample_sink",
+            instance_name: "sink",
+            parameters: {},
+            display_name: "",
+            description: "",
+            tags: [],
+        ),
+    ],
+    cables: [
+        (
+            source: ("producer", "out"),
+            target: ("relay", "in"),
+            transform: None,
+            display_name: "",
+            description: "",
+            tags: [],
+        ),
+        (
+            source: ("relay", "out"),
+            target: ("sink", "in"),
+            transform: None,
+            display_name: "",
+            description: "",
+            tags: [],
+        ),
+    ],
+    rack: None,
+)

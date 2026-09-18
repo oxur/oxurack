@@ -1,15 +1,17 @@
 //! Frame-tick scheduling phases, merge buffers, and ordering.
 //!
-//! [`TickPhase`] defines the three-phase ordering for each tick of
+//! [`TickPhase`] defines the five-phase ordering for each sample of
 //! the modular rack:
 //!
 //! 1. **Produce** -- modules generate output values.
 //! 2. **Propagate** -- cables carry values from outputs to inputs.
-//! 3. **Consume** -- modules read their input ports.
+//! 3. **MergeInputs** -- cable contributions are merged into input ports.
+//! 4. **Consume** -- modules read their input ports.
+//! 5. **Observe** -- observers capture the completed sample.
 //!
 //! This module also provides:
 //!
-//! - [`MergeBuffers`] -- per-tick accumulator for values arriving at
+//! - [`MergeBuffers`] -- per-sample accumulator for values arriving at
 //!   input ports via cables.
 //! - [`TickOrder`] -- cached topological ordering of module entities
 //!   for the Produce phase.
@@ -20,14 +22,16 @@
 
 use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::time::Duration;
 
 use bevy_ecs::prelude::{Entity, Message, Query, Res, ResMut, Resource};
 use bevy_ecs::schedule::SystemSet;
 use smallvec::SmallVec;
 
-/// System set labels for the three phases of a rack tick.
+/// System set labels for the five phases of a rack sample.
 ///
-/// Configured as a strict chain (`Produce -> Propagate -> Consume`)
+/// Configured as a strict chain
+/// (`Produce -> Propagate -> MergeInputs -> Consume -> Observe`)
 /// inside the [`Update`](bevy_app::Update) schedule by [`CorePlugin`](crate::CorePlugin).
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum TickPhase {
@@ -35,16 +39,91 @@ pub enum TickPhase {
     Produce,
     /// Cables propagate values from output ports to input ports.
     Propagate,
+    /// Merge all cable contributions into input ports.
+    MergeInputs,
     /// Modules read from their input ports.
     Consume,
+    /// Observers capture the completed sample.
+    Observe,
+}
+
+/// Authoritative logical time for rack samples.
+///
+/// A running sample publishes the prior completed count as its zero-based
+/// index. The completed count advances only after the Observe phase, so every
+/// phase in one sample sees the same index and the same prior count.
+#[derive(Resource, Default, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct SampleTime {
+    last_index: Option<u64>,
+    completed_samples: u64,
+}
+
+impl SampleTime {
+    const PERIOD: Duration = Duration::from_millis(1);
+
+    /// Returns the duration represented by one rack sample.
+    pub const fn period() -> Duration {
+        Self::PERIOD
+    }
+
+    /// Returns the index published by the most recently begun sample.
+    pub const fn last_index(&self) -> Option<u64> {
+        self.last_index
+    }
+
+    /// Returns the number of samples finalized after Observe.
+    pub const fn completed_samples(&self) -> u64 {
+        self.completed_samples
+    }
+
+    fn begin_sample(&mut self) {
+        self.last_index = Some(self.completed_samples);
+    }
+
+    fn finalize_sample(&mut self) {
+        self.completed_samples = self
+            .completed_samples
+            .checked_add(1)
+            .expect("sample count overflow is impossible");
+    }
+}
+
+/// Shared start/stop state for the core sample pipeline.
+#[derive(Resource, Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SimulationRunning(pub bool);
+
+#[derive(Resource, Default, Debug, Clone, Copy)]
+pub(crate) struct SampleGate(bool);
+
+/// Latch the running state and publish the new sample index before Produce.
+pub(crate) fn begin_sample_system(
+    running: Res<SimulationRunning>,
+    mut gate: ResMut<SampleGate>,
+    mut sample_time: ResMut<SampleTime>,
+) {
+    gate.0 = running.0;
+    if gate.0 {
+        sample_time.begin_sample();
+    }
+}
+
+/// Finalize a running sample after Observe.
+pub(crate) fn finalize_sample_system(gate: Res<SampleGate>, mut sample_time: ResMut<SampleTime>) {
+    if gate.0 {
+        sample_time.finalize_sample();
+    }
+}
+
+pub(crate) fn sample_is_running(gate: Res<SampleGate>) -> bool {
+    gate.0
 }
 
 // ── MergeBuffers ──────────────────────────────────────────────────
 
-/// Per-tick accumulator for values arriving at input ports via cables.
+/// Per-sample accumulator for values arriving at input ports via cables.
 ///
 /// During the Propagate phase, each cable contributes a transformed
-/// value to its target port's buffer. During the Consume phase, these
+/// value to its target port's buffer. During the MergeInputs phase, these
 /// contributions are merged according to the port's [`MergePolicy`](crate::MergePolicy).
 #[derive(Resource, Default, Debug)]
 pub struct MergeBuffers {
@@ -107,9 +186,9 @@ pub struct TickNow {
 
 /// Cached ordering of cable entities for deterministic propagation.
 ///
-/// Cables are ordered by (target_module_id, target_port_name,
-/// source_module_id, source_port_name) so that propagation is
-/// deterministic across runs even if entity IDs change.
+/// Cables are ordered by target instance name/port and then source instance
+/// name/port. A final entity tie-break handles invalid raw worlds with
+/// duplicate names without changing valid patch ordering.
 #[derive(Resource, Default, Debug)]
 pub struct PropagationOrder {
     /// Ordered list of cable entities to process during propagation.
@@ -145,24 +224,24 @@ pub fn mark_propagation_order_dirty(world: &mut bevy_ecs::world::World) {
 fn rebuild_propagation_order(
     cable_q: &Query<(Entity, &crate::Cable)>,
     port_q: &Query<(&crate::Port, &bevy_ecs::hierarchy::ChildOf)>,
-    module_q: &Query<&crate::ModuleId>,
+    module_q: &Query<&crate::Module>,
 ) -> Vec<Entity> {
-    let mut entries: Vec<(Entity, crate::ModuleId, String, crate::ModuleId, String)> = cable_q
+    let mut entries: Vec<(Entity, String, String, String, String)> = cable_q
         .iter()
         .filter_map(|(cable_entity, cable)| {
             let (target_port, target_child_of) = port_q.get(cable.target_port).ok()?;
-            let target_module_id = *module_q.get(target_child_of.0).ok()?;
+            let target_module = module_q.get(target_child_of.0).ok()?;
             let target_port_name = target_port.name.as_ref().to_string();
 
             let (source_port, source_child_of) = port_q.get(cable.source_port).ok()?;
-            let source_module_id = *module_q.get(source_child_of.0).ok()?;
+            let source_module = module_q.get(source_child_of.0).ok()?;
             let source_port_name = source_port.name.as_ref().to_string();
 
             Some((
                 cable_entity,
-                target_module_id,
+                target_module.instance_name.clone(),
                 target_port_name,
-                source_module_id,
+                source_module.instance_name.clone(),
                 source_port_name,
             ))
         })
@@ -173,6 +252,7 @@ fn rebuild_propagation_order(
             .then_with(|| a.2.cmp(&b.2))
             .then_with(|| a.3.cmp(&b.3))
             .then_with(|| a.4.cmp(&b.4))
+            .then_with(|| a.0.cmp(&b.0))
     });
 
     entries.into_iter().map(|(e, ..)| e).collect()
@@ -189,7 +269,7 @@ fn rebuild_propagation_order(
 pub(crate) fn rebuild_propagation_order_system(
     cable_q: Query<(Entity, &crate::Cable)>,
     port_q: Query<(&crate::Port, &bevy_ecs::hierarchy::ChildOf)>,
-    module_q: Query<&crate::ModuleId>,
+    module_q: Query<&crate::Module>,
     mut order: ResMut<PropagationOrder>,
     mut dirty: ResMut<PropagationOrderDirty>,
     mut merge_buffers: ResMut<MergeBuffers>,
@@ -252,7 +332,7 @@ pub(crate) fn propagate_cables_system(
 
 /// Consumes merge buffers and writes merged values to input ports.
 ///
-/// Runs in [`TickPhase::Consume`]. For each input port with one or
+/// Runs in [`TickPhase::MergeInputs`]. For each input port with one or
 /// more contributions: applies the port's [`MergePolicy`](crate::MergePolicy)
 /// across the contributions and writes the result to
 /// [`CurrentValue`](crate::CurrentValue). Ports with zero
@@ -410,8 +490,9 @@ pub(crate) fn apply_merge(policy: crate::MergePolicy, values: &[crate::Value]) -
 /// Computes a topological ordering of modules based on cable connections.
 ///
 /// Returns `Err(PatchError::FeedbackCycle)` if a cycle is detected.
-/// Tie-breaks within the same topological level by
-/// [`ModuleId`](crate::ModuleId) (ascending).
+/// Tie-breaks within the same topological level by module instance name
+/// (ascending), with the entity as a deterministic fallback for duplicate
+/// names in raw worlds.
 ///
 /// # Arguments
 ///
@@ -453,15 +534,18 @@ pub fn compute_tick_order(
         *in_degree.entry(target_module).or_insert(0) += 1;
     }
 
-    // Map entity -> ModuleId for tie-breaking.
-    let module_ids: HashMap<Entity, crate::ModuleId> =
-        modules.iter().map(|(e, _, id)| (*e, **id)).collect();
+    // Kahn's algorithm with instance-name tie-breaking. ModuleId remains in
+    // the public function signature and continues to identify instances, but
+    // it is not an observable ordering key.
+    let module_names: HashMap<Entity, String> = modules
+        .iter()
+        .map(|(e, module, _)| (*e, module.instance_name.clone()))
+        .collect();
 
-    // Kahn's algorithm with ModuleId tie-breaking via BinaryHeap<Reverse<...>>.
-    let mut queue: BinaryHeap<Reverse<(crate::ModuleId, Entity)>> = in_degree
+    let mut queue: BinaryHeap<Reverse<(String, Entity)>> = in_degree
         .iter()
         .filter(|(_, deg)| **deg == 0)
-        .map(|(entity, _)| Reverse((module_ids[entity], *entity)))
+        .map(|(entity, _)| Reverse((module_names[entity].clone(), *entity)))
         .collect();
 
     let mut result = Vec::with_capacity(modules.len());
@@ -473,7 +557,7 @@ pub fn compute_tick_order(
                 let deg = in_degree.get_mut(&dep).expect("known module");
                 *deg -= 1;
                 if *deg == 0 {
-                    queue.push(Reverse((module_ids[&dep], dep)));
+                    queue.push(Reverse((module_names[&dep].clone(), dep)));
                 }
             }
         }
@@ -1020,17 +1104,22 @@ mod tests {
 
         let order = compute_tick_order(&modules_ref, &cables_ref, &ports_ref).unwrap();
 
-        // All modules should be present, sorted by ModuleId.
+        // All modules should be present, sorted by instance name.
         assert_eq!(order.len(), 3);
 
-        // Verify sorted by ModuleId.
-        let ids: Vec<ModuleId> = order
+        // Verify sorted by instance name rather than ModuleId.
+        let names: Vec<String> = order
             .iter()
-            .map(|&e| *world.entity(e).get::<ModuleId>().unwrap())
+            .map(|&e| {
+                world
+                    .entity(e)
+                    .get::<Module>()
+                    .unwrap()
+                    .instance_name
+                    .clone()
+            })
             .collect();
-        let mut sorted_ids = ids.clone();
-        sorted_ids.sort();
-        assert_eq!(ids, sorted_ids, "modules should be in ModuleId order");
+        assert_eq!(names, vec!["a", "b", "c"]);
     }
 
     #[test]

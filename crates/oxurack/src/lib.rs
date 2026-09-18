@@ -8,11 +8,11 @@ use std::any::TypeId;
 use std::collections::HashMap;
 use std::path::Path;
 use std::time::Duration;
+use std::time::Instant;
 
 use bevy_app::prelude::{App, FixedUpdate};
-use bevy_ecs::prelude::Resource;
 use bevy_ecs::schedule::ScheduleLabel;
-use bevy_time::prelude::{Fixed, Time};
+use bevy_time::prelude::{Fixed, Real, Time, Virtual};
 
 // ── Re-exports from oxurack-graph (feature-gated) ──────────────────
 #[cfg(feature = "graph")]
@@ -25,7 +25,9 @@ pub use oxurack_graph;
 
 pub use oxurack_core::OxurackModule as Module;
 
-pub use oxurack_core::{CoreError, CorePlugin, CorePluginFixed, PatchHandle, Scale};
+pub use oxurack_core::{
+    CoreError, CorePlugin, CorePluginFixed, PatchHandle, SampleTime, Scale, SimulationRunning,
+};
 
 pub use oxurack_core::{
     CableConfig, CableTransform, ModuleConfig, ParameterValue, Patch, Value, ValueKind,
@@ -40,12 +42,14 @@ pub use oxurack_core::{
 // module-author internals. Module crates import them directly from
 // oxurack_core, not from the user-facing oxurack surface.
 
-/// Whether the simulation tick loop is running.
-///
-/// Module tick systems (clock, LFO, etc.) should early-return when
-/// this is `false`. Defaults to `false` on construction.
-#[derive(Resource, Default, Debug, Clone, Copy, PartialEq, Eq)]
-pub struct SimulationRunning(pub bool);
+/// The driver that owns sample execution for a rack.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SimulationDriver {
+    /// Bevy's live fixed-time loop owns sample execution.
+    Live,
+    /// Explicit calls to [`Oxurack::advance_samples`] own sample execution.
+    Manual,
+}
 
 /// The rack. Install modules, load patches, power on, play.
 ///
@@ -56,6 +60,7 @@ pub struct SimulationRunning(pub bool);
 pub struct Oxurack {
     app: App,
     installed_modules: HashMap<oxurack_core::ModuleKind, TypeId>,
+    driver: SimulationDriver,
 }
 
 impl Oxurack {
@@ -73,11 +78,16 @@ impl Oxurack {
             .resource_mut::<Time<Fixed>>()
             .set_timestep(Duration::from_millis(1));
 
-        app.init_resource::<SimulationRunning>();
+        app.world_mut().insert_resource(SimulationRunning(false));
+        app.world_mut().resource_mut::<Time<Virtual>>().pause();
+        app.world_mut()
+            .resource_mut::<Time<Fixed>>()
+            .discard_overstep(Duration::MAX);
 
         Self {
             app,
             installed_modules: HashMap::new(),
+            driver: SimulationDriver::Live,
         }
     }
 
@@ -204,6 +214,120 @@ impl Oxurack {
         Ok(())
     }
 
+    /// Returns the driver currently responsible for sample execution.
+    pub fn driver_mode(&self) -> SimulationDriver {
+        self.driver
+    }
+
+    /// Selects the driver responsible for future samples.
+    ///
+    /// Switching to manual mode pauses virtual time and discards pending
+    /// fixed overstep. Switching back to live mode rebases real time while
+    /// virtual time is paused, then resumes it only when the rack is running.
+    pub fn set_driver_mode(&mut self, driver: SimulationDriver) -> &mut Self {
+        if self.driver == driver {
+            if driver == SimulationDriver::Live {
+                self.rebase_live_time();
+            }
+            return self;
+        }
+
+        self.discard_fixed_overstep();
+        self.app.world_mut().resource_mut::<Time<Virtual>>().pause();
+
+        if driver == SimulationDriver::Live {
+            self.rebase_live_time();
+            if self.is_running() {
+                self.app
+                    .world_mut()
+                    .resource_mut::<Time<Virtual>>()
+                    .unpause();
+            }
+        }
+
+        self.driver = driver;
+        self
+    }
+
+    /// Starts the rack without resetting module state or sample time.
+    pub fn start(&mut self) -> &mut Self {
+        self.app.world_mut().resource_mut::<SimulationRunning>().0 = true;
+
+        self.rebase_live_time();
+        if self.driver == SimulationDriver::Live {
+            self.app
+                .world_mut()
+                .resource_mut::<Time<Virtual>>()
+                .unpause();
+        }
+        self
+    }
+
+    /// Stops the rack without resetting module state or sample time.
+    pub fn stop(&mut self) -> &mut Self {
+        self.app.world_mut().resource_mut::<SimulationRunning>().0 = false;
+        self.app.world_mut().resource_mut::<Time<Virtual>>().pause();
+        self.discard_fixed_overstep();
+        self.rebase_live_time();
+        self
+    }
+
+    /// Returns a copy of the rack's authoritative sample clock.
+    pub fn sample_time(&self) -> SampleTime {
+        *self.app.world().resource::<SampleTime>()
+    }
+
+    /// Advances exactly `count` samples under the manual driver.
+    ///
+    /// Returns zero without changing state when the rack is stopped or the
+    /// requested count is zero. A live rack returns
+    /// [`CoreError::ManualSampleRequiresManualDriver`] without mutation.
+    pub fn advance_samples(&mut self, count: u64) -> Result<u64, CoreError> {
+        if self.driver != SimulationDriver::Manual {
+            return Err(CoreError::ManualSampleRequiresManualDriver);
+        }
+        if count == 0 || !self.is_running() {
+            return Ok(0);
+        }
+
+        for _ in 0..count {
+            let world = self.app.world_mut();
+            world
+                .resource_mut::<Time<Virtual>>()
+                .advance_by(SampleTime::period());
+            world
+                .resource_mut::<Time<Fixed>>()
+                .advance_by(SampleTime::period());
+
+            let fixed_time = world.resource::<Time<Fixed>>().as_generic();
+            *world.resource_mut::<Time>() = fixed_time;
+            world.run_schedule(FixedUpdate);
+
+            let virtual_time = world.resource::<Time<Virtual>>().as_generic();
+            *world.resource_mut::<Time>() = virtual_time;
+        }
+
+        Ok(count)
+    }
+
+    fn is_running(&self) -> bool {
+        self.app.world().resource::<SimulationRunning>().0
+    }
+
+    fn discard_fixed_overstep(&mut self) {
+        self.app
+            .world_mut()
+            .resource_mut::<Time<Fixed>>()
+            .discard_overstep(Duration::MAX);
+    }
+
+    fn rebase_live_time(&mut self) {
+        self.app
+            .world_mut()
+            .resource_mut::<Time<Real>>()
+            .update_with_instant(Instant::now());
+    }
+
     /// Runs a single app update cycle.
     ///
     /// In fixed-timestep mode, this advances `Time<Fixed>` and may
@@ -214,6 +338,10 @@ impl Oxurack {
     }
 
     /// Consume the rack and return the underlying Bevy [`App`].
+    ///
+    /// The caller takes responsibility for preserving the shared
+    /// [`SimulationRunning`] state and named [`TickPhase`] membership after
+    /// ownership transfers to Bevy.
     pub fn into_app(self) -> App {
         self.app
     }
@@ -239,6 +367,7 @@ impl Default for Oxurack {
 mod tests {
     use super::*;
     use bevy_ecs::prelude::{Component, Entity, Query, ResMut, Resource, With};
+    use bevy_ecs::schedule::IntoScheduleConfigs;
     use oxurack_core::{
         CableConfig, CoreError, MergePolicy, ModuleConfig, ModuleRegistry, OxurackModule,
         ParameterGetter, ParameterRegistry, ParameterSchema, ParameterSetter, ParameterValue,
@@ -473,7 +602,7 @@ mod tests {
         fn register_systems(app: &mut App, schedule: bevy_ecs::schedule::InternedScheduleLabel) {
             app.init_resource::<LiveHookCalls>()
                 .init_resource::<LiveSystemRuns>()
-                .add_systems(schedule, live_behavior_system);
+                .add_systems(schedule, live_behavior_system.in_set(TickPhase::Produce));
             app.world_mut().resource_mut::<LiveHookCalls>().0 += 1;
         }
 
@@ -512,6 +641,7 @@ mod tests {
         rack.install::<LiveBehaviorCounter>();
         rack.load_patch(&fixture)
             .expect("behavior fixture should load through the public path");
+        rack.start();
 
         let handle = rack.world().resource::<PatchHandle>().clone();
         let alpha = handle.modules["alpha"];
@@ -590,6 +720,62 @@ mod tests {
             Duration::from_millis(1),
             "Time<Fixed> should be exactly 1 ms"
         );
+    }
+
+    #[test]
+    fn test_driver_transitions_discard_overstep_without_catch_up() {
+        let mut rack = Oxurack::new();
+        rack.start();
+        rack.world_mut()
+            .resource_mut::<Time<Fixed>>()
+            .accumulate_overstep(Duration::from_millis(5));
+
+        rack.set_driver_mode(SimulationDriver::Manual);
+        assert_eq!(rack.driver_mode(), SimulationDriver::Manual);
+        assert_eq!(
+            rack.world().resource::<Time<Fixed>>().overstep(),
+            Duration::ZERO
+        );
+        assert!(rack.world().resource::<Time<Virtual>>().is_paused());
+
+        assert_eq!(
+            rack.advance_samples(1).expect("manual sample should run"),
+            1
+        );
+        assert_eq!(rack.sample_time().completed_samples(), 1);
+        assert_eq!(
+            rack.world().resource::<Time<Virtual>>().elapsed(),
+            Duration::from_millis(1)
+        );
+        assert_eq!(
+            rack.world().resource::<Time<Fixed>>().elapsed(),
+            Duration::from_millis(1)
+        );
+
+        rack.set_driver_mode(SimulationDriver::Live);
+        assert_eq!(rack.driver_mode(), SimulationDriver::Live);
+        assert_eq!(
+            rack.world().resource::<Time<Fixed>>().overstep(),
+            Duration::ZERO
+        );
+        assert!(!rack.world().resource::<Time<Virtual>>().is_paused());
+
+        rack.world_mut()
+            .resource_mut::<Time<Fixed>>()
+            .accumulate_overstep(Duration::from_millis(5));
+        rack.stop();
+        assert_eq!(
+            rack.world().resource::<Time<Fixed>>().overstep(),
+            Duration::ZERO
+        );
+        assert!(rack.world().resource::<Time<Virtual>>().is_paused());
+        rack.start();
+        assert_eq!(
+            rack.world().resource::<Time<Fixed>>().overstep(),
+            Duration::ZERO
+        );
+        assert!(!rack.world().resource::<Time<Virtual>>().is_paused());
+        assert_eq!(rack.sample_time().completed_samples(), 1);
     }
 
     #[test]
@@ -772,6 +958,7 @@ mod tests {
         let path = save_patch_to_temp(&two_module_patch(), "oxurack_test_umbrella_tick.ron");
         oxa.load_patch(&path).expect("load should succeed");
         let _ = std::fs::remove_file(&path);
+        oxa.start();
 
         let handle = oxa.world().get_resource::<PatchHandle>().unwrap().clone();
         let gen_entity = handle.modules["gen_1"];

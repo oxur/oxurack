@@ -64,8 +64,8 @@ pub use value::{MidiMessage, Value, ValueKind};
 // Phase 2
 pub use rng::{derive_module_rng, derive_seed};
 pub use tick::{
-    MergeBuffers, PropagationOrder, PropagationOrderDirty, TickNow, TickOrder, TickPhase,
-    compute_tick_order, mark_propagation_order_dirty,
+    MergeBuffers, PropagationOrder, PropagationOrderDirty, SampleTime, SimulationRunning, TickNow,
+    TickOrder, TickPhase, compute_tick_order, mark_propagation_order_dirty,
 };
 
 // Phase 4
@@ -112,10 +112,12 @@ use bevy_ecs::schedule::{IntoScheduleConfigs, ScheduleLabel};
 ///   [`ParameterRegistry`], and [`ModuleRegistry`] resources.
 /// - Registers the [`TickNow`], [`TransportChanged`], [`MidiInReceived`],
 ///   [`CoreCommand`], and [`PatchLoaded`] messages.
-/// - Configures the [`TickPhase`] system sets in the [`Update`] schedule
-///   as a strict chain: `Produce -> Propagate -> Consume`.
-/// - Adds the propagate and consume systems to [`TickPhase::Propagate`]
-///   and [`TickPhase::Consume`] respectively.
+/// - Configures the [`TickPhase`] system sets in the selected schedule as a
+///   strict `Produce -> Propagate -> MergeInputs -> Consume -> Observe` chain.
+/// - Gates all named sample phases on [`SimulationRunning`], latched once at
+///   sample begin, and publishes [`SampleTime`] around the chain.
+/// - Adds propagation to [`TickPhase::Propagate`] and port merging to
+///   [`TickPhase::MergeInputs`].
 ///
 /// For fixed-timestep simulation (e.g. 1000 Hz), use
 /// [`CorePlugin::fixed()`] which targets [`FixedUpdate`] instead.
@@ -161,11 +163,17 @@ impl Plugin for CorePluginFixed {
 }
 
 fn build_core_plugin(app: &mut App, schedule: impl ScheduleLabel + Clone) {
+    if app.world().get_resource::<SimulationRunning>().is_none() {
+        app.insert_resource(SimulationRunning(true));
+    }
+
     app.init_resource::<CableIndex>()
         .init_resource::<tick::MergeBuffers>()
         .init_resource::<tick::TickOrder>()
         .init_resource::<tick::PropagationOrder>()
         .init_resource::<tick::PropagationOrderDirty>()
+        .init_resource::<tick::SampleTime>()
+        .init_resource::<tick::SampleGate>()
         .init_resource::<ParameterRegistry>()
         .init_resource::<ModuleRegistry>()
         .add_message::<tick::TickNow>()
@@ -185,16 +193,26 @@ fn build_core_plugin(app: &mut App, schedule: impl ScheduleLabel + Clone) {
         .init_resource::<DisplayNameFormatter>()
         .configure_sets(
             schedule.clone(),
-            (TickPhase::Produce, TickPhase::Propagate, TickPhase::Consume).chain(),
+            (
+                TickPhase::Produce,
+                TickPhase::Propagate,
+                TickPhase::MergeInputs,
+                TickPhase::Consume,
+                TickPhase::Observe,
+            )
+                .chain()
+                .run_if(tick::sample_is_running),
         )
         .add_systems(
-            schedule,
+            schedule.clone(),
             (
+                tick::begin_sample_system.before(TickPhase::Produce),
                 tick::rebuild_propagation_order_system
                     .in_set(TickPhase::Propagate)
                     .before(tick::propagate_cables_system),
                 tick::propagate_cables_system.in_set(TickPhase::Propagate),
-                tick::consume_ports_system.in_set(TickPhase::Consume),
+                tick::consume_ports_system.in_set(TickPhase::MergeInputs),
+                tick::finalize_sample_system.after(TickPhase::Observe),
             ),
         );
 
@@ -210,6 +228,44 @@ fn build_core_plugin(app: &mut App, schedule: impl ScheduleLabel + Clone) {
 mod tests {
     use super::*;
     use bevy_app::App;
+    use bevy_ecs::prelude::{ResMut, Resource};
+    use bevy_ecs::schedule::IntoScheduleConfigs;
+
+    #[derive(Resource, Default, Debug, PartialEq, Eq)]
+    struct PhaseCounts([u32; 5]);
+
+    fn count_produce(mut counts: ResMut<PhaseCounts>) {
+        counts.0[0] += 1;
+    }
+
+    fn count_propagate(mut counts: ResMut<PhaseCounts>) {
+        counts.0[1] += 1;
+    }
+
+    fn count_merge(mut counts: ResMut<PhaseCounts>) {
+        counts.0[2] += 1;
+    }
+
+    fn count_consume(mut counts: ResMut<PhaseCounts>) {
+        counts.0[3] += 1;
+    }
+
+    fn count_observe(mut counts: ResMut<PhaseCounts>) {
+        counts.0[4] += 1;
+    }
+
+    fn add_phase_counters(app: &mut App, schedule: impl ScheduleLabel + Clone) {
+        app.init_resource::<PhaseCounts>().add_systems(
+            schedule,
+            (
+                count_produce.in_set(TickPhase::Produce),
+                count_propagate.in_set(TickPhase::Propagate),
+                count_merge.in_set(TickPhase::MergeInputs),
+                count_consume.in_set(TickPhase::Consume),
+                count_observe.in_set(TickPhase::Observe),
+            ),
+        );
+    }
 
     #[test]
     fn test_core_plugin_does_not_panic() {
@@ -296,6 +352,53 @@ mod tests {
             world.get_resource::<ModuleRegistry>().is_some(),
             "ModuleRegistry resource should be present after adding CorePlugin"
         );
+    }
+
+    #[test]
+    fn test_core_plugin_runs_five_phases_by_default_and_gates_explicit_false() {
+        let mut app = App::new();
+        app.add_plugins(CorePlugin);
+        add_phase_counters(&mut app, Update);
+
+        app.update();
+        assert_eq!(app.world().resource::<PhaseCounts>().0, [1, 1, 1, 1, 1]);
+        assert_eq!(app.world().resource::<SampleTime>().last_index(), Some(0));
+        assert_eq!(app.world().resource::<SampleTime>().completed_samples(), 1);
+
+        let mut stopped = App::new();
+        stopped.insert_resource(SimulationRunning(false));
+        stopped.add_plugins(CorePlugin);
+        add_phase_counters(&mut stopped, Update);
+        stopped.update();
+        assert_eq!(stopped.world().resource::<PhaseCounts>().0, [0, 0, 0, 0, 0]);
+        assert_eq!(
+            *stopped.world().resource::<SampleTime>(),
+            SampleTime::default()
+        );
+
+        stopped.world_mut().resource_mut::<SimulationRunning>().0 = true;
+        stopped.update();
+        assert_eq!(stopped.world().resource::<PhaseCounts>().0, [1, 1, 1, 1, 1]);
+    }
+
+    #[test]
+    fn test_core_plugin_fixed_runs_named_phases_and_latches_stop() {
+        fn stop_in_produce(mut running: ResMut<SimulationRunning>) {
+            running.0 = false;
+        }
+
+        let mut app = App::new();
+        app.add_plugins(CorePlugin::fixed());
+        add_phase_counters(&mut app, FixedUpdate);
+        app.add_systems(FixedUpdate, stop_in_produce.in_set(TickPhase::Produce));
+
+        app.world_mut().run_schedule(FixedUpdate);
+        assert_eq!(app.world().resource::<PhaseCounts>().0, [1, 1, 1, 1, 1]);
+        assert_eq!(app.world().resource::<SampleTime>().completed_samples(), 1);
+
+        app.world_mut().run_schedule(FixedUpdate);
+        assert_eq!(app.world().resource::<PhaseCounts>().0, [1, 1, 1, 1, 1]);
+        assert_eq!(app.world().resource::<SampleTime>().completed_samples(), 1);
     }
 
     #[cfg(feature = "rt-bridge")]

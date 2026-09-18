@@ -45,6 +45,10 @@ pub enum CoreError {
         kind: String,
     },
 
+    /// A manual sample was requested while the rack uses its live driver.
+    #[error("manual samples require the manual simulation driver")]
+    ManualSampleRequiresManualDriver,
+
     /// No module instance with the given name exists in the loaded patch.
     #[error("unknown module instance: '{0}'")]
     UnknownModule(String),

@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use bevy_app::{App, FixedUpdate, Update};
 use bevy_ecs::prelude::{Component, Entity, Query, ResMut, Resource, With, World};
-use bevy_ecs::schedule::InternedScheduleLabel;
+use bevy_ecs::schedule::{InternedScheduleLabel, IntoScheduleConfigs};
 use oxurack::{CoreError, Oxurack, ParameterValue, PatchHandle};
 use oxurack_core::{
     ModuleConfig, ModuleKind, ModuleRegistry, OxurackModule, ParameterGetter, ParameterRegistry,
@@ -115,8 +115,10 @@ impl OxurackModule for BehaviorCounter {
     }
 
     fn register_systems(app: &mut App, schedule: InternedScheduleLabel) {
-        app.init_resource::<HookCalls>()
-            .add_systems(schedule, behavior_counter_system);
+        app.init_resource::<HookCalls>().add_systems(
+            schedule,
+            behavior_counter_system.in_set(oxurack::TickPhase::Produce),
+        );
     }
 
     fn parameter_setters() -> &'static [(&'static str, ParameterSetter)] {
@@ -174,8 +176,10 @@ impl OxurackModule for ConflictingCounter {
     }
 
     fn register_systems(app: &mut App, schedule: InternedScheduleLabel) {
-        app.init_resource::<ConflictingHookCalls>()
-            .add_systems(schedule, conflicting_counter_system);
+        app.init_resource::<ConflictingHookCalls>().add_systems(
+            schedule,
+            conflicting_counter_system.in_set(oxurack::TickPhase::Produce),
+        );
     }
 
     fn parameter_setters() -> &'static [(&'static str, ParameterSetter)] {
@@ -280,6 +284,7 @@ fn installed_systems_execute_each_loaded_instance_on_fixed_update() {
     rack.install::<BehaviorCounter>();
     rack.load_patch(&fixture_path())
         .expect("behavior fixture should load");
+    rack.start();
     let mut app = rack.into_app();
     add_update_schedule(&mut app);
     let handle = app.world().resource::<PatchHandle>().clone();
@@ -320,6 +325,7 @@ fn same_type_reinstall_before_edit_keeps_system_single_and_accessors_registered(
     rack.install::<BehaviorCounter>();
     rack.load_patch(&fixture_path())
         .expect("behavior fixture should load");
+    rack.start();
     rack.try_install::<BehaviorCounter>()
         .expect("same type reinstall should be idempotent");
 
@@ -355,6 +361,7 @@ fn conflicting_type_returns_before_mutation_and_original_behavior_survives() {
 
     rack.load_patch(&fixture_path())
         .expect("original registration should still load the fixture");
+    rack.start();
     let mut app = rack.into_app();
     add_update_schedule(&mut app);
     let handle = app.world().resource::<PatchHandle>().clone();
@@ -395,6 +402,8 @@ fn installations_are_rack_local_and_legacy_modules_still_load() {
     second
         .load_patch(&fixture_path())
         .expect("second fixture should load");
+    first.start();
+    second.start();
 
     let mut first_app = first.into_app();
     let mut second_app = second.into_app();
