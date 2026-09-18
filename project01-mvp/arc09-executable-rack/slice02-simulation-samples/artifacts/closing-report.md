@@ -19,8 +19,7 @@ revision is `8a73d33ad17cfad849db34d10b672fa4d894a79a`:
 
 The source worktree was clean for the final validation pass. The planning
 worktree was at `bc641325f2d48c56516cfe7b3a202e4f5e19c539` at intake. The
-planning evidence commit is recorded after this report is committed; this
-report will receive a follow-up metadata-only commit with that hash.
+planning evidence commit is `80ddf0ee6ce3f8cf5d3a32a814b3f15a5aa3c8c4`.
 
 The source diff stayed within the exact allowlist:
 
