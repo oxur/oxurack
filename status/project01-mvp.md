@@ -1,11 +1,11 @@
 # project01-mvp — status
 
-> Current: Three contributors, Expedited Mode. Arc09/slice01 remains open:
-> CRC verified I-01/I-03/I-04 at d43078e; I-02/I-05/I-06 await correction.
-> [Directive05](../project01-mvp/cdc-directive05.md) authorized the exact
-> test/checker repairs; CRC has issued [iteration02](../project01-mvp/arc09-executable-rack/slice01-module-behavior-installation/cc-prompt-iteration02.md)
-> for CC relay. TM/MIDI then workbench remains
-> the priority; earlier handoff/status entries below are historical.
+> Current: Three contributors, Expedited Mode. Arc09/slice01 is closed.
+> Arc09/slice02 source `8a73d33` has a CRC partial review: S-01/S-02 behavior
+> reproduced; S-03–S-06 remain open for stronger transition/ordering proof and
+> canonical close evidence. [Iteration01](../project01-mvp/arc09-executable-rack/slice02-simulation-samples/cc-prompt-iteration01.md)
+> is the current CC assignment. Slice03 seed work remains held; TM/MIDI then
+> Clock/LFO/Scope remain the product priority. Earlier entries below are history.
 
 **Best estimate: approximately 45% of the reconstructed MVP implemented**
 (plausible range **35–55%**). The infrastructure is much further along than the
@@ -462,3 +462,20 @@ current CC prompt relative to project01-mvp:
 `arc09-executable-rack/slice02-simulation-samples/cc-prompt.md`.
 Arc09/slice03 seed handoff remains held until slice02 review; arc10 TM/MIDI,
 arc11 Clock/LFO/Scope, Q-02/Q-03 coverage and hardware gates remain assigned.
+
+## CRC slice02 partial review and iteration01 — current, 2026-09-17
+
+CC source `1a22066`/`8a73d33` and planning evidence `80ddf0e`/`85ea14d`
+provide passing sample traces, principal Rust gates, host retries and preserved
+restricted failures. CRC independently reran focused sample/core tests,
+all-targets Clippy, formatting and diff check, and inspected source/planning
+diffs. S-01/S-02 behavior reproduces. S-04's transition test does not run the
+next live update, S-05's ordering fixture does not force numeric ID and name
+order to disagree, and S-06's close report is under `artifacts/` while the
+green verifier checks slice01 only. S-03 needs fixed-core false and stopped-live
+negatives. All six ledger rows remain open pending a clean-candidate review.
+
+CRC's [partial verification](../project01-mvp/arc09-executable-rack/slice02-simulation-samples/crc-verification.md)
+records the findings. Relay the current CC assignment relative to project01-mvp:
+`arc09-executable-rack/slice02-simulation-samples/cc-prompt-iteration01.md`.
+No arc-plan amendment or slice03 opening is authorized by this partial review.

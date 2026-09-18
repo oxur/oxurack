@@ -1,6 +1,6 @@
 # Slice02 — deterministic simulation samples
 
-Version 1.0, 2026-09-17. Status: open; initial CC assignment issued.
+Version 1.1, 2026-09-17. Status: open; corrective iteration01 issued after CRC partial review.
 Workflow: CDC design / CRC review / CC implementation, Expedited Mode.
 Source predecessor: clean `6a31c0f99241eccb0dcf0f23e9f64ac9dec2f94a` in
 `.worktrees/codex-oxurack-module-behavior-installation`; no implementation of
@@ -140,15 +140,27 @@ with actual exits and logs. No ignored test, warning suppression or target waive
 
 ## Assignment history
 
-Current assignment: `arc09-executable-rack/slice02-simulation-samples/cc-prompt.md`
+Current assignment: `arc09-executable-rack/slice02-simulation-samples/cc-prompt-iteration01.md`
 
 | Date | Prompt | Predecessor | Reason | Disposition |
 | --- | --- | --- | --- | --- |
-| 2026-09-17 | cc-prompt.md | accepted slice01 / CDC contract §2 | First exact-sample and phase implementation | CC proposed-done at source `8a73d33`; CRC reproduction pending; no acceptance or advancement |
+| 2026-09-17 | cc-prompt.md | accepted slice01 / CDC contract §2 | First exact-sample and phase implementation | CRC partial review: S-01/S-02 behavior reproduced; S-03–S-06 remain open at source `8a73d33` |
+| 2026-09-17 | cc-prompt-iteration01.md | CRC partial review at `8a73d33` / planning `85ea14d` | Distinguishing transition and ordering tests, fixed-core negative, current-slice checker and canonical CC close record | Active CC assignment; slice03 held |
 
 Executed corrective refinements: 0 of 5. Preserve this prompt and every later
 iteration. CC proposes completion; CRC independently reviews. Arc09/slice03
 stays held until this slice closes.
+
+## Iteration01 author readiness — CRC
+
+| Check | Result / pointer |
+| --- | --- |
+| Source-grounded | Ready: CRC inspected the eight-file source diff at `8a73d33`, current test bodies, ModuleId derivation and Bevy 0.18.1 `FixedTimesteps` update path. |
+| Design-complete | Ready: repair only proof and close-set placement within the existing CDC §2 contract; production behavior, public API, seed and scope changes remain held for review. |
+| Guideline-applied | Ready: [iteration01](cc-prompt-iteration01.md#source-reconnaissance-and-applied-guidance) maps Rust API/ownership/error and testing rules to specific test homes and oracles. |
+| Executable | Ready: the five-step recipe uses inline rack tests where `world` and `step` remain accessible, integration tests for RON traces, and a bounded slice02 checker. |
+| Falsifiable | Ready: next live 0/1 ms updates must show no catch-up; opposing name/ID orders force numeric and lexical implementations to disagree; misplaced/stale planning negatives exercise the current-slice predicate. |
+| Coherent and portable | Ready: required-full/section manifest, conditional Bevy read, pinned state, intake/readback, explicit files, complete matrix, scoped commits and CRC return are in the prompt. |
 
 ## Author readiness — CRC
 
@@ -166,3 +178,6 @@ stays held until this slice closes.
 - v1.0 — 2026-09-17: CRC opened the next approved arc09 slice after independent
   slice01 close, with explicit 1 ms sample, phase, running, driver and ordering
   contracts, six ledger rows and guide-authored CC assignment.
+- v1.1 — 2026-09-17: CRC's independent partial review retained all six rows
+  open and issued iteration01 for discriminating transition/ordering tests and
+  canonical current-slice evidence, without changing CDC §2 or arc scope.

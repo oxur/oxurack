@@ -1,8 +1,10 @@
 # Slice02 — simulation samples ledger
 
-Opened 2026-09-17 before CC at source `6a31c0f`; six rows, all open. A CC
-closing report is proposed-done only. CRC must reproduce every row and check
-the bubble-up before this slice closes.
+Opened 2026-09-17 before CC at source `6a31c0f`; six rows, all open. CC's
+initial proposed-done packet at `8a73d33` received a
+[partial CRC review](crc-verification.md): S-01/S-02 behavior reproduced,
+S-03–S-06 require iteration01 evidence repair, and no row is yet accepted.
+CRC must reproduce every row and check the bubble-up before this slice closes.
 
 | ID | Criterion | Verify | Significance | Origin | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
