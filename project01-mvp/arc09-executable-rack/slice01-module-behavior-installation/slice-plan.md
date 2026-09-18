@@ -1,6 +1,6 @@
 # Slice01 — module behavior installation
 
-Version 1.1, 2026-09-17. Status: open; CRC preparing detailed replacement under directive04.
+Version 1.2, 2026-09-17. Status: open; detailed replacement ready for CC relay under directive04.
 Workflow: CDC design / CRC independent review / CC implementation; Expedited Mode.
 Source baseline: `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` (main).
 Planning predecessor: `390d2aa2c3449f8a6e4bbaff3df6c64d821ce4ea`; authority is the
@@ -115,14 +115,14 @@ verification. No close or verifier placeholders at opening.
 
 ## Assignment history
 
-Current assignment: `arc09-executable-rack/slice01-module-behavior-installation/cc-prompt.md` — held for relay/execution pending
-CRC authoring under [directive04](../../cdc-directive04.md). No replacement has been
-issued; its intended next-unused path is cc-prompt-iteration01.md. Read the current
-authoring amendment below before acting on the historical initial assignment.
+Current assignment: [cc-prompt-iteration01.md](cc-prompt-iteration01.md), CRC's
+preserved replacement under [directive04](../../cdc-directive04.md), ready for
+Duncan to relay to CC. The original `cc-prompt.md` remains held and unexecuted.
 
 | Date | Prompt | Predecessor | Reason | Disposition |
 | --- | --- | --- | --- | --- |
 | 2026-09-17 | cc-prompt.md | none | CDC response to escalation03; first TM prerequisite implementation | held by directive04; replacement preparation assigned to CRC |
+| 2026-09-17 | cc-prompt-iteration01.md | cc-prompt.md | Newly installed guide requires source-grounded recipe, explicit test oracles and bounded CC intake | issued for relay; original unexecuted, not an executed corrective pass |
 
 Executed refinements: 0 of 5. Preserve later cc-prompt-iterationNN.md files.
 CC owns execution; CRC checks exact commits, reproduces I-01–I-06 and records
@@ -137,12 +137,39 @@ design. New arc, altered contract or unresolved failure returns through Duncan.
 ## Authoring amendment — 2026-09-17
 
 [Directive04](../../cdc-directive04.md) authorizes CRC to expand the existing design
-using the installed implementation-prompt-authoring guide/template. CRC owns source
-reconnaissance, applied domain guidance, concrete implementation/test recipes and
-a six-part readiness record here before issuing the replacement. This is pending
-author work, not a completed readiness claim. Initial prompt/design preserved;
-I-01–I-06, eight source paths and all validation requirements remain unchanged.
-CRC must reconcile any intervening execution and record actual refinement counts.
+using the installed implementation-prompt-authoring guide/template. CRC inspected
+clean source `a7ce6e61536ca96b6aeb2227ee06e430ed8df162`, the locked Bevy 0.18.1
+schedule source, the eleven-diagnostic rustdoc log, and the directive03/04 packet.
+No intervening CC execution packet or source change was present. The replacement's
+“Inspected source and applied engineering guidance” records the actual symbols,
+Rust guide chapters/strengths, rationale and checks. Its “Binding contract and
+recommended implementation sequence” and “Behavioral fixture and falsifiable
+oracles” supply the ordered route and exact positive/negative observations.
+Initial prompt/design are preserved; I-01–I-06, eight source paths and all
+validation requirements remain unchanged. Executed refinements remain 0 of 5.
+
+CRC author readiness self-review, with pointers into the issued replacement:
+
+| Check | Result and evidence pointer |
+| --- | --- |
+| Source-grounded | Ready. “Inspected source and applied engineering guidance” identifies constructor/install/patch paths, parameter registry, CorePluginFixed, feature boundary and locked Bevy APIs; “Required reading and intake” makes CC recheck the pin. |
+| Design-complete | Ready. “Binding contract and recommended implementation sequence” fixes public signatures, per-rack identity, collision ordering, idempotence, hook-panic and legacy convenience policy; private helper names alone remain discretionary. |
+| Guideline-applied | Ready. “Inspected source and applied engineering guidance” maps Rust trait/borrow/error/API/docs rules and testing guidance to decisions, rationale and proof, with exact chapters and strengths; the manifest assigns CC the bounded relevant sections. |
+| Executable | Ready. The ordered seven-step recipe names the eight approved paths and concrete symbols, including borrow end before App hook; its pseudocode is expressly uncompiled, and the source allowlist plus return contract is explicit. |
+| Falsifiable | Ready. “Behavioral fixture and falsifiable oracles” derives the `(0,0) → (2,3) → (4,6) → (8,9)` two-instance trace, conflict preservation, independent racks, legacy module and feature matrix; “Validation, evidence, commits and return” retains every gate. |
+| Coherent and portable | Ready. “Required reading and intake” gives exact accessible roots, bounded extents, revision/readback and evidence home. The contract and exclusions align with execution-contract §1, directive04, this plan and I-01–I-06; source scope and future slices stay separate. |
+
+These are author checks, not independent CRC acceptance of CC's future work.
+The expected first execution still requires CC's actual readback, implementation,
+tests and proposed-done evidence before CRC reproduction.
+The preserved planning verifier currently asserts that `cc-prompt.md` is the
+current assignment; it therefore reports `Assignment mismatch` after this
+authorized replacement. Its historical source stays intact. CC must capture that
+result as a known structural-check limitation, and I-05 cannot close until
+CRC/CDC explicitly dispositions it under the existing gate. It does not block
+the unaffected source implementation or behavior tests.
 
 - v1.1 — 2026-09-17: Operator requested guide-based CRC prompt authoring; hold the
   earlier handoff for a detailed preserved replacement without changing design scope.
+- v1.2 — 2026-09-17: Issued preserved iteration01 replacement with source/guidance
+  reconnaissance and six-part author readiness; the first prompt was not executed.

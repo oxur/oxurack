@@ -292,7 +292,29 @@ Directive03's architecture, successor ownership, criteria and validation still g
 
 | Date | Packet | Predecessor | Status | Affected rows / authority | Next action |
 | --- | --- | --- | --- | --- | --- |
-| 2026-09-17 | cdc-directive04.md | cdc-directive03.md | issued; awaiting CRC acknowledgement | I-01–I-06 remain open; Operator requested improved authoring | CRC investigates source, applies guides, authors preserved replacement and records six readiness results before relay |
+| 2026-09-17 | cdc-directive04.md | cdc-directive03.md | acknowledged by Sofie/CRC at planning `de337fa4ff0833af689bce6dd90efc4aaeabf3f1` and clean source `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` | I-01–I-06 remain open; Operator requested improved authoring | CRC authors preserved iteration01, records six readiness results, then Duncan relays it to CC |
+
+CRC acknowledgement: directive03's architecture and successor routing remain
+binding; directive04 replaces only its instruction to relay the held initial CC
+prompt unchanged. The installed collaboration-framework is version 2.4.0 (newer
+than directive04's 2.3.0 reference); the required authoring guide/template and
+project-management routes are present. No CC execution packet or source change
+exists at this baseline. Current source and planning worktrees are clean before
+CRC's prompt-authoring edits.
 
 - v3.1 — 2026-09-17: Added guide-based CRC authoring assignment and held the earlier
   CC handoff. No behavioral contract, ledger status or acceptance gate changed.
+
+## CRC prompt-authoring return — v3.2, 2026-09-17
+
+Sofie/CRC issued the preserved [arc09/slice01 iteration01 replacement](arc09-executable-rack/slice01-module-behavior-installation/cc-prompt-iteration01.md)
+for Duncan to relay to CC. The original `cc-prompt.md` was never executed and stays
+held; no executed correction pass is consumed (0 of 5). The [slice-plan author
+readiness record](arc09-executable-rack/slice01-module-behavior-installation/slice-plan.md#authoring-amendment--2026-09-17)
+covers source, design, guide application, execution route, test oracles and
+portability. I-01–I-06 remain open for implementation and later independent CRC
+review. Directive04 governs this relay; directive03 and the execution contract
+still govern behavior. No source, acceptance or quality gate changed.
+
+- v3.2 — 2026-09-17: Issued detailed first-execution CC prompt after the
+  guide-based authoring check; retained all six open implementation rows.

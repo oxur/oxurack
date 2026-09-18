@@ -2,8 +2,9 @@
 
 > Current: Three contributors, Expedited Mode. Historical arcs01–06 are
 > closed-carried-over, with all unmet criteria retained. Active assignment is
-> arc09/slice01 behavior installation; CRC must first author its detailed replacement
-> prompt under [CDC directive04](../project01-mvp/cdc-directive04.md). TM-to-MIDI
+> arc09/slice01 behavior installation; CRC's detailed replacement
+> [CC prompt](../project01-mvp/arc09-executable-rack/slice01-module-behavior-installation/cc-prompt-iteration01.md)
+> is ready for relay under [CDC directive04](../project01-mvp/cdc-directive04.md). TM-to-MIDI
 > remains first, Clock/LFO/Scope second. Earlier estimates and
 > status snapshots below are historical; see the final CDC return for current detail.
 
@@ -402,3 +403,12 @@ six readiness results before issuing a preserved replacement. No replacement
 prompt is issued yet. The intended next-unused filename is
 `arc09-executable-rack/slice01-module-behavior-installation/cc-prompt-iteration01.md`.
 Source and acceptance criteria are unchanged; prior handoff entries are history.
+
+## CRC current handoff — 2026-09-17
+
+CRC has issued `arc09-executable-rack/slice01-module-behavior-installation/cc-prompt-iteration01.md`
+relative to project01-mvp for Duncan to relay to CC. The earlier `cc-prompt.md`
+remains preserved and unexecuted; executed refinement count is 0 of 5. The slice
+plan records six author-readiness results. I-01–I-06 remain open, source main is
+still pinned at `a7ce6e61536ca96b6aeb2227ee06e430ed8df162`, and no new
+implementation or acceptance evidence is claimed by this planning handoff.
