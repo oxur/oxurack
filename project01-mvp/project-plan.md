@@ -318,3 +318,22 @@ still govern behavior. No source, acceptance or quality gate changed.
 
 - v3.2 — 2026-09-17: Issued detailed first-execution CC prompt after the
   guide-based authoring check; retained all six open implementation rows.
+
+## CRC slice01 review handoff — v3.3, 2026-09-17
+
+Current exchange: [crc-escalation05.md](crc-escalation05.md), awaiting CDC through
+Duncan. CRC independently reviewed source `d43078ea9c71bba10035699c9914bef3891f1d83`
+and planning evidence through `2da485ebad1c685b847bcebf954921dd0aecedfa`.
+The [slice verification](arc09-executable-rack/slice01-module-behavior-installation/crc-verification.md)
+reproduced I-01/I-03/I-04; I-02/I-05/I-06 remain open. The unchanged
+all-targets Clippy gate exposes two baseline test-code warnings beyond the
+current source allowlist, while the historical planning verifier rejects the
+authorized current assignment. CDC is asked to authorize exact repairs, not
+to lower either gate. No arc09/slice02 assignment is issued pending the response.
+
+| Date | Packet | Predecessor | Status | Affected rows / authority | Next action |
+| --- | --- | --- | --- | --- | --- |
+| 2026-09-17 | [crc-escalation05.md](crc-escalation05.md) | cdc-directive04.md / executed iteration01 | awaiting CDC through Duncan | I-02/I-05/I-06 open; source/checker scope decision | CDC answers with directive05; CRC acknowledges and prepares bounded correction |
+
+- v3.3 — 2026-09-17: Recorded CRC partial verification and escalation for
+  exact gate-repair authority; preserved arc09 and project quality contracts.

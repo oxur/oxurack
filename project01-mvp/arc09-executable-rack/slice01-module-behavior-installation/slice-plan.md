@@ -1,6 +1,6 @@
 # Slice01 — module behavior installation
 
-Version 1.2, 2026-09-17. Status: open; detailed replacement ready for CC relay under directive04.
+Version 1.3, 2026-09-17. Status: open; CRC partial review, escalation05 awaiting CDC.
 Workflow: CDC design / CRC independent review / CC implementation; Expedited Mode.
 Source baseline: `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` (main).
 Planning predecessor: `390d2aa2c3449f8a6e4bbaff3df6c64d821ce4ea`; authority is the
@@ -115,14 +115,17 @@ verification. No close or verifier placeholders at opening.
 
 ## Assignment history
 
-Current assignment: [cc-prompt-iteration01.md](cc-prompt-iteration01.md), CRC's
-preserved replacement under [directive04](../../cdc-directive04.md), ready for
-Duncan to relay to CC. The original `cc-prompt.md` remains held and unexecuted.
+Current executed assignment: [cc-prompt-iteration01.md](cc-prompt-iteration01.md),
+CRC's preserved replacement under [directive04](../../cdc-directive04.md).
+CC returned source `d43078e`; [CRC's partial review](crc-verification.md) leaves
+I-02/I-05/I-06 open. [Escalation05](../../crc-escalation05.md) is awaiting CDC
+before another CC assignment. The original `cc-prompt.md` remains held and
+unexecuted.
 
 | Date | Prompt | Predecessor | Reason | Disposition |
 | --- | --- | --- | --- | --- |
 | 2026-09-17 | cc-prompt.md | none | CDC response to escalation03; first TM prerequisite implementation | held by directive04; replacement preparation assigned to CRC |
-| 2026-09-17 | cc-prompt-iteration01.md | cc-prompt.md | Newly installed guide requires source-grounded recipe, explicit test oracles and bounded CC intake | CC proposed-done in source commit `d43078ea9c71bba10035699c9914bef3891f1d83`; planning evidence and CRC review pending; original unexecuted |
+| 2026-09-17 | cc-prompt-iteration01.md | cc-prompt.md | Newly installed guide requires source-grounded recipe, explicit test oracles and bounded CC intake | CC proposed-done at `d43078e`; CRC partial review, original unexecuted |
 
 Executed refinements: 0 of 5. Preserve later cc-prompt-iterationNN.md files.
 CC owns execution; CRC checks exact commits, reproduces I-01–I-06 and records
@@ -173,3 +176,25 @@ the unaffected source implementation or behavior tests.
   earlier handoff for a detailed preserved replacement without changing design scope.
 - v1.2 — 2026-09-17: Issued preserved iteration01 replacement with source/guidance
   reconnaissance and six-part author readiness; the first prompt was not executed.
+
+## CRC review and design handoff — v1.3, 2026-09-17
+
+[CRC verification](crc-verification.md) independently reproduced I-01, I-03
+and I-04 at source `d43078e`. I-02 needs an after-edit live-state reinstall
+test, I-05 has two baseline all-targets Clippy findings and an obsolete
+planning-verifier assignment assertion, and I-06 needs validation-table
+provenance and explicit bubble-up repair. The full gate remains unchanged.
+CRC requests exact source/checker scope from CDC in project-level
+[crc-escalation05.md](../../crc-escalation05.md); no new CC prompt is issued
+until a response. Arc09/slice02 stays held.
+
+| Date | Exchange | Predecessor | Status | Affected rows / next owner |
+| --- | --- | --- | --- | --- |
+| 2026-09-17 | crc-escalation05.md | cdc-directive04.md and executed iteration01 | awaiting CDC through Duncan | I-02/I-05/I-06 open; CDC decides D1–D3, CRC then prepares the next prompt |
+
+Executed corrective refinements remain 0 of 5; iteration01 was the first
+execution of the slice after the held initial prompt. A later executed
+iteration02 would consume the first corrective pass.
+
+- v1.3 — 2026-09-17: Recorded independent partial CRC verdict and design
+  escalation; retained the six-row denominator and all original quality gates.

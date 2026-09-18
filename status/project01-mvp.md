@@ -2,9 +2,10 @@
 
 > Current: Three contributors, Expedited Mode. Historical arcs01–06 are
 > closed-carried-over, with all unmet criteria retained. Active assignment is
-> arc09/slice01 behavior installation; CRC's detailed replacement
-> [CC prompt](../project01-mvp/arc09-executable-rack/slice01-module-behavior-installation/cc-prompt-iteration01.md)
-> is ready for relay under [CDC directive04](../project01-mvp/cdc-directive04.md). TM-to-MIDI
+> arc09/slice01 behavior installation; CC executed the detailed
+> [iteration01 prompt](../project01-mvp/arc09-executable-rack/slice01-module-behavior-installation/cc-prompt-iteration01.md).
+> CRC reproduced three of six rows and sent [escalation05](../project01-mvp/crc-escalation05.md)
+> to CDC for the remaining gate scope. TM-to-MIDI
 > remains first, Clock/LFO/Scope second. Earlier estimates and
 > status snapshots below are historical; see the final CDC return for current detail.
 
@@ -412,3 +413,12 @@ remains preserved and unexecuted; executed refinement count is 0 of 5. The slice
 plan records six author-readiness results. I-01–I-06 remain open, source main is
 still pinned at `a7ce6e61536ca96b6aeb2227ee06e430ed8df162`, and no new
 implementation or acceptance evidence is claimed by this planning handoff.
+
+## CRC partial review — 2026-09-17
+
+At source `d43078ea9c71bba10035699c9914bef3891f1d83`, CRC independently
+reproduced I-01, I-03 and I-04. I-02 needs an after-edit reinstall test, I-05
+needs the unchanged all-targets Clippy and structural planning checks resolved,
+and I-06 needs evidence-provenance repair. Slice01 remains open; arc09/slice02
+is held. Project-level `crc-escalation05.md` is the current Operator relay to
+CDC; earlier status sections above describe historical handoffs.
