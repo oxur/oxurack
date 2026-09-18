@@ -542,12 +542,9 @@ pub fn apply_patch_to_world(
     let mut module_entities: HashMap<String, Entity> = HashMap::new();
     for module_config in &patch.modules {
         let kind = crate::ModuleKind::from(module_config.kind.as_str());
-        let reg = registry.get(&kind).expect("validated");
-        let entity = (reg.spawner)(
-            world,
-            &module_config.instance_name,
-            &module_config.parameters,
-        )?;
+        let context =
+            crate::ModuleSpawnContext::new(patch.master_seed, &module_config.instance_name);
+        let entity = registry.spawn(&kind, world, &context, &module_config.parameters)?;
         module_entities.insert(module_config.instance_name.clone(), entity);
 
         world.write_message(crate::ModuleAdded {

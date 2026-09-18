@@ -28,7 +28,8 @@ pub use oxurack_graph;
 pub use oxurack_core::OxurackModule as Module;
 
 pub use oxurack_core::{
-    CoreError, CorePlugin, CorePluginFixed, PatchHandle, SampleTime, Scale, SimulationRunning,
+    CoreError, CorePlugin, CorePluginFixed, ModuleSpawnContext, PatchHandle, SampleTime, Scale,
+    SimulationRunning,
 };
 
 pub use oxurack_core::{

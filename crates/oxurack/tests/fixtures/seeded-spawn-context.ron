@@ -1,0 +1,29 @@
+(
+    version: "1.0",
+    master_seed: 42,
+    bpm: 120.0,
+    modules: [
+        (
+            kind: "umbrella_seeded_probe",
+            instance_name: "tm_a",
+            parameters: {
+                "offset": Int(2),
+            },
+            display_name: "",
+            description: "",
+            tags: [],
+        ),
+        (
+            kind: "umbrella_seeded_probe",
+            instance_name: "tm_b",
+            parameters: {
+                "offset": Int(3),
+            },
+            display_name: "",
+            description: "",
+            tags: [],
+        ),
+    ],
+    cables: [],
+    rack: None,
+)

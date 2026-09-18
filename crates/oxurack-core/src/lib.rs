@@ -78,7 +78,10 @@ pub use event::{
 pub use label::{
     Description, DisplayName, DisplayNameFormatter, RackMeta, Tag, TagError, Tags, display_name_of,
 };
-pub use module::{ModuleRegistration, ModuleRegistry, ModuleSpawner, OxurackModule, PortSchema};
+pub use module::{
+    ModuleRegistration, ModuleRegistry, ModuleSpawnContext, ModuleSpawner, OxurackModule,
+    PortSchema,
+};
 pub use parameter::{
     ParameterGetter, ParameterName, ParameterRegistry, ParameterSchema, ParameterSetter,
     ParameterValue,

@@ -17,7 +17,6 @@ smallvec     = { version = "1", features = ["serde"] }
 serde        = { version = "1", features = ["derive"] }
 ron          = "0.12"
 thiserror    = "2"
-ahash        = "0.8"
 rand         = { version = "0.10", default-features = false }
 oxurack-midi = { version = "0.1.0", path = "../oxurack-midi" }
 oxurack-rt   = { version = "0.1.0", path = "../oxurack-rt", optional = true }

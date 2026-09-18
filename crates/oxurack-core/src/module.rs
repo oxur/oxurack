@@ -49,17 +49,71 @@ impl AsRef<str> for ModuleKind {
 /// Unique identifier for a module instance within a patch.
 ///
 /// Module IDs are cheap to copy and compare. They are ordered so they
-/// can be used as sort keys for deterministic processing order.
+/// can be used as sort keys for deterministic processing order. Numeric
+/// values are derived by the versioned [`crate::derive_seed`] contract and
+/// may change across compatibility amendments; observable rack ordering uses
+/// instance names instead.
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ModuleId(pub u64);
 
 impl ModuleId {
     /// Derive a deterministic [`ModuleId`] from an instance name.
     ///
-    /// Uses a hash-based derivation so that the same instance name
-    /// always produces the same ID.
+    /// Uses the versioned seed derivation so that the same instance name
+    /// always produces the same ID for the locked implementation.
     pub fn from_instance_name(instance_name: &str) -> Self {
         Self(crate::rng::derive_seed(0, instance_name))
+    }
+}
+
+/// The ephemeral seed and identity context supplied while constructing one
+/// module instance.
+///
+/// The context borrows the instance name only for the synchronous spawn call;
+/// its derived values are copied into module-owned state by the module when
+/// needed. It is not an ECS resource or persisted patch state.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ModuleSpawnContext<'a> {
+    instance_name: &'a str,
+    master_seed: u64,
+    module_id: ModuleId,
+    instance_seed: u64,
+}
+
+impl<'a> ModuleSpawnContext<'a> {
+    /// Constructs the context for one named module instance.
+    #[must_use]
+    pub fn new(master_seed: u64, instance_name: &'a str) -> Self {
+        Self {
+            instance_name,
+            master_seed,
+            module_id: ModuleId::from_instance_name(instance_name),
+            instance_seed: crate::derive_seed(master_seed, instance_name),
+        }
+    }
+
+    /// Returns the patch master seed.
+    #[must_use]
+    pub const fn master_seed(&self) -> u64 {
+        self.master_seed
+    }
+
+    /// Returns the borrowed patch instance name.
+    #[must_use]
+    pub const fn instance_name(&self) -> &'a str {
+        self.instance_name
+    }
+
+    /// Returns the deterministic numeric module identity.
+    #[must_use]
+    pub const fn module_id(&self) -> ModuleId {
+        self.module_id
+    }
+
+    /// Returns the deterministic per-instance seed.
+    #[must_use]
+    pub const fn instance_seed(&self) -> u64 {
+        self.instance_seed
     }
 }
 
@@ -165,6 +219,20 @@ pub trait OxurackModule: Send + Sync + 'static {
         parameters: &HashMap<String, crate::ParameterValue>,
     ) -> Result<Entity, crate::CoreError>;
 
+    /// Instantiate this module with its pre-construction seed context.
+    ///
+    /// The default forwards to the required legacy [`Self::spawn`] method, so
+    /// existing modules remain source-compatible. Context-aware modules may
+    /// override this method to construct deterministic state before returning
+    /// their entity.
+    fn spawn_with_context(
+        world: &mut World,
+        context: &ModuleSpawnContext<'_>,
+        parameters: &HashMap<String, crate::ParameterValue>,
+    ) -> Result<Entity, crate::CoreError> {
+        Self::spawn(world, context.instance_name(), parameters)
+    }
+
     /// Register the systems and resources that implement this module's
     /// behavior.
     ///
@@ -213,6 +281,12 @@ pub trait OxurackModule: Send + Sync + 'static {
 pub type ModuleSpawner = fn(
     &mut World,
     &str,
+    &HashMap<String, crate::ParameterValue>,
+) -> Result<Entity, crate::CoreError>;
+
+type ModuleContextSpawner = for<'a> fn(
+    &mut World,
+    &ModuleSpawnContext<'a>,
     &HashMap<String, crate::ParameterValue>,
 ) -> Result<Entity, crate::CoreError>;
 
@@ -274,6 +348,7 @@ impl fmt::Debug for ModuleRegistration {
 #[derive(Resource, Default, Debug)]
 pub struct ModuleRegistry {
     registrations: HashMap<ModuleKind, ModuleRegistration>,
+    context_spawners: HashMap<ModuleKind, ModuleContextSpawner>,
 }
 
 impl ModuleRegistry {
@@ -294,7 +369,8 @@ impl ModuleRegistry {
             parameter_schemas: M::parameter_schema().to_vec(),
             spawner: M::spawn,
         };
-        self.registrations.insert(kind, reg);
+        self.registrations.insert(kind.clone(), reg);
+        self.context_spawners.insert(kind, M::spawn_with_context);
     }
 
     /// Look up a module registration by kind.
@@ -314,7 +390,25 @@ impl ModuleRegistry {
     /// Primarily useful in tests that need to register a module kind
     /// without going through the [`OxurackModule`] trait.
     pub fn insert(&mut self, kind: ModuleKind, registration: ModuleRegistration) {
+        self.context_spawners.remove(&kind);
         self.registrations.insert(kind, registration);
+    }
+
+    /// Spawns through the registered context hook, falling back to the public
+    /// legacy spawner for manually inserted registrations.
+    pub(crate) fn spawn(
+        &self,
+        kind: &ModuleKind,
+        world: &mut World,
+        context: &ModuleSpawnContext<'_>,
+        parameters: &HashMap<String, crate::ParameterValue>,
+    ) -> Result<Entity, crate::CoreError> {
+        if let Some(spawner) = self.context_spawners.get(kind) {
+            return spawner(world, context, parameters);
+        }
+
+        let registration = self.registrations.get(kind).expect("validated");
+        (registration.spawner)(world, context.instance_name(), parameters)
     }
 
     /// Returns an iterator over all registered module kinds.
