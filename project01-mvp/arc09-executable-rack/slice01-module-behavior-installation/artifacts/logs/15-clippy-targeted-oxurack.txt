@@ -1,0 +1,24 @@
+    Checking hashbrown v0.16.1
+    Checking crossbeam-utils v0.8.21
+    Checking once_cell v1.21.4
+    Checking rand v0.10.1
+    Checking oxurack-midi v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/crates/oxurack-midi)
+    Checking yansi v1.0.1
+    Checking diff v0.1.13
+    Checking ahash v0.8.12
+    Checking ron v0.12.1
+    Checking pretty_assertions v1.4.1
+    Checking crossbeam-queue v0.3.12
+    Checking concurrent-queue v2.5.0
+    Checking crossbeam-channel v0.5.15
+    Checking bevy_platform v0.18.1
+    Checking indexmap v2.13.1
+    Checking bevy_utils v0.18.1
+    Checking bevy_tasks v0.18.1
+    Checking bevy_ecs v0.18.1
+    Checking bevy_app v0.18.1
+    Checking bevy_time v0.18.1
+    Checking oxurack-core v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/crates/oxurack-core)
+    Checking oxurack v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/crates/oxurack)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.04s
+cargo_exit=0

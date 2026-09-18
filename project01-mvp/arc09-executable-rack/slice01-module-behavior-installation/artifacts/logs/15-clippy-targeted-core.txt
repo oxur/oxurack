@@ -1,0 +1,9 @@
+    Checking crossbeam-utils v0.8.21
+    Checking crossbeam-queue v0.3.12
+    Checking concurrent-queue v2.5.0
+    Checking bevy_tasks v0.18.1
+    Checking bevy_ecs v0.18.1
+    Checking bevy_app v0.18.1
+    Checking oxurack-core v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/crates/oxurack-core)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.04s
+cargo_exit=0

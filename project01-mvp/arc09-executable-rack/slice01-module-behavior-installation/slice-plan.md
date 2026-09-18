@@ -122,7 +122,7 @@ Duncan to relay to CC. The original `cc-prompt.md` remains held and unexecuted.
 | Date | Prompt | Predecessor | Reason | Disposition |
 | --- | --- | --- | --- | --- |
 | 2026-09-17 | cc-prompt.md | none | CDC response to escalation03; first TM prerequisite implementation | held by directive04; replacement preparation assigned to CRC |
-| 2026-09-17 | cc-prompt-iteration01.md | cc-prompt.md | Newly installed guide requires source-grounded recipe, explicit test oracles and bounded CC intake | issued for relay; original unexecuted, not an executed corrective pass |
+| 2026-09-17 | cc-prompt-iteration01.md | cc-prompt.md | Newly installed guide requires source-grounded recipe, explicit test oracles and bounded CC intake | CC proposed-done in source commit `d43078ea9c71bba10035699c9914bef3891f1d83`; planning evidence and CRC review pending; original unexecuted |
 
 Executed refinements: 0 of 5. Preserve later cc-prompt-iterationNN.md files.
 CC owns execution; CRC checks exact commits, reproduces I-01–I-06 and records

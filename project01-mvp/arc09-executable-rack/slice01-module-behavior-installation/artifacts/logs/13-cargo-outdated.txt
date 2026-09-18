@@ -1,0 +1,10 @@
+error: failed to get `bevy_app` as a dependency of package `oxurack v0.1.0 (/var/folders/dt/kc8ndn6d3kx8c1jnxr05drsh0000gn/T/cargo-outdatedY3iLPL/crates/oxurack)`
+
+Caused by:
+  download of config.json failed
+
+Caused by:
+  failed to download from `https://index.crates.io/config.json`
+
+Caused by:
+  [6] Couldn't resolve host name (Could not resolve host: index.crates.io)

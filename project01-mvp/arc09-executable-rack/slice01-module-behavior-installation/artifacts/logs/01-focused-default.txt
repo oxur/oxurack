@@ -1,0 +1,12 @@
+   Compiling oxurack v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.56s
+     Running tests/module_installation.rs (target/debug/deps/module_installation-cfafd8cd70a557cd)
+
+running 5 tests
+test old_install_panics_clearly_but_try_install_is_typed ... ok
+test same_type_reinstall_preserves_loaded_state_and_accessors ... ok
+test conflicting_type_returns_before_mutation_and_original_behavior_survives ... ok
+test installed_systems_execute_each_loaded_instance_on_fixed_update ... ok
+test installations_are_rack_local_and_legacy_modules_still_load ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
