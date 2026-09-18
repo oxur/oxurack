@@ -133,7 +133,7 @@ def main():
     print("PASS: six arc CDC records; child denominator 0/0/2/3/0/1; no behavior upgraded")
     print(f"PASS: project/arc09/slice01 rows 7/4/6; complete open set and directive03; {count} local links")
     print(f"PASS: current assignment metadata and history resolve to {current_assignment}")
-    print("Structural self-check only; arc09 implementation and independent CRC acceptance remain pending")
+    print("Structural self-check only; arc09 composition and project acceptance remain pending")
 
 
 if __name__ == "__main__":

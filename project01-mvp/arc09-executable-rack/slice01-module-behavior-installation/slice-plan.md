@@ -1,6 +1,6 @@
 # Slice01 — module behavior installation
 
-Version 1.5, 2026-09-17. Status: open; corrective iteration02 ready for CC relay.
+Version 1.6, 2026-09-17. Status: closed; iteration02 independently accepted.
 Workflow: CDC design / CRC independent review / CC implementation; Expedited Mode.
 Source baseline: `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` (main).
 Planning predecessor: `390d2aa2c3449f8a6e4bbaff3df6c64d821ce4ea`; authority is the
@@ -133,7 +133,7 @@ This [corrective iteration02](cc-prompt-iteration02.md) is issued under
 | --- | --- | --- | --- | --- |
 | 2026-09-17 | cc-prompt.md | none | CDC response to escalation03; first TM prerequisite implementation | held by directive04; replacement preparation assigned to CRC |
 | 2026-09-17 | cc-prompt-iteration01.md | cc-prompt.md | Newly installed guide requires source-grounded recipe, explicit test oracles and bounded CC intake | CC proposed-done at `d43078e`; CRC partial review, original unexecuted |
-| 2026-09-17 | cc-prompt-iteration02.md | cc-prompt-iteration01.md | CDC-approved after-edit reinstall test, exact Clippy/checker repairs and evidence correction | CC proposed-done at source `6a31c0f`; planning evidence and CRC review pending; corrective pass 1 of 5 |
+| 2026-09-17 | cc-prompt-iteration02.md | cc-prompt-iteration01.md | CDC-approved after-edit reinstall test, exact Clippy/checker repairs and evidence correction | CC source `6a31c0f` and planning evidence independently accepted by CRC; corrective pass 1 of 5 |
 
 Executed refinements: 1 of 5. Preserve later cc-prompt-iterationNN.md files.
 CC owns execution; CRC checks exact commits, reproduces I-01–I-06 and records
@@ -264,3 +264,19 @@ Arc09/slice02 stays held until CRC accepts the new candidate and closes all rows
 
 - v1.5 — 2026-09-17: Issued guide-authored corrective iteration02 with canonical
   assignment metadata and six readiness checks; retained all gates and row states.
+
+## CRC close — v1.6, 2026-09-17
+
+[Iteration02 verification](crc-verification.md#iteration02-independent-close)
+independently reproduces I-01–I-06 at clean source `6a31c0f`. The two
+restricted workspace matrices fail the four existing MIDI initialization cases;
+host-access retries pass. Full all-targets Clippy, format, strict docs,
+`make check`, direct dependency audit and the complete planning verifier pass.
+The 62-row evidence table retains historical failures and corrects exactly ten
+nonexistent cwd cells. The inherited coverage/hardware gates stay assigned to
+their named successors. The [CC report](closing-report.md#iteration02-corrective-report)
+contains the six-row walk and bubble-up. No arc-plan change is required from
+this slice; arc09/slice02 may now open under CDC's existing execution contract.
+
+- v1.6 — 2026-09-17: Closed all six rows after independent iteration02 review;
+  retained the earlier partial verdict and environment-qualified gate evidence.

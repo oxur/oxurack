@@ -443,3 +443,22 @@ reinstall oracle and provenance repair. Source remains clean at
 `d43078ea9c71bba10035699c9914bef3891f1d83`; I-02/I-05/I-06 are open,
 and arc09/slice02 is held pending independent acceptance. Earlier return05
 wording describes CDC's state before CRC authored the prompt.
+
+## CRC slice01 close and slice02 handoff — current, 2026-09-17
+
+CC's iteration02 source `6a31c0f99241eccb0dcf0f23e9f64ac9dec2f94a` and
+planning evidence `0f4561b`/`4fb9f2f` were independently reviewed. Arc09/slice01
+is closed with I-01–I-06 done. After-edit reinstall, both feature variants,
+full Clippy, strict docs, format, verifier and host-access workspace/make
+gates pass. Restricted MIDI/timing/DNS failures and three ignored RT tests
+remain visible; this is not physical MIDI or global coverage acceptance.
+The first 20 historical validation rows retain their results, with exactly ten
+cwd corrections and explicit dirty-tree provenance.
+
+CRC opened arc09/slice02 under the existing CDC execution contract: indexed
+1 ms samples, five named phases, stopped/start/stop behavior, exclusive
+manual/live drivers and stable named ordering. Six S rows are open. Relay the
+current CC prompt relative to project01-mvp:
+`arc09-executable-rack/slice02-simulation-samples/cc-prompt.md`.
+Arc09/slice03 seed handoff remains held until slice02 review; arc10 TM/MIDI,
+arc11 Clock/LFO/Scope, Q-02/Q-03 coverage and hardware gates remain assigned.

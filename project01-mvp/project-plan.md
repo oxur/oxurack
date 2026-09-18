@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — arc09/slice01; CRC prompt authoring under directive04 before CC relay |
+| status | active — arc09/slice01 closed; slice02 deterministic samples issued to CC |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
@@ -221,7 +221,7 @@ does not create the next implementation slice or accept an arc capability.
 | --- | --- | --- | --- | --- | --- |
 | 2026-09-17 | [crc-escalation03.md](crc-escalation03.md) | cdc-directive02.md and CC `df6ec0a` | sent for Operator relay to CDC | R-01–R-06 done as evidence; 12 S rows deferred; 12 A rows open | CDC independently reviews six arc assemblies and designs TM prerequisite slice(s) |
 
-## Current roadmap — v3.0, 2026-09-17
+## Current roadmap — maintained through v3.6, 2026-09-17
 
 CDC reviewed CRC's actual `390d2aa` packet and resolved escalation03 through
 [cdc-directive03.md](cdc-directive03.md). All six historical slices and arcs01–06
@@ -232,7 +232,7 @@ P-01–P-06 remain open. Arc08/slice01 is accepted as observation evidence only.
 
 | Current owner | Scope / concrete next identifiers | State and dependency |
 | --- | --- | --- |
-| [Arc09 executable rack](arc09-executable-rack/arc-plan.md) | slice01-module-behavior-installation; slice02-simulation-samples; slice03-seeded-spawn-context | Active, first slice issued; establishes behavior, sample/phase and seed contracts |
+| [Arc09 executable rack](arc09-executable-rack/arc-plan.md) | slice01-module-behavior-installation; slice02-simulation-samples; slice03-seeded-spawn-context | Active; slice01 independently closed, slice02 issued, slice03 planned |
 | arc10-turing-machine-midi | slice01-musical-clock; slice02-turing-machine-adapter; slice03-midi-output; slice04-output-runtime; slice05-endpoint-acceptance | Planned after arc09; internal Clock is pulled forward because M1 needs a real pulse source |
 | arc11-observation-workbench | slice01-lfo; slice02-scope-capture; slice03-workbench-integration | Planned after M1; enrich existing Clock, bounded scalar/event observation and minimal inspection |
 | arc12-live-rack-operations | slice01-live-persistence; slice02-events-and-metadata; slice03-graph-composition; slice04-runtime-api | Retains remaining original arcs02–05 obligations after M1/M2; original requirements remain the input when detailed |
@@ -240,14 +240,14 @@ P-01–P-06 remain open. Arc08/slice01 is accepted as observation evidence only.
 | Arc07 live interface | Minimal workbench presentation, then full approved CLI/REPL/controller needs | Existing planned domain; no mandatory four-pane UI or broader feature expansion |
 | Arc08 validation | slice02-coverage-provenance; slice03-coverage-hardening; slice04-hardware-timing; later system/soak/resource validation | Existing active validation domain; no global quality target is lowered |
 
-Only arc09's new directory/open set is created now. Arc10–13 and unissued slice IDs
+Only arc09's issued slice directories/open sets have been created. Arc10–13 and unissued slice IDs
 above are reserved roadmap destinations, not empty plans or implementation prompts.
 Dependencies, not arc numbers, set execution order. Feature completion of old arcs
 is not a prerequisite fiction: known source foundations can be used with exact
 current validation, while missing acceptance remains explicitly tracked.
 
 CDC chose the contracts in the [execution design](arc09-executable-rack/slice01-module-behavior-installation/artifacts/execution-contract.md).
-First slice is bounded to behavior installation plus its strict documentation gate;
+Slice01 was bounded to behavior installation plus its strict documentation gate;
 seed/time/MIDI are separate reviewable changes. The P99 target, 95% target,
 benchmarks, soak and real musical acceptance remain project gates. M1 audible
 sample-quantized playback does not claim final low-jitter release readiness.
@@ -375,6 +375,29 @@ an acceptance or arc09/slice02 advancement.
 | Date | Packet | Predecessor | Status | Affected rows / authority | Next action |
 | --- | --- | --- | --- | --- | --- |
 | 2026-09-17 | [cc-prompt-iteration02.md](arc09-executable-rack/slice01-module-behavior-installation/cc-prompt-iteration02.md) | cdc-directive05.md / iteration01 | issued for relay, not executed | I-02/I-05/I-06 correction within approved scope | Duncan relays to CC; CC returns committed source/planning evidence for CRC review |
+
+## CRC slice01 close and slice02 issue — v3.6, 2026-09-17
+
+Sofie/CRC independently reviewed CC's clean `6a31c0f` corrective source and
+planning evidence `0f4561b`/`4fb9f2f`. [Slice01 verification](arc09-executable-rack/slice01-module-behavior-installation/crc-verification.md#iteration02-independent-close)
+closes I-01–I-06. The after-edit reinstall oracle reaches `(4,6)` before
+reinstall and `(8,9)` after one further fixed run. Full all-targets Clippy,
+strict docs, format, planning verification and host-access workspace/make
+checks pass. Restricted MIDI/timing and DNS failures remain recorded alongside
+successful host retries; three RT tests remain ignored. The inherited 95%
+coverage, physical MIDI and hardware timing gates remain with their existing
+owners. No arc09 sequence or scope amendment was required.
+
+CRC opened [arc09/slice02](arc09-executable-rack/slice02-simulation-samples/slice-plan.md)
+within the existing CDC execution-contract §2. The [initial prompt](arc09-executable-rack/slice02-simulation-samples/cc-prompt.md)
+defines the exact 1 ms sample API, five-phase pipeline, manual/live transitions,
+raw-core compatibility and sample-indexed traces. Its six S rows are open;
+arc09/slice03 and arc close remain future work. Current CC assignment relative
+to project01-mvp:
+`arc09-executable-rack/slice02-simulation-samples/cc-prompt.md`.
+
+- v3.6 — 2026-09-17: Independently closed the first executable-rack slice and
+  issued the next approved sample/phase slice with guide-authored prompt.
 
 - v3.5 — 2026-09-17: Issued the bounded corrective assignment after directive05
   acknowledgment and six-part author readiness; no gate or source behavior changed.
