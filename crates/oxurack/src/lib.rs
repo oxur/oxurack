@@ -12,6 +12,8 @@ use std::time::Instant;
 
 use bevy_app::prelude::{App, FixedUpdate};
 use bevy_ecs::schedule::ScheduleLabel;
+#[cfg(test)]
+use bevy_time::TimeUpdateStrategy;
 use bevy_time::prelude::{Fixed, Real, Time, Virtual};
 
 // ── Re-exports from oxurack-graph (feature-gated) ──────────────────
@@ -776,6 +778,73 @@ mod tests {
         );
         assert!(!rack.world().resource::<Time<Virtual>>().is_paused());
         assert_eq!(rack.sample_time().completed_samples(), 1);
+    }
+
+    #[test]
+    fn test_live_transitions_and_stop_start_discard_catch_up() {
+        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/behavior-installation.ron");
+        let mut rack = Oxurack::new();
+        rack.install::<LiveBehaviorCounter>();
+        rack.load_patch(&fixture)
+            .expect("behavior fixture should load through the public path");
+        rack.start();
+
+        let handle = rack.world().resource::<PatchHandle>().clone();
+        rack.set_driver_mode(SimulationDriver::Manual);
+        assert_eq!(
+            rack.advance_samples(1).expect("manual sample should run"),
+            1
+        );
+        assert_eq!(rack.sample_time().last_index(), Some(0));
+        assert_eq!(live_state(&rack, &handle, "alpha").total, 2);
+
+        rack.set_driver_mode(SimulationDriver::Live);
+        rack.world_mut()
+            .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::ZERO));
+        rack.step();
+        assert_eq!(rack.sample_time().last_index(), Some(0));
+        assert_eq!(rack.sample_time().completed_samples(), 1);
+        assert_eq!(live_state(&rack, &handle, "alpha").total, 2);
+
+        rack.world_mut()
+            .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_millis(1)));
+        rack.step();
+        assert_eq!(rack.sample_time().last_index(), Some(1));
+        assert_eq!(rack.sample_time().completed_samples(), 2);
+        assert_eq!(live_state(&rack, &handle, "alpha").total, 4);
+
+        rack.world_mut()
+            .resource_mut::<Time<Fixed>>()
+            .accumulate_overstep(Duration::from_millis(5));
+        rack.stop();
+        assert_eq!(
+            rack.world().resource::<Time<Fixed>>().overstep(),
+            Duration::ZERO
+        );
+        let stopped_time = rack.sample_time();
+        let stopped_state = live_state(&rack, &handle, "alpha");
+
+        rack.world_mut()
+            .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_millis(5)));
+        rack.step();
+        assert_eq!(rack.sample_time(), stopped_time);
+        assert_eq!(live_state(&rack, &handle, "alpha"), stopped_state);
+
+        rack.start();
+        rack.world_mut()
+            .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::ZERO));
+        rack.step();
+        assert_eq!(rack.sample_time(), stopped_time);
+        assert_eq!(live_state(&rack, &handle, "alpha"), stopped_state);
+
+        rack.world_mut()
+            .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_millis(1)));
+        rack.step();
+        assert_eq!(rack.sample_time().last_index(), Some(2));
+        assert_eq!(rack.sample_time().completed_samples(), 3);
+        assert_eq!(live_state(&rack, &handle, "alpha").total, 6);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 3);
     }
 
     #[test]

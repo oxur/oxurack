@@ -6,8 +6,8 @@ use bevy_ecs::prelude::{Component, Entity, Query, Res, ResMut, Resource, World};
 use bevy_ecs::schedule::{InternedScheduleLabel, IntoScheduleConfigs};
 use bevy_time::{Time, TimeUpdateStrategy};
 use oxurack::{
-    CoreError, MergePolicy, Oxurack, ParameterValue, PortDirection, PortSchema, SampleTime,
-    SimulationDriver, TickPhase, Value, ValueKind,
+    CoreError, MergePolicy, ModuleId, Oxurack, ParameterValue, PortDirection, PortSchema,
+    SampleTime, SimulationDriver, TickPhase, Value, ValueKind,
 };
 use oxurack_core::{CurrentValue, OxurackModule, spawn_module_entity, spawn_port_on_module};
 
@@ -587,8 +587,72 @@ fn stopped_manual_and_live_requests_do_not_change_sample_state() {
 }
 
 #[test]
+fn live_reentry_has_no_zero_elapsed_catch_up_sample() {
+    let mut rack = installed_fixture();
+    rack.start().set_driver_mode(SimulationDriver::Manual);
+    assert_eq!(
+        rack.advance_samples(1).expect("manual sample should run"),
+        1
+    );
+    rack.set_driver_mode(SimulationDriver::Live);
+    let after_manual = rack.sample_time();
+
+    let mut app = rack.into_app();
+    app.insert_resource(TimeUpdateStrategy::ManualDuration(
+        std::time::Duration::ZERO,
+    ));
+    app.update();
+    assert_eq!(observed(&app), expected_samples()[..1].to_vec());
+    assert_eq!(phase_trace(&app).len(), 5);
+    assert_eq!(*app.world().resource::<SampleTime>(), after_manual);
+
+    app.insert_resource(TimeUpdateStrategy::ManualDuration(
+        std::time::Duration::from_millis(1),
+    ));
+    app.update();
+    assert_eq!(observed(&app), expected_samples()[..2].to_vec());
+    assert_eq!(phase_trace(&app).len(), 10);
+    assert_eq!(app.world().resource::<SampleTime>().last_index(), Some(1));
+    assert_eq!(app.world().resource::<SampleTime>().completed_samples(), 2);
+}
+
+#[test]
 fn last_wins_is_name_stable_with_spawn_permutation_and_unrelated_entity() {
-    fn run(order: &[&str]) -> Value {
+    fn opposing_names() -> (&'static str, &'static str) {
+        const CANDIDATES: [&str; 32] = [
+            "order_00", "order_01", "order_02", "order_03", "order_04", "order_05", "order_06",
+            "order_07", "order_08", "order_09", "order_10", "order_11", "order_12", "order_13",
+            "order_14", "order_15", "order_16", "order_17", "order_18", "order_19", "order_20",
+            "order_21", "order_22", "order_23", "order_24", "order_25", "order_26", "order_27",
+            "order_28", "order_29", "order_30", "order_31",
+        ];
+        for (index, left) in CANDIDATES.iter().enumerate() {
+            for right in CANDIDATES.iter().skip(index + 1) {
+                let left_id = ModuleId::from_instance_name(left);
+                let right_id = ModuleId::from_instance_name(right);
+                if left < right && left_id > right_id {
+                    return (*left, *right);
+                }
+            }
+        }
+        panic!("candidate set must contain opposing lexical and ModuleId orders");
+    }
+
+    let (lexical_first, lexical_last) = opposing_names();
+    let lexical_first_id = ModuleId::from_instance_name(lexical_first);
+    let lexical_last_id = ModuleId::from_instance_name(lexical_last);
+    assert!(
+        lexical_first_id > lexical_last_id,
+        "test requires lexical-last ModuleId to be numerically smaller"
+    );
+    let numeric_id_last_value = if lexical_first_id < lexical_last_id {
+        2.0
+    } else {
+        1.0
+    };
+    assert_eq!(numeric_id_last_value, 1.0);
+
+    fn run(order: &[&str], lexical_first: &str, lexical_last: &str) -> Value {
         let mut app = App::new();
         app.add_plugins(oxurack::CorePlugin::fixed());
         let world = app.world_mut();
@@ -607,7 +671,7 @@ fn last_wins_is_name_stable_with_spawn_permutation_and_unrelated_entity() {
                 .entity_mut(output)
                 .get_mut::<CurrentValue>()
                 .expect("source output should exist")
-                .0 = Value::Float(if *name == "a" { 1.0 } else { 2.0 });
+                .0 = Value::Float(if *name == lexical_first { 1.0 } else { 2.0 });
             modules.insert(*name, output);
         }
         let unrelated = world.spawn_empty().id();
@@ -620,7 +684,7 @@ fn last_wins_is_name_stable_with_spawn_permutation_and_unrelated_entity() {
             ValueKind::Float,
             MergePolicy::LastWins,
         );
-        for source in ["a", "b"] {
+        for source in [lexical_first, lexical_last] {
             world.spawn(oxurack_core::Cable {
                 source_port: modules[source],
                 target_port: input,
@@ -633,6 +697,19 @@ fn last_wins_is_name_stable_with_spawn_permutation_and_unrelated_entity() {
         world.entity(input).get::<CurrentValue>().unwrap().0
     }
 
-    assert_eq!(run(&["a", "b"]), Value::Float(2.0));
-    assert_eq!(run(&["b", "a"]), Value::Float(2.0));
+    // The lexical-last source must win. A rejected numeric-ID sort would
+    // select lexical_first because the two ordering policies oppose here.
+    assert_eq!(
+        run(&[lexical_first, lexical_last], lexical_first, lexical_last),
+        Value::Float(2.0)
+    );
+    assert_eq!(
+        run(&[lexical_last, lexical_first], lexical_first, lexical_last),
+        Value::Float(2.0)
+    );
+    assert_ne!(
+        Value::Float(2.0),
+        Value::Float(numeric_id_last_value),
+        "numeric-ID ordering would select the other source"
+    );
 }

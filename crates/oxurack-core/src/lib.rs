@@ -401,6 +401,24 @@ mod tests {
         assert_eq!(app.world().resource::<SampleTime>().completed_samples(), 1);
     }
 
+    #[test]
+    fn test_core_plugin_fixed_preserves_preinserted_false_until_enabled() {
+        let mut app = App::new();
+        app.insert_resource(SimulationRunning(false));
+        app.add_plugins(CorePlugin::fixed());
+        add_phase_counters(&mut app, FixedUpdate);
+
+        app.world_mut().run_schedule(FixedUpdate);
+        assert_eq!(app.world().resource::<PhaseCounts>().0, [0, 0, 0, 0, 0]);
+        assert_eq!(*app.world().resource::<SampleTime>(), SampleTime::default());
+
+        app.world_mut().resource_mut::<SimulationRunning>().0 = true;
+        app.world_mut().run_schedule(FixedUpdate);
+        assert_eq!(app.world().resource::<PhaseCounts>().0, [1, 1, 1, 1, 1]);
+        assert_eq!(app.world().resource::<SampleTime>().last_index(), Some(0));
+        assert_eq!(app.world().resource::<SampleTime>().completed_samples(), 1);
+    }
+
     #[cfg(feature = "rt-bridge")]
     #[test]
     fn test_core_plugin_registers_midi_output_queue() {

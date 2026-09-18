@@ -1087,39 +1087,63 @@ mod tests {
         assert!(pos_c < pos_d, "C before D");
     }
 
+    fn opposing_instance_names() -> (&'static str, &'static str) {
+        const CANDIDATES: [&str; 32] = [
+            "order_00", "order_01", "order_02", "order_03", "order_04", "order_05", "order_06",
+            "order_07", "order_08", "order_09", "order_10", "order_11", "order_12", "order_13",
+            "order_14", "order_15", "order_16", "order_17", "order_18", "order_19", "order_20",
+            "order_21", "order_22", "order_23", "order_24", "order_25", "order_26", "order_27",
+            "order_28", "order_29", "order_30", "order_31",
+        ];
+        for (index, left) in CANDIDATES.iter().enumerate() {
+            for right in CANDIDATES.iter().skip(index + 1) {
+                let left_id = ModuleId::from_instance_name(left);
+                let right_id = ModuleId::from_instance_name(right);
+                if left < right && left_id > right_id {
+                    return (*left, *right);
+                }
+            }
+        }
+        panic!("candidate set must contain opposing lexical and ModuleId orders");
+    }
+
     #[test]
     fn test_topo_no_cables() {
-        let mut world = World::new();
+        let (lexical_first, lexical_last) = opposing_instance_names();
+        let lexical_first_id = ModuleId::from_instance_name(lexical_first);
+        let lexical_last_id = ModuleId::from_instance_name(lexical_last);
+        assert!(lexical_first_id > lexical_last_id);
 
-        let mod_a = spawn_test_module(&mut world, "gen", "a");
-        let mod_b = spawn_test_module(&mut world, "gen", "b");
-        let mod_c = spawn_test_module(&mut world, "gen", "c");
+        fn run(order: &[&str]) -> Vec<String> {
+            let mut world = World::new();
+            let entities: Vec<Entity> = order
+                .iter()
+                .map(|name| spawn_test_module(&mut world, "gen", name))
+                .collect();
+            let modules_data = collect_modules(&world, &entities);
+            let modules_ref: Vec<(Entity, &Module, &ModuleId)> =
+                modules_data.iter().map(|(e, m, id)| (*e, m, id)).collect();
+            let cables_ref: Vec<(Entity, &Cable)> = vec![];
+            let ports_ref: Vec<(Entity, &Port, Entity)> = vec![];
+            let ordered_entities = compute_tick_order(&modules_ref, &cables_ref, &ports_ref)
+                .expect("independent modules should have a topological order");
+            ordered_entities
+                .iter()
+                .map(|&entity| {
+                    world
+                        .entity(entity)
+                        .get::<Module>()
+                        .expect("ordered entity should be a module")
+                        .instance_name
+                        .clone()
+                })
+                .collect()
+        }
 
-        let modules_data = collect_modules(&world, &[mod_a, mod_b, mod_c]);
-        let modules_ref: Vec<(Entity, &Module, &ModuleId)> =
-            modules_data.iter().map(|(e, m, id)| (*e, m, id)).collect();
-
-        let cables_ref: Vec<(Entity, &Cable)> = vec![];
-        let ports_ref: Vec<(Entity, &Port, Entity)> = vec![];
-
-        let order = compute_tick_order(&modules_ref, &cables_ref, &ports_ref).unwrap();
-
-        // All modules should be present, sorted by instance name.
-        assert_eq!(order.len(), 3);
-
-        // Verify sorted by instance name rather than ModuleId.
-        let names: Vec<String> = order
-            .iter()
-            .map(|&e| {
-                world
-                    .entity(e)
-                    .get::<Module>()
-                    .unwrap()
-                    .instance_name
-                    .clone()
-            })
-            .collect();
-        assert_eq!(names, vec!["a", "b", "c"]);
+        let mut expected = vec![lexical_first.to_owned(), lexical_last.to_owned()];
+        expected.sort_unstable();
+        assert_eq!(run(&[lexical_first, lexical_last]), expected);
+        assert_eq!(run(&[lexical_last, lexical_first]), expected);
     }
 
     #[test]
