@@ -1,0 +1,20 @@
+id	command	environment	result	evidence
+V01	cargo test --locked -p oxurack-core	workspace sandbox	PASS	logs/01-core-package.log; 414 unit, 5 integration_full_cycle, 9 seeded-context, 2 doctests
+V02	cargo test --locked -p oxurack	workspace sandbox	PASS	logs/02-umbrella-package.log; 15 unit, 5 module-installation, 5 sample-pipeline, 1 seeded-context, 0 doctests
+V03	cargo test --locked -p oxurack --no-default-features	workspace sandbox	PASS	logs/03-umbrella-no-default.log; 13 unit, 5 module-installation, 5 sample-pipeline, 1 seeded-context, 0 doctests
+V04	cargo test --locked --workspace --all-features	restricted sandbox	FAIL_EXPECTED_HOST_RETRY	logs/04-workspace-all-features.log; oxurack-rt MIDI initialization failed in 4 tests
+V05	cargo test --locked --workspace --all-features	host retry	PASS	logs/04b-workspace-all-features-host.log
+V06	cargo test --locked --workspace --no-default-features	restricted sandbox	FAIL_EXPECTED_HOST_RETRY	logs/05-workspace-no-default.log; oxurack-rt MIDI initialization failed in 4 tests
+V07	cargo test --locked --workspace --no-default-features	host retry	PASS	logs/05b-workspace-no-default-host.log
+V08	cargo clippy --locked --workspace --all-features --all-targets -- -D warnings	workspace sandbox	PASS	logs/06-clippy.log; only existing future-incompatibility notice for block v0.1.6
+V09	cargo fmt --all -- --check	workspace sandbox	PASS	logs/07-fmt.log
+V10	RUSTDOCFLAGS=-Dwarnings cargo doc --locked --workspace --all-features --no-deps	workspace sandbox	PASS	logs/08-doc-all-features.log; only existing future-incompatibility notice for block v0.1.6
+V11	RUSTDOCFLAGS=-Dwarnings cargo doc --locked -p oxurack --no-default-features --no-deps	workspace sandbox	PASS	logs/09-doc-no-default.log
+V12	make check	restricted sandbox	FAIL_EXPECTED_HOST_RETRY	logs/10a-make-check-restricted.log; required Make gate reached the same oxurack-rt MIDI restriction
+V13	make check	host retry	PASS	logs/10-make-check-host.log; All checks passed (build + lint + test)
+V14	cargo outdated --root-deps-only --ignore-external-rel	restricted sandbox	FAIL_EXPECTED_HOST_RETRY	logs/11a-cargo-outdated-restricted.log; initial restricted attempt failed registry DNS before output
+V15	cargo outdated --root-deps-only --ignore-external-rel	host retry	PASS_WITH_UPDATES_REPORTED	logs/11-cargo-outdated-host.log; dependency updates are informational and were not applied
+V16	cargo test --locked -p oxurack-core rng::tests::test_derive_seed_golden_vectors	workspace sandbox	PASS	logs/12-golden-vectors.log; 1 golden-vector test passed
+V17	cargo test --locked -p oxurack-core --test seeded_spawn_context -- --nocapture	workspace sandbox	PASS	logs/13-core-seeded-context.log; 9 tests, including two current_exe child replays
+V18	cargo test --locked -p oxurack --test seeded_spawn_context -- --nocapture	workspace sandbox	PASS	logs/14-umbrella-seeded-context.log; public umbrella context delivery passed
+V19	git diff --check 5c1ce2c..HEAD	workspace sandbox	PASS	source commit 642313a62db437ee2bf0b3d5b97fcdcffa16782a; source worktree clean

@@ -1,0 +1,997 @@
+[1;34mChecking for outdated dependencies...[0m
+
+
+[1;32m✓ All dependencies up to date[0m
+[1;34mRunning linter checks...[0m
+[1;36m• Running clippy...[0m
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.10s
+warning: the following packages contain code that will be rejected by a future version of Rust: block v0.1.6
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+[1;32m✓ Clippy passed[0m
+[1;36m• Checking code formatting...[0m
+[1;32m✓ Format check passed[0m
+[1;34mBuilding Oxurack...[0m
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.10s
+warning: the following packages contain code that will be rejected by a future version of Rust: block v0.1.6
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+[1;32m✓ Build complete[0m
+[1;34mRunning tests...[0m
+[1;36m• Running all workspace tests...[0m
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.06s
+warning: the following packages contain code that will be rejected by a future version of Rust: block v0.1.6
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+     Running unittests src/lib.rs (target/debug/deps/oxurack-769eb76d41c3d0a7)
+
+running 15 tests
+test tests::test_new_has_module_registry ... ok
+test tests::test_install_populates_registry ... ok
+test tests::test_new_has_simulation_running_false ... ok
+test tests::test_driver_transitions_discard_overstep_without_catch_up ... ok
+test tests::test_load_patch_unregistered_kind_errors ... ok
+test tests::test_new_has_time_fixed_at_1ms ... ok
+test tests::test_load_patch_makes_graph_current_synchronously ... ok
+test tests::test_graph_accessor_returns_view ... ok
+test tests::test_install_then_apply_patch_spawns_entities ... ok
+test tests::test_load_patch_stores_handle ... ok
+test tests::test_step_does_not_panic ... ok
+test tests::test_live_transitions_and_stop_start_discard_catch_up ... ok
+test tests::test_load_patch_replaces_previous_handle ... ok
+test tests::test_reinstall_after_parameter_edit_preserves_loaded_state ... ok
+test tests::test_propagation_runs_in_fixed_update_not_update ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/module_installation.rs (target/debug/deps/module_installation-75be530be9d52cf4)
+
+running 5 tests
+test old_install_panics_clearly_but_try_install_is_typed ... ok
+test same_type_reinstall_before_edit_keeps_system_single_and_accessors_registered ... ok
+test installed_systems_execute_each_loaded_instance_on_fixed_update ... ok
+test conflicting_type_returns_before_mutation_and_original_behavior_survives ... ok
+test installations_are_rack_local_and_legacy_modules_still_load ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/sample_pipeline.rs (target/debug/deps/sample_pipeline-56fe84b4d552c6f5)
+
+running 5 tests
+test last_wins_is_name_stable_with_spawn_permutation_and_unrelated_entity ... ok
+test manual_pipeline_has_indexed_latency_and_phase_order ... ok
+test stopped_manual_and_live_requests_do_not_change_sample_state ... ok
+test live_reentry_has_no_zero_elapsed_catch_up_sample ... ok
+test manual_and_controlled_live_drives_match_grouping ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/seeded_spawn_context.rs (target/debug/deps/seeded_spawn_context-ceaaad68f842a481)
+
+running 1 test
+test public_umbrella_load_delivers_context_before_state_construction ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/oxurack_core-592671f29e39ccaf)
+
+running 438 tests
+test bridge::tests::test_convert_core_midi_program_change ... ok
+test bridge::tests::test_convert_core_midi_channel_pressure ... ok
+test bridge::tests::test_convert_core_midi_pitch_bend ... ok
+test bridge::tests::test_convert_core_midi_note_off ... ok
+test bridge::tests::test_convert_core_midi_note_on ... ok
+test bridge::tests::test_convert_core_midi_cc ... ok
+test bridge::tests::test_convert_rt_midi_cc ... ok
+test bridge::tests::test_convert_core_midi_poly_key_pressure ... ok
+test bridge::tests::test_convert_rt_midi_channel_pressure ... ok
+test bridge::tests::test_convert_core_midi_system_message_returns_none ... ok
+test bridge::tests::test_convert_rt_midi_note_off ... ok
+test bridge::tests::test_convert_rt_midi_note_on ... ok
+test bridge::tests::test_convert_rt_midi_note_on_velocity_zero_becomes_note_off ... ok
+test bridge::tests::test_convert_rt_midi_pitch_bend ... ok
+test bridge::tests::test_convert_rt_midi_poly_key_pressure ... ok
+test bridge::tests::test_convert_rt_midi_program_change ... ok
+test bridge::tests::test_convert_rt_midi_unknown_returns_none ... ok
+test bridge::tests::test_convert_rt_to_core_to_rt_cc_roundtrip ... ok
+test bridge::tests::test_convert_rt_to_core_to_rt_note_on_roundtrip ... ok
+test bridge::tests::test_convert_rt_to_core_to_rt_pitch_bend_roundtrip ... ok
+test bridge::tests::test_convert_rt_to_core_to_rt_program_change_roundtrip ... ok
+test bridge::tests::test_midi_output_queue_default_is_empty ... ok
+test bridge::tests::test_midi_output_queue_push_and_drain ... ok
+test cable::tests::test_affine_bipolar ... ok
+test cable::tests::test_affine_float ... ok
+test cable::tests::test_affine_gate_none ... ok
+test cable::tests::test_affine_midi_none ... ok
+test cable::tests::test_affine_raw_none ... ok
+test cable::tests::test_bipolarize_float_none ... ok
+test cable::tests::test_bipolarize_gate_none ... ok
+test cable::tests::test_bipolarize_midi_none ... ok
+test cable::tests::test_bipolarize_neg_one ... ok
+test cable::tests::test_bipolarize_one ... ok
+test cable::tests::test_bipolarize_raw_none ... ok
+test cable::tests::test_bipolarize_zero ... ok
+test cable::tests::test_cable_index_target_ports_empty ... ok
+test cable::tests::test_cable_index_clear ... ok
+test cable::tests::test_cable_index_target_ports ... ok
+test cable::tests::test_cable_index_remove ... ok
+test cable::tests::test_cable_index_add_and_lookup ... ok
+test cable::tests::test_cable_index_unknown_port_returns_empty ... ok
+test cable::tests::test_cable_transform_clone_and_eq ... ok
+test cable::tests::test_cable_component_roundtrip ... ok
+test cable::tests::test_cable_component_no_transform ... ok
+test cable::tests::test_cable_transform_debug ... ok
+test cable::tests::test_clamp_bipolar ... ok
+test cable::tests::test_clamp_float_above ... ok
+test cable::tests::test_clamp_float_below ... ok
+test cable::tests::test_clamp_float_within ... ok
+test cable::tests::test_clamp_gate_none ... ok
+test cable::tests::test_clamp_midi_none ... ok
+test cable::tests::test_clamp_raw_none ... ok
+test cable::tests::test_gate_to_float_bipolar_none ... ok
+test cable::tests::test_gate_to_float_false ... ok
+test cable::tests::test_gate_to_float_float_none ... ok
+test cable::tests::test_gate_to_float_midi_none ... ok
+test cable::tests::test_gate_to_float_raw_none ... ok
+test cable::tests::test_gate_to_float_true ... ok
+test cable::tests::test_invert_bipolar ... ok
+test cable::tests::test_invert_float ... ok
+test cable::tests::test_invert_gate_none ... ok
+test cable::tests::test_invert_midi_none ... ok
+test cable::tests::test_invert_raw_none ... ok
+test cable::tests::test_threshold_above ... ok
+test cable::tests::test_threshold_at_boundary ... ok
+test cable::tests::test_threshold_below ... ok
+test cable::tests::test_threshold_bipolar_none ... ok
+test cable::tests::test_threshold_gate_none ... ok
+test cable::tests::test_threshold_midi_none ... ok
+test cable::tests::test_threshold_raw_none ... ok
+test cable::tests::test_unipolar_bipolar_none ... ok
+test cable::tests::test_unipolar_gate_none ... ok
+test cable::tests::test_unipolar_half ... ok
+test cable::tests::test_unipolar_midi_none ... ok
+test cable::tests::test_unipolar_one ... ok
+test cable::tests::test_unipolar_raw_none ... ok
+test cable::tests::test_unipolar_zero ... ok
+test error::tests::test_core_error_from_patch_error ... ok
+test error::tests::test_core_error_from_tick_error ... ok
+test error::tests::test_core_error_invalid_parameter_value ... ok
+test error::tests::test_core_error_no_patch_loaded_display ... ok
+test error::tests::test_core_error_not_implemented_display ... ok
+test error::tests::test_core_error_unknown_module_display ... ok
+test error::tests::test_core_error_unknown_parameter ... ok
+test error::tests::test_from_patch_error_to_core_error ... ok
+test error::tests::test_from_tick_error_to_core_error ... ok
+test error::tests::test_patch_error_duplicate_instance_name ... ok
+test error::tests::test_patch_error_deserialize ... ok
+test error::tests::test_patch_error_feedback_cycle ... ok
+test error::tests::test_patch_error_illegal_merge ... ok
+test error::tests::test_patch_error_invalid_bpm ... ok
+test error::tests::test_patch_error_invalid_tag_display ... ok
+test error::tests::test_patch_error_io ... ok
+test error::tests::test_patch_error_io_from_conversion ... ok
+test error::tests::test_patch_error_kind_mismatch ... ok
+test error::tests::test_patch_error_non_finite_float ... ok
+test error::tests::test_patch_error_serialize ... ok
+test error::tests::test_patch_error_unknown_module_kind ... ok
+test error::tests::test_patch_error_unknown_port ... ok
+test error::tests::test_tick_error_midi_queue_overflow ... ok
+test error::tests::test_tick_error_module_panic ... ok
+test event::tests::test_core_command_add_cable_debug ... ok
+test event::tests::test_core_command_clone ... ok
+test event::tests::test_core_command_load_patch_debug ... ok
+test event::tests::test_core_command_panic_debug ... ok
+test event::tests::test_core_command_remove_cable_debug ... ok
+test event::tests::test_core_command_save_patch_debug ... ok
+test event::tests::test_core_command_set_bpm_debug ... ok
+test event::tests::test_core_command_set_parameter_debug ... ok
+test event::tests::test_dispatch_add_cable_returns_not_implemented ... ok
+test event::tests::test_dispatch_panic_command ... ok
+test event::tests::test_dispatch_load_patch_returns_not_implemented ... ok
+test event::tests::test_dispatch_remove_cable_returns_not_implemented ... ok
+test event::tests::test_dispatch_save_patch_returns_not_implemented ... ok
+test event::tests::test_dispatch_set_bpm_command ... ok
+test event::tests::test_dispatch_set_parameter_no_patch_loaded ... ok
+test event::tests::test_dispatch_set_parameter_invalid_value ... ok
+test event::tests::test_dispatch_set_parameter_emits_previous_value ... ok
+test event::tests::test_midi_in_received_clone_eq ... ok
+test event::tests::test_midi_in_received_debug ... ok
+test event::tests::test_dispatch_set_parameter_previous_equals_new_when_same_value ... ok
+test event::tests::test_dispatch_set_parameter_positive_path ... ok
+test event::tests::test_dispatch_set_parameter_previous_none_when_getter_missing ... ok
+test event::tests::test_dispatch_set_parameter_unknown_module ... ok
+test event::tests::test_patch_loaded_clone ... ok
+test event::tests::test_dispatch_set_parameter_unknown_parameter ... ok
+test event::tests::test_parameter_changed_emitted_on_set_parameter ... ok
+test event::tests::test_patch_loaded_debug ... ok
+test event::tests::test_parameter_changed_not_emitted_on_set_parameter_failure ... ok
+test event::tests::test_transport_changed_clone_eq ... ok
+test event::tests::test_transport_changed_debug ... ok
+test event::tests::test_transport_state_all_variants ... ok
+test event::tests::test_transport_state_eq ... ok
+test label::tests::test_description_component_insert_and_read ... ok
+test label::tests::test_display_name_of_treats_empty_string_as_absent ... ok
+test label::tests::test_display_name_of_uses_component_when_present ... ok
+test label::tests::test_display_name_component_insert_and_read ... ok
+test label::tests::test_display_name_of_uses_formatter_when_absent ... ok
+test label::tests::test_formatter_dash_separator ... ok
+test label::tests::test_formatter_default_acronyms ... ok
+test label::tests::test_formatter_digit_tokens ... ok
+test label::tests::test_formatter_mixed ... ok
+test label::tests::test_formatter_runtime_extension ... ok
+test label::tests::test_formatter_title_case ... ok
+test label::tests::test_tag_error_display ... ok
+test label::tests::test_tag_new_allows_internal_whitespace ... ok
+test label::tests::test_tag_new_rejects_empty ... ok
+test label::tests::test_tag_new_rejects_leading_whitespace ... ok
+test label::tests::test_tag_new_rejects_trailing_whitespace ... ok
+test label::tests::test_tag_new_valid_input ... ok
+test module::tests::test_module_id_copy ... ok
+test label::tests::test_tags_component_insert_and_read ... ok
+test module::tests::test_module_id_debug ... ok
+test module::tests::test_module_component_roundtrip ... ok
+test module::tests::test_module_id_display ... ok
+test module::tests::test_module_id_equality ... ok
+test module::tests::test_module_id_from_instance_name_deterministic ... ok
+test module::tests::test_module_id_from_instance_name_differs_for_different_names ... ok
+test module::tests::test_module_id_hash ... ok
+test module::tests::test_module_id_ordering ... ok
+test module::tests::test_module_id_sorting ... ok
+test module::tests::test_module_kind_clone ... ok
+test module::tests::test_module_kind_debug ... ok
+test module::tests::test_module_kind_display ... ok
+test module::tests::test_module_kind_equality ... ok
+test module::tests::test_module_kind_from_str ... ok
+test module::tests::test_module_kind_from_string ... ok
+test module::tests::test_module_kind_hash ... ok
+test module::tests::test_module_registration_clone ... ok
+test module::tests::test_module_registry_contains ... ok
+test module::tests::test_module_registry_debug ... ok
+test module::tests::test_module_registry_default_description ... ok
+test module::tests::test_module_registry_get_unknown ... ok
+test module::tests::test_module_registry_kinds ... ok
+test module::tests::test_module_registry_parameter_schema_accessible ... ok
+test module::tests::test_module_registry_register_and_get ... ok
+test module::tests::test_module_registry_port_schema_accessible ... ok
+test module::tests::test_port_schema_clone ... ok
+test module::tests::test_port_schema_debug ... ok
+test module::tests::test_spawn_module_entity_creates_module_and_id ... ok
+test parameter::tests::test_get_parameter_propagates_getter_error ... ok
+test module::tests::test_spawn_module_entity_deterministic_id ... ok
+test parameter::tests::test_parameter_name_debug ... ok
+test parameter::tests::test_get_parameter_returns_unknown_for_unregistered ... ok
+test parameter::tests::test_parameter_name_display ... ok
+test parameter::tests::test_get_parameter_returns_current_value ... ok
+test parameter::tests::test_parameter_name_equality ... ok
+test parameter::tests::test_parameter_name_from_str ... ok
+test parameter::tests::test_parameter_name_from_string ... ok
+test parameter::tests::test_parameter_name_hash ... ok
+test parameter::tests::test_parameter_schema_clone ... ok
+test parameter::tests::test_parameter_schema_debug ... ok
+test parameter::tests::test_parameter_value_bool ... ok
+test parameter::tests::test_parameter_value_clone ... ok
+test parameter::tests::test_parameter_value_float ... ok
+test parameter::tests::test_parameter_value_int ... ok
+test parameter::tests::test_parameter_value_scale ... ok
+test parameter::tests::test_parameter_value_string ... ok
+test parameter::tests::test_registry_register_and_set ... ok
+test parameter::tests::test_registry_unknown_parameter ... ok
+test parameter::tests::test_registry_setter_can_reject_value ... ok
+test patch::tests::test_check_patch_cycles_only_reports_cycle_members ... ok
+test patch::tests::test_apply_patch_to_world_validation_failure ... ok
+test patch::tests::test_apply_patch_to_world_empty_patch ... ok
+test patch::tests::test_apply_patch_to_world_spawns_modules ... ok
+test patch::tests::test_apply_patch_to_world_module_ids_deterministic ... ok
+test patch::tests::test_check_patch_cycles_self_loop_ignored ... ok
+test patch::tests::test_apply_patch_to_world_spawns_ports ... ok
+test patch::tests::test_apply_patch_to_world_spawns_cable ... ok
+test patch::tests::test_cable_connected_emitted_on_patch_load ... ok
+test patch::tests::test_check_patch_cycles_three_node_cycle ... ok
+test patch::tests::test_deserialize_invalid_ron ... ok
+test patch::tests::test_find_port_entity_returns_none_for_unknown_port ... ok
+test patch::tests::test_label_changed_emitted_on_patch_load_module_with_description ... ok
+test patch::tests::test_label_changed_emitted_on_patch_load_cable_with_label ... ok
+test patch::tests::test_label_changed_emitted_on_patch_load_module_with_display_name ... ok
+test patch::tests::test_label_changed_emitted_on_patch_load_module_with_tags ... ok
+test patch::tests::test_label_changed_not_emitted_when_labels_empty ... ok
+test patch::tests::test_load_nonexistent_file ... ok
+test patch::tests::test_label_changed_rack_level_emissions ... ok
+test patch::tests::test_apply_patch_to_world_propagation_integration ... ok
+test patch::tests::test_apply_patch_to_world_with_transform ... ok
+test patch::tests::test_patch_clone_eq ... ok
+test patch::tests::test_load_malformed_ron_file ... ok
+test patch::tests::test_load_patch_into_world_nonexistent_file ... ok
+test patch::tests::test_label_changed_module_label_order ... ok
+test patch::tests::test_patch_handle_clone ... ok
+test patch::tests::test_patch_handle_debug ... ok
+test patch::tests::test_module_invalid_tag_returns_error ... ok
+test patch::tests::test_parameter_changed_emitted_on_patch_load_initial_values ... ok
+test patch::tests::test_module_added_emitted_on_patch_load ... ok
+test patch::tests::test_parameter_changed_patch_load_previous_is_none ... ok
+test patch::tests::test_patch_ron_human_readable ... ok
+test patch::tests::test_legacy_patch_files_load_unchanged ... ok
+test patch::tests::test_patch_load_notification_ordering ... ok
+test patch::tests::test_load_patch_into_world_roundtrip ... ok
+test patch::tests::test_patch_loaded_extended_fields ... ok
+test patch::tests::test_patch_loaded_label_count_zero_for_unlabeled_patch ... ok
+test patch::tests::test_patch_ron_roundtrip_with_transform ... ok
+test patch::tests::test_patch_ron_roundtrip ... ok
+test patch::tests::test_validate_empty_patch ... ok
+test patch::tests::test_patch_loaded_label_count_counts_all_emissions ... ok
+test patch::tests::test_validate_duplicate_instance_name ... ok
+test patch::tests::test_validate_average_multi_cable_ok ... ok
+test patch::tests::test_validate_kind_mismatch_with_transform_ok ... ok
+test patch::tests::test_rack_meta_loaded_from_patch ... ok
+test patch::tests::test_validate_kind_mismatch_without_transform ... ok
+test patch::tests::test_validate_feedback_cycle ... ok
+test patch::tests::test_rack_meta_invalid_tag_returns_error ... ok
+test patch::tests::test_validate_no_cycle_linear ... ok
+test patch::tests::test_validate_patch_rejects_infinite_bpm ... ok
+test patch::tests::test_rack_meta_default_when_section_absent ... ok
+test patch::tests::test_validate_patch_rejects_infinity_parameter ... ok
+test patch::tests::test_save_and_load_file ... ok
+test patch::tests::test_validate_patch_rejects_nan_bpm ... ok
+test patch::tests::test_validate_patch_rejects_negative_bpm ... ok
+test patch::tests::test_validate_patch_rejects_nan_parameter ... ok
+test patch::tests::test_save_and_load_roundtrip_with_all_parameter_types ... ok
+test patch::tests::test_validate_patch_rejects_zero_bpm ... ok
+test patch::tests::test_validate_patch_rejects_negative_infinity_parameter ... ok
+test patch::tests::test_validate_reject_multi_cable ... ok
+test patch::tests::test_validate_unknown_module_kind ... ok
+test patch::tests::test_validate_unknown_port ... ok
+test patch::tests::test_validate_unknown_port_module_not_found ... ok
+test patch::tests::test_validate_valid_patch ... ok
+test port::tests::test_merge_average_bipolar ... ok
+test port::tests::test_merge_average_float ... ok
+test port::tests::test_merge_average_gate ... ok
+test patch::tests::test_ron_roundtrip_all_cable_transforms ... ok
+test port::tests::test_merge_average_midi ... ok
+test port::tests::test_merge_average_raw ... ok
+test port::tests::test_merge_last_wins_bipolar ... ok
+test port::tests::test_merge_last_wins_float ... ok
+test port::tests::test_merge_last_wins_gate ... ok
+test port::tests::test_merge_last_wins_midi ... ok
+test port::tests::test_merge_last_wins_raw ... ok
+test port::tests::test_merge_max_bipolar ... ok
+test port::tests::test_merge_max_float ... ok
+test port::tests::test_merge_max_gate ... ok
+test port::tests::test_merge_max_midi ... ok
+test port::tests::test_merge_max_raw ... ok
+test port::tests::test_merge_policy_clone_and_eq ... ok
+test port::tests::test_merge_reject_bipolar ... ok
+test port::tests::test_merge_policy_hash ... ok
+test port::tests::test_merge_reject_float ... ok
+test port::tests::test_merge_reject_gate ... ok
+test port::tests::test_merge_reject_midi ... ok
+test port::tests::test_merge_reject_raw ... ok
+test port::tests::test_merge_sum_bipolar ... ok
+test port::tests::test_merge_sum_float ... ok
+test port::tests::test_merge_sum_gate ... ok
+test port::tests::test_merge_sum_midi ... ok
+test port::tests::test_merge_sum_raw ... ok
+test port::tests::test_port_direction_equality ... ok
+test port::tests::test_port_direction_hash ... ok
+test port::tests::test_port_name_clone ... ok
+test port::tests::test_port_name_display ... ok
+test port::tests::test_port_name_equality ... ok
+test port::tests::test_port_name_from_str ... ok
+test port::tests::test_port_name_from_string ... ok
+test port::tests::test_port_name_hash ... ok
+test rng::tests::test_derive_module_rng_different_inputs_different_sequence ... ok
+test port::tests::test_spawn_port_component_roundtrip ... ok
+test rng::tests::test_derive_module_rng_different_master_seed ... ok
+test port::tests::test_spawn_port_on_module_creates_child_with_components ... ok
+test rng::tests::test_derive_module_rng_same_inputs_same_sequence ... ok
+test rng::tests::test_derive_seed_deterministic ... ok
+test port::tests::test_spawn_port_on_module_output ... ok
+test rng::tests::test_derive_seed_differs_for_different_master_seeds ... ok
+test rng::tests::test_derive_seed_differs_for_different_names ... ok
+test rng::tests::test_derive_seed_empty_name ... ok
+test rng::tests::test_derive_seed_golden_vectors ... ok
+test scale::tests::test_augmented_intervals ... ok
+test rng::tests::test_derive_seed_uses_utf8_byte_length ... ok
+test scale::tests::test_blues_intervals ... ok
+test scale::tests::test_chromatic_intervals ... ok
+test scale::tests::test_clone_eq ... ok
+test scale::tests::test_debug ... ok
+test scale::tests::test_dorian_intervals ... ok
+test scale::tests::test_diminished_intervals ... ok
+test scale::tests::test_harmonic_minor_intervals ... ok
+test scale::tests::test_is_in_scale_octave_equivalence ... ok
+test scale::tests::test_is_in_scale_with_root ... ok
+test scale::tests::test_is_in_scale_root_c ... ok
+test scale::tests::test_lydian_intervals ... ok
+test scale::tests::test_major_intervals ... ok
+test scale::tests::test_mixolydian_intervals ... ok
+test scale::tests::test_name_none ... ok
+test scale::tests::test_name_some ... ok
+test scale::tests::test_natural_minor_intervals ... ok
+test scale::tests::test_ne ... ok
+test scale::tests::test_new_all_out_of_range_defaults_to_root ... ok
+test scale::tests::test_new_empty_intervals_defaults_to_root ... ok
+test scale::tests::test_new_filters_out_of_range ... ok
+test scale::tests::test_new_sorts_and_deduplicates ... ok
+test scale::tests::test_pentatonic_major_intervals ... ok
+test scale::tests::test_pentatonic_minor_intervals ... ok
+test scale::tests::test_phrygian_intervals ... ok
+test scale::tests::test_quantize_chromatic_identity ... ok
+test scale::tests::test_quantize_edge_note_0 ... ok
+test scale::tests::test_quantize_edge_note_127 ... ok
+test scale::tests::test_quantize_edge_note_1_not_in_c_major ... ok
+test scale::tests::test_quantize_in_scale_unchanged ... ok
+test scale::tests::test_quantize_snaps_down_on_tie ... ok
+test scale::tests::test_quantize_snaps_to_nearest ... ok
+test scale::tests::test_quantize_with_root ... ok
+test scale::tests::test_root_clamped_to_11 ... ok
+test scale::tests::test_root_within_range ... ok
+test scale::tests::test_serde_ron_roundtrip ... ok
+test scale::tests::test_whole_tone_intervals ... ok
+test scale::tests::test_serde_ron_roundtrip_anonymous ... ok
+test tests::test_core_plugin_does_not_panic ... ok
+test tests::test_core_plugin_fixed_preserves_preinserted_false_until_enabled ... ok
+test tests::test_core_plugin_registers_midi_output_queue ... ok
+test tests::test_core_plugin_registers_module_registry ... ok
+test tests::test_core_plugin_registers_cable_index ... ok
+test tests::test_core_plugin_fixed_runs_named_phases_and_latches_stop ... ok
+test tests::test_core_plugin_registers_merge_buffers ... ok
+test tests::test_core_plugin_registers_tick_order ... ok
+test tick::tests::test_apply_merge_average_bipolar ... ok
+test tick::tests::test_apply_merge_average_float ... ok
+test tick::tests::test_apply_merge_last_wins ... ok
+test tick::tests::test_apply_merge_max_bipolar ... ok
+test tick::tests::test_apply_merge_max_float ... ok
+test tick::tests::test_apply_merge_max_gate ... ok
+test tick::tests::test_apply_merge_average_mixed_kind_panics - should panic ... ok
+test tick::tests::test_apply_merge_reject_single ... ok
+test tick::tests::test_apply_merge_sum_bipolar_clamped ... ok
+test tick::tests::test_apply_merge_sum_float_clamped ... ok
+test tick::tests::test_apply_merge_sum_gate_or ... ok
+test tick::tests::test_apply_merge_sum_mixed_kind_panics - should panic ... ok
+test tick::tests::test_merge_buffers_clear ... ok
+test tick::tests::test_merge_buffers_contribute_and_read ... ok
+test tick::tests::test_merge_buffers_empty_port ... ok
+test tick::tests::test_tick_now_clone_copy ... ok
+test tick::tests::test_tick_phase_clone ... ok
+test tick::tests::test_tick_phase_eq ... ok
+test tick::tests::test_tick_phase_hash ... ok
+test tests::test_core_plugin_registers_propagation_order ... ok
+test tests::test_core_plugin_registers_parameter_registry ... ok
+test tick::tests::test_topo_cycle_detected ... ok
+test tick::tests::test_topo_diamond ... ok
+test tick::tests::test_topo_linear_chain ... ok
+test tick::tests::test_topo_deterministic ... ok
+test value::tests::test_coerce_bipolar_neg_to_float ... ok
+test value::tests::test_coerce_bipolar_to_bipolar ... ok
+test tick::tests::test_topo_no_cables ... ok
+test value::tests::test_coerce_bipolar_to_float ... ok
+test value::tests::test_coerce_bipolar_to_gate_negative ... ok
+test value::tests::test_coerce_bipolar_to_gate_positive ... ok
+test value::tests::test_coerce_bipolar_to_gate_zero ... ok
+test value::tests::test_coerce_bipolar_to_midi_none ... ok
+test value::tests::test_coerce_bipolar_to_raw_none ... ok
+test value::tests::test_coerce_float_to_bipolar ... ok
+test value::tests::test_coerce_float_to_bipolar_zero ... ok
+test tick::tests::test_merge_average_integration ... ok
+test value::tests::test_coerce_float_to_float ... ok
+test value::tests::test_coerce_float_to_gate_low ... ok
+test tick::tests::test_propagate_disabled_cable ... ok
+test value::tests::test_coerce_float_to_gate_high ... ok
+test value::tests::test_coerce_float_to_raw_none ... ok
+test value::tests::test_coerce_float_to_midi_none ... ok
+test tick::tests::test_propagate_with_transform ... ok
+test value::tests::test_coerce_gate_false_to_bipolar ... ok
+test tick::tests::test_propagate_single_cable ... ok
+test value::tests::test_coerce_gate_false_to_float ... ok
+test value::tests::test_coerce_gate_to_gate ... ok
+test value::tests::test_coerce_gate_to_midi_none ... ok
+test value::tests::test_coerce_gate_to_raw_none ... ok
+test value::tests::test_coerce_gate_true_to_bipolar ... ok
+test value::tests::test_coerce_gate_true_to_float ... ok
+test tick::tests::test_sample_and_hold ... ok
+test value::tests::test_coerce_midi_to_bipolar_none ... ok
+test value::tests::test_coerce_midi_to_float_none ... ok
+test value::tests::test_coerce_midi_to_gate_none ... ok
+test value::tests::test_coerce_midi_to_midi ... ok
+test value::tests::test_coerce_midi_to_raw_none ... ok
+test value::tests::test_coerce_raw_to_bipolar_none ... ok
+test value::tests::test_coerce_raw_to_float_none ... ok
+test value::tests::test_coerce_raw_to_gate_none ... ok
+test value::tests::test_coerce_raw_to_midi_none ... ok
+test value::tests::test_coerce_raw_to_raw ... ok
+test value::tests::test_default_for_kind_bipolar ... ok
+test value::tests::test_default_for_kind_float ... ok
+test value::tests::test_default_for_kind_gate ... ok
+test value::tests::test_default_for_kind_midi ... ok
+test value::tests::test_default_for_kind_raw ... ok
+test value::tests::test_kind_bipolar ... ok
+test value::tests::test_kind_float ... ok
+test value::tests::test_kind_gate ... ok
+test value::tests::test_kind_midi ... ok
+test tick::tests::test_propagation_order_cached_and_dirty ... ok
+test value::tests::test_kind_raw ... ok
+test value::tests::test_midi_message_debug_and_clone ... ok
+test value::tests::test_value_kind_debug ... ok
+test value::tests::test_value_kind_eq_and_hash ... ok
+test value::tests::test_value_size ... ok
+test tests::test_core_plugin_runs_five_phases_by_default_and_gates_explicit_false ... ok
+
+test result: ok. 438 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/integration_full_cycle.rs (target/debug/deps/integration_full_cycle-fbe333a27f85a424)
+
+running 5 tests
+test test_counter_output_monotonic ... ok
+test test_accumulator_sum_monotonic ... ok
+test test_full_cycle_performance ... ok
+test test_full_cycle_propagation ... ok
+test test_full_cycle_determinism ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests/seeded_spawn_context.rs (target/debug/deps/seeded_spawn_context-2cbe8189361bfe21)
+
+running 9 tests
+test committed_trace_fixture_comes_from_hard_coded_plan_golden_seeds ... ok
+test seeded_probe_child ... ok
+test default_context_hook_forwards_to_legacy_spawn ... ok
+test failed_spawn_does_not_leak_context_to_an_independent_load ... ok
+test direct_registration_falls_back_to_legacy_spawner_and_replacement_clears_hook ... ok
+test context_fields_and_parameters_are_visible_before_state_construction ... ok
+test stop_resume_continues_and_fresh_load_restarts_trace ... ok
+test reordered_and_changed_inputs_have_the_required_trace_relationships ... ok
+test fresh_process_replay_matches_committed_fixture_twice ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src/lib.rs (target/debug/deps/oxurack_graph-941cb9559144dd8d)
+
+running 65 tests
+test tests::test_cable_info_serde_roundtrip ... ok
+test tests::test_cycle_error_display ... ok
+test tests::test_compatible_inputs_unknown_port ... ok
+test tests::test_cable_disconnected_removes_edge ... ok
+test tests::test_compatible_inputs_finds_matching_kind ... ok
+test tests::test_compatible_inputs_excludes_mismatched_kind ... ok
+test tests::test_cable_info_resolves_ports_and_modules ... ok
+test tests::test_cables_sorted_by_endpoints ... ok
+test tests::test_compatible_inputs_includes_same_module ... ok
+test tests::test_cycles_acyclic_graph ... ok
+test tests::test_cables_returns_all ... ok
+test tests::test_cable_connected_adds_edge ... ok
+test tests::test_cycles_empty_graph ... ok
+test tests::test_dangling_modules_empty_graph ... ok
+test tests::test_cycles_finds_self_loop ... ok
+test tests::test_cycles_finds_two_node_cycle ... ok
+test tests::test_cycles_multiple_disjoint ... ok
+test tests::test_dangling_modules_all_connected ... ok
+test tests::test_dangling_modules_finds_isolated ... ok
+test tests::test_dangling_ports_all_wired ... ok
+test tests::test_dangling_ports_empty_graph ... ok
+test tests::test_dangling_ports_finds_unwired_output ... ok
+test tests::test_downstream_closure_isolated ... ok
+test tests::test_downstream_of_returns_target_modules ... ok
+test tests::test_incoming_cables ... ok
+test tests::test_downstream_closure_diamond ... ok
+test tests::test_downstream_closure_linear_chain ... ok
+test tests::test_module_by_name_resolves ... ok
+test tests::test_module_info_serde_roundtrip ... ok
+test tests::test_module_by_name_returns_none_for_missing ... ok
+test tests::test_module_info_description_none_when_absent ... ok
+test tests::test_module_info_falls_back_to_formatter ... ok
+test tests::test_dangling_ports_finds_unwired_input ... ok
+test tests::test_module_info_no_tags_when_absent ... ok
+test tests::test_module_info_resolves_description ... ok
+test tests::test_module_added_adds_node ... ok
+test tests::test_module_info_resolves_display_name_from_component ... ok
+test tests::test_module_info_resolves_tags ... ok
+test tests::test_parameter_info_serde_roundtrip ... ok
+test tests::test_module_removed_cleans_incident_edges ... ok
+test tests::test_module_removed_removes_node ... ok
+test tests::test_modules_empty_for_empty_graph ... ok
+test tests::test_module_kinds_histogram ... ok
+test tests::test_modules_of_kind_filters ... ok
+test tests::test_port_info_serde_roundtrip ... ok
+test tests::test_neighborhoods_empty_for_isolated_module ... ok
+test tests::test_outgoing_cables ... ok
+test tests::test_parameters_of_current_none_when_getter_missing ... ok
+test tests::test_modules_sorted_by_instance_name ... ok
+test tests::test_rack_graph_empty_on_init ... ok
+test tests::test_parameters_of_empty_for_unknown_entity ... ok
+test tests::test_parameters_of_returns_schema ... ok
+test tests::test_parameters_of_includes_current_value ... ok
+test tests::test_ports_of_returns_empty_for_unknown_module ... ok
+test tests::test_parameters_of_sorted_by_name ... ok
+test tests::test_modules_returns_all ... ok
+test tests::test_topological_order_empty_graph ... ok
+test tests::test_ports_of_returns_inputs_and_outputs ... ok
+test tests::test_topological_order_diamond ... ok
+test tests::test_topological_order_returns_cycle_error ... ok
+test tests::test_topological_order_linear_chain ... ok
+test tests::test_upstream_closure_linear_chain ... ok
+test tests::test_upstream_closure_unknown_entity ... ok
+test tests::test_two_modules_added ... ok
+test tests::test_upstream_of_returns_source_modules ... ok
+
+test result: ok. 65 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/patch_load_populates_graph.rs (target/debug/deps/patch_load_populates_graph-802831686413ed53)
+
+running 1 test
+test test_patch_load_populates_graph ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/oxurack_midi-e090090bc512c1d8)
+
+running 59 tests
+test message::tests::test_to_wire_cc ... ok
+test message::tests::test_to_wire_note_off ... ok
+test message::tests::test_to_wire_note_on ... ok
+test message::tests::test_to_wire_channel_pressure ... ok
+test message::tests::test_midi_message_debug_and_clone ... ok
+test message::tests::test_to_wire_poly_key_pressure ... ok
+test message::tests::test_to_wire_pitch_bend_centre ... ok
+test message::tests::test_to_wire_system_messages_return_none ... ok
+test message::tests::test_to_wire_program_change ... ok
+test tests::test_midi_wire_is_4_bytes ... ok
+test tests::test_note_on_velocity_zero_becomes_note_off ... ok
+test tests::test_roundtrip_cc ... ok
+test tests::test_roundtrip_channel_pressure ... ok
+test tests::test_roundtrip_note_off ... ok
+test tests::test_roundtrip_note_on ... ok
+test tests::test_roundtrip_pitch_bend_centre ... ok
+test tests::test_roundtrip_pitch_bend_max ... ok
+test tests::test_roundtrip_pitch_bend_min ... ok
+test tests::test_roundtrip_poly_key_pressure ... ok
+test tests::test_roundtrip_program_change ... ok
+test tests::test_system_messages_to_wire_returns_none ... ok
+test tests::test_wire_note_on_roundtrip ... ok
+test tests::test_wire_program_change_roundtrip ... ok
+test tests::test_wire_unknown_status_returns_none ... ok
+test wire::tests::test_cc ... ok
+test wire::tests::test_cc_masks_all_fields ... ok
+test wire::tests::test_from_bytes_data_byte_returns_none ... ok
+test wire::tests::test_from_bytes_empty_returns_none ... ok
+test wire::tests::test_from_bytes_note_on_missing_data2 ... ok
+test wire::tests::test_from_bytes_program_change_single_byte ... ok
+test wire::tests::test_from_bytes_system_returns_none ... ok
+test wire::tests::test_from_bytes_single_status_byte ... ok
+test wire::tests::test_midi_wire_size ... ok
+test wire::tests::test_note_off_masks_channel ... ok
+test wire::tests::test_note_off ... ok
+test wire::tests::test_note_on ... ok
+test wire::tests::test_note_on_masks_channel ... ok
+test wire::tests::test_note_on_masks_data ... ok
+test wire::tests::test_note_on_roundtrip ... ok
+test wire::tests::test_pitch_bend ... ok
+test wire::tests::test_pitch_bend_masks_all_fields ... ok
+test wire::tests::test_program_change ... ok
+test wire::tests::test_program_change_masks_channel_and_program ... ok
+test wire::tests::test_program_change_roundtrip ... ok
+test wire::tests::test_to_bytes_cc ... ok
+test wire::tests::test_to_bytes_note_off ... ok
+test wire::tests::test_to_bytes_note_on ... ok
+test wire::tests::test_to_bytes_pads_short_messages ... ok
+test wire::tests::test_to_bytes_pitch_bend ... ok
+test wire::tests::test_to_bytes_program_change ... ok
+test wire::tests::test_to_message_cc ... ok
+test wire::tests::test_to_message_channel_pressure ... ok
+test wire::tests::test_to_message_note_off ... ok
+test wire::tests::test_to_message_note_on ... ok
+test wire::tests::test_to_message_note_on_velocity_zero ... ok
+test wire::tests::test_to_message_pitch_bend_centre ... ok
+test wire::tests::test_to_message_poly_key_pressure ... ok
+test wire::tests::test_to_message_program_change ... ok
+test wire::tests::test_to_message_unknown_returns_none ... ok
+
+test result: ok. 59 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/oxurack_mod_turingmachine-bcbeb5064b135257)
+
+running 115 tests
+test clock::tests::div1_always_fires ... ok
+test clock::tests::div2_fires_every_other_tick ... ok
+test clock::tests::div4_fires_every_fourth_tick ... ok
+test clock::tests::reset_restarts_counters ... ok
+test clock::tests::test_div2_many_ticks ... ok
+test clock::tests::test_division_getter ... ok
+test engine::tests::display_shows_brackets ... ok
+test engine::tests::locked_loop_repeats ... ok
+test engine::tests::deterministic_with_seed ... ok
+test engine::tests::pulses_are_and_of_adjacent_bits ... ok
+test engine::tests::fully_random_no_repeat ... ok
+test engine::tests::reset_zeroes_register ... ok
+test engine::tests::step_count_increments ... ok
+test engine::tests::test_all_zeros_register ... ok
+test engine::tests::test_all_ones_register ... ok
+test engine::tests::test_default_impl ... ok
+test engine::tests::test_display_default_length ... ok
+test engine::tests::test_display_short_length ... ok
+test engine::tests::test_length_in_outputs ... ok
+test engine::tests::test_modulate_write ... ok
+test engine::tests::test_move_step_advances_register ... ok
+test engine::tests::test_move_step_vs_tick ... ok
+test engine::tests::test_new_produces_output ... ok
+test engine::tests::test_reset_clears_dividers ... ok
+test engine::tests::test_reset_clears_step_count ... ok
+test engine::tests::test_noise_cc_range ... ok
+test engine::tests::test_scale_note_independent_of_main_note ... ok
+test engine::tests::test_set_length_position ... ok
+test engine::tests::test_set_note_range ... ok
+test engine::tests::test_set_root_changes_output ... ok
+test engine::tests::test_set_scale_changes_output ... ok
+test engine::tests::test_set_scale_output_root ... ok
+test engine::tests::test_set_scale_output_scale ... ok
+test engine::tests::test_write_probability_in_outputs ... ok
+test error::tests::test_error_debug ... ok
+test error::tests::test_error_display_invalid_data ... ok
+test error::tests::test_error_display_other ... ok
+test error::tests::test_error_from_send_error ... ok
+test error::tests::test_error_source ... ok
+test length::tests::decrement_saturates ... ok
+test length::tests::default_is_16 ... ok
+test length::tests::increment_saturates ... ok
+test length::tests::round_trip ... ok
+test length::tests::set_length_snaps ... ok
+test length::tests::set_position_clamps ... ok
+test quantizer::tests::test_augmented_intervals ... ok
+test quantizer::tests::test_chromatic_passthrough ... ok
+test quantizer::tests::test_diminished_intervals ... ok
+test quantizer::tests::test_dorian_intervals ... ok
+test quantizer::tests::test_harmonic_minor_intervals ... ok
+test quantizer::tests::test_lydian_intervals ... ok
+test quantizer::tests::test_major_snaps_correctly ... ok
+test quantizer::tests::test_mixolydian_intervals ... ok
+test quantizer::tests::test_natural_minor_intervals ... ok
+test quantizer::tests::test_note_from_dac_full_range ... ok
+test quantizer::tests::test_note_from_dac_low_range_start ... ok
+test quantizer::tests::test_note_from_dac_high_range ... ok
+test quantizer::tests::test_note_from_dac_narrow_range ... ok
+test quantizer::tests::test_note_from_dac_never_zero ... ok
+test quantizer::tests::test_note_from_dac_with_major_scale ... ok
+test quantizer::tests::test_note_from_dac_with_pentatonic_and_root ... ok
+test quantizer::tests::test_note_from_dac_zero_range ... ok
+test quantizer::tests::test_pentatonic_minor_intervals ... ok
+test quantizer::tests::test_pentatonic_quantize ... ok
+test quantizer::tests::test_phrygian_intervals ... ok
+test quantizer::tests::test_quantize_at_boundaries ... ok
+test quantizer::tests::test_quantize_blues ... ok
+test quantizer::tests::test_quantize_exact_match ... ok
+test quantizer::tests::test_quantize_harmonic_minor ... ok
+test quantizer::tests::test_quantize_near_127_finds_below ... ok
+test quantizer::tests::test_quantize_near_zero_finds_above ... ok
+test quantizer::tests::test_quantize_note_126_root_only ... ok
+test quantizer::tests::test_quantize_note_zero_not_in_scale ... ok
+test quantizer::tests::test_quantize_whole_tone ... ok
+test quantizer::tests::test_quantize_with_nonzero_root ... ok
+test quantizer::tests::test_quantizer_clone_eq ... ok
+test quantizer::tests::test_quantizer_set_root_clamps ... ok
+test quantizer::tests::test_quantizer_debug ... ok
+test quantizer::tests::test_quantizer_set_root_wraps_or_clamps ... ok
+test quantizer::tests::test_quantizer_set_range ... ok
+test quantizer::tests::test_quantizer_set_scale ... ok
+test quantizer::tests::test_range_respected ... ok
+test quantizer::tests::test_scale_clone ... ok
+test quantizer::tests::test_scale_debug ... ok
+test quantizer::tests::test_scale_eq ... ok
+test quantizer::tests::test_scale_name ... ok
+test quantizer::tests::test_scale_ne ... ok
+test quantizer::tests::test_scale_new_all_out_of_range ... ok
+test quantizer::tests::test_scale_new_empty_gets_root ... ok
+test quantizer::tests::test_scale_new_filters_out_of_range ... ok
+test quantizer::tests::test_scale_new_sorts_and_deduplicates ... ok
+test quantizer::tests::test_scale_root_only ... ok
+test quantizer::tests::test_velocity_from_dac_lower_7_bits ... ok
+test quantizer::tests::test_velocity_from_dac_max ... ok
+test quantizer::tests::test_velocity_from_dac_zero ... ok
+test quantizer::tests::test_whole_tone_intervals ... ok
+test quantizer::tests::test_velocity_never_zero ... ok
+test shift_register::tests::test_clock_overflow_discards_bit_16 ... ok
+test shift_register::tests::test_clock_shifts_left ... ok
+test shift_register::tests::test_dac_byte_length_16_is_upper_byte ... ok
+test shift_register::tests::test_dac_byte_length_8_is_lower_byte ... ok
+test shift_register::tests::test_dac_byte_length_less_than_8 ... ok
+test shift_register::tests::test_default_delegates_to_new ... ok
+test shift_register::tests::test_feedback_bit_length_one ... ok
+test shift_register::tests::test_feedback_bit_maximum_length ... ok
+test shift_register::tests::test_feedback_bit_respects_length ... ok
+test shift_register::tests::test_new_returns_zeroed_register ... ok
+test shift_register::tests::test_pulse_bit_is_msb_of_dac_byte ... ok
+test shift_register::tests::test_new_random_produces_value ... ok
+test shift_register::tests::test_reset_clears_register ... ok
+test shift_register::tests::test_to_bools_order ... ok
+test write_knob::tests::modulate_clamps ... ok
+test write_knob::tests::new_clamps ... ok
+test write_knob::tests::probability_0_ignores_feedback ... ok
+test write_knob::tests::probability_1_always_keeps ... ok
+
+test result: ok. 115 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/oxurack_rt-444a14e55510731a)
+
+running 153 tests
+test clock::master::tests::test_interval_at_120_bpm ... ok
+test clock::master::tests::test_next_tick_returns_current_schedule ... ok
+test clock::master::tests::test_new_initial_state ... ok
+test clock::master::tests::test_beat_increments_correctly ... ok
+test clock::master::tests::test_set_position_from_spp ... ok
+test clock::master::tests::test_subdivision_wraps_at_24 ... ok
+test clock::master::tests::test_set_tempo_changes_interval ... ok
+test clock::master::tests::test_reset_clears_position ... ok
+test clock::passthrough::tests::test_passthrough_1_to_1 ... ok
+test clock::master::tests::test_advance_schedules_are_drift_free ... ok
+test clock::passthrough::tests::test_passthrough_divide_2 ... ok
+test clock::passthrough::tests::test_passthrough_advance_output_wraps_at_24 ... ok
+test clock::passthrough::tests::test_passthrough_divide_produces_even_distribution ... ok
+test clock::passthrough::tests::test_passthrough_dropout ... ok
+test clock::passthrough::tests::test_passthrough_multiply_2 ... ok
+test clock::passthrough::tests::test_passthrough_multiply_3_divide_2 ... ok
+test clock::passthrough::tests::test_passthrough_multiply_and_divide_clamped_to_1 ... ok
+test clock::passthrough::tests::test_passthrough_no_dropout_before_ticks ... ok
+test clock::passthrough::tests::test_passthrough_reset ... ok
+test clock::passthrough::tests::test_passthrough_running_state ... ok
+test clock::passthrough::tests::test_passthrough_set_position_from_spp ... ok
+test clock::slave::tests::test_estimator_detects_dropout ... ok
+test clock::slave::tests::test_estimator_follows_tempo_change ... ok
+test clock::slave::tests::test_estimator_handles_tempo_jump ... ok
+test clock::slave::tests::test_estimator_locks_after_4_ticks ... ok
+test clock::slave::tests::test_estimator_minimum_window_size ... ok
+test clock::slave::tests::test_estimator_no_dropout_before_ticks ... ok
+test clock::slave::tests::test_estimator_no_dropout_within_window ... ok
+test clock::slave::tests::test_estimator_not_locked_initially ... ok
+test clock::slave::tests::test_estimator_not_locked_with_3_ticks ... ok
+test clock::slave::tests::test_estimator_raw_filtered_interval ... ok
+test clock::slave::tests::test_estimator_smooths_jitter ... ok
+test clock::slave::tests::test_estimator_zero_interval_returns_none_bpm ... ok
+test clock::slave::tests::test_oscillator_not_running_initially ... ok
+test clock::slave::tests::test_oscillator_phase_correction ... ok
+test clock::slave::tests::test_oscillator_reset_position ... ok
+test clock::slave::tests::test_oscillator_resume_does_nothing_if_already_running ... ok
+test clock::slave::tests::test_oscillator_spp ... ok
+test clock::slave::tests::test_oscillator_starts_on_first_sync ... ok
+test clock::slave::tests::test_oscillator_stop_and_resume ... ok
+test clock::slave::tests::test_oscillator_subdivision_wraps ... ok
+test clock::slave::tests::test_slave_clock_advance_when_not_locked ... ok
+test clock::slave::tests::test_slave_clock_continue_before_locked ... ok
+test clock::slave::tests::test_slave_clock_dropout_resets_oscillator ... ok
+test clock::slave::tests::test_slave_clock_feed_spp ... ok
+test clock::slave::tests::test_slave_clock_locks_after_ticks ... ok
+test clock::slave::tests::test_slave_clock_not_locked_initially ... ok
+test clock::slave::tests::test_slave_clock_timeout ... ok
+test clock::slave::tests::test_slave_clock_transport_continue_resumes ... ok
+test clock::slave::tests::test_slave_clock_transport_start_resets ... ok
+test clock::slave::tests::test_slave_clock_transport_stop_halts ... ok
+test clock::tests::test_interval_ns_from_bpm_240 ... ok
+test clock::tests::test_interval_ns_from_bpm_120 ... ok
+test clock::tests::test_interval_ns_from_bpm_60 ... ok
+test clock::slave::tests::test_slave_output_jitter_within_budget ... ok
+test messages::tests::test_cc ... ok
+test messages::tests::test_classify_active_sensing ... ok
+test messages::tests::test_classify_channel_pressure ... ok
+test messages::tests::test_classify_clock ... ok
+test messages::tests::test_classify_continue ... ok
+test messages::tests::test_classify_data_byte_returns_none ... ok
+test messages::tests::test_classify_empty_returns_none ... ok
+test messages::tests::test_classify_mtc_quarter_frame ... ok
+test messages::tests::test_classify_note_on ... ok
+test messages::tests::test_classify_program_change ... ok
+test messages::tests::test_classify_song_position ... ok
+test messages::tests::test_classify_song_position_max ... ok
+test messages::tests::test_classify_song_position_missing_bytes ... ok
+test messages::tests::test_classify_song_select ... ok
+test messages::tests::test_classify_song_position_zero ... ok
+test messages::tests::test_classify_start ... ok
+test messages::tests::test_classify_stop ... ok
+test messages::tests::test_classify_sysex_returns_none ... ok
+test messages::tests::test_classify_system_reset ... ok
+test messages::tests::test_classify_tune_request ... ok
+test messages::tests::test_ecs_command_fits_cache_line ... ok
+test messages::tests::test_from_bytes_data_byte_returns_none ... ok
+test messages::tests::test_from_bytes_empty_returns_none ... ok
+test messages::tests::test_from_bytes_note_on_missing_data2 ... ok
+test messages::tests::test_from_bytes_program_change_single_byte ... ok
+test messages::tests::test_from_bytes_single_status_byte ... ok
+test messages::tests::test_from_bytes_system_returns_none ... ok
+test messages::tests::test_midi_message_size ... ok
+test messages::tests::test_note_off ... ok
+test messages::tests::test_note_on ... ok
+test messages::tests::test_note_on_roundtrip ... ok
+test messages::tests::test_pitch_bend ... ok
+test messages::tests::test_program_change ... ok
+test messages::tests::test_program_change_roundtrip ... ok
+test messages::tests::test_rt_event_fits_cache_line ... ok
+test messages::tests::test_to_bytes_cc ... ok
+test messages::tests::test_to_bytes_note_off ... ok
+test messages::tests::test_to_bytes_note_on ... ok
+test messages::tests::test_to_bytes_pads_short_messages ... ok
+test messages::tests::test_to_bytes_pitch_bend ... ok
+test messages::tests::test_to_bytes_program_change ... ok
+test midi_io::tests::test_open_input_no_ports_succeeds ... ok
+test midi_io::tests::test_midi_input_ports_debug ... ok
+test midi_io::tests::test_midi_ports_debug ... ok
+test midi_io::tests::test_open_no_ports_succeeds ... ok
+test midi_io::tests::test_port_lost_out_of_bounds_returns_true ... ok
+test midi_io::tests::test_port_lost_tracked_on_empty ... ok
+test midi_io::tests::test_send_out_of_bounds_returns_port_not_found ... ok
+test priority::tests::test_priority_elevation_effects_on_scheduler ... ignored, requires RT scheduling permissions; run with `cargo test -- --ignored`
+test priority::tests::test_error_display ... ok
+test priority::tests::test_elevation_succeeds ... ok
+test queues::tests::test_queue_empty_returns_none ... ok
+test queues::tests::test_queue_full_returns_error ... ok
+test queues::tests::test_queue_cross_thread ... ok
+test queues::tests::test_queue_multiple_event_types ... ok
+test queues::tests::test_queue_roundtrip_ecs_command ... ok
+test queues::tests::test_queue_roundtrip_rt_event ... ok
+test tests::test_clock_mode_debug ... ok
+test tests::test_midi_input_config_debug ... ok
+test tests::test_midi_output_config_debug ... ok
+test tests::test_runtime_config_debug ... ok
+test midi_io::tests::test_list_input_ports ... FAILED
+test midi_io::tests::test_list_output_ports ... FAILED
+test midi_io::tests::test_open_input_nonexistent_returns_error ... FAILED
+test midi_io::tests::test_open_nonexistent_port_returns_error ... FAILED
+test thread::tests::test_midi_input_event_uses_push_event ... ok
+test thread::tests::test_non_fatal_error_uses_push_event ... ok
+test thread::tests::test_drop_stops_thread ... ok
+test tests::test_runtime_debug ... ok
+test tests::test_rt_handles_debug ... ok
+test thread::tests::test_double_stop_returns_already_stopped ... ok
+test thread::tests::test_port_lost_send_returns_error ... ok
+test thread::tests::test_push_event_overflow_emits_error ... ok
+test thread::tests::test_push_event_overflow_tracking ... ok
+test thread::tests::test_passthrough_mode_shutdown_command ... ok
+test thread::tests::test_master_spp_sets_position ... ok
+test thread::tests::test_master_transport_start_resets_position ... ok
+test thread::tests::test_passthrough_mode_exercises_command_paths ... ok
+test thread::tests::test_shutdown_command ... ok
+test thread::tests::test_slave_mode_clock_tick_uses_push_event ... ok
+test thread::tests::test_passthrough_mode_starts_and_stops ... ok
+test thread::tests::test_runtime_starts_and_stops ... ok
+test thread::tests::test_timing_loop_jitter ... ignored
+test thread::tests::test_timing_loop_no_drift ... ignored
+test timing::tests::test_elapsed_since ... ok
+test timing::tests::test_monotonic_clock_advances ... ok
+test timing::tests::test_precision_sleep_accuracy ... ok
+test timing::tests::test_precision_sleep_no_undershoot ... ok
+test thread::tests::test_send_midi_command_exercises_path ... ok
+test timing::tests::test_precision_sleep_past_target_returns_immediately ... ok
+test thread::tests::test_master_transport_with_send_enabled ... ok
+test thread::tests::test_slave_transport_via_command ... ok
+test thread::tests::test_master_transport_continue_preserves_position ... ok
+test thread::tests::test_slave_mode_ignores_set_tempo ... ok
+test thread::tests::test_runtime_produces_clock_ticks ... ok
+test thread::tests::test_runtime_with_no_inputs_still_works ... ok
+test thread::tests::test_set_tempo_command ... ok
+test thread::tests::test_master_transport_stop_halts_ticks ... ok
+
+failures:
+
+---- midi_io::tests::test_list_input_ports stdout ----
+
+thread 'midi_io::tests::test_list_input_ports' (18881476) panicked at crates/oxurack-rt/src/midi_io.rs:358:9:
+listing input ports should succeed: Err(MidiInit("MIDI support could not be initialized"))
+
+---- midi_io::tests::test_list_output_ports stdout ----
+
+thread 'midi_io::tests::test_list_output_ports' (18881477) panicked at crates/oxurack-rt/src/midi_io.rs:349:9:
+listing output ports should succeed: Err(MidiInit("MIDI support could not be initialized"))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- midi_io::tests::test_open_input_nonexistent_returns_error stdout ----
+
+thread 'midi_io::tests::test_open_input_nonexistent_returns_error' (18881481) panicked at crates/oxurack-rt/src/midi_io.rs:413:22:
+expected PortNotFound, got: MIDI initialization failed: MIDI support could not be initialized
+
+---- midi_io::tests::test_open_nonexistent_port_returns_error stdout ----
+
+thread 'midi_io::tests::test_open_nonexistent_port_returns_error' (18881483) panicked at crates/oxurack-rt/src/midi_io.rs:342:22:
+expected PortNotFound, got: MIDI initialization failed: MIDI support could not be initialized
+
+
+failures:
+    midi_io::tests::test_list_input_ports
+    midi_io::tests::test_list_output_ports
+    midi_io::tests::test_open_input_nonexistent_returns_error
+    midi_io::tests::test_open_nonexistent_port_returns_error
+
+test result: FAILED. 146 passed; 4 failed; 3 ignored; 0 measured; 0 filtered out; finished in 1.06s
+
+error: test failed, to rerun pass `-p oxurack-rt --lib`
+make: *** [test] Error 101

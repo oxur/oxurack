@@ -1,0 +1,16 @@
+    Blocking waiting for file lock on build directory
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running tests/seeded_spawn_context.rs (target/debug/deps/seeded_spawn_context-2f09dbfc59a1246b)
+
+running 9 tests
+test seeded_probe_child ... ok
+test committed_trace_fixture_comes_from_hard_coded_plan_golden_seeds ... ok
+test default_context_hook_forwards_to_legacy_spawn ... ok
+test context_fields_and_parameters_are_visible_before_state_construction ... ok
+test direct_registration_falls_back_to_legacy_spawner_and_replacement_clears_hook ... ok
+test failed_spawn_does_not_leak_context_to_an_independent_load ... ok
+test stop_resume_continues_and_fresh_load_restarts_trace ... ok
+test reordered_and_changed_inputs_have_the_required_trace_relationships ... ok
+test fresh_process_replay_matches_committed_fixture_twice ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
