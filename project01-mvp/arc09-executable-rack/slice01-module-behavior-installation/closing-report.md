@@ -14,7 +14,7 @@ count remains 0 of 5.
 - Source implementation commit: `d43078ea9c71bba10035699c9914bef3891f1d83` (`Make installed modules execute in the rack`)
 - Planning worktree: `/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning`
 - Planning state at intake: `4e50a3a0171b44344f19e4bbf1b8307dafec741c`
-- Planning evidence commit: `PLANNING_EVIDENCE_COMMIT_TO_BE_FILLED_AFTER_INITIAL_COMMIT`
+- Planning evidence commit: `c53989d5dc3c765fcb8f27261be25d4a918995e6`
 
 Validation commands ran against the source worktree at the baseline revision
 with the implementation changes present and unstaged. The exact resulting tree
