@@ -135,7 +135,7 @@ unexecuted. This execution consumes corrective pass 1 of 5.
 - Source state after commit: clean
 - Planning worktree: `/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning`
 - Planning assignment state at intake: `c12ab9d7f19daf5c7510e5697fb64129ddf5bbbb`
-- Planning evidence commit: `ITERATION02_PLANNING_EVIDENCE_COMMIT_TO_BE_FILLED`
+- Planning evidence commit: `0f4561b06708f36287abd519d5bf0d24a3e7bcde`
 
 The corrective source diff contains exactly four paths:
 
