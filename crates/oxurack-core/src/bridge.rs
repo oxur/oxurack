@@ -478,7 +478,7 @@ mod tests {
         queue.commands.push(oxurack_rt::EcsCommand::Shutdown);
         assert_eq!(queue.commands.len(), 2);
 
-        let drained: Vec<_> = queue.commands.drain(..).collect();
+        let drained = std::mem::take(&mut queue.commands);
         assert_eq!(drained.len(), 2);
         assert!(queue.commands.is_empty());
     }

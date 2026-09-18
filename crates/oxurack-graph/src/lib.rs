@@ -1033,10 +1033,10 @@ mod tests {
             .get::<bevy_ecs::hierarchy::Children>(module_entity)
             .expect("module should have children");
         for child in children.iter() {
-            if let Some(port) = world.get::<Port>(child) {
-                if port.name.as_ref() == name {
-                    return child;
-                }
+            if let Some(port) = world.get::<Port>(child)
+                && port.name.as_ref() == name
+            {
+                return child;
             }
         }
         panic!("port '{name}' not found on entity {module_entity:?}");

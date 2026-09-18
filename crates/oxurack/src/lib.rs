@@ -238,9 +238,11 @@ impl Default for Oxurack {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bevy_ecs::prelude::{Component, Entity, Query, ResMut, Resource, With};
     use oxurack_core::{
         CableConfig, CoreError, MergePolicy, ModuleConfig, ModuleRegistry, OxurackModule,
-        ParameterSchema, ParameterValue, PatchHandle, PortDirection, PortSchema, ValueKind,
+        ParameterGetter, ParameterRegistry, ParameterSchema, ParameterSetter, ParameterValue,
+        PatchHandle, PortDirection, PortSchema, ValueKind,
     };
     use pretty_assertions::assert_eq;
     use std::collections::HashMap;
@@ -366,6 +368,202 @@ mod tests {
         let path = std::env::temp_dir().join(name);
         oxurack_core::save_patch_to_file(patch, &path).expect("save should succeed");
         path
+    }
+
+    #[derive(Component, Clone, Debug, PartialEq, Eq)]
+    struct LiveStepState {
+        increment: i64,
+        total: i64,
+    }
+
+    #[derive(Component)]
+    struct LiveCounter;
+
+    #[derive(Resource, Default)]
+    struct LiveHookCalls(usize);
+
+    #[derive(Resource, Default)]
+    struct LiveSystemRuns(usize);
+
+    struct LiveBehaviorCounter;
+
+    fn live_invalid_parameter(reason: &str) -> CoreError {
+        CoreError::InvalidParameterValue {
+            module: "behavior_counter".to_owned(),
+            param: "increment".to_owned(),
+            reason: reason.to_owned(),
+        }
+    }
+
+    fn live_set_increment(
+        world: &mut bevy_ecs::world::World,
+        entity: Entity,
+        value: ParameterValue,
+    ) -> Result<(), CoreError> {
+        let ParameterValue::Int(increment) = value else {
+            return Err(live_invalid_parameter("expected an integer"));
+        };
+        world
+            .entity_mut(entity)
+            .get_mut::<LiveStepState>()
+            .ok_or_else(|| live_invalid_parameter("module has no live step state"))?
+            .increment = increment;
+        Ok(())
+    }
+
+    fn live_get_increment(
+        world: &bevy_ecs::world::World,
+        entity: Entity,
+    ) -> Result<ParameterValue, CoreError> {
+        world
+            .entity(entity)
+            .get::<LiveStepState>()
+            .map(|state| ParameterValue::Int(state.increment))
+            .ok_or_else(|| live_invalid_parameter("module has no live step state"))
+    }
+
+    fn live_behavior_system(
+        mut system_runs: ResMut<LiveSystemRuns>,
+        mut query: Query<&mut LiveStepState, With<LiveCounter>>,
+    ) {
+        system_runs.0 += 1;
+        for mut state in &mut query {
+            state.total += state.increment;
+        }
+    }
+
+    impl OxurackModule for LiveBehaviorCounter {
+        const KIND: &'static str = "behavior_counter";
+        const DISPLAY_NAME: &'static str = "Live Behavior Counter";
+        const DESCRIPTION: &'static str = "A unit-test module for live reinstall behavior.";
+
+        fn port_schema() -> &'static [PortSchema] {
+            &[]
+        }
+
+        fn parameter_schema() -> &'static [ParameterSchema] {
+            &[ParameterSchema {
+                name: "increment",
+                description: "Amount added on every fixed tick.",
+                default: ParameterValue::Int(1),
+            }]
+        }
+
+        fn spawn(
+            world: &mut bevy_ecs::world::World,
+            instance_name: &str,
+            parameters: &HashMap<String, ParameterValue>,
+        ) -> Result<Entity, CoreError> {
+            let increment = match parameters.get("increment") {
+                Some(ParameterValue::Int(increment)) => *increment,
+                None => 1,
+                Some(_) => return Err(live_invalid_parameter("expected an integer")),
+            };
+            let entity = oxurack_core::spawn_module_entity(world, Self::KIND, instance_name);
+            world.entity_mut(entity).insert((
+                LiveCounter,
+                LiveStepState {
+                    increment,
+                    total: 0,
+                },
+            ));
+            Ok(entity)
+        }
+
+        fn register_systems(app: &mut App, schedule: bevy_ecs::schedule::InternedScheduleLabel) {
+            app.init_resource::<LiveHookCalls>()
+                .init_resource::<LiveSystemRuns>()
+                .add_systems(schedule, live_behavior_system);
+            app.world_mut().resource_mut::<LiveHookCalls>().0 += 1;
+        }
+
+        fn parameter_setters() -> &'static [(&'static str, ParameterSetter)] {
+            &[("increment", live_set_increment)]
+        }
+
+        fn parameter_getters() -> &'static [(&'static str, ParameterGetter)] {
+            &[("increment", live_get_increment)]
+        }
+    }
+
+    fn live_state(rack: &Oxurack, handle: &PatchHandle, name: &str) -> LiveStepState {
+        rack.world()
+            .entity(handle.modules[name])
+            .get::<LiveStepState>()
+            .unwrap_or_else(|| panic!("{name} should have LiveStepState"))
+            .clone()
+    }
+
+    fn live_parameter(rack: &mut Oxurack, entity: Entity) -> ParameterValue {
+        let kind = ModuleKind::from(LiveBehaviorCounter::KIND);
+        rack.world_mut()
+            .resource_scope::<ParameterRegistry, _>(|world, registry| {
+                registry
+                    .get_parameter(world, entity, &kind, "increment")
+                    .expect("live getter should remain registered")
+            })
+    }
+
+    #[test]
+    fn test_reinstall_after_parameter_edit_preserves_loaded_state() {
+        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/behavior-installation.ron");
+        let mut rack = Oxurack::new();
+        rack.install::<LiveBehaviorCounter>();
+        rack.load_patch(&fixture)
+            .expect("behavior fixture should load through the public path");
+
+        let handle = rack.world().resource::<PatchHandle>().clone();
+        let alpha = handle.modules["alpha"];
+        let beta = handle.modules["beta"];
+        assert_eq!(live_state(&rack, &handle, "alpha").total, 0);
+        assert_eq!(live_state(&rack, &handle, "beta").total, 0);
+        assert_eq!(live_state(&rack, &handle, "alpha").increment, 2);
+        assert_eq!(live_state(&rack, &handle, "beta").increment, 3);
+        assert_eq!(rack.world().resource::<LiveHookCalls>().0, 1);
+
+        rack.world_mut().run_schedule(FixedUpdate);
+        rack.world_mut().run_schedule(FixedUpdate);
+        assert_eq!(live_state(&rack, &handle, "alpha").total, 4);
+        assert_eq!(live_state(&rack, &handle, "beta").total, 6);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 2);
+
+        let kind = ModuleKind::from(LiveBehaviorCounter::KIND);
+        {
+            let world = rack.world_mut();
+            world.resource_scope::<ParameterRegistry, _>(|world, registry| {
+                registry
+                    .set_parameter(world, alpha, &kind, "increment", ParameterValue::Int(4))
+                    .expect("live setter should remain registered");
+                assert_eq!(
+                    registry
+                        .get_parameter(world, alpha, &kind, "increment")
+                        .expect("alpha getter should remain registered"),
+                    ParameterValue::Int(4)
+                );
+                assert_eq!(
+                    registry
+                        .get_parameter(world, beta, &kind, "increment")
+                        .expect("beta getter should remain registered"),
+                    ParameterValue::Int(3)
+                );
+            });
+        }
+
+        rack.try_install::<LiveBehaviorCounter>()
+            .expect("same-type reinstall should be idempotent after live edits");
+        assert_eq!(live_state(&rack, &handle, "alpha").total, 4);
+        assert_eq!(live_state(&rack, &handle, "beta").total, 6);
+        assert_eq!(live_parameter(&mut rack, alpha), ParameterValue::Int(4));
+        assert_eq!(live_parameter(&mut rack, beta), ParameterValue::Int(3));
+        assert_eq!(rack.world().resource::<LiveHookCalls>().0, 1);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 2);
+
+        rack.world_mut().run_schedule(FixedUpdate);
+        assert_eq!(live_state(&rack, &handle, "alpha").total, 8);
+        assert_eq!(live_state(&rack, &handle, "beta").total, 9);
+        assert_eq!(rack.world().resource::<LiveHookCalls>().0, 1);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 3);
     }
 
     // ── Tests ──────────────────────────────────────────────────────

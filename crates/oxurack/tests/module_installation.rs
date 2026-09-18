@@ -315,7 +315,7 @@ fn installed_systems_execute_each_loaded_instance_on_fixed_update() {
 }
 
 #[test]
-fn same_type_reinstall_preserves_loaded_state_and_accessors() {
+fn same_type_reinstall_before_edit_keeps_system_single_and_accessors_registered() {
     let mut rack = Oxurack::new();
     rack.install::<BehaviorCounter>();
     rack.load_patch(&fixture_path())
