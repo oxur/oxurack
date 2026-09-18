@@ -349,7 +349,32 @@ CDC reproduced both failing gates; no additional implementation acceptance.
 
 | Date | Packet | Predecessor | Status | Affected rows / authority | Next action |
 | --- | --- | --- | --- | --- | --- |
-| 2026-09-17 | cdc-directive05.md | crc-escalation05.md / directive04 | issued; awaiting CRC acknowledgement | I-02/I-05/I-06 open; exact scope amendment, unchanged gates | CRC authors iteration02, CC repairs, CRC independently verifies before slice02 |
+| 2026-09-17 | cdc-directive05.md | crc-escalation05.md / directive04 | acknowledged by Sofie/CRC against clean planning `dcab7931f8379380e0054c9b44b7b7d82b9be597` and source `d43078ea9c71bba10035699c9914bef3891f1d83` | I-02/I-05/I-06 open; exact scope amendment, unchanged gates | CRC authors iteration02, CC repairs, CRC independently verifies before slice02 |
 
 - v3.4 — 2026-09-17: Bounded corrective scope approved; no architectural or
   quality-target change, no slice/arc close. Previous pending-CDC status is history.
+
+CRC acknowledgment: D1 authorizes only the named graph/bridge test-code
+normalizations; D2 authorizes CC to repair the current-assignment checker while
+retaining every existing structural check; D3 authorizes one combined corrective
+assignment after guide-based authoring. The source and planning states above
+match directive05's observed candidate. No CC iteration02 work is present yet;
+CRC's prior I-01/I-03/I-04 verdict remains candidate-specific, and no gate or
+target has been waived.
+
+## CRC corrective handoff — v3.5, 2026-09-17
+
+Sofie/CRC has issued [arc09/slice01 iteration02](arc09-executable-rack/slice01-module-behavior-installation/cc-prompt-iteration02.md)
+under directive05 for Duncan to relay to CC. The [slice-plan author readiness](arc09-executable-rack/slice01-module-behavior-installation/slice-plan.md#crc-corrective-authoring-and-readiness--v15-2026-09-17)
+records six checks and a single canonical current-assignment field. Source
+remains clean at `d43078ea9c71bba10035699c9914bef3891f1d83`; I-02/I-05/I-06
+remain open, and the three earlier done rows are tied to that prior candidate.
+The next CC execution will be the first corrective pass (1 of 5 when run), not
+an acceptance or arc09/slice02 advancement.
+
+| Date | Packet | Predecessor | Status | Affected rows / authority | Next action |
+| --- | --- | --- | --- | --- | --- |
+| 2026-09-17 | [cc-prompt-iteration02.md](arc09-executable-rack/slice01-module-behavior-installation/cc-prompt-iteration02.md) | cdc-directive05.md / iteration01 | issued for relay, not executed | I-02/I-05/I-06 correction within approved scope | Duncan relays to CC; CC returns committed source/planning evidence for CRC review |
+
+- v3.5 — 2026-09-17: Issued the bounded corrective assignment after directive05
+  acknowledgment and six-part author readiness; no gate or source behavior changed.

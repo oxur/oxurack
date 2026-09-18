@@ -1,6 +1,6 @@
 # Slice01 — module behavior installation
 
-Version 1.4, 2026-09-17. Status: open; directive05 authorizes CRC corrective-prompt preparation.
+Version 1.5, 2026-09-17. Status: open; corrective iteration02 ready for CC relay.
 Workflow: CDC design / CRC independent review / CC implementation; Expedited Mode.
 Source baseline: `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` (main).
 Planning predecessor: `390d2aa2c3449f8a6e4bbaff3df6c64d821ce4ea`; authority is the
@@ -102,30 +102,38 @@ crates/oxurack/tests/fixtures/behavior-installation.ron
 crates/oxurack-mod-turingmachine/src/length.rs
 crates/oxurack-mod-turingmachine/src/write_knob.rs
 crates/oxurack-graph/src/lib.rs
+crates/oxurack-core/src/bridge.rs
 ```
 
-The final three entries are doc-comment-only. Inline tests in the first three
-files are allowed. No manifest/lockfile/new dependency edits. If another path is
+The two Turing Machine paths are doc-comment-only. Graph lib.rs keeps its
+doc-comment boundary except the exact `find_port` test-helper edit authorized
+by directive05; bridge.rs permits only that directive's queue test edit.
+Inline tests in the first three original source files are allowed. No
+manifest/lockfile/new dependency edits. If another path is
 necessary, explain why to CRC before expanding this allowlist; design changes go
 to CDC. The RON fixture is source test data; logs are planning artifacts.
 Planning allowlist: this slice's ledger.md, slice-plan.md (assignment status only),
 closing-report.md, the two named evidence files and each separately enumerated log.
+Directive05 also permits CC's narrow assignment-check update to
+artifacts/verify-planning.py and named iteration02 verifier-fixture evidence.
 Do not edit issued cc-prompt.md, execution-contract.md or another contributor's
 verification. No close or verifier placeholders at opening.
 
 ## Assignment history
 
-Current executed assignment: [cc-prompt-iteration01.md](cc-prompt-iteration01.md),
-CRC's preserved replacement under [directive04](../../cdc-directive04.md).
-CC returned source `d43078e`; [CRC's partial review](crc-verification.md) leaves
-I-02/I-05/I-06 open. [Escalation05](../../crc-escalation05.md) is awaiting CDC
-before another CC assignment. The original `cc-prompt.md` remains held and
-unexecuted.
+Current assignment: `arc09-executable-rack/slice01-module-behavior-installation/cc-prompt-iteration02.md`
+
+This [corrective iteration02](cc-prompt-iteration02.md) is issued under
+[directive05](../../cdc-directive05.md). The last executed assignment was
+[iteration01](cc-prompt-iteration01.md), source `d43078e`, with
+[CRC partial review](crc-verification.md): I-02/I-05/I-06 open. The original
+`cc-prompt.md` remains held and unexecuted.
 
 | Date | Prompt | Predecessor | Reason | Disposition |
 | --- | --- | --- | --- | --- |
 | 2026-09-17 | cc-prompt.md | none | CDC response to escalation03; first TM prerequisite implementation | held by directive04; replacement preparation assigned to CRC |
 | 2026-09-17 | cc-prompt-iteration01.md | cc-prompt.md | Newly installed guide requires source-grounded recipe, explicit test oracles and bounded CC intake | CC proposed-done at `d43078e`; CRC partial review, original unexecuted |
+| 2026-09-17 | cc-prompt-iteration02.md | cc-prompt-iteration01.md | CDC-approved after-edit reinstall test, exact Clippy/checker repairs and evidence correction | issued for CC relay; not yet executed, 0 of 5 corrective passes used |
 
 Executed refinements: 0 of 5. Preserve later cc-prompt-iterationNN.md files.
 CC owns execution; CRC checks exact commits, reproduces I-01–I-06 and records
@@ -229,3 +237,30 @@ The verifier remains a known failing gate until CC repairs and CRC reproduces it
 - v1.4 — 2026-09-17: CDC authorized exact test/checker corrections, identified
   the consuming into_app test constraint, and retained all quality gates and the
   0/5 executed-correction count until iteration02 runs.
+
+## CRC corrective authoring and readiness — v1.5, 2026-09-17
+
+CRC acknowledges directive05 against clean planning
+`dcab7931f8379380e0054c9b44b7b7d82b9be597` and clean source `d43078e`.
+The source reconnaissance in [iteration02](cc-prompt-iteration02.md#inspected-baseline-and-applied-guidance)
+checked `into_app(self)`, unit-test access to the live rack, the two exact
+Clippy sites, the integration fixture and the verifier's existing checks.
+Directive05 approves only test/checker repairs; the behavior contract and all
+six ledger criteria remain unchanged. Prior directive05 “not yet issued” text
+above is the historical pre-authoring state.
+
+| Author readiness check | CRC result and prompt pointer |
+| --- | --- |
+| Source-grounded | Ready: “Inspected baseline and applied guidance” names the real consuming API, fixture/test helpers and checker source at `d43078e`; “Required reading and intake” makes CC recheck them. |
+| Design-complete | Ready: “Binding corrective scope and ordered implementation route” fixes the live-state sequence, four exact source paths, checker metadata format and failure cases; only test-local helper/parser shape remains discretionary. |
+| Guideline-applied | Ready: the applied-guidance table ties CG-L-01, OB-19, AP-01 and testing guides to the all-targets gate, Vec transfer, warning policy and behavioral proof, with strength/rationale/check. |
+| Executable | Ready: seven ordered file/symbol steps, an expressly uncompiled borrow sketch, four-path corrective source allowlist and explicit planning artifact scope show the route without a public API change. |
+| Falsifiable | Ready: the after-edit `(0,0) → (4,6) → (8,9)` oracle, six bounded checker cases, full unchanged command matrix and raw failure/rerun requirements reject duplicate systems, stale metadata and green-wrapper inference. |
+| Coherent and portable | Ready: the bounded manifest names accessible paths and states, intake/readback home and prior authority; this plan's one canonical assignment field matches its history row and the checker contract. Future sample/seed/MIDI work remains separate. |
+
+This is CRC author self-review, not CC execution or independent acceptance.
+Executed corrective refinements remain 0 of 5 until CC runs iteration02.
+Arc09/slice02 stays held until CRC accepts the new candidate and closes all rows.
+
+- v1.5 — 2026-09-17: Issued guide-authored corrective iteration02 with canonical
+  assignment metadata and six readiness checks; retained all gates and row states.
