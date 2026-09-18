@@ -1,11 +1,10 @@
 # project01-mvp — status
 
-> Current: Three contributors, Expedited Mode. Arc09/slice01 is closed.
-> Arc09/slice02 source `8a73d33` has a CRC partial review: S-01/S-02 behavior
-> reproduced; S-03–S-06 remain open for stronger transition/ordering proof and
-> canonical close evidence. [Iteration01](../project01-mvp/arc09-executable-rack/slice02-simulation-samples/cc-prompt-iteration01.md)
-> is the current CC assignment. Slice03 seed work remains held; TM/MIDI then
-> Clock/LFO/Scope remain the product priority. Earlier entries below are history.
+> Current: Three contributors, Expedited Mode. Arc09/slices01–02 are closed
+> after independent CRC review. Slice03 seeded spawn context is open; its
+> [CC assignment](../project01-mvp/arc09-executable-rack/slice03-seeded-spawn-context/cc-prompt.md)
+> is current. TM/MIDI then Clock/LFO/Scope remain the product priority.
+> Earlier entries below are history.
 
 **Best estimate: approximately 45% of the reconstructed MVP implemented**
 (plausible range **35–55%**). The infrastructure is much further along than the
@@ -479,3 +478,21 @@ CRC's [partial verification](../project01-mvp/arc09-executable-rack/slice02-simu
 records the findings. Relay the current CC assignment relative to project01-mvp:
 `arc09-executable-rack/slice02-simulation-samples/cc-prompt-iteration01.md`.
 No arc-plan amendment or slice03 opening is authorized by this partial review.
+
+## CRC slice02 close and slice03 handoff — current, 2026-09-18
+
+CC's repaired source `5c1ce2c` and planning packet `733327f`/`e82637d`/
+`f2897af` were independently reviewed. CRC reran core/package/no-default
+tests, full Clippy, format, strict docs, host `make check`, no-default workspace
+tests, diff check and the slice02 checker with missing-close/stale-assignment
+negative controls. Source/principal planning diffs were inspected. S-01–S-06
+are done; the reported source has no production changes after the first
+sample implementation. Restricted MIDI/DNS attempts and three ignored timing
+tests remain documented. Physical MIDI, global 95% coverage and arc
+composition are not accepted by this slice close.
+
+CRC opened arc09/slice03 within CDC execution-contract §3: pre-construction
+seed context, fixed FNV-1a vectors, legacy spawner compatibility and separate
+process replay. Relay the current CC prompt relative to project01-mvp:
+`arc09-executable-rack/slice03-seeded-spawn-context/cc-prompt.md`.
+Arc10 TM/MIDI remains CDC-owned and held for arc09 composition review.

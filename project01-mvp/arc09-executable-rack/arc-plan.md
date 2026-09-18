@@ -1,6 +1,6 @@
 # Arc09 — executable, reproducible rack
 
-Version 1.1 — 2026-09-17. Status: active; slice01 closed, slice02 issued.
+Version 1.2 — 2026-09-18. Status: active; slices01–02 closed, slice03 issued.
 Depends on: existing core/umbrella source and accepted arc08 baseline observations.
 Blocks: arc10 TM/MIDI and arc11 Clock/LFO/Scope workbench. Replaces no original
 acceptance criterion; receives the execution/seed portions of historical arcs02/05.
@@ -21,8 +21,8 @@ physical MIDI, live snapshotting and full transport are subsequent capabilities.
 | ID | Scope | State / dependency |
 | --- | --- | --- |
 | slice01-module-behavior-installation | Default behavior hook, once-per-type rack registration, recoverable kind conflict, bounded existing rustdoc repairs | Closed; six rows independently reproduced at source `6a31c0f` |
-| slice02-simulation-samples | Explicit sample driver, phase/merge/observe boundary and manual/live exclusivity; maintain legacy step semantics | Open after slice01; CRC prompt issued under execution-contract §2 |
-| slice03-seeded-spawn-context | Explicit pre-construction seed handoff, stable seed derivation and fresh-process replay fixtures | Planned after slice02; no future directory created |
+| slice02-simulation-samples | Explicit sample driver, phase/merge/observe boundary and manual/live exclusivity; maintain legacy step semantics | Closed; six rows independently reproduced at source `5c1ce2c` |
+| slice03-seeded-spawn-context | Explicit pre-construction seed handoff, stable seed derivation and fresh-process replay fixtures | Open after slice02; CRC prompt issued under execution-contract §3 |
 
 CRC may prepare slice02/03 within the governing design after acceptance of the
 previous slice. Substantive API, compatibility, timing or evidence changes require
@@ -46,3 +46,6 @@ behavior must be disclosed before implementation, not explained away afterward.
 - v1.1 — 2026-09-17: CRC independently closed slice01 and opened slice02 within
   CDC's existing sample/phase contract. Slice01's restricted MIDI/DNS findings
   resolve with host retries and do not alter arc sequence or acceptance scope.
+- v1.2 — 2026-09-18: CRC independently closed slice02 after one evidence
+  refinement and opened the already planned seed-context slice03. The reported
+  weak initial tests required proof repair, not a scope or design amendment.

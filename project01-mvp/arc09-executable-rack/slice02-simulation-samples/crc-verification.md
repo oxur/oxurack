@@ -58,3 +58,69 @@ The real RON fixture, exact per-sample tuples, controlled live grouping, and
 separate restricted/host logs made the sample behavior reproducible. The
 review also exposed why a green predecessor-specific planning checker and
 same-result ordering test are weaker than current-slice acceptance evidence.
+
+## Iteration01 independent close — 2026-09-18
+
+Reviewer: Sofie/CRC, independent of CC. Assignment:
+`arc09-executable-rack/slice02-simulation-samples/cc-prompt-iteration01.md`.
+Candidate source `5c1ce2ccb5e0ba36ac9fd2605a047e0ff45928b2`, planning packet
+`733327f8af80c0f49bf8459fe7527cf82931cb23` with provenance follow-ups
+`e82637dbd98df1e95f67794deb1895372d4d183a` and `f2897af`.
+Both worktrees were clean. I inspected the four-file iteration diff and
+CC's canonical root [`closing-report.md`](closing-report.md), 53 raw logs,
+validation matrix, intake evidence and current-slice checker.
+
+Independent commands at the clean source revision exited zero:
+`cargo test --locked -p oxurack-core` (412 unit, 5 integration, 2 doctests);
+`cargo test --locked -p oxurack` (15 umbrella, 5 installation, 5 sample,
+0 doctests); no-default sample and installation suites (5 each);
+`cargo clippy --locked --workspace --all-features --all-targets -- -D warnings`;
+`cargo fmt --all -- --check`; strict all-features workspace rustdoc and
+no-default umbrella rustdoc; `git diff --check 8a73d33..HEAD`.
+The full host `make check` passed, including its dependency, build, lint,
+format and all-features workspace test gates. Independently ran
+`cargo test --locked --workspace --no-default-features --quiet` with host MIDI
+access; it passed, including 150 oxurack-rt tests and the three pre-existing
+ignored timing tests. CC's restricted failures and successful host retries
+remain separately recorded; no physical MIDI/timing or 95% coverage acceptance
+is inferred.
+
+Before changing the ledger, I ran
+`python3 project01-mvp/arc09-executable-rack/slice02-simulation-samples/artifacts/verify-slice02-planning.py --negative-cases`:
+valid exit 0, missing-root-close exit 1, stale-assignment exit 1, with 53
+logs and 16 local links checked. That checker deliberately requires CC's six
+rows to remain `open`; after CRC closes the ledger it is a historical
+pre-acceptance predicate, not a recurring post-close health check. The prior
+slice01 checker remains inherited structural evidence only.
+
+| Row | Independent disposition |
+| --- | --- |
+| S-01 | **Done, reproduced.** The public RON fixture yields indices 0/1/2, completed 1/2/3 and identical manual, live 1+1+1 and live 1+2 traces at 1 ms. |
+| S-02 | **Done, reproduced.** All five phase markers and shared clock pairs, immediate merged inputs, one-sample relay/sink latency and disconnected hold match the exact ledger trace. |
+| S-03 | **Done, reproduced.** Bare Update and fixed core run by default; preinserted false gates both; Oxurack begins stopped, stopped live/manual calls preserve state, and restart is contiguous. |
+| S-04 | **Done, reproduced.** Exact wrong-driver error and manual `step()` no-op hold. New controlled zero/one ms post-transition updates prove discarded overstep cannot create a catch-up sample; host tests pass. |
+| S-05 | **Done, reproduced.** The fixtures select and assert a lexical/ModuleId opposition before using actual LastWins propagation and `compute_tick_order`, then require the lexical result under both spawn orders. Numeric-ID ordering would yield a different result. |
+| S-06 | **Done, reproduced.** Four changed test files stay within the corrective allowlist; the root CC report and artifact inventory are present; full gate matrix, strict docs, current-slice checker and negative cases pass with restricted failures retained. |
+
+Opening, CC return and CRC close denominators are each six; all six rows are
+accepted `done`. The CC report's `[a,b]` phrase is legacy shorthand from its
+initial fixture: the final test actually chooses two opposing `order_*` names
+at runtime, as checked in source and above. This minor stale label does not
+alter its stated winner or evidence. The checker stage limitation is explicit
+above and does not weaken the behavioral review.
+
+### Bubble-up to arc09
+
+The slice delivers the approved arc09 sample/phase piece at the expected source
+and tests. Its only iteration finding was weak initial proof, repaired without
+production or design change. The silent-drop comparison retains seed handoff
+for slice03, TM/MIDI for arc10, Clock/LFO/Scope for arc11, persistence for its
+named successor, and quality/hardware gates for their recorded owners. No
+arc-plan scope, architecture or sequence amendment is needed. Slice02 closes;
+CRC may open the already planned slice03 under CDC execution-contract §3.
+
+### What worked
+
+Controlled no-sleep time stimuli and an asserted opposing ID/name pair made
+the disputed behaviors distinguishable. Preserving the first CC report and
+restricted gate attempts kept the refinement's provenance inspectable.

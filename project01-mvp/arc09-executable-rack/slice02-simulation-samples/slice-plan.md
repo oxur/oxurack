@@ -1,6 +1,6 @@
 # Slice02 — deterministic simulation samples
 
-Version 1.1, 2026-09-17. Status: open; corrective iteration01 issued after CRC partial review.
+Version 1.2, 2026-09-18. Status: closed; six rows independently accepted after iteration01.
 Workflow: CDC design / CRC review / CC implementation, Expedited Mode.
 Source predecessor: clean `6a31c0f99241eccb0dcf0f23e9f64ac9dec2f94a` in
 `.worktrees/codex-oxurack-module-behavior-installation`; no implementation of
@@ -145,11 +145,13 @@ Current assignment: `arc09-executable-rack/slice02-simulation-samples/cc-prompt-
 | Date | Prompt | Predecessor | Reason | Disposition |
 | --- | --- | --- | --- | --- |
 | 2026-09-17 | cc-prompt.md | accepted slice01 / CDC contract §2 | First exact-sample and phase implementation | CRC partial review: S-01/S-02 behavior reproduced; S-03–S-06 remain open at source `8a73d33` |
-| 2026-09-17 | cc-prompt-iteration01.md | CRC partial review at `8a73d33` / planning `85ea14d` | Distinguishing transition and ordering tests, fixed-core negative, current-slice checker and canonical CC close record | Active CC assignment; slice03 held |
+| 2026-09-17 | cc-prompt-iteration01.md | CRC partial review at `8a73d33` / planning `85ea14d` | Distinguishing transition and ordering tests, fixed-core negative, current-slice checker and canonical CC close record | Accepted by CRC at source `5c1ce2c`; six rows done; slice03 may open |
 
-Executed corrective refinements: 0 of 5. Preserve this prompt and every later
-iteration. CC proposes completion; CRC independently reviews. Arc09/slice03
-stays held until this slice closes.
+Executed corrective refinements: 1 of 5. Both issued prompts are preserved.
+The [CC closing report](closing-report.md) and
+[CRC independent close](crc-verification.md#iteration01-independent-close--2026-09-18)
+record the final disposition. The checker requiring open ledger rows is a
+pre-acceptance predicate; it was run before CRC changed statuses to done.
 
 ## Iteration01 author readiness — CRC
 
@@ -181,3 +183,5 @@ stays held until this slice closes.
 - v1.1 — 2026-09-17: CRC's independent partial review retained all six rows
   open and issued iteration01 for discriminating transition/ordering tests and
   canonical current-slice evidence, without changing CDC §2 or arc scope.
+- v1.2 — 2026-09-18: CRC independently reproduced iteration01 and closed all
+  six rows. No scope or architecture change bubbled into arc09.
