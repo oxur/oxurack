@@ -133,9 +133,9 @@ This [corrective iteration02](cc-prompt-iteration02.md) is issued under
 | --- | --- | --- | --- | --- |
 | 2026-09-17 | cc-prompt.md | none | CDC response to escalation03; first TM prerequisite implementation | held by directive04; replacement preparation assigned to CRC |
 | 2026-09-17 | cc-prompt-iteration01.md | cc-prompt.md | Newly installed guide requires source-grounded recipe, explicit test oracles and bounded CC intake | CC proposed-done at `d43078e`; CRC partial review, original unexecuted |
-| 2026-09-17 | cc-prompt-iteration02.md | cc-prompt-iteration01.md | CDC-approved after-edit reinstall test, exact Clippy/checker repairs and evidence correction | issued for CC relay; not yet executed, 0 of 5 corrective passes used |
+| 2026-09-17 | cc-prompt-iteration02.md | cc-prompt-iteration01.md | CDC-approved after-edit reinstall test, exact Clippy/checker repairs and evidence correction | CC proposed-done at source `6a31c0f`; planning evidence and CRC review pending; corrective pass 1 of 5 |
 
-Executed refinements: 0 of 5. Preserve later cc-prompt-iterationNN.md files.
+Executed refinements: 1 of 5. Preserve later cc-prompt-iterationNN.md files.
 CC owns execution; CRC checks exact commits, reproduces I-01–I-06 and records
 crc-verification.md. On acceptance CRC may detail arc09/slice02 under the approved
 design. New arc, altered contract or unresolved failure returns through Duncan.

@@ -1,0 +1,14 @@
+cwd=/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+source_revision=6a31c0f99241eccb0dcf0f23e9f64ac9dec2f94a
+source_branch=codex/oxurack-module-behavior-installation
+source_state=clean
+planning_revision=c12ab9d7f19daf5c7510e5697fb64129ddf5bbbb
+planning_state=dirty/uncommitted
+rustc 1.98.0 (88d9e12ae 2026-08-18)
+command=python3 /Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc09-executable-rack/slice01-module-behavior-installation/artifacts/verify-planning.py
+PASS: 23 imported documents preserved; 24 exact deferred rows assigned successors
+PASS: six arc CDC records; child denominator 0/0/2/3/0/1; no behavior upgraded
+PASS: project/arc09/slice01 rows 7/4/6; complete open set and directive03; 297 local links
+PASS: current assignment metadata and history resolve to /Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc09-executable-rack/slice01-module-behavior-installation/cc-prompt-iteration02.md
+Structural self-check only; arc09 implementation and independent CRC acceptance remain pending
+verifier_exit=0

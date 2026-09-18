@@ -117,3 +117,102 @@ The next review remains CRC reproduction of I-01 through I-06. Arc09 slice02
 continues to own sample/phase/manual-live semantics, and slice03 continues to
 own seed-context behavior; this implementation does not advance either
 successor or alter their contracts.
+
+## Iteration02 corrective report
+
+Status: proposed-done for CRC review of the first corrective pass; the ledger
+remains CC/CRC-owned and no row is closed by this report. Active assignment:
+`arc09-executable-rack/slice01-module-behavior-installation/cc-prompt-iteration02.md`.
+Predecessor: iteration01 at `d43078e`; the held initial `cc-prompt.md` remains
+unexecuted. This execution consumes corrective pass 1 of 5.
+
+### Exact states and source scope
+
+- Source worktree: `/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation`
+- Source branch: `codex/oxurack-module-behavior-installation`
+- Source baseline: `a7ce6e61536ca96b6aeb2227ee06e430ed8df162`
+- Iteration02 source commit: `6a31c0f99241eccb0dcf0f23e9f64ac9dec2f94a` (`Prove live module reinstall and clear gates`)
+- Source state after commit: clean
+- Planning worktree: `/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning`
+- Planning assignment state at intake: `c12ab9d7f19daf5c7510e5697fb64129ddf5bbbb`
+- Planning evidence commit: `ITERATION02_PLANNING_EVIDENCE_COMMIT_TO_BE_FILLED`
+
+The corrective source diff contains exactly four paths:
+
+- `crates/oxurack/src/lib.rs`: existing unit-test module only; live
+  after-edit reinstall fixture and temporal oracle.
+- `crates/oxurack/tests/module_installation.rs`: one test rename clarifying
+  its pre-edit `into_app` boundary.
+- `crates/oxurack-graph/src/lib.rs`: `find_port` test-helper let-chain only.
+- `crates/oxurack-core/src/bridge.rs`: queue test `std::mem::take` only.
+
+No production behavior, public API, scheduler, seed, MIDI, device, dependency,
+manifest, lockfile, coverage target, or future-slice source changed.
+
+### I-01 through I-06 proposed walk
+
+| ID | Iteration02 evidence | Proposed disposition |
+| --- | --- | --- |
+| I-01 | Clean default and no-default integration tests pass after the corrective commit. The existing two-rack, legacy-hook and once-per-kind behavior remains intact. | Candidate regression reproduced; CRC review remains required. |
+| I-02 | New unit test keeps the rack alive after two fixed runs to `(4,6)`, edits alpha to 4 through `ParameterRegistry`, verifies `(4,3)`, reinstalls the same type, verifies state/getters and one hook invocation remain unchanged, then reaches `(8,9)` with exactly one system execution per tick. Existing conflict and before-edit integration coverage remains. | Proposed close pending CRC reproduction. |
+| I-03 | Clean default/no-default integration tests and both clean workspace feature matrices pass under host access; the public RON fixture still proves fixed-schedule behavior and graph-on/off coverage. | Candidate regression reproduced; CRC review remains required. |
+| I-04 | Clean strict workspace and no-default rustdoc both pass; no legacy documentation files changed in iteration02. | Candidate regression reproduced; CRC review remains required. |
+| I-05 | Full all-targets Clippy passes after the two authorized test-only repairs. The assignment-aware full planning checker passes. Restricted workspace and `make check` attempts retain MIDI/timing failures, while host retries pass; outdated restricted DNS and host success are both retained. | Proposed close pending CRC disposition of retained environment failures. |
+| I-06 | Exactly ten historical nonexistent cwd cells were corrected, all old rows and raw logs remain, explicit dirty/clean source states were added, clean candidate rows point to `6a31c0f`, and this report contains the required bubble-up. | Proposed close pending CRC inspection of provenance and scope. |
+
+### Validation and retained limitations
+
+`artifacts/validation-results.tsv` has 62 command rows: the original 20 are
+preserved with corrected cwd metadata and explicit historical dirty state; 22
+new dirty-candidate rows cover the live test, unchanged gates, checker and
+fixture negatives; 20 clean-candidate rows cover focused/full regressions and
+gate reruns. Each row names its exact raw log.
+
+The dirty and clean candidate focused tests, package tests, full all-targets
+Clippy, formatting and strict rustdoc pass. Both workspace matrices pass with
+host access and retain three ignored pre-existing real-time/timing/priority
+tests; no ignored tests were run. Restricted workspace tests fail four MIDI
+initialization cases. Restricted clean `make check` additionally reports one
+`timing::tests::test_monotonic_clock_advances` failure; its host retry passes.
+Restricted dependency audits fail on crates.io DNS, and host retries complete
+with available updates listed but no dependency changes. The full checker and
+all six temporary assignment fixtures pass. These results do not claim hardware,
+sample-time, seed, coverage-target, or independent acceptance completion.
+
+### Bubble-up to arc09
+
+The delivered capability is a candidate-complete module-installation
+prerequisite: installed behavior remains once-per-kind and rack-local, live
+state survives same-type reinstall after a parameter edit, and the formerly
+blocked all-targets lint and assignment-aware structural checks now run green.
+The new evidence also makes the historical dirty-tree provenance explicit.
+
+Newly confirmed gaps are environmental: restricted execution cannot initialize
+MIDI and can expose a timing flake, while restricted dependency inspection
+cannot resolve crates.io. Host retries pass, but CRC must decide whether those
+environment-qualified results satisfy the existing gate contract. The stale
+checker assertion is repaired without weakening its denominator, import,
+successor, closure-record or local-link checks.
+
+Scope was delivered as specified for this corrective pass: the four named
+source paths, the after-edit unit oracle, the two test-only lint repairs, the
+metadata-driven checker, six temporary checker cases, provenance correction,
+explicit logs and report. Deferred work remains CRC independent reproduction,
+ledger closure, arc09/slice02 sample/phase/manual-live semantics, slice03 seed
+context, Q-02/Q-03 coverage work, and all hardware/MIDI acceptance. No successor
+slice is advanced by this packet.
+
+### Iteration02 artifact inventory
+
+- `artifacts/test-evidence.md`: fresh intake/readback and provenance basis.
+- `artifacts/iteration02-verifier-fixtures.md`: exact temporary fixture script,
+  inputs and outputs.
+- `artifacts/validation-results.tsv`: preserved historical rows plus dirty and
+  clean candidate rows with source state.
+- `artifacts/logs/00-environment.txt` through `18-planning-verifier.txt`:
+  iteration01 raw evidence preserved unchanged.
+- `artifacts/logs/19-live-reinstall-default.txt` through
+  `60-planning-verifier-clean-source.txt`: iteration02 raw attempts, retries
+  and clean candidate gates.
+- Source commit `6a31c0f99241eccb0dcf0f23e9f64ac9dec2f94a`: four-path corrective
+  candidate for CRC reproduction.

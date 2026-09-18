@@ -79,3 +79,79 @@ verifier attempt must retain its real status and raw log. The verifier's known
 assignment mismatch is a structural limitation to preserve and explicitly
 disposition; it cannot be silently converted to a pass. No ignored
 physical/timing tests or historical coverage target waiver is allowed.
+
+## Iteration02 intake and corrective contract readback
+
+This intake was completed before dependent iteration02 edits. The active
+planning assignment is `c12ab9d7f19daf5c7510e5697fb64129ddf5bbbb`; its clean
+predecessor/CDC acknowledgement is `dcab7931f8379380e0054c9b44b7b7d82b9be597`.
+The source worktree is clean at `d43078ea9c71bba10035699c9914bef3891f1d83`.
+The first corrective pass is therefore active; the held initial prompt remains
+unexecuted and iteration01 remains historical candidate work.
+
+| Required item | Revision/state and loaded extent | Result or gap |
+| --- | --- | --- |
+| Active prompt, slice plan, ledger | planning `c12ab9d`; prompt lines 1-263, slice-plan lines 1-266, ledger lines 1-15; required-full | Complete; iteration02 is the current assignment, I-01/I-03/I-04 are CRC-done only at `d43078e`, I-02/I-05/I-06 remain open. |
+| Planning instructions | planning `c12ab9d`; root `AGENTS.md` lines 1-46, required-full | Complete; three-contributor Expedited Mode, explicit scoped commits and planning/source separation retained. |
+| CDC and CRC authority | planning `c12ab9d`; `cdc-directive05.md` lines 1-177 and `crc-verification.md` lines 1-70, required-full | Complete; D1/D2/D3 authorize only the four source corrections, checker repair, live reinstall proof and evidence repair. |
+| Execution contract and arc plan | planning `c12ab9d`; execution-contract lines 1-201 opening and §1 loaded; arc-plan lines 1-45 required-full | Complete; production behavior/API/scheduler/seed/MIDI boundaries remain unchanged and slice02/03 stay future work. |
+| Project plan | planning `c12ab9d`; project-plan lines 13-35, 224-266, 341-380 loaded as named sections | Complete; inherited gates and Q-01/Q-02/Q-03 ownership remain binding. |
+| Predecessor prompt | planning `c12ab9d`; iteration01 lines 94-273 loaded for binding sequence, fixture/oracles and validation/return | Complete; the prior candidate and its gate matrix are preserved; the old assignment identity is historical. |
+| Prior evidence | planning `c12ab9d`; closing-report lines 1-119, validation TSV lines 1-21 and test-evidence lines 1-81 loaded | Complete; prior failures/log paths remain evidence. Ten nonexistent historical cwd cells are confirmed by path existence checks and are corrected as metadata only. |
+| Authoring/project-management guides | installed collaboration-framework 2.4.0; authoring intake lines 194-316, Expedited Mode lines 87-122, top-down iteration section loaded | Complete; fresh intake/readback and later explicit-path commits required. |
+| Rust/testing guides | installed rust-guidelines; Strength Indicators lines 477-525, CG-L-01, OB-19, AP-01 loaded; testing guides 01 and 03 required-full | Complete; all-targets Clippy stays required, `mem::take` is the bounded Vec transfer, and no library lint attribute is allowed. |
+| Source rack/test boundary | source `d43078e`, clean; `oxurack/src/lib.rs` lines 1-668, integration test lines 1-452, RON fixture lines 1-29, module trait lines 130-230 and parameter registry lines 95-180 loaded | Complete; `into_app(self)` consumes the rack, so the new after-edit oracle belongs in the existing unit-test module using private test-only world access. |
+| Source Clippy sites | source `d43078e`, clean; graph helper lines 1010-1055 and bridge test lines 450-510 loaded | Complete; only the let-chain and `std::mem::take` test edits are authorized. |
+| Planning checker | planning `c12ab9d`; `verify-planning.py` lines 1-88 required-full | Complete; all historical structural checks stay, only the current-assignment assertion/output may change. |
+| Reference-only history | directive04, held initial prompt and crc-escalation05 were not loaded for implementation decisions | Conditional reference-only material; no unresolved conflict required them. |
+
+No required item was inaccessible or left truncated after contiguous recovery.
+
+The corrective contract is narrow. I-02 needs a test-local module with a real
+fixed-schedule system and separate hook-invocation/system-run observations:
+load the static public fixture, run two fixed schedules to `(4,6)`, edit
+alpha through the registered setter to `4`, release every world/resource
+borrow, reinstall the same type while `rack` is still owned, assert state and
+getters remain `(4,6)` and `(4,3)`, then run once more to `(8,9)`. The existing
+integration reinstall test remains public `into_app` coverage and is renamed
+only to describe its before-edit boundary.
+
+I-05 requires the full all-targets workspace Clippy command and complete
+planning checker; `make check` and targeted Clippy cannot substitute for
+either. The only source repairs are the diagnosed graph test let-chain and
+bridge test `std::mem::take`, with no `#[allow]` or production lint policy.
+The checker must parse exactly one canonical backticked current-assignment
+field, validate its in-slice regular file and matching history row, retain the
+initial/iteration01 prompts, and prove six temporary negative/alternate cases
+without mutating the real planning tree.
+
+I-06 requires correcting exactly the ten nonexistent cwd cells while retaining
+their original commands, baseline HEAD, exits, failures, retries and raw logs.
+Those historical runs were dirty/uncommitted; later `d43078e` identity is
+reported only as CC attestation/uncertain unless fresh evidence supports it.
+New rows must record their actual HEAD and clean/dirty state. The iteration02
+report must explicitly bubble up delivered capability, newly discovered gaps,
+and scope-as-specified versus delivered/deferred work. No sample, seed, MIDI,
+coverage-target or future-slice obligation moves into this corrective pass.
+
+## Iteration02 provenance correction record
+
+The original 20-row table was inspected by resolving every `cwd` field. Exactly
+ten cells (the focused no-default/package/workspace rows, their retries where
+present, full Clippy, and the targeted core/format rows) named the nonexistent
+`/Users/oubiwann/lab/oxurack/...` checkout. They were corrected to the actual
+implementation worktree `/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation`.
+Commands, exits, results, retry distinctions and log paths were preserved.
+
+Each historical row now has `source_state=dirty/uncommitted` and retains
+`source_revision=a7ce6e61536ca96b6aeb2227ee06e430ed8df162`, which was the HEAD
+reported when the implementation tree was being validated. The later
+`d43078e` identity is recorded only as CC attestation/uncertain mapping; it is
+not substituted for the historical HEAD. Iteration02 dirty rows use the same
+explicit state, and clean-candidate rows use their actual committed HEAD
+`6a31c0f99241eccb0dcf0f23e9f64ac9dec2f94a` with `source_state=clean`.
+
+The new rows retain both restricted and host outcomes. The clean restricted
+`make check` run reproduced four MIDI initialization failures and one timing
+failure; the authorized host retry passed. No ignored physical/timing tests
+were run, and no raw log was rewritten to turn a failure into a pass.

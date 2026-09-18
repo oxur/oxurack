@@ -1,0 +1,8 @@
+cwd=/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+revision=d43078ea9c71bba10035699c9914bef3891f1d83
+branch=codex/oxurack-module-behavior-installation
+source_state=dirty/uncommitted
+rustc 1.98.0 (88d9e12ae 2026-08-18)
+cargo 1.98.0 (797e8a9bc 2026-08-05)
+command=cargo fmt --all -- --check
+command_exit=0

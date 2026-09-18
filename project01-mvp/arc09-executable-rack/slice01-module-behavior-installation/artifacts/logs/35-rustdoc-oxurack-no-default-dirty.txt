@@ -1,0 +1,11 @@
+cwd=/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+revision=d43078ea9c71bba10035699c9914bef3891f1d83
+branch=codex/oxurack-module-behavior-installation
+source_state=dirty/uncommitted
+rustc 1.98.0 (88d9e12ae 2026-08-18)
+cargo 1.98.0 (797e8a9bc 2026-08-05)
+command=RUSTDOCFLAGS=-Dwarnings cargo doc --locked -p oxurack --no-default-features --no-deps
+ Documenting oxurack v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.61s
+   Generated /Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/target/doc/oxurack/index.html
+command_exit=0

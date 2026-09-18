@@ -1,0 +1,20 @@
+cwd=/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+revision=6a31c0f99241eccb0dcf0f23e9f64ac9dec2f94a
+branch=codex/oxurack-module-behavior-installation
+source_state=clean
+rustc 1.98.0 (88d9e12ae 2026-08-18)
+cargo 1.98.0 (797e8a9bc 2026-08-05)
+command=cargo test --locked -p oxurack --no-default-features --test module_installation
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running tests/module_installation.rs (target/debug/deps/module_installation-0c01149d37efd9f6)
+
+running 5 tests
+test old_install_panics_clearly_but_try_install_is_typed ... ok
+test same_type_reinstall_before_edit_keeps_system_single_and_accessors_registered ... ok
+test conflicting_type_returns_before_mutation_and_original_behavior_survives ... ok
+test installed_systems_execute_each_loaded_instance_on_fixed_update ... ok
+test installations_are_rack_local_and_legacy_modules_still_load ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+command_exit=0

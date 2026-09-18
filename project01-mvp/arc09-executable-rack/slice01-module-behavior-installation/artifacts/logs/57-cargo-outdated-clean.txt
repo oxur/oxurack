@@ -1,0 +1,18 @@
+cwd=/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+revision=6a31c0f99241eccb0dcf0f23e9f64ac9dec2f94a
+branch=codex/oxurack-module-behavior-installation
+source_state=clean
+rustc 1.98.0 (88d9e12ae 2026-08-18)
+cargo 1.98.0 (797e8a9bc 2026-08-05)
+command=cargo outdated --root-deps-only --ignore-external-rel
+error: failed to get `bevy_app` as a dependency of package `oxurack v0.1.0 (/var/folders/dt/kc8ndn6d3kx8c1jnxr05drsh0000gn/T/cargo-outdatedB1rlfr/crates/oxurack)`
+
+Caused by:
+  download of config.json failed
+
+Caused by:
+  failed to download from `https://index.crates.io/config.json`
+
+Caused by:
+  [6] Couldn't resolve host name (Could not resolve host: index.crates.io)
+command_exit=1

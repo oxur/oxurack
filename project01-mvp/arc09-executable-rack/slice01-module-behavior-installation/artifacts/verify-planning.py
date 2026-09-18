@@ -29,6 +29,55 @@ def rows(path):
     return result
 
 
+def check_current_assignment(plan_text: str, slice_dir: Path) -> Path:
+    """Validate the explicit current prompt field and its history row."""
+    fields = [
+        line for line in plan_text.splitlines()
+        if line.startswith("Current assignment:")
+    ]
+    check(len(fields) == 1, "Current assignment field count mismatch")
+
+    match = re.fullmatch(r"Current assignment: `([^`]+)`", fields[0])
+    check(match is not None, "Malformed current assignment field")
+    relative = match.group(1)
+    expected_prefix = "arc09-executable-rack/slice01-module-behavior-installation/"
+    expected = (
+        relative == expected_prefix + "cc-prompt.md"
+        or re.fullmatch(
+            re.escape(expected_prefix) + r"cc-prompt-iteration[0-9]{2}\.md",
+            relative,
+        )
+        is not None
+    )
+    check(expected, "Non-canonical current assignment path")
+
+    relative_path = Path(relative)
+    check(not relative_path.is_absolute(), "Current assignment must be relative")
+    check(".." not in relative_path.parts, "Current assignment escapes its project")
+
+    project_dir = slice_dir.parent.parent
+    resolved_slice = slice_dir.resolve()
+    resolved_prompt = (project_dir / relative_path).resolve()
+    try:
+        resolved_prompt.relative_to(resolved_slice)
+    except ValueError as error:
+        raise RuntimeError("Current assignment is outside this slice") from error
+    check(resolved_prompt.is_file(), "Current assignment prompt is missing")
+
+    for name in ("cc-prompt.md", "cc-prompt-iteration01.md"):
+        check((slice_dir / name).is_file(), f"Missing preserved prompt: {name}")
+
+    matching_history = []
+    for line in plan_text.splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in line.split("|")[1:-1]]
+        if len(cells) >= 2 and cells[1] == relative_path.name:
+            matching_history.append(line)
+    check(len(matching_history) == 1, "Current assignment history mismatch")
+    return resolved_prompt
+
+
 def main():
     with (PROJECT / "artifacts/migration-manifest.tsv").open() as stream:
         imported = list(csv.DictReader(stream, delimiter="\t"))
@@ -67,7 +116,9 @@ def main():
     for name in ["slice-plan.md", "ledger.md", "cc-prompt.md"]:
         check((HERE.parent / name).is_file(), f"Incomplete open set: {name}")
     check((PROJECT / "cdc-directive03.md").is_file(), "Missing CDC return")
-    check("Current assignment: `arc09-executable-rack/slice01-module-behavior-installation/cc-prompt.md`" in (HERE.parent / "slice-plan.md").read_text(), "Assignment mismatch")
+    current_assignment = check_current_assignment(
+        (HERE.parent / "slice-plan.md").read_text(), HERE.parent
+    )
     count = 0
     for doc in [WORKTREE / "AGENTS.md", WORKTREE / "README.md", *PROJECT.rglob("*.md"), *(WORKTREE / "status").glob("*.md")]:
         text = doc.read_text()
@@ -81,6 +132,7 @@ def main():
     print("PASS: 23 imported documents preserved; 24 exact deferred rows assigned successors")
     print("PASS: six arc CDC records; child denominator 0/0/2/3/0/1; no behavior upgraded")
     print(f"PASS: project/arc09/slice01 rows 7/4/6; complete open set and directive03; {count} local links")
+    print(f"PASS: current assignment metadata and history resolve to {current_assignment}")
     print("Structural self-check only; arc09 implementation and independent CRC acceptance remain pending")
 
 

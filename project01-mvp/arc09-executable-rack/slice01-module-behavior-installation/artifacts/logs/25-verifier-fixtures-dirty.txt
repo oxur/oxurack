@@ -1,0 +1,13 @@
+cwd=/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+revision=d43078ea9c71bba10035699c9914bef3891f1d83
+branch=codex/oxurack-module-behavior-installation
+source_state=dirty/uncommitted
+rustc 1.98.0 (88d9e12ae 2026-08-18)
+command=python3 /private/tmp/oxurack_iteration02_verifier_fixtures.py
+missing-current: FAIL Current assignment field count mismatch
+nonexistent-current: FAIL Current assignment prompt is missing
+field-history-mismatch: FAIL Current assignment history mismatch
+duplicate-current: FAIL Current assignment field count mismatch
+out-of-slice-path: FAIL Non-canonical current assignment path
+valid-alternate: PASS
+python_exit=0
