@@ -1,6 +1,6 @@
 # Slice01 — module behavior installation
 
-Version 1.3, 2026-09-17. Status: open; CRC partial review, escalation05 awaiting CDC.
+Version 1.4, 2026-09-17. Status: open; directive05 authorizes CRC corrective-prompt preparation.
 Workflow: CDC design / CRC independent review / CC implementation; Expedited Mode.
 Source baseline: `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` (main).
 Planning predecessor: `390d2aa2c3449f8a6e4bbaff3df6c64d821ce4ea`; authority is the
@@ -198,3 +198,34 @@ iteration02 would consume the first corrective pass.
 
 - v1.3 — 2026-09-17: Recorded independent partial CRC verdict and design
   escalation; retained the six-row denominator and all original quality gates.
+
+## CDC decision on escalation05 — v1.4, 2026-09-17
+
+[Directive05](../../cdc-directive05.md) approves D1/D2/D3. Current executed
+assignment remains iteration01, partially verified at `d43078e`; iteration02 is
+not yet authored/issued. CRC now prepares it under directive04's six readiness
+checks. Earlier awaiting-CDC statements above are superseded by this decision.
+
+Source scope amendment: add `crates/oxurack-core/src/bridge.rs` for only the
+queue test's drain/collect-to-mem::take edit; permit only the `find_port` test
+helper's collapsed conditional in graph lib.rs in addition to its doc repairs.
+Original eight paths retain their other bounds. I-02 may add a test-local fixture
+and after-edit reinstall test in umbrella lib.rs's existing test module, retaining
+the rack across direct schedule runs; no new public app-access API is authorized.
+
+Planning scope amendment: CC may narrowly update artifacts/verify-planning.py
+and add individually named corrective logs/negative-fixture evidence. CRC records
+a single canonical current-assignment field when issuing iteration02, consistent
+with its assignment-history entry. The full original checker contract is retained.
+No prior failed log, issued prompt/design or CRC verdict is overwritten.
+
+All original gate commands remain required, plus the after-edit library test in
+both feature modes and the bounded parser negatives specified by directive05.
+Three historical done rows remain anchored to CRC's old candidate; I-02/I-05/I-06
+stay open pending the new candidate's independent review. Graph doc-only language
+elsewhere has only the explicit behavior-preserving test-helper exception above.
+The verifier remains a known failing gate until CC repairs and CRC reproduces it.
+
+- v1.4 — 2026-09-17: CDC authorized exact test/checker corrections, identified
+  the consuming into_app test constraint, and retained all quality gates and the
+  0/5 executed-correction count until iteration02 runs.

@@ -337,3 +337,19 @@ to lower either gate. No arc09/slice02 assignment is issued pending the response
 
 - v3.3 — 2026-09-17: Recorded CRC partial verification and escalation for
   exact gate-repair authority; preserved arc09 and project quality contracts.
+
+## CDC scope return — v3.4, 2026-09-17
+
+Current directive: [cdc-directive05.md](cdc-directive05.md), answering
+[escalation05](crc-escalation05.md). D1 approves two exact test-only Clippy
+repairs; D2 approves the current-assignment verifier correction without dropping
+any structural checks; D3 authorizes CRC's detailed iteration02 combining those
+with I-02's after-edit reinstall oracle and I-06's provenance/bubble-up corrections.
+CDC reproduced both failing gates; no additional implementation acceptance.
+
+| Date | Packet | Predecessor | Status | Affected rows / authority | Next action |
+| --- | --- | --- | --- | --- | --- |
+| 2026-09-17 | cdc-directive05.md | crc-escalation05.md / directive04 | issued; awaiting CRC acknowledgement | I-02/I-05/I-06 open; exact scope amendment, unchanged gates | CRC authors iteration02, CC repairs, CRC independently verifies before slice02 |
+
+- v3.4 — 2026-09-17: Bounded corrective scope approved; no architectural or
+  quality-target change, no slice/arc close. Previous pending-CDC status is history.

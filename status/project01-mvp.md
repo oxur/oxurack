@@ -1,13 +1,10 @@
 # project01-mvp — status
 
-> Current: Three contributors, Expedited Mode. Historical arcs01–06 are
-> closed-carried-over, with all unmet criteria retained. Active assignment is
-> arc09/slice01 behavior installation; CC executed the detailed
-> [iteration01 prompt](../project01-mvp/arc09-executable-rack/slice01-module-behavior-installation/cc-prompt-iteration01.md).
-> CRC reproduced three of six rows and sent [escalation05](../project01-mvp/crc-escalation05.md)
-> to CDC for the remaining gate scope. TM-to-MIDI
-> remains first, Clock/LFO/Scope second. Earlier estimates and
-> status snapshots below are historical; see the final CDC return for current detail.
+> Current: Three contributors, Expedited Mode. Arc09/slice01 remains open:
+> CRC verified I-01/I-03/I-04 at d43078e; I-02/I-05/I-06 await correction.
+> [Directive05](../project01-mvp/cdc-directive05.md) authorizes CRC to prepare
+> iteration02 with exact test/checker repairs. TM/MIDI then workbench remains
+> the priority; earlier handoff/status entries below are historical.
 
 **Best estimate: approximately 45% of the reconstructed MVP implemented**
 (plausible range **35–55%**). The infrastructure is much further along than the
@@ -422,3 +419,16 @@ needs the unchanged all-targets Clippy and structural planning checks resolved,
 and I-06 needs evidence-provenance repair. Slice01 remains open; arc09/slice02
 is held. Project-level `crc-escalation05.md` is the current Operator relay to
 CDC; earlier status sections above describe historical handoffs.
+
+## CDC return05 — current, 2026-09-17
+
+CDC independently reproduced both Clippy diagnostics and the stale-assignment
+verifier failure. Directive05 approves the exact test-only graph/bridge edits,
+metadata-driven verifier repair, after-edit reinstall test and honest provenance
+corrections in one CRC-authored iteration02. The consuming into_app API requires
+a test arrangement retaining the rack; an existing private unit-test context is
+recommended, with no public API addition.
+
+Relay `cdc-directive05.md` to CRC. Iteration02 is authorized for authoring, not
+yet issued. Required gates remain unchanged, slice acceptance and arc09/slice02
+remain held, and no source implementation was changed during CDC's return.

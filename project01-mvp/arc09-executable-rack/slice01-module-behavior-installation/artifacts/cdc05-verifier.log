@@ -1,0 +1,12 @@
+Planning candidate: 69140854cd13cffb3531f4a75b39249e8a04aa88
+Command: python3 arc09-executable-rack/slice01-module-behavior-installation/artifacts/verify-planning.py (from project directory; executed by absolute path)
+Actual cwd: /Users/oubiwann/lab/oxur/oxurack/.worktrees/planning
+Exit: 1
+Traceback (most recent call last):
+  File "/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc09-executable-rack/slice01-module-behavior-installation/artifacts/verify-planning.py", line 88, in <module>
+    main()
+  File "/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc09-executable-rack/slice01-module-behavior-installation/artifacts/verify-planning.py", line 70, in main
+    check("Current assignment: `arc09-executable-rack/slice01-module-behavior-installation/cc-prompt.md`" in (HERE.parent / "slice-plan.md").read_text(), "Assignment mismatch")
+  File "/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc09-executable-rack/slice01-module-behavior-installation/artifacts/verify-planning.py", line 15, in check
+    raise RuntimeError(message)
+RuntimeError: Assignment mismatch

@@ -1,0 +1,36 @@
+    Checking oxurack-core v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack-core)
+    Checking oxurack-graph v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack-graph)
+error: this `if` statement can be collapsed
+    --> crates/oxurack-graph/src/lib.rs:1036:13
+     |
+1036 | /             if let Some(port) = world.get::<Port>(child) {
+1037 | |                 if port.name.as_ref() == name {
+1038 | |                     return child;
+1039 | |                 }
+1040 | |             }
+     | |_____________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#collapsible_if
+     = note: `-D clippy::collapsible-if` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(clippy::collapsible_if)]`
+help: collapse nested if block
+     |
+1036 ~             if let Some(port) = world.get::<Port>(child)
+1037 ~                 && port.name.as_ref() == name {
+1038 |                     return child;
+1039 ~                 }
+     |
+
+error: could not compile `oxurack-graph` (lib test) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: draining all elements of a collection into a new collection of the same type
+   --> crates/oxurack-core/src/bridge.rs:481:31
+    |
+481 |         let drained: Vec<_> = queue.commands.drain(..).collect();
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: use `mem::take` to avoid creating a new allocation: `std::mem::take(&mut queue.commands)`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#drain_collect
+    = note: `-D clippy::drain-collect` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::drain_collect)]`
+
+error: could not compile `oxurack-core` (lib test) due to 1 previous error
