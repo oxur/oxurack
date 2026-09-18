@@ -61,6 +61,13 @@ struct ObservedSample {
     disconnected_hold: f32,
 }
 
+type SampleRun = (
+    Vec<ObservedSample>,
+    Vec<&'static str>,
+    Vec<(u64, u64)>,
+    SampleTime,
+);
+
 #[derive(Resource, Default)]
 struct ObservedSamples(Vec<ObservedSample>);
 
@@ -458,12 +465,7 @@ fn phase_clock_trace(app: &App) -> Vec<(u64, u64)> {
     app.world().resource::<PhaseClockTrace>().0.clone()
 }
 
-fn run_manual() -> (
-    Vec<ObservedSample>,
-    Vec<&'static str>,
-    Vec<(u64, u64)>,
-    SampleTime,
-) {
+fn run_manual() -> SampleRun {
     let mut rack = installed_fixture();
     assert_eq!(rack.sample_time(), SampleTime::default());
     rack.set_driver_mode(SimulationDriver::Manual).start();
