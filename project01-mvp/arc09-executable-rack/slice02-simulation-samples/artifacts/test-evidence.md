@@ -73,5 +73,122 @@ public driver and raw CorePlugin compatibility paths.
 Validation commands and raw outputs are recorded individually under
 `artifacts/logs/`, with cwd, source HEAD, dirty/clean state, toolchain, actual
 exit and command output. The validation table retains failed restricted attempts
-before host retries. This file will be extended after implementation and the
-source commit with the six-row proposed walk and sample traces.
+before host retries.
+
+## Iteration01 intake and evidence repair
+
+Date: 2026-09-17. Active assignment:
+`arc09-executable-rack/slice02-simulation-samples/cc-prompt-iteration01.md`.
+The source worktree was clean at pinned intake revision
+`8a73d33ad17cfad849db34d10b672fa4d894a79a`; the planning worktree was clean at
+CRC-issued HEAD `881b834a83aaed1ed7663fa393074574b543dd6e`. After intake, only
+the prompt-allowlisted test files and slice02 planning evidence are dirty.
+
+### Required-read receipts
+
+| Material | Loaded extent and state | Readback / status |
+| --- | --- | --- |
+| `cc-prompt-iteration01.md` | Required-full, 158/158 lines at planning HEAD `881b834a` | Complete; preserves six-row scope and requires transition, fixed-core, discriminating ordering, root-close and current-slice checker repairs. |
+| `slice-plan.md` | Required-full, 183/183 lines at planning HEAD `881b834a` | Complete; current assignment is iteration01, six rows remain open, slice03 remains held. |
+| `ledger.md` | Required-full, 16/16 lines | Complete; S-01 through S-06 remain open. |
+| `crc-verification.md` | Required-full, 60/60 lines | Complete; S-01/S-02 reproduced; S-03 fixed-core/stopped-live negatives, S-04 transition, S-05 ordering policy, and S-06 evidence remained open. |
+| preserved `cc-prompt.md` | Required-full, 229/229 lines | Complete; original sample/driver/phase/ordering contract and validation matrix remain binding. |
+| prior `artifacts/closing-report.md` | Required-full, 160/160 lines | Complete; retained unchanged as prior-attempt evidence, with its misplaced artifact-home close identified by CRC. |
+| prior `artifacts/test-evidence.md` | Required-full, 77/77 lines | Complete; prior intake/readback loaded; its future-tense closing sentence is repaired by this section. |
+| prior `artifacts/validation-results.tsv` | Required-full, 23/23 lines | Complete; 22 original attempts retained and appended to by iteration01 validation rows. |
+| `../arc-plan.md` | Required-full, 48/48 lines | Complete; slice02 is open, slice03 is planned, and no arc scope amendment is authorized here. |
+| `../slice01.../artifacts/execution-contract.md` | Opening definitions, complete §1, §2 and §5 loaded in bounded ranges 1–110 and 185–201 | Complete for this assignment; §2 binds sample/driver/phase/ordering behavior and §5 retains quality owners. §3–§4 are future work. |
+| planning `AGENTS.md` | Required-full, 26/26 lines | Complete; canonical planning worktree, role boundaries and explicit scoped commits apply. |
+| `../../project-plan.md` | Required sections loaded: lines 1–35, 224–283 and 379–403 | Complete; project DoD, roadmap, quality dispositions and slice02 handoff retain their authority. |
+| project-management guides | README Expedited Mode; canonical worktree/iteration and verification sections; closing-slices complete 103/103 lines | Complete; root `closing-report.md` is first-class, iteration prompts are preserved, and CRC review remains independent. |
+| implementation-prompt guide | Required sections for test/oracle design and CC intake/review loaded in bounded ranges 141–316 | Complete; required reads, discriminating tests, current-validator limits and close shape applied. |
+| Rust guidance | `SKILL.md` strength legend; API-08/API-24, EH-01, OB-12/OB-13 and CG-L-01 entries loaded | Complete; retain named driver APIs, typed recoverable errors, scoped borrows and full Clippy. |
+| testing guides | `01-testing-discipline.md` 91/91 and `03-validation-gates.md` 82/82 | Complete; controlled stimuli, intermediate observations, negative controls and separate gate evidence applied. |
+| pinned source | `sample_pipeline.rs` named fixture/tests and transition paths; umbrella driver/transition tests; core plugin compatibility tests; tick ordering/phase paths; ModuleId and `derive_seed` definitions; affected callers loaded at `8a73d33` | Complete; current tests can observe public App traces, inline tests retain private world/step access, and name/ID policy conflict is now forced by candidate selection. |
+| Bevy 0.18.1 | `TimeUpdateStrategy::ManualDuration`, fixed/virtual/real time APIs and schedule behavior loaded from the locked registry | Complete; no ambiguity remained; `ManualDuration(0)` and `ManualDuration(1 ms)` provide controlled no-sleep transition stimuli. |
+| inherited `slice01/.../verify-planning.py` | Complete 140-line read including `main` | Complete as inherited evidence only; it is hard-coded to slice01 assignment/ledger and cannot validate this slice. |
+
+The first combined guide/source output was truncated by the tool; the omitted
+required sections were recovered with contiguous bounded reads before edits.
+No conditional drift trigger remained after rechecking both HEADs: the pinned
+source was clean, the planning assignment and allowlist were present, and the
+locked Bevy behavior was resolved. No manifest, lockfile, RT/device, seed or
+future-slice material was touched.
+
+### Iteration01 contract readback and proof delta
+
+S-03 now has a fixed-schedule negative that inserts `SimulationRunning(false)`
+before `CorePlugin::fixed()`, runs FixedUpdate with all five counters at zero
+and `SampleTime` at None/0, then enables the resource and requires one complete
+sample. The umbrella transition test uses the public rack methods plus a
+controlled `TimeUpdateStrategy::ManualDuration`: after one manual sample,
+zero elapsed Live update leaves the trace/state and index unchanged, one fresh
+millisecond adds exactly index 1, and the analogous stop/start sequence
+discards injected overstep, runs no phase while stopped, preserves state on a
+zero elapsed restart update and resumes at index 2.
+
+S-04's old overstep-only assertion could pass while a later live update replayed
+time; `oxurack/src/lib.rs::test_live_transitions_and_stop_start_discard_catch_up`
+now observes `SampleTime`, `LiveStepState`, `LiveSystemRuns` and the controlled
+updates. The integration
+`sample_pipeline.rs::live_reentry_has_no_zero_elapsed_catch_up_sample` observes
+the real RON pipeline and phase/trace state after Live→Manual→Live.
+
+S-05's old `a`/`b` fixture could pass under either sort key. Both the LastWins
+fixture and `oxurack-core/src/tick.rs::test_topo_no_cables` now select a
+lexical/ModuleId opposition, assert the IDs before driving the real paths, and
+assert the lexical-last source/name after both spawn orders. The expected
+numeric-ID winner is the other value, so the rejected implementation fails the
+same predicate. `derive_seed` and ModuleId production code remain unchanged.
+
+S-06 now has the canonical current-slice checker at
+`artifacts/verify-slice02-planning.py` and the first-class root
+`slice02-simulation-samples/closing-report.md`; the earlier artifact report is
+preserved. The checker uses one predicate for the valid tree and deliberate
+missing-root-close and stale-assignment copies. The initial checker exercise
+returned `valid_exit=0`, `missing_close_exit=1`, and
+`stale_assignment_exit=1`, with the structural-only limitation stated in its
+output.
+
+### Iteration01 clean source and final gates
+
+The scoped source repair is committed at
+`5c1ce2ccb5e0ba36ac9fd2605a047e0ff45928b2` on
+`codex/oxurack-module-behavior-installation`; the source worktree was clean
+before every recorded gate. The source commit contains only the four
+allowlisted test files:
+
+- `crates/oxurack/src/lib.rs`
+- `crates/oxurack-core/src/lib.rs`
+- `crates/oxurack-core/src/tick.rs`
+- `crates/oxurack/tests/sample_pipeline.rs`
+
+Focused logs 23–28 prove the repaired transition, fixed-plugin false-value,
+sample re-entry, LastWins, and topological-order predicates. Complete package
+logs 29–34 pass: 412 core unit tests, 5 core integration tests, 2 core
+doctests, 15 umbrella unit tests, 5 module-installation tests, 5 sample
+pipeline tests, and umbrella doctests. Logs 35–46 retain the complete
+workspace, host-retry, Make, and dependency-audit outcomes; logs 47–53 retain
+diff, planning, and final tool-preflight outcomes. The original validation
+rows and logs 01–22 remain unchanged.
+
+The source trace remains the exact producer/relay/sink sequence recorded above:
+sample indices 0, 1, and 2 have producer outputs 1, 2, and 3; relay outputs
+0, 1, and 2; sink outputs 0, 0, and 1; and completed counts 1, 2, and 3.
+The new transition oracle additionally proves that zero elapsed Live re-entry
+adds no sample, one fresh millisecond adds exactly one, stopped controlled
+updates change no phase or state, and restart resumes at the next contiguous
+index. The fixed-plugin negative proves a preinserted false
+`SimulationRunning` remains false until enabled. The ordering oracles select
+names whose lexical and ModuleId orders oppose and prove lexical-last
+selection under both spawn permutations.
+
+The restricted environment still fails four inherited MIDI initialization
+tests in the all-features and no-default workspace runs and in restricted
+`make check`; host retries pass. Restricted dependency audit fails only on
+`index.crates.io` DNS and the host retry passes. `cargo-binstall --version`
+remains a recorded parser-usage exit, while `cargo outdated --version` passes.
+The inherited slice01 verifier remains structural-only evidence. The current
+slice checker uses one predicate and returns `valid_exit=0`,
+`missing_close_exit=1`, and `stale_assignment_exit=1`; it does not claim
+semantic acceptance or CRC disposition.

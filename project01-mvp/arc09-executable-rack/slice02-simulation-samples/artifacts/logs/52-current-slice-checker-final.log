@@ -1,0 +1,21 @@
+cwd: /Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc09-executable-rack/slice02-simulation-samples
+head: 881b834a83aaed1ed7663fa393074574b543dd6e
+branch: planning
+source_worktree: /Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+source_state: clean
+toolchain:
+rustc 1.98.0 (88d9e12ae 2026-08-18)
+cargo 1.98.0 (797e8a9bc 2026-08-05)
+stable-aarch64-apple-darwin (default)
+command: python3 /Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc09-executable-rack/slice02-simulation-samples/artifacts/verify-slice02-planning.py --negative-cases
+--- raw output ---
+PASS: current assignment, preserved prompts, six open ledger rows and canonical root close
+PASS: artifact inventory has 51 raw logs and 16 checked local links
+Structural self-check only; behavior, CRC reproduction and slice acceptance remain pending
+missing-root-close: exit=1 (missing canonical root closing-report.md)
+stale-assignment: exit=1 (stale or malformed current assignment)
+valid_exit=0
+missing_close_exit=1
+stale_assignment_exit=1
+--- result ---
+exit: 0

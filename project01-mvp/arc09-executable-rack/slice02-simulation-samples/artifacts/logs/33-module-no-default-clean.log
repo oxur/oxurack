@@ -1,0 +1,26 @@
+cwd: /Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+head: 5c1ce2ccb5e0ba36ac9fd2605a047e0ff45928b2
+branch: codex/oxurack-module-behavior-installation
+source_worktree: /Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+source_state: clean
+toolchain:
+rustc 1.98.0 (88d9e12ae 2026-08-18)
+cargo 1.98.0 (797e8a9bc 2026-08-05)
+stable-aarch64-apple-darwin (default)
+command: cargo test --locked -p oxurack --no-default-features --test module_installation
+--- raw output ---
+   Compiling oxurack v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.46s
+     Running tests/module_installation.rs (target/debug/deps/module_installation-0c01149d37efd9f6)
+
+running 5 tests
+test old_install_panics_clearly_but_try_install_is_typed ... ok
+test conflicting_type_returns_before_mutation_and_original_behavior_survives ... ok
+test same_type_reinstall_before_edit_keeps_system_single_and_accessors_registered ... ok
+test installed_systems_execute_each_loaded_instance_on_fixed_update ... ok
+test installations_are_rack_local_and_legacy_modules_still_load ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+--- result ---
+exit: 0

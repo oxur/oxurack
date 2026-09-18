@@ -1,0 +1,13 @@
+cwd: /Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+head: 5c1ce2ccb5e0ba36ac9fd2605a047e0ff45928b2
+branch: codex/oxurack-module-behavior-installation
+source_worktree: /Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+source_state: clean
+toolchain:
+rustc 1.98.0 (88d9e12ae 2026-08-18)
+cargo 1.98.0 (797e8a9bc 2026-08-05)
+stable-aarch64-apple-darwin (default)
+command: git diff --check
+--- raw output ---
+--- result ---
+exit: 0

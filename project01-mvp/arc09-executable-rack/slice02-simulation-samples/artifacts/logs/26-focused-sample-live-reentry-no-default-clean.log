@@ -1,0 +1,23 @@
+cwd: /Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+head: 5c1ce2ccb5e0ba36ac9fd2605a047e0ff45928b2
+branch: codex/oxurack-module-behavior-installation
+source_worktree: /Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+source_state: clean
+toolchain:
+rustc 1.98.0 (88d9e12ae 2026-08-18)
+cargo 1.98.0 (797e8a9bc 2026-08-05)
+stable-aarch64-apple-darwin (default)
+command: cargo test --locked -p oxurack --no-default-features --test sample_pipeline live_reentry_has_no_zero_elapsed_catch_up_sample
+--- raw output ---
+   Compiling oxurack-core v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack-core)
+   Compiling oxurack v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.20s
+     Running tests/sample_pipeline.rs (target/debug/deps/sample_pipeline-6624c25bbf84ca9c)
+
+running 1 test
+test live_reentry_has_no_zero_elapsed_catch_up_sample ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.01s
+
+--- result ---
+exit: 0

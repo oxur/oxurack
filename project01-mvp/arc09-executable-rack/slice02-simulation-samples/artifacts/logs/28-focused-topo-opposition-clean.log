@@ -1,0 +1,27 @@
+cwd: /Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+head: 5c1ce2ccb5e0ba36ac9fd2605a047e0ff45928b2
+branch: codex/oxurack-module-behavior-installation
+source_worktree: /Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+source_state: clean
+toolchain:
+rustc 1.98.0 (88d9e12ae 2026-08-18)
+cargo 1.98.0 (797e8a9bc 2026-08-05)
+stable-aarch64-apple-darwin (default)
+command: cargo test --locked -p oxurack-core test_topo_no_cables
+--- raw output ---
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.05s
+     Running unittests src/lib.rs (target/debug/deps/oxurack_core-bfbb475f9b3c3a53)
+
+running 1 test
+test tick::tests::test_topo_no_cables ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 411 filtered out; finished in 0.00s
+
+     Running tests/integration_full_cycle.rs (target/debug/deps/integration_full_cycle-b4ef7f399455a39c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+--- result ---
+exit: 0
