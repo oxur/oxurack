@@ -165,6 +165,20 @@ pub trait OxurackModule: Send + Sync + 'static {
         parameters: &HashMap<String, crate::ParameterValue>,
     ) -> Result<Entity, crate::CoreError>;
 
+    /// Register the systems and resources that implement this module's
+    /// behavior.
+    ///
+    /// The rack calls this hook once for a module type when its kind is first
+    /// installed, passing the schedule selected by the rack. The default is a
+    /// no-op so existing metadata-only modules remain valid. Implementations
+    /// should add systems that query all matching module instances; this hook
+    /// is not called once per spawned patch instance.
+    fn register_systems(
+        _app: &mut bevy_app::App,
+        _schedule: bevy_ecs::schedule::InternedScheduleLabel,
+    ) {
+    }
+
     /// Returns setter functions for each declared parameter.
     ///
     /// Each entry is a `(name, setter_fn)` pair. The registration

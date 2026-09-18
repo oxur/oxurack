@@ -33,7 +33,7 @@ impl WriteKnob {
 
     /// Resolves the write decision for a single bit.
     ///
-    /// With probability [`self.probability`], the `feedback_bit` is returned
+    /// With probability [`Self::probability`], the `feedback_bit` is returned
     /// unchanged. Otherwise a fresh random bit is generated.
     pub fn resolve(&self, feedback_bit: bool, rng: &mut impl rand::Rng) -> bool {
         let roll: f32 = rng.random::<f32>();

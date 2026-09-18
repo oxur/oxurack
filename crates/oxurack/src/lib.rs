@@ -4,11 +4,14 @@
 //! power on, play. The Bevy ECS engine runs underneath but stays out
 //! of your way unless you ask for it via [`Oxurack::into_app`].
 
+use std::any::TypeId;
+use std::collections::HashMap;
 use std::path::Path;
 use std::time::Duration;
 
-use bevy_app::prelude::App;
+use bevy_app::prelude::{App, FixedUpdate};
 use bevy_ecs::prelude::Resource;
+use bevy_ecs::schedule::ScheduleLabel;
 use bevy_time::prelude::{Fixed, Time};
 
 // ── Re-exports from oxurack-graph (feature-gated) ──────────────────
@@ -52,6 +55,7 @@ pub struct SimulationRunning(pub bool);
 /// engine is accessible via [`into_app`](Self::into_app) when needed.
 pub struct Oxurack {
     app: App,
+    installed_modules: HashMap<oxurack_core::ModuleKind, TypeId>,
 }
 
 impl Oxurack {
@@ -71,30 +75,78 @@ impl Oxurack {
 
         app.init_resource::<SimulationRunning>();
 
-        Self { app }
+        Self {
+            app,
+            installed_modules: HashMap::new(),
+        }
     }
 
     /// Install a module type into the rack.
     ///
     /// After installation, patches referencing `M::KIND` can be loaded
     /// and their module instances will be spawned by `M::spawn`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if a different Rust module type has already claimed `M::KIND`.
+    /// Use [`try_install`](Self::try_install) when the module type is selected
+    /// from fallible or user-provided input.
     pub fn install<M: oxurack_core::OxurackModule>(&mut self) -> &mut Self {
-        self.app
-            .world_mut()
-            .resource_mut::<oxurack_core::ModuleRegistry>()
-            .register::<M>();
-
-        let kind = oxurack_core::ModuleKind::from(M::KIND);
-        let world = self.app.world_mut();
-        let mut param_reg = world.resource_mut::<oxurack_core::ParameterRegistry>();
-        for &(name, setter) in M::parameter_setters() {
-            param_reg.register(kind.clone(), name, setter);
-        }
-        for &(name, getter) in M::parameter_getters() {
-            param_reg.register_getter(kind.clone(), name, getter);
+        if let Err(error) = self.try_install::<M>() {
+            panic!("cannot install module kind '{}': {error}", M::KIND);
         }
 
         self
+    }
+
+    /// Try to install a module type into the rack.
+    ///
+    /// A module kind is registered once per rack. Reinstalling the same Rust
+    /// type is idempotent, while a different type claiming an installed kind
+    /// is rejected before the rack's registries or schedules are changed.
+    /// Successful installation invokes
+    /// [`oxurack_core::OxurackModule::register_systems`]
+    /// once with [`FixedUpdate`]. A panic from that user-provided hook is not
+    /// caught and does not promise rollback of earlier registration changes.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CoreError::ModuleKindConflict`]
+    /// when a different Rust type already owns `M::KIND` in this rack.
+    pub fn try_install<M: oxurack_core::OxurackModule>(
+        &mut self,
+    ) -> Result<&mut Self, oxurack_core::CoreError> {
+        let kind = oxurack_core::ModuleKind::from(M::KIND);
+        let type_id = TypeId::of::<M>();
+
+        match self.installed_modules.get(&kind) {
+            Some(installed) if *installed == type_id => return Ok(self),
+            Some(_) => {
+                return Err(oxurack_core::CoreError::ModuleKindConflict {
+                    kind: M::KIND.to_owned(),
+                });
+            }
+            None => {}
+        }
+
+        {
+            let world = self.app.world_mut();
+            world
+                .resource_mut::<oxurack_core::ModuleRegistry>()
+                .register::<M>();
+
+            let mut parameter_registry = world.resource_mut::<oxurack_core::ParameterRegistry>();
+            for &(name, setter) in M::parameter_setters() {
+                parameter_registry.register(kind.clone(), name, setter);
+            }
+            for &(name, getter) in M::parameter_getters() {
+                parameter_registry.register_getter(kind.clone(), name, getter);
+            }
+        }
+
+        M::register_systems(&mut self.app, FixedUpdate.intern());
+        self.installed_modules.insert(kind, type_id);
+        Ok(self)
     }
 
     /// Access the rack's graph view for navigation queries.
@@ -110,17 +162,17 @@ impl Oxurack {
 
     /// Loads a patch from a RON file and applies it to the world.
     ///
-    /// On success, the resulting [`PatchHandle`](oxurack_core::PatchHandle)
+    /// On success, the resulting [`PatchHandle`]
     /// is stored as a resource. If a handle from a previous load exists,
     /// it is replaced.
     ///
-    /// When the `graph` feature is enabled, the [`GraphMaintenance`](oxurack_graph::GraphMaintenance)
+    /// When the `graph` feature is enabled, the `GraphMaintenance`
     /// schedule runs synchronously after the patch is applied, so
     /// `rack.graph().modules()` reflects the just-loaded patch immediately.
     ///
     /// # Errors
     ///
-    /// Returns [`CoreError`](oxurack_core::CoreError) on I/O, parse,
+    /// Returns [`CoreError`] on I/O, parse,
     /// validation, or spawn failure. On error, no `PatchHandle` is
     /// inserted (or the previous one is left intact).
     pub fn load_patch(&mut self, path: &Path) -> Result<(), oxurack_core::CoreError> {

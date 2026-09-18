@@ -3,10 +3,10 @@
 //! [`RackGraph`] is a Bevy resource backed by petgraph's `StableDiGraph`
 //! that tracks modules (nodes) and cables (edges). It is maintained
 //! reactively by [`RackGraphPlugin`], which subscribes to
-//! [`ModuleAdded`](oxurack_core::ModuleAdded),
-//! [`ModuleRemoved`](oxurack_core::ModuleRemoved),
-//! [`CableConnected`](oxurack_core::CableConnected), and
-//! [`CableDisconnected`](oxurack_core::CableDisconnected) notifications
+//! [`ModuleAdded`],
+//! [`ModuleRemoved`],
+//! [`CableConnected`], and
+//! [`CableDisconnected`] notifications
 //! emitted by `oxurack-core`.
 //!
 //! Labels and parameter values are *not* stored in the graph — they are
@@ -308,7 +308,7 @@ fn build_cable_info(world: &World, edge: &RackEdge) -> CableInfo {
 
 /// Read-only view over the rack graph with label-resolving queries.
 ///
-/// Created via [`GraphView::new`] or [`Oxurack::graph`]. All query
+/// Created via [`GraphView::new`] or the umbrella rack's `graph` method. All query
 /// methods resolve labels (display names, descriptions, tags) fresh
 /// from the ECS world at call time — no caching, no staleness.
 pub struct GraphView<'w> {
@@ -852,11 +852,11 @@ pub struct GraphMaintenance;
 /// Registers the `RackGraph` resource and four maintenance systems
 /// that subscribe to structural-mutation notifications:
 ///
-/// - [`ModuleAdded`](oxurack_core::ModuleAdded) → add a node
-/// - [`ModuleRemoved`](oxurack_core::ModuleRemoved) → remove a node
+/// - [`ModuleAdded`] → add a node
+/// - [`ModuleRemoved`] → remove a node
 ///   (plus incident edges)
-/// - [`CableConnected`](oxurack_core::CableConnected) → add an edge
-/// - [`CableDisconnected`](oxurack_core::CableDisconnected) → remove
+/// - [`CableConnected`] → add an edge
+/// - [`CableDisconnected`] → remove
 ///   an edge
 ///
 /// Maintenance systems run in the [`GraphMaintenance`] schedule,

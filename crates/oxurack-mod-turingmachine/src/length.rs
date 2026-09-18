@@ -64,7 +64,7 @@ impl LengthSelector {
         Self::VALID_LENGTHS[self.position]
     }
 
-    /// Returns the loop length as a [`NonZeroUsize`].
+    /// Returns the loop length as a [`std::num::NonZeroUsize`].
     ///
     /// All valid lengths are >= 2, so this is always safe.
     #[must_use]

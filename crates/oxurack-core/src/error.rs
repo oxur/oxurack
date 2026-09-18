@@ -38,6 +38,13 @@ pub enum CoreError {
         reason: String,
     },
 
+    /// A module kind was already installed for a different Rust type.
+    #[error("module kind conflict: '{kind}' is already installed by another Rust type")]
+    ModuleKindConflict {
+        /// The module kind claimed by both Rust types.
+        kind: String,
+    },
+
     /// No module instance with the given name exists in the loaded patch.
     #[error("unknown module instance: '{0}'")]
     UnknownModule(String),

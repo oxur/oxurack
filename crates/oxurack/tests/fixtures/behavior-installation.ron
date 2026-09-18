@@ -1,0 +1,29 @@
+(
+    version: "1.0",
+    master_seed: 42,
+    bpm: 120.0,
+    modules: [
+        (
+            kind: "behavior_counter",
+            instance_name: "alpha",
+            parameters: {
+                "increment": Int(2),
+            },
+            display_name: "",
+            description: "",
+            tags: [],
+        ),
+        (
+            kind: "behavior_counter",
+            instance_name: "beta",
+            parameters: {
+                "increment": Int(3),
+            },
+            display_name: "",
+            description: "",
+            tags: [],
+        ),
+    ],
+    cables: [],
+    rack: None,
+)
