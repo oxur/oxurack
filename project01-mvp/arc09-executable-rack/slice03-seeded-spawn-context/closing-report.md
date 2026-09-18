@@ -6,6 +6,7 @@ CC implementation is proposed-done at source commit
 `642313a62db437ee2bf0b3d5b97fcdcffa16782a`. The six Slice03 ledger rows
 remain open pending CRC review. This report is the canonical closing report
 for the slice's implementation return; it does not mark the ledger done.
+The evidence packet is recorded in planning commit `698d2d0`.
 
 ## Result
 
