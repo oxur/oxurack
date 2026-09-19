@@ -280,37 +280,48 @@ impl Oxurack {
         *self.app.world().resource::<SampleTime>()
     }
 
-    /// Advances exactly `count` samples under the manual driver.
+    /// Advances up to `count` complete samples under the manual driver.
     ///
-    /// Returns zero without changing state when the rack is stopped or the
-    /// requested count is zero. A live rack returns
-    /// [`CoreError::ManualSampleRequiresManualDriver`] without mutation.
+    /// The return value is the number of samples that completed. A shared stop
+    /// after a sample begins lets that latched sample finish, then prevents the
+    /// next sample from starting. A stopped rack or zero-count request returns
+    /// zero without changing state. A live rack returns
+    /// [`CoreError::ManualSampleRequiresManualDriver`] before mutation.
     pub fn advance_samples(&mut self, count: u64) -> Result<u64, CoreError> {
         if self.driver != SimulationDriver::Manual {
             return Err(CoreError::ManualSampleRequiresManualDriver);
         }
-        if count == 0 || !self.is_running() {
+        if count == 0 {
             return Ok(0);
         }
 
+        let mut completed = 0;
         for _ in 0..count {
-            let world = self.app.world_mut();
-            world
-                .resource_mut::<Time<Virtual>>()
-                .advance_by(SampleTime::period());
-            world
-                .resource_mut::<Time<Fixed>>()
-                .advance_by(SampleTime::period());
+            if !self.is_running() {
+                break;
+            }
 
-            let fixed_time = world.resource::<Time<Fixed>>().as_generic();
-            *world.resource_mut::<Time>() = fixed_time;
-            world.run_schedule(FixedUpdate);
+            {
+                let world = self.app.world_mut();
+                world
+                    .resource_mut::<Time<Virtual>>()
+                    .advance_by(SampleTime::period());
+                world
+                    .resource_mut::<Time<Fixed>>()
+                    .advance_by(SampleTime::period());
 
-            let virtual_time = world.resource::<Time<Virtual>>().as_generic();
-            *world.resource_mut::<Time>() = virtual_time;
+                let fixed_time = world.resource::<Time<Fixed>>().as_generic();
+                *world.resource_mut::<Time>() = fixed_time;
+                world.run_schedule(FixedUpdate);
+
+                let virtual_time = world.resource::<Time<Virtual>>().as_generic();
+                *world.resource_mut::<Time>() = virtual_time;
+            }
+
+            completed += 1;
         }
 
-        Ok(count)
+        Ok(completed)
     }
 
     fn is_running(&self) -> bool {
@@ -369,12 +380,13 @@ impl Default for Oxurack {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bevy_ecs::prelude::{Component, Entity, Query, ResMut, Resource, With};
+    use bevy_ecs::hierarchy::Children;
+    use bevy_ecs::prelude::{Component, Entity, Query, Res, ResMut, Resource, With};
     use bevy_ecs::schedule::IntoScheduleConfigs;
     use oxurack_core::{
-        CableConfig, CoreError, MergePolicy, ModuleConfig, ModuleRegistry, OxurackModule,
-        ParameterGetter, ParameterRegistry, ParameterSchema, ParameterSetter, ParameterValue,
-        PatchHandle, PortDirection, PortSchema, ValueKind,
+        CableConfig, CoreError, CurrentValue, MergePolicy, ModuleConfig, ModuleRegistry,
+        ModuleSpawnContext, OxurackModule, ParameterGetter, ParameterRegistry, ParameterSchema,
+        ParameterSetter, ParameterValue, PatchHandle, PortDirection, PortSchema, ValueKind,
     };
     use pretty_assertions::assert_eq;
     use std::collections::HashMap;
@@ -699,7 +711,633 @@ mod tests {
         assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 3);
     }
 
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum StopPhase {
+        Produce,
+        Propagate,
+        MergeInputs,
+        Consume,
+        Observe,
+    }
+
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    struct PhaseMarker {
+        phase: StopPhase,
+        index: u64,
+    }
+
+    #[derive(Resource, Clone, Debug, PartialEq, Eq)]
+    struct StopControl {
+        stop: Option<(StopPhase, u64)>,
+        resume: Option<(StopPhase, u64)>,
+    }
+
+    impl StopControl {
+        fn none() -> Self {
+            Self {
+                stop: None,
+                resume: None,
+            }
+        }
+    }
+
+    #[derive(Resource, Default, Clone, Debug, PartialEq, Eq)]
+    struct StopTrace {
+        markers: Vec<PhaseMarker>,
+    }
+
+    #[derive(Component, Clone, Debug, PartialEq, Eq)]
+    struct StopProbeState {
+        instance_seed: u64,
+        state: u64,
+        steps: u64,
+    }
+
+    struct StopProbe;
+
+    impl OxurackModule for StopProbe {
+        const KIND: &'static str = "stop_probe";
+        const DISPLAY_NAME: &'static str = "Stop Accounting Probe";
+
+        fn port_schema() -> &'static [PortSchema] {
+            &[PortSchema {
+                name: "out",
+                direction: PortDirection::Output,
+                value_kind: ValueKind::Gate,
+                merge_policy: MergePolicy::Reject,
+                description: "Deterministic stop-accounting state.",
+            }]
+        }
+
+        fn parameter_schema() -> &'static [ParameterSchema] {
+            &[]
+        }
+
+        fn spawn(
+            world: &mut bevy_ecs::world::World,
+            instance_name: &str,
+            _parameters: &HashMap<String, ParameterValue>,
+        ) -> Result<Entity, CoreError> {
+            spawn_stop_probe(world, instance_name, 0)
+        }
+
+        fn spawn_with_context(
+            world: &mut bevy_ecs::world::World,
+            context: &ModuleSpawnContext<'_>,
+            _parameters: &HashMap<String, ParameterValue>,
+        ) -> Result<Entity, CoreError> {
+            spawn_stop_probe(world, context.instance_name(), context.instance_seed())
+        }
+
+        fn register_systems(app: &mut App, schedule: bevy_ecs::schedule::InternedScheduleLabel) {
+            app.add_systems(schedule, stop_probe_produce.in_set(TickPhase::Produce));
+        }
+    }
+
+    fn spawn_stop_probe(
+        world: &mut bevy_ecs::world::World,
+        instance_name: &str,
+        instance_seed: u64,
+    ) -> Result<Entity, CoreError> {
+        let entity = oxurack_core::spawn_module_entity(world, StopProbe::KIND, instance_name);
+        oxurack_core::spawn_port_on_module(
+            world,
+            entity,
+            "out",
+            PortDirection::Output,
+            ValueKind::Gate,
+            MergePolicy::Reject,
+        );
+        world.entity_mut(entity).insert(StopProbeState {
+            instance_seed,
+            state: instance_seed,
+            steps: 0,
+        });
+        Ok(entity)
+    }
+
+    fn record_phase(
+        phase: StopPhase,
+        index: u64,
+        trace: &mut StopTrace,
+        control: &StopControl,
+        running: &mut SimulationRunning,
+    ) {
+        trace.markers.push(PhaseMarker { phase, index });
+        if control.stop == Some((phase, index)) {
+            running.0 = false;
+        }
+        if control.resume == Some((phase, index)) {
+            running.0 = true;
+        }
+    }
+
+    fn stop_probe_produce(
+        sample_time: Res<SampleTime>,
+        mut trace: ResMut<StopTrace>,
+        control: Res<StopControl>,
+        mut running: ResMut<SimulationRunning>,
+        mut states: Query<(&mut StopProbeState, &Children)>,
+        mut current_values: Query<&mut CurrentValue>,
+    ) {
+        let Some(index) = sample_time.last_index() else {
+            return;
+        };
+
+        for (mut state, children) in &mut states {
+            state.state = state
+                .state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1);
+            state.steps += 1;
+            let value = oxurack_core::Value::Gate(state.state & 1 == 1);
+            for child in children.iter() {
+                if let Ok(mut current) = current_values.get_mut(*child) {
+                    current.0 = value;
+                }
+            }
+        }
+
+        record_phase(
+            StopPhase::Produce,
+            index,
+            &mut trace,
+            &control,
+            &mut running,
+        );
+    }
+
+    fn stop_probe_propagate(
+        sample_time: Res<SampleTime>,
+        mut trace: ResMut<StopTrace>,
+        control: Res<StopControl>,
+        mut running: ResMut<SimulationRunning>,
+    ) {
+        let Some(index) = sample_time.last_index() else {
+            return;
+        };
+        record_phase(
+            StopPhase::Propagate,
+            index,
+            &mut trace,
+            &control,
+            &mut running,
+        );
+    }
+
+    fn stop_probe_merge_inputs(
+        sample_time: Res<SampleTime>,
+        mut trace: ResMut<StopTrace>,
+        control: Res<StopControl>,
+        mut running: ResMut<SimulationRunning>,
+    ) {
+        let Some(index) = sample_time.last_index() else {
+            return;
+        };
+        record_phase(
+            StopPhase::MergeInputs,
+            index,
+            &mut trace,
+            &control,
+            &mut running,
+        );
+    }
+
+    fn stop_probe_consume(
+        sample_time: Res<SampleTime>,
+        mut trace: ResMut<StopTrace>,
+        control: Res<StopControl>,
+        mut running: ResMut<SimulationRunning>,
+    ) {
+        let Some(index) = sample_time.last_index() else {
+            return;
+        };
+        record_phase(
+            StopPhase::Consume,
+            index,
+            &mut trace,
+            &control,
+            &mut running,
+        );
+    }
+
+    fn stop_probe_observe(
+        sample_time: Res<SampleTime>,
+        mut trace: ResMut<StopTrace>,
+        control: Res<StopControl>,
+        mut running: ResMut<SimulationRunning>,
+    ) {
+        let Some(index) = sample_time.last_index() else {
+            return;
+        };
+        record_phase(
+            StopPhase::Observe,
+            index,
+            &mut trace,
+            &control,
+            &mut running,
+        );
+    }
+
+    #[derive(Clone, Debug, PartialEq, Eq)]
+    struct StopObservation {
+        sample_time: SampleTime,
+        fixed_elapsed: Duration,
+        virtual_elapsed: Duration,
+        generic_elapsed: Duration,
+        fixed_delta: Duration,
+        virtual_delta: Duration,
+        generic_delta: Duration,
+        fixed_overstep: Duration,
+        state: StopProbeState,
+        port_gate: bool,
+        markers: Vec<PhaseMarker>,
+    }
+
+    fn stop_probe_patch() -> oxurack_core::Patch {
+        oxurack_core::Patch {
+            version: "1.0".to_owned(),
+            master_seed: 42,
+            bpm: 120.0,
+            modules: vec![ModuleConfig {
+                kind: StopProbe::KIND.to_owned(),
+                instance_name: "probe".to_owned(),
+                ..Default::default()
+            }],
+            cables: vec![],
+            rack: None,
+        }
+    }
+
+    fn stop_probe_rack(name: &str, control: StopControl) -> (Oxurack, PatchHandle) {
+        let mut rack = Oxurack::new();
+        rack.install::<StopProbe>();
+        rack.world_mut().insert_resource(control);
+        rack.world_mut().insert_resource(StopTrace::default());
+        rack.app.add_systems(
+            FixedUpdate,
+            (
+                stop_probe_propagate.in_set(TickPhase::Propagate),
+                stop_probe_merge_inputs.in_set(TickPhase::MergeInputs),
+                stop_probe_consume.in_set(TickPhase::Consume),
+                stop_probe_observe.in_set(TickPhase::Observe),
+            ),
+        );
+
+        let path = save_patch_to_temp(
+            &stop_probe_patch(),
+            &format!("oxurack_slice04_{name}_{}.ron", std::process::id()),
+        );
+        rack.load_patch(&path)
+            .expect("stop-accounting patch should load through the public path");
+        let _ = std::fs::remove_file(&path);
+        rack.set_driver_mode(SimulationDriver::Manual).start();
+
+        let handle = rack.world().resource::<PatchHandle>().clone();
+        (rack, handle)
+    }
+
+    fn stop_probe_observation(rack: &Oxurack, handle: &PatchHandle) -> StopObservation {
+        let world = rack.world();
+        let module_entity = handle.modules["probe"];
+        let state = world
+            .entity(module_entity)
+            .get::<StopProbeState>()
+            .expect("probe state should exist")
+            .clone();
+        let children = world
+            .entity(module_entity)
+            .get::<Children>()
+            .expect("probe should have a port child");
+        let port_gate = children
+            .iter()
+            .find_map(|child| {
+                let port = world.entity(*child).get::<oxurack_core::Port>()?;
+                if port.name.as_ref() != "out" {
+                    return None;
+                }
+                match world.entity(*child).get::<CurrentValue>()?.0 {
+                    oxurack_core::Value::Gate(value) => Some(value),
+                    _ => None,
+                }
+            })
+            .expect("probe output gate should exist");
+        let fixed = world.resource::<Time<Fixed>>();
+        let virtual_time = world.resource::<Time<Virtual>>();
+        let generic = world.resource::<Time>();
+
+        StopObservation {
+            sample_time: *world.resource::<SampleTime>(),
+            fixed_elapsed: fixed.elapsed(),
+            virtual_elapsed: virtual_time.elapsed(),
+            generic_elapsed: generic.elapsed(),
+            fixed_delta: fixed.delta(),
+            virtual_delta: virtual_time.delta(),
+            generic_delta: generic.delta(),
+            fixed_overstep: fixed.overstep(),
+            state,
+            port_gate,
+            markers: world.resource::<StopTrace>().markers.clone(),
+        }
+    }
+
+    fn expected_markers(samples: u64) -> Vec<PhaseMarker> {
+        let phases = [
+            StopPhase::Produce,
+            StopPhase::Propagate,
+            StopPhase::MergeInputs,
+            StopPhase::Consume,
+            StopPhase::Observe,
+        ];
+        (0..samples)
+            .flat_map(|index| {
+                phases
+                    .iter()
+                    .copied()
+                    .map(move |phase| PhaseMarker { phase, index })
+            })
+            .collect()
+    }
+
+    fn assert_partial_sample(
+        rack: &Oxurack,
+        handle: &PatchHandle,
+        returned: u64,
+        expected_samples: u64,
+        message: &str,
+    ) -> StopObservation {
+        let observation = stop_probe_observation(rack, handle);
+        assert_eq!(returned, expected_samples, "{message}: returned count");
+        assert_eq!(
+            observation.sample_time.completed_samples(),
+            expected_samples,
+            "{message}: completed count"
+        );
+        assert_eq!(
+            observation.sample_time.last_index(),
+            expected_samples.checked_sub(1),
+            "{message}: last sample index"
+        );
+        assert_eq!(
+            observation.fixed_elapsed,
+            Duration::from_millis(expected_samples),
+            "{message}: fixed elapsed"
+        );
+        assert_eq!(
+            observation.virtual_elapsed,
+            Duration::from_millis(expected_samples),
+            "{message}: virtual elapsed"
+        );
+        assert_eq!(
+            observation.generic_elapsed, observation.virtual_elapsed,
+            "{message}: generic Time must restore Virtual time"
+        );
+        assert_eq!(
+            observation.fixed_delta,
+            Duration::from_millis(1),
+            "{message}: fixed delta"
+        );
+        assert_eq!(
+            observation.virtual_delta,
+            Duration::from_millis(1),
+            "{message}: virtual delta"
+        );
+        assert_eq!(
+            observation.generic_delta, observation.virtual_delta,
+            "{message}: generic delta must restore Virtual time"
+        );
+        assert_eq!(
+            observation.fixed_overstep,
+            Duration::ZERO,
+            "{message}: fixed overstep"
+        );
+        assert_eq!(
+            observation.markers,
+            expected_markers(expected_samples),
+            "{message}: complete phase trace"
+        );
+        assert_eq!(
+            observation.state.steps, expected_samples,
+            "{message}: module state advances once per completed sample"
+        );
+        assert_eq!(
+            observation.state.instance_seed,
+            ModuleSpawnContext::new(42, "probe").instance_seed(),
+            "{message}: spawn context seed is owned by module state"
+        );
+        assert_eq!(
+            observation.port_gate,
+            observation.state.state & 1 == 1,
+            "{message}: output port follows owned module state"
+        );
+        observation
+    }
+
     // ── Tests ──────────────────────────────────────────────────────
+
+    #[test]
+    fn test_stop_accounting_stops_in_produce_after_one_complete_sample() {
+        let (mut rack, handle) = stop_probe_rack(
+            "produce",
+            StopControl {
+                stop: Some((StopPhase::Produce, 0)),
+                resume: None,
+            },
+        );
+        let returned = rack
+            .advance_samples(3)
+            .expect("Produce stop should be partial success");
+        assert_partial_sample(&rack, &handle, returned, 1, "Produce stop at sample zero");
+    }
+
+    #[test]
+    fn test_stop_accounting_stops_in_consume_after_one_complete_sample() {
+        let (mut rack, handle) = stop_probe_rack(
+            "consume",
+            StopControl {
+                stop: Some((StopPhase::Consume, 0)),
+                resume: None,
+            },
+        );
+        let returned = rack
+            .advance_samples(3)
+            .expect("Consume stop should be partial success");
+        assert_partial_sample(&rack, &handle, returned, 1, "Consume stop at sample zero");
+    }
+
+    #[test]
+    fn test_stop_accounting_stops_in_observe_after_one_complete_sample() {
+        let (mut rack, handle) = stop_probe_rack(
+            "observe",
+            StopControl {
+                stop: Some((StopPhase::Observe, 0)),
+                resume: None,
+            },
+        );
+        let returned = rack
+            .advance_samples(3)
+            .expect("Observe stop should be partial success");
+        assert_partial_sample(&rack, &handle, returned, 1, "Observe stop at sample zero");
+    }
+
+    #[test]
+    fn test_stop_accounting_stops_at_sample_one_with_two_complete_samples() {
+        let (mut rack, handle) = stop_probe_rack(
+            "sample-one",
+            StopControl {
+                stop: Some((StopPhase::Consume, 1)),
+                resume: None,
+            },
+        );
+        let returned = rack
+            .advance_samples(5)
+            .expect("sample-one stop should be partial success");
+        let observation = assert_partial_sample(&rack, &handle, returned, 2, "stop at sample one");
+        assert_eq!(observation.markers.len(), 10);
+    }
+
+    #[test]
+    fn test_stop_accounting_repeated_stopped_calls_are_full_noops() {
+        let (mut rack, handle) = stop_probe_rack(
+            "stopped-noop",
+            StopControl {
+                stop: Some((StopPhase::Observe, 0)),
+                resume: None,
+            },
+        );
+        let returned = rack
+            .advance_samples(3)
+            .expect("initial stop should be partial success");
+        assert_partial_sample(&rack, &handle, returned, 1, "initial stopped observation");
+        let before = stop_probe_observation(&rack, &handle);
+
+        for requested in [1, 3, 0, 100] {
+            assert_eq!(
+                rack.advance_samples(requested)
+                    .expect("stopped manual call should be a no-op"),
+                0,
+                "stopped request {requested} should complete zero samples"
+            );
+            assert_eq!(
+                stop_probe_observation(&rack, &handle),
+                before,
+                "stopped request {requested} changed clock, state, port or trace"
+            );
+        }
+    }
+
+    #[test]
+    fn test_stop_accounting_start_resumes_against_uninterrupted_reference() {
+        let (mut rack, handle) = stop_probe_rack(
+            "resume",
+            StopControl {
+                stop: Some((StopPhase::Produce, 0)),
+                resume: None,
+            },
+        );
+        let returned = rack
+            .advance_samples(3)
+            .expect("initial stop should be partial success");
+        assert_partial_sample(&rack, &handle, returned, 1, "resume starting point");
+
+        rack.world_mut().insert_resource(StopControl::none());
+        rack.start();
+        assert_eq!(
+            rack.advance_samples(1)
+                .expect("resumed manual sample should run"),
+            1
+        );
+        let resumed = stop_probe_observation(&rack, &handle);
+
+        let (mut reference, reference_handle) = stop_probe_rack("reference", StopControl::none());
+        assert_eq!(
+            reference
+                .advance_samples(2)
+                .expect("uninterrupted reference should run"),
+            2
+        );
+        let expected = stop_probe_observation(&reference, &reference_handle);
+
+        assert_eq!(
+            resumed, expected,
+            "resume must match fresh two-sample state"
+        );
+        assert_eq!(resumed.sample_time.last_index(), Some(1));
+        assert_eq!(resumed.sample_time.completed_samples(), 2);
+    }
+
+    #[test]
+    fn test_stop_accounting_false_then_true_allows_next_sample() {
+        let (mut rack, handle) = stop_probe_rack(
+            "false-true",
+            StopControl {
+                stop: Some((StopPhase::Produce, 0)),
+                resume: Some((StopPhase::Observe, 0)),
+            },
+        );
+        let returned = rack
+            .advance_samples(3)
+            .expect("later resume should preserve batch continuation");
+        let observation =
+            assert_partial_sample(&rack, &handle, returned, 3, "false then true in one sample");
+        assert!(
+            rack.world().resource::<SimulationRunning>().0,
+            "final shared running value should permit the next sample"
+        );
+        assert_eq!(observation.markers.len(), 15);
+    }
+
+    #[test]
+    fn test_stop_accounting_uninterrupted_manual_and_zero_count() {
+        let (mut rack, handle) = stop_probe_rack("uninterrupted", StopControl::none());
+        let before = stop_probe_observation(&rack, &handle);
+        assert_eq!(
+            rack.advance_samples(0)
+                .expect("manual zero-count request should be a no-op"),
+            0
+        );
+        assert_eq!(
+            stop_probe_observation(&rack, &handle),
+            before,
+            "manual zero-count request mutated the rack"
+        );
+
+        let returned = rack
+            .advance_samples(3)
+            .expect("uninterrupted manual request should complete all samples");
+        assert_partial_sample(&rack, &handle, returned, 3, "uninterrupted manual request");
+    }
+
+    #[test]
+    fn test_stop_accounting_live_error_precedes_mutation_for_all_counts() {
+        let (mut rack, handle) = stop_probe_rack("live-error", StopControl::none());
+        rack.set_driver_mode(SimulationDriver::Live);
+
+        for requested in [3, 0] {
+            let before = stop_probe_observation(&rack, &handle);
+            assert!(matches!(
+                rack.advance_samples(requested),
+                Err(CoreError::ManualSampleRequiresManualDriver)
+            ));
+            assert_eq!(
+                stop_probe_observation(&rack, &handle),
+                before,
+                "Live request {requested} mutated before returning its typed error"
+            );
+        }
+
+        rack.stop();
+        let before = stop_probe_observation(&rack, &handle);
+        assert!(matches!(
+            rack.advance_samples(2),
+            Err(CoreError::ManualSampleRequiresManualDriver)
+        ));
+        assert_eq!(
+            stop_probe_observation(&rack, &handle),
+            before,
+            "stopped Live request mutated before returning its typed error"
+        );
+    }
 
     #[test]
     fn test_new_has_simulation_running_false() {
