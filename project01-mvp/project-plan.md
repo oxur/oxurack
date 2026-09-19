@@ -441,3 +441,33 @@ Arc10 remains unopened; TM/MIDI then Clock/LFO/Scope stays the priority sequence
 
 - v3.8 — 2026-09-18: Arc09 CDC composition exposed shared-stop/manual-batch
   interaction; plan amended to remediate it before advancing, preserving gates.
+
+## CRC directive06 acknowledgement and Slice04 issue — v3.9, 2026-09-18
+
+Sofie/CRC acknowledged [directive06](cdc-directive06.md) against clean source
+`642313a62db437ee2bf0b3d5b97fcdcffa16782a` and planning
+`6a1bc1340ae6eecb8ed606eb6c1aa8323f7a7119`. The CDC review and current source
+agree: driver validation is correctly first, but the manual loop checks running
+only at entry, so a shared mid-sample stop can over-report progress and advance
+unused clocks. No additional design decision is unresolved.
+
+CRC opened [arc09/slice04](arc09-executable-rack/slice04-sample-stop-accounting/slice-plan.md)
+with six M rows and issued a guide-authored initial prompt. The exact one-source-file
+scope preserves core's complete-sample latch while checking shared running before
+each attempted sample, returning actual completed progress and proving clock/state
+resume behavior with real patch construction. All six author-readiness checks pass;
+the slice starts with zero executed corrective refinements.
+
+Current CC assignment relative to `project01-mvp`:
+`arc09-executable-rack/slice04-sample-stop-accounting/cc-prompt.md`.
+The prior three slices/18 rows retain their candidate-specific acceptance; the
+current arc denominator is four slices/24 rows with M-01–M-06 open. Arc10 remains
+held until CC implementation, independent CRC closure/reassembly and independent
+CDC acceptance.
+
+| Date | Packet | Predecessor | Status | Affected rows / authority | Next action |
+| --- | --- | --- | --- | --- | --- |
+| 2026-09-18 | [Slice04 CC prompt](arc09-executable-rack/slice04-sample-stop-accounting/cc-prompt.md) | directive06; source `642313a`; planning `6a1bc13` | issued for relay, not executed | M-01–M-06 open; E-02/E-04 remain open | Duncan relays to CC; CC returns committed source/planning evidence for CRC review |
+
+- v3.9 — 2026-09-18: Acknowledged directive06 and issued the bounded Slice04
+  repair assignment after six-part author readiness; no acceptance gate changed.

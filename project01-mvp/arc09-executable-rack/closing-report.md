@@ -92,3 +92,24 @@ benchmarks, soak and musical acceptance in Arc08/project gates.
 CDC must now review this closing report, [CRC verification](crc-verification.md)
 and [ledger](ledger.md). Only a successful `cdc-verification.md` may close arc09
 and authorize CDC to open arc10 and its first slice.
+
+## CDC review06 addendum — 2026-09-18
+
+CDC rejected the preceding candidate-specific ready verdict after independently
+finding that a mid-sample stop lets the old manual outer loop return and advance
+three requested samples although core completes one. E-01/E-03 were reproduced;
+E-02/E-04 remain open. The earlier composition statement and 3/3 denominator are
+historical for source `642313a`, not the current arc disposition.
+
+[Directive06](../cdc-directive06.md) adds
+[slice04-sample-stop-accounting](slice04-sample-stop-accounting/slice-plan.md).
+Its six M rows begin open, giving a final planned denominator of four slices and
+24 child rows. The three prior slices/18 rows retain their candidate-specific CRC
+acceptance. Arc09 stays open until CC repairs the stop boundary, CRC independently
+closes the new slice and refreshes this assembly, and CDC accepts the new candidate.
+
+The Slice01 row above incorrectly says “two corrective passes.” The preserved
+history is: the original prompt was held and never executed, iteration01 was the
+first execution, and iteration02 was one corrective pass (1 of 5). This addendum
+corrects the accounting without rewriting the original report. Slice04 starts
+with zero executed corrective refinements. Arc10 remains held.

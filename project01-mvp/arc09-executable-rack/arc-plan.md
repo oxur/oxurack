@@ -1,7 +1,7 @@
 # Arc09 — executable, reproducible rack
 
-Version 1.4 — 2026-09-18. Status: CDC composition review failed the stop boundary;
-three accepted slices, one planned stop-accounting remediation slice.
+Version 1.5 — 2026-09-18. Status: CDC composition review failed the stop boundary;
+three accepted slices, one open stop-accounting remediation slice.
 Depends on: existing core/umbrella source and accepted arc08 baseline observations.
 Blocks: arc10 TM/MIDI and arc11 Clock/LFO/Scope workbench. Replaces no original
 acceptance criterion; receives the execution/seed portions of historical arcs02/05.
@@ -24,7 +24,7 @@ physical MIDI, live snapshotting and full transport are subsequent capabilities.
 | slice01-module-behavior-installation | Default behavior hook, once-per-type rack registration, recoverable kind conflict, bounded existing rustdoc repairs | Closed; six rows independently reproduced at source `6a31c0f` |
 | slice02-simulation-samples | Explicit sample driver, phase/merge/observe boundary and manual/live exclusivity; maintain legacy step semantics | Closed; six rows independently reproduced at source `5c1ce2c` |
 | slice03-seeded-spawn-context | Explicit pre-construction seed handoff, stable seed derivation and fresh-process replay fixtures | Closed; six rows independently reproduced at source `642313a` |
-| slice04-sample-stop-accounting | Correct manual partial progress/time after a shared mid-sample stop, with phase and resume proofs | Planned by directive06; CRC authors open set before execution |
+| [slice04-sample-stop-accounting](slice04-sample-stop-accounting/slice-plan.md) | Correct manual partial progress/time after a shared mid-sample stop, with phase and resume proofs | Open; six M rows and initial CC prompt issued, awaiting execution |
 
 CRC may prepare slice02/03 within the governing design after acceptance of the
 previous slice. Substantive API, compatibility, timing or evidence changes require
@@ -70,3 +70,5 @@ author the fourth open set, then reassemble for independent CDC review. Arc10 he
 
 - v1.4 — 2026-09-18: CDC composition F-01 adds slice04 after accepted slice02/03
   interactions revealed missing stop-during-batch accounting. Arc remains open.
+- v1.5 — 2026-09-18: CRC acknowledged directive06, created Slice04's six-row
+  open set and issued its guide-authored initial CC assignment. Arc10 remains held.

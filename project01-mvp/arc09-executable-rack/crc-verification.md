@@ -68,3 +68,18 @@ CDC records its independent verdict in
 E-01–E-04, updates the project bubble-up, closes arc09, and prepares arc10 plus
 its first slice under the existing roadmap. Required changes return as a new
 project-level `cdc-directiveNN.md` through the Operator.
+
+## CDC review06 disposition addendum — 2026-09-18
+
+The operational-readiness verdict above applies only to source `642313a` and was
+not accepted at the independent composition gate. [CDC review](cdc-verification.md)
+reproduced E-01/E-03 but left E-02/E-04 open after its phase-stop probes exposed
+incorrect partial return and time accounting. Passing standard matrices did not
+cover that interaction.
+
+[Directive06](../cdc-directive06.md) now governs the bounded
+[Slice04 open set](slice04-sample-stop-accounting/slice-plan.md). The arc contains
+four planned slices/24 child rows; the prior three/18 retain their accepted
+candidate evidence while M-01–M-06 are open. CRC must independently reproduce the
+repair and reassemble E-01–E-04 before another CDC review. This addendum does not
+accept new source or authorize arc10.
