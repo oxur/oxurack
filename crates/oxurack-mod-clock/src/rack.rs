@@ -20,7 +20,7 @@ const DEFAULT_PULSE_WIDTH_MS: i64 = 10;
 /// The oxurack module adapter for [`Clock`].
 pub struct ClockModule;
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone, PartialEq, Eq)]
 struct ClockState {
     clock: Clock,
     pulse: Entity,
@@ -95,9 +95,7 @@ impl OxurackModule for ClockModule {
         parameters: &HashMap<String, ParameterValue>,
     ) -> Result<Entity, CoreError> {
         let raw = decode_spawn_parameters(instance_name, parameters)?;
-        let config = raw.into_validated().map_err(|error| {
-            invalid_parameter(instance_name, "pulse_width_ms", error.to_string())
-        })?;
+        let config = validate_spawn_config(instance_name, raw)?;
 
         let module = spawn_module_entity(world, Self::KIND, instance_name);
         let pulse = spawn_port_on_module(
@@ -152,30 +150,53 @@ fn decode_spawn_parameters(
     instance_name: &str,
     parameters: &HashMap<String, ParameterValue>,
 ) -> Result<RawConfig, CoreError> {
-    let mut raw = RawConfig::default();
-    let mut keys: Vec<&String> = parameters.keys().collect();
-    keys.sort_unstable();
+    if let Some(key) = parameters
+        .keys()
+        .filter(|key| !is_known_parameter(key))
+        .min()
+    {
+        return Err(CoreError::UnknownParameter {
+            module: instance_name.to_owned(),
+            param: key.clone(),
+        });
+    }
 
-    for key in keys {
-        let value = parameters
-            .get(key)
-            .expect("parameter key collected from the same map");
-        match key.as_str() {
-            "bpm" => raw.bpm = decode_float(instance_name, key, value)?,
-            "ppqn" => raw.ppqn = decode_bounded_int(instance_name, key, value, 1, 96)?,
-            "pulse_width_ms" => {
-                raw.pulse_width_ms = decode_bounded_int(instance_name, key, value, 1, 1000)?
-            }
-            _ => {
-                return Err(CoreError::UnknownParameter {
-                    module: instance_name.to_owned(),
-                    param: key.clone(),
-                });
-            }
+    let mut raw = RawConfig::default();
+    for parameter in ["bpm", "ppqn", "pulse_width_ms"] {
+        let Some(value) = parameters.get(parameter) else {
+            continue;
+        };
+        match parameter {
+            "bpm" => raw.bpm = decode_float(instance_name, parameter, value)?,
+            "ppqn" => raw.ppqn = decode_int(instance_name, parameter, value)?,
+            "pulse_width_ms" => raw.pulse_width_ms = decode_int(instance_name, parameter, value)?,
+            _ => unreachable!("the fixed spawn parameter list contains only known names"),
         }
     }
 
     Ok(raw)
+}
+
+fn is_known_parameter(parameter: &str) -> bool {
+    matches!(parameter, "bpm" | "ppqn" | "pulse_width_ms")
+}
+
+fn spawn_error_parameter(error: ClockError) -> &'static str {
+    match error {
+        ClockError::NonFiniteBpm | ClockError::BpmOutOfRange => "bpm",
+        ClockError::InvalidPpqn => "ppqn",
+        ClockError::InvalidPulseWidth | ClockError::PulseOverlap => "pulse_width_ms",
+    }
+}
+
+fn validate_spawn_config(instance_name: &str, raw: RawConfig) -> Result<ClockConfig, CoreError> {
+    raw.into_validated().map_err(|error| {
+        invalid_parameter(
+            instance_name,
+            spawn_error_parameter(error),
+            error.to_string(),
+        )
+    })
 }
 
 fn decode_float(
@@ -193,20 +214,13 @@ fn decode_float(
     }
 }
 
-fn decode_bounded_int(
+fn decode_int(
     instance_name: &str,
     parameter: &str,
     value: &ParameterValue,
-    minimum: i64,
-    maximum: i64,
 ) -> Result<i64, CoreError> {
     match value {
-        ParameterValue::Int(value) if (*value >= minimum) && (*value <= maximum) => Ok(*value),
-        ParameterValue::Int(_) => Err(invalid_parameter(
-            instance_name,
-            parameter,
-            format!("must be an integer in {minimum}..={maximum}"),
-        )),
+        ParameterValue::Int(value) => Ok(*value),
         _ => Err(invalid_parameter(instance_name, parameter, "expected Int")),
     }
 }
@@ -249,10 +263,8 @@ fn set_parameter(
 
     match parameter {
         "bpm" => raw.bpm = decode_float(&instance_name, parameter, &value)?,
-        "ppqn" => raw.ppqn = decode_bounded_int(&instance_name, parameter, &value, 1, 96)?,
-        "pulse_width_ms" => {
-            raw.pulse_width_ms = decode_bounded_int(&instance_name, parameter, &value, 1, 1000)?
-        }
+        "ppqn" => raw.ppqn = decode_int(&instance_name, parameter, &value)?,
+        "pulse_width_ms" => raw.pulse_width_ms = decode_int(&instance_name, parameter, &value)?,
         _ => {
             return Err(CoreError::UnknownParameter {
                 module: instance_name,
@@ -310,7 +322,7 @@ mod tests {
     use bevy_app::{App, Update};
     use bevy_ecs::prelude::QueryState;
     use bevy_ecs::schedule::ScheduleLabel;
-    use oxurack_core::{CorePlugin, Module};
+    use oxurack_core::{CorePlugin, Module, Port};
 
     fn module_parameters(values: &[(&str, ParameterValue)]) -> HashMap<String, ParameterValue> {
         values
@@ -320,60 +332,86 @@ mod tests {
     }
 
     #[test]
-    fn aggregate_spawn_validation_happens_before_entity_creation() {
+    fn failed_spawns_report_the_responsible_parameter_without_entities() {
+        fn assert_failed(values: &[(&str, ParameterValue)], expected: &str) {
+            let mut world = World::new();
+            let before = entity_counts(&mut world);
+            let result = ClockModule::spawn(&mut world, "clock", &module_parameters(values));
+            assert!(matches!(
+                result,
+                Err(CoreError::InvalidParameterValue { module, param, .. })
+                    if module == "clock" && param == expected
+            ));
+            assert_eq!(entity_counts(&mut world), before);
+        }
+
+        for bpm in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY, 0.0, 1001.0] {
+            assert_failed(&[("bpm", ParameterValue::Float(bpm))], "bpm");
+        }
+        for ppqn in [0, 97] {
+            assert_failed(&[("ppqn", ParameterValue::Int(ppqn))], "ppqn");
+        }
+        assert_failed(&[("ppqn", ParameterValue::Float(1.0))], "ppqn");
+        for pulse_width_ms in [0, 1001] {
+            assert_failed(
+                &[("pulse_width_ms", ParameterValue::Int(pulse_width_ms))],
+                "pulse_width_ms",
+            );
+        }
+        assert_failed(
+            &[("pulse_width_ms", ParameterValue::Float(1.0))],
+            "pulse_width_ms",
+        );
+        assert_failed(
+            &[
+                ("bpm", ParameterValue::Float(1000.0)),
+                ("ppqn", ParameterValue::Int(30)),
+                ("pulse_width_ms", ParameterValue::Int(2)),
+            ],
+            "pulse_width_ms",
+        );
+
         let mut world = World::new();
-        let parameters = module_parameters(&[
-            ("bpm", ParameterValue::Float(1000.0)),
-            ("ppqn", ParameterValue::Int(30)),
-            ("pulse_width_ms", ParameterValue::Int(2)),
-        ]);
-        let result = ClockModule::spawn(&mut world, "clock", &parameters);
-        assert!(matches!(
-            result,
-            Err(CoreError::InvalidParameterValue {
-                module,
-                param,
-                ..
-            }) if module == "clock" && param == "pulse_width_ms"
-        ));
-
-        let mut modules = QueryState::<&Module>::new(&mut world);
-        assert_eq!(modules.iter(&world).count(), 0);
-
-        let valid = module_parameters(&[
-            ("bpm", ParameterValue::Float(1000.0)),
-            ("ppqn", ParameterValue::Int(30)),
-            ("pulse_width_ms", ParameterValue::Int(1)),
-        ]);
-        let entity = ClockModule::spawn(&mut world, "valid", &valid).unwrap();
+        let entity = ClockModule::spawn(&mut world, "valid", &HashMap::new()).unwrap();
         assert_eq!(
             get_bpm(&world, entity).unwrap(),
-            ParameterValue::Float(1000.0)
+            ParameterValue::Float(120.0)
         );
-        assert_eq!(get_ppqn(&world, entity).unwrap(), ParameterValue::Int(30));
+        assert_eq!(get_ppqn(&world, entity).unwrap(), ParameterValue::Int(1));
         assert_eq!(
             get_pulse_width_ms(&world, entity).unwrap(),
-            ParameterValue::Int(1)
+            ParameterValue::Int(10)
         );
     }
 
     #[test]
-    fn unknown_spawn_parameters_are_reported_in_lexical_order() {
-        let mut world = World::new();
-        let parameters = module_parameters(&[
-            ("zeta", ParameterValue::Int(1)),
-            ("alpha", ParameterValue::Int(1)),
-        ]);
-        let result = ClockModule::spawn(&mut world, "clock", &parameters);
-        assert!(matches!(
-            result,
-            Err(CoreError::UnknownParameter { module, param })
-                if module == "clock" && param == "alpha"
-        ));
+    fn unknown_spawn_parameters_win_before_invalid_known_values() {
+        for values in [
+            &[
+                ("zeta", ParameterValue::Float(f32::NAN)),
+                ("alpha", ParameterValue::Int(1)),
+                ("bpm", ParameterValue::Float(f32::NAN)),
+            ][..],
+            &[
+                ("bpm", ParameterValue::Float(f32::NAN)),
+                ("alpha", ParameterValue::Int(1)),
+                ("zeta", ParameterValue::Float(f32::NAN)),
+            ][..],
+        ] {
+            let mut world = World::new();
+            let before = entity_counts(&mut world);
+            let result = ClockModule::spawn(&mut world, "clock", &module_parameters(values));
+            assert!(matches!(
+                result,
+                Err(CoreError::UnknownParameter { module, param })
+                    if module == "clock" && param == "alpha"
+            ));
+            assert_eq!(entity_counts(&mut world), before);
+        }
     }
 
     #[test]
-    fn setters_validate_before_commit_and_getters_read_clock_state() {
+    fn setters_decode_each_parameter_and_getters_read_clock_state() {
         let mut world = World::new();
         let entity = ClockModule::spawn(&mut world, "clock", &HashMap::new()).unwrap();
         assert_eq!(
@@ -381,26 +419,110 @@ mod tests {
             ParameterValue::Float(120.0)
         );
 
-        let error = set_bpm(&mut world, entity, ParameterValue::Float(f32::NAN)).unwrap_err();
-        assert!(matches!(
-            error,
-            CoreError::InvalidParameterValue { module, param, .. }
-                if module == "clock" && param == "bpm"
-        ));
-        assert_eq!(
-            get_bpm(&world, entity).unwrap(),
-            ParameterValue::Float(120.0)
-        );
-
         set_bpm(&mut world, entity, ParameterValue::Float(240.0)).unwrap();
+        set_ppqn(&mut world, entity, ParameterValue::Int(2)).unwrap();
+        set_pulse_width_ms(&mut world, entity, ParameterValue::Int(5)).unwrap();
         assert_eq!(
             get_bpm(&world, entity).unwrap(),
             ParameterValue::Float(240.0)
         );
-        assert_eq!(get_ppqn(&world, entity).unwrap(), ParameterValue::Int(1));
+        assert_eq!(get_ppqn(&world, entity).unwrap(), ParameterValue::Int(2));
         assert_eq!(
             get_pulse_width_ms(&world, entity).unwrap(),
-            ParameterValue::Int(10)
+            ParameterValue::Int(5)
+        );
+
+        for (parameter, result) in [
+            ("bpm", set_bpm(&mut world, entity, ParameterValue::Int(240))),
+            (
+                "ppqn",
+                set_ppqn(&mut world, entity, ParameterValue::Float(2.0)),
+            ),
+            (
+                "pulse_width_ms",
+                set_pulse_width_ms(&mut world, entity, ParameterValue::Bool(true)),
+            ),
+        ] {
+            assert!(matches!(
+                result,
+                Err(CoreError::InvalidParameterValue { module, param, .. })
+                    if module == "clock" && param == parameter
+            ));
+        }
+    }
+
+    #[test]
+    fn missing_and_non_clock_entities_are_unknown_modules() {
+        let mut world = World::new();
+        let missing = world.spawn_empty().id();
+        assert!(world.despawn(missing));
+        assert!(matches!(
+            get_bpm(&world, missing),
+            Err(CoreError::UnknownModule(_))
+        ));
+
+        let non_clock = world.spawn_empty().id();
+        assert!(matches!(
+            set_ppqn(&mut world, non_clock, ParameterValue::Int(2)),
+            Err(CoreError::UnknownModule(_))
+        ));
+    }
+
+    #[test]
+    fn invalid_edits_preserve_clock_state_and_held_value() {
+        let mut app = App::new();
+        app.add_plugins(CorePlugin);
+        let entity = ClockModule::spawn(app.world_mut(), "clock", &HashMap::new()).unwrap();
+        ClockModule::register_systems(&mut app, Update.intern());
+        app.update();
+
+        let pulse = app.world().get::<ClockState>(entity).unwrap().pulse;
+        let before = app.world().get::<ClockState>(entity).unwrap().clone();
+        let before_value = *app.world().get::<CurrentValue>(pulse).unwrap();
+        set_bpm(app.world_mut(), entity, ParameterValue::Float(240.0)).unwrap();
+        let pending = app.world().get::<ClockState>(entity).unwrap().clone();
+        let pending_value = *app.world().get::<CurrentValue>(pulse).unwrap();
+        assert_ne!(pending, before);
+        assert_eq!(pending_value, before_value);
+        let error = set_ppqn(app.world_mut(), entity, ParameterValue::Float(2.0)).unwrap_err();
+        assert!(matches!(
+            error,
+            CoreError::InvalidParameterValue { module, param, .. }
+                if module == "clock" && param == "ppqn"
+        ));
+        assert_eq!(*app.world().get::<ClockState>(entity).unwrap(), pending);
+        assert_eq!(
+            *app.world().get::<CurrentValue>(pulse).unwrap(),
+            pending_value
+        );
+
+        app.update();
+        assert_eq!(
+            app.world().get::<CurrentValue>(pulse).unwrap().0,
+            Value::Gate(false)
+        );
+        app.update();
+        assert_eq!(
+            app.world().get::<CurrentValue>(pulse).unwrap().0,
+            Value::Gate(true)
+        );
+
+        let before_overlap = app.world().get::<ClockState>(entity).unwrap().clone();
+        let before_overlap_value = *app.world().get::<CurrentValue>(pulse).unwrap();
+        let error =
+            set_pulse_width_ms(app.world_mut(), entity, ParameterValue::Int(1000)).unwrap_err();
+        assert!(matches!(
+            error,
+            CoreError::InvalidParameterValue { module, param, .. }
+                if module == "clock" && param == "pulse_width_ms"
+        ));
+        assert_eq!(
+            *app.world().get::<ClockState>(entity).unwrap(),
+            before_overlap
+        );
+        assert_eq!(
+            *app.world().get::<CurrentValue>(pulse).unwrap(),
+            before_overlap_value
         );
     }
 
@@ -417,5 +539,11 @@ mod tests {
             app.world().get::<CurrentValue>(pulse).unwrap().0,
             Value::Gate(true)
         );
+    }
+
+    fn entity_counts(world: &mut World) -> (usize, usize) {
+        let mut modules = QueryState::<&Module>::new(world);
+        let mut ports = QueryState::<&Port>::new(world);
+        (modules.iter(world).count(), ports.iter(world).count())
     }
 }

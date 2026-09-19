@@ -1,8 +1,10 @@
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 
 use bevy_ecs::prelude::{Commands, Component, Entity, Query, Res, ResMut, Resource, World};
+use bevy_time::{Time, TimeUpdateStrategy, Virtual};
 use oxurack::{
     CoreError, MergePolicy, Oxurack, ParameterSchema, ParameterValue, PortDirection, PortSchema,
     SampleTime, SimulationDriver, TickPhase, Value, ValueKind,
@@ -14,6 +16,7 @@ use oxurack_core::{
 use oxurack_mod_clock::ClockModule;
 
 const FIXTURE: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/clock.ron");
+const MILLIS_PER_MINUTE: u128 = 60_000_000;
 
 #[derive(Component)]
 struct ConsumerPort {
@@ -27,10 +30,16 @@ struct ConsumerState {
     rises: Vec<u64>,
 }
 
-#[derive(Resource, Default)]
+#[derive(Resource, Default, Clone, Debug, PartialEq, Eq)]
 struct GateTrace {
     samples: BTreeMap<String, Vec<bool>>,
     rises: BTreeMap<String, Vec<u64>>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct ClockRun {
+    trace: GateTrace,
+    sample_time: SampleTime,
 }
 
 struct GateConsumer;
@@ -137,15 +146,121 @@ fn observe_gate(
     }
 }
 
-fn rack_with_fixture() -> Oxurack {
+fn installed_fixture() -> Oxurack {
     let mut rack = Oxurack::new();
-    rack.install::<ClockModule>()
-        .install::<GateConsumer>()
-        .set_driver_mode(SimulationDriver::Manual);
+    rack.install::<ClockModule>();
+    rack.install::<ClockModule>();
+    rack.install::<GateConsumer>();
+    rack.install::<GateConsumer>();
     rack.load_patch(Path::new(FIXTURE))
         .expect("clock fixture loads");
-    rack.start();
     rack
+}
+
+fn run_manual(groups: &[u64]) -> ClockRun {
+    let mut rack = installed_fixture();
+    rack.set_driver_mode(SimulationDriver::Manual).start();
+    for &group in groups {
+        rack.advance_samples(group)
+            .expect("manual clock samples should run");
+    }
+    let sample_time = rack.sample_time();
+    let app = rack.into_app();
+    ClockRun {
+        trace: app.world().resource::<GateTrace>().clone(),
+        sample_time,
+    }
+}
+
+fn run_manual_path(path: &Path, groups: &[u64]) -> ClockRun {
+    let mut rack = Oxurack::new();
+    rack.install::<ClockModule>();
+    rack.install::<ClockModule>();
+    rack.install::<GateConsumer>();
+    rack.install::<GateConsumer>();
+    rack.load_patch(path).expect("clock fixture loads");
+    rack.set_driver_mode(SimulationDriver::Manual).start();
+    for &group in groups {
+        rack.advance_samples(group)
+            .expect("manual clock samples should run");
+    }
+    let sample_time = rack.sample_time();
+    let app = rack.into_app();
+    ClockRun {
+        trace: app.world().resource::<GateTrace>().clone(),
+        sample_time,
+    }
+}
+
+fn run_live(groups: &[u32]) -> ClockRun {
+    let mut rack = installed_fixture();
+    rack.start();
+    let mut app = rack.into_app();
+    let maximum_group = groups.iter().copied().max().unwrap_or(1);
+    app.world_mut()
+        .resource_mut::<Time<Virtual>>()
+        .set_max_delta(Duration::from_millis(u64::from(maximum_group)));
+    for &group in groups {
+        app.insert_resource(TimeUpdateStrategy::FixedTimesteps(group));
+        app.update();
+    }
+    ClockRun {
+        trace: app.world().resource::<GateTrace>().clone(),
+        sample_time: *app.world().resource::<SampleTime>(),
+    }
+}
+
+fn expected_samples(rate_milli_bpm: u64, pulse_width_ms: usize, total: usize) -> Vec<bool> {
+    let rate = u128::from(rate_milli_bpm);
+    let mut samples = vec![false; total];
+    let maximum_pulse = (total as u128 * rate / MILLIS_PER_MINUTE) + 1;
+    for pulse in 0..=maximum_pulse {
+        let rising = (pulse * MILLIS_PER_MINUTE + rate - 1) / rate;
+        if rising >= total as u128 {
+            break;
+        }
+        let start = rising as usize;
+        let end = (start + pulse_width_ms).min(total);
+        samples[start..end].fill(true);
+    }
+    samples
+}
+
+fn expected_trace(total: usize) -> GateTrace {
+    let clocks = [
+        ("consumer_slow", 120_000, 3),
+        ("consumer_fast", 240_000, 2),
+        ("consumer_default", 120_000, 10),
+        ("consumer_patch_bpm", 90_000, 10),
+        ("consumer_unrelated", 0, 0),
+    ];
+    let mut trace = GateTrace::default();
+    for (name, rate, width) in clocks {
+        let samples = if rate == 0 {
+            vec![false; total]
+        } else {
+            expected_samples(rate, width, total)
+        };
+        let mut previous = false;
+        let rises = samples
+            .iter()
+            .enumerate()
+            .filter_map(|(index, &current)| {
+                let rising = current && !previous;
+                previous = current;
+                rising.then_some(index as u64)
+            })
+            .collect();
+        trace.samples.insert(name.to_owned(), samples);
+        trace.rises.insert(name.to_owned(), rises);
+    }
+    trace
+}
+
+fn assert_complete_run(run: &ClockRun, total: usize) {
+    assert_eq!(run.trace, expected_trace(total));
+    assert_eq!(run.sample_time.completed_samples(), total as u64);
+    assert_eq!(run.sample_time.last_index(), Some(total as u64 - 1));
 }
 
 fn write_reversed_fixture() -> PathBuf {
@@ -158,59 +273,76 @@ fn write_reversed_fixture() -> PathBuf {
 }
 
 #[test]
-fn installed_clocks_drive_connected_consumers_with_named_edges() {
-    let mut rack = rack_with_fixture();
-    assert_eq!(rack.advance_samples(1_105).unwrap(), 1_105);
-    let app = rack.into_app();
-    let trace = app.world().resource::<GateTrace>();
-
-    assert_eq!(trace.samples["consumer_slow"].len(), 1_105);
-    assert_eq!(trace.samples["consumer_fast"].len(), 1_105);
-    assert_eq!(trace.rises["consumer_slow"], vec![0, 500, 1_000]);
-    assert_eq!(trace.rises["consumer_fast"], vec![0, 250, 500, 750, 1_000]);
-    assert_eq!(trace.rises["consumer_default"], vec![0, 500, 1_000]);
-    assert_eq!(trace.rises["consumer_patch_bpm"], vec![0, 667]);
-    assert!(
-        trace.samples["consumer_slow"][3..500]
-            .iter()
-            .all(|value| !*value)
-    );
-    assert!(
-        trace.samples["consumer_fast"][2..250]
-            .iter()
-            .all(|value| !*value)
-    );
+fn installed_clocks_drive_the_complete_expected_trace() {
+    let run = run_manual(&[1_105]);
+    assert_complete_run(&run, 1_105);
 }
 
 #[test]
-fn grouping_reinstall_stop_resume_and_spawn_permutation_preserve_behavior() {
-    let mut rack = rack_with_fixture();
-    rack.advance_samples(1).unwrap();
-    rack.install::<ClockModule>();
-    rack.install::<GateConsumer>();
+fn manual_and_live_groupings_match_full_trace_and_sample_time() {
+    let manual_single = run_manual(&[1_105]);
+    let manual_grouped = run_manual(&[1, 2, 7, 95, 1_000]);
+    let live_single = run_live(&[1; 1_105]);
+    let live_grouped = run_live(&[1, 2, 7, 95, 1_000]);
+
+    assert_complete_run(&manual_single, 1_105);
+    assert_eq!(manual_grouped, manual_single);
+    assert_eq!(live_single, manual_single);
+    assert_eq!(live_grouped, manual_single);
+}
+
+#[test]
+fn pause_resume_stop_while_high_and_stopped_requests_match_reference() {
+    let reference = run_manual(&[1_105]);
+    let mut rack = installed_fixture();
+    rack.set_driver_mode(SimulationDriver::Manual).start();
     rack.advance_samples(2).unwrap();
     rack.stop();
     assert_eq!(rack.advance_samples(0).unwrap(), 0);
     assert_eq!(rack.advance_samples(10).unwrap(), 0);
     rack.start();
-    rack.advance_samples(247).unwrap();
-    let app = rack.into_app();
-    let trace = app.world().resource::<GateTrace>();
-    assert_eq!(trace.rises["consumer_fast"], vec![0]);
+    rack.advance_samples(1_103).unwrap();
+    let subject = {
+        let sample_time = rack.sample_time();
+        let app = rack.into_app();
+        ClockRun {
+            trace: app.world().resource::<GateTrace>().clone(),
+            sample_time,
+        }
+    };
 
+    assert_eq!(subject, reference);
+}
+
+#[test]
+fn reinstall_after_progress_does_not_duplicate_or_reset_behavior() {
+    let reference = run_manual(&[1_105]);
+    let mut rack = installed_fixture();
+    rack.set_driver_mode(SimulationDriver::Manual).start();
+    rack.advance_samples(3).unwrap();
+    rack.install::<ClockModule>();
+    rack.install::<ClockModule>();
+    rack.install::<GateConsumer>();
+    rack.install::<GateConsumer>();
+    rack.advance_samples(1_102).unwrap();
+    let subject = {
+        let sample_time = rack.sample_time();
+        let app = rack.into_app();
+        ClockRun {
+            trace: app.world().resource::<GateTrace>().clone(),
+            sample_time,
+        }
+    };
+
+    assert_eq!(subject, reference);
+}
+
+#[test]
+fn reversed_fixture_has_the_same_full_trace() {
     let path = write_reversed_fixture();
-    let mut reversed = Oxurack::new();
-    reversed
-        .install::<ClockModule>()
-        .install::<GateConsumer>()
-        .set_driver_mode(SimulationDriver::Manual);
-    reversed.load_patch(&path).unwrap();
-    reversed.start();
-    reversed.advance_samples(501).unwrap();
-    let reversed_app = reversed.into_app();
-    let trace = reversed_app.world().resource::<GateTrace>();
-    assert_eq!(trace.rises["consumer_slow"], vec![0, 500]);
-    assert_eq!(trace.rises["consumer_fast"], vec![0, 250, 500]);
-    assert!(trace.rises["consumer_unrelated"].is_empty());
+    let normal = run_manual(&[1_105]);
+    let reversed = run_manual_path(&path, &[1, 2, 7, 95, 1_000]);
     let _ = std::fs::remove_file(path);
+
+    assert_eq!(reversed, normal);
 }

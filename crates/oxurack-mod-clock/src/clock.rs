@@ -233,6 +233,23 @@ mod tests {
     }
 
     #[test]
+    fn fractional_120_bpm_schedule_has_exact_high_and_low_windows() {
+        let config = ClockConfig::try_new(120.0, 4, 3).unwrap();
+        let mut clock = Clock::new(config);
+        let output: Vec<_> = (0..625).map(|_| clock.next_sample()).collect();
+
+        assert_eq!(
+            rising_indices(&mut Clock::new(config), 625),
+            vec![0, 125, 250, 375, 500]
+        );
+        for start in [0, 125, 250, 375, 500] {
+            assert!(output[start..start + 3].iter().all(|value| *value));
+            let low_end = (start + 125).min(output.len());
+            assert!(output[start + 3..low_end].iter().all(|value| !*value));
+        }
+    }
+
+    #[test]
     fn boundary_rate_has_a_low_sample() {
         let config = ClockConfig::try_new(1000.0, 30, 1).unwrap();
         let mut clock = Clock::new(config);
@@ -250,7 +267,23 @@ mod tests {
             Err(ClockError::NonFiniteBpm)
         );
         assert_eq!(
+            ClockConfig::try_new(f32::INFINITY, 1, 1),
+            Err(ClockError::NonFiniteBpm)
+        );
+        assert_eq!(
+            ClockConfig::try_new(f32::NEG_INFINITY, 1, 1),
+            Err(ClockError::NonFiniteBpm)
+        );
+        assert_eq!(
             ClockConfig::try_new(0.0, 0, 0),
+            Err(ClockError::BpmOutOfRange)
+        );
+        assert_eq!(
+            ClockConfig::try_new(-1.0, 1, 1),
+            Err(ClockError::BpmOutOfRange)
+        );
+        assert_eq!(
+            ClockConfig::try_new(1001.0, 1, 1),
             Err(ClockError::BpmOutOfRange)
         );
         assert_eq!(
@@ -258,8 +291,20 @@ mod tests {
             Err(ClockError::InvalidPpqn)
         );
         assert_eq!(
+            ClockConfig::try_new(120.0, 97, 1),
+            Err(ClockError::InvalidPpqn)
+        );
+        assert_eq!(
             ClockConfig::try_new(120.0, 1, 0),
             Err(ClockError::InvalidPulseWidth)
+        );
+        assert_eq!(
+            ClockConfig::try_new(120.0, 1, 1001),
+            Err(ClockError::InvalidPulseWidth)
+        );
+        assert_eq!(
+            ClockConfig::try_new(1000.0, 30, 2),
+            Err(ClockError::PulseOverlap)
         );
         assert_eq!(ClockConfig::try_new(120.0004, 1, 10).unwrap().bpm(), 120.0);
         assert_eq!(
@@ -279,10 +324,11 @@ mod tests {
         );
         clock.set_config(faster);
         assert!(!clock.next_sample());
-        assert_eq!(
-            (0..10).map(|_| clock.next_sample()).collect::<Vec<_>>(),
-            vec![true; 10]
-        );
+        let mut edited_output = vec![false];
+        edited_output.extend((0..250).map(|_| clock.next_sample()));
+        assert!(edited_output[1..11].iter().all(|value| *value));
+        assert!(edited_output[11..251].iter().all(|value| !*value));
+        assert!(clock.next_sample());
 
         let mut control = Clock::new(original);
         let mut edited = Clock::new(original);
