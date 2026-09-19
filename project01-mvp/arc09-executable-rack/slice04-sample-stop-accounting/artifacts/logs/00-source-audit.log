@@ -1,0 +1,39 @@
+crates/oxurack-core/src/tick.rs:93:pub struct SimulationRunning(pub bool);
+crates/oxurack-core/src/tick.rs:201:/// the next [`TickPhase::Propagate`] phase. Set this to `true` after
+crates/oxurack-core/src/tick.rs:265:/// Runs in [`TickPhase::Propagate`], scheduled before
+crates/oxurack-core/src/tick.rs:289:/// Runs in [`TickPhase::Propagate`], after
+crates/oxurack-core/src/tick.rs:335:/// Runs in [`TickPhase::MergeInputs`]. For each input port with one or
+crates/oxurack-core/src/tick.rs:826:        assert_eq!(TickPhase::Produce, TickPhase::Produce);
+crates/oxurack-core/src/tick.rs:827:        assert_ne!(TickPhase::Produce, TickPhase::Propagate);
+crates/oxurack-core/src/tick.rs:828:        assert_ne!(TickPhase::Propagate, TickPhase::Consume);
+crates/oxurack-core/src/tick.rs:835:        set.insert(TickPhase::Produce);
+crates/oxurack-core/src/tick.rs:836:        set.insert(TickPhase::Propagate);
+crates/oxurack-core/src/tick.rs:837:        set.insert(TickPhase::Consume);
+crates/oxurack-core/src/tick.rs:838:        set.insert(TickPhase::Produce); // duplicate
+crates/oxurack-core/src/tick.rs:844:        let phase = TickPhase::Propagate;
+crates/oxurack/tests/sample_pipeline.rs:253:                    produce_marker.in_set(TickPhase::Produce),
+crates/oxurack/tests/sample_pipeline.rs:254:                    producer_system.in_set(TickPhase::Produce),
+crates/oxurack/tests/sample_pipeline.rs:255:                    propagate_marker.in_set(TickPhase::Propagate),
+crates/oxurack/tests/sample_pipeline.rs:256:                    merge_marker.in_set(TickPhase::MergeInputs),
+crates/oxurack/tests/sample_pipeline.rs:257:                    consume_marker.in_set(TickPhase::Consume),
+crates/oxurack/tests/sample_pipeline.rs:258:                    observe_marker.in_set(TickPhase::Observe),
+crates/oxurack/tests/sample_pipeline.rs:260:                        .in_set(TickPhase::Observe)
+crates/oxurack/tests/sample_pipeline.rs:262:                    relay_produce.in_set(TickPhase::Produce),
+crates/oxurack/tests/sample_pipeline.rs:263:                    sink_produce.in_set(TickPhase::Produce),
+crates/oxurack/tests/sample_pipeline.rs:264:                    relay_consume.in_set(TickPhase::Consume),
+crates/oxurack/tests/sample_pipeline.rs:265:                    sink_consume.in_set(TickPhase::Consume),
+crates/oxurack/tests/sample_pipeline.rs:473:        rack.advance_samples(3).expect("manual samples should run"),
+crates/oxurack/tests/sample_pipeline.rs:565:        rack.advance_samples(1),
+crates/oxurack/tests/sample_pipeline.rs:572:    assert_eq!(rack.advance_samples(0).expect("zero is a no-op"), 0);
+crates/oxurack/tests/sample_pipeline.rs:573:    assert_eq!(rack.advance_samples(2).expect("stopped is a no-op"), 0);
+crates/oxurack/tests/sample_pipeline.rs:579:    assert_eq!(rack.advance_samples(1).expect("started manual rack"), 1);
+crates/oxurack/tests/sample_pipeline.rs:582:    assert_eq!(rack.advance_samples(2).expect("stopped manual rack"), 0);
+crates/oxurack/tests/sample_pipeline.rs:585:    assert_eq!(rack.advance_samples(1).expect("restarted manual rack"), 1);
+crates/oxurack/tests/sample_pipeline.rs:594:        rack.advance_samples(1).expect("manual sample should run"),
+crates/oxurack/src/lib.rs:84:        app.world_mut().insert_resource(SimulationRunning(false));
+crates/oxurack/src/lib.rs:257:        self.app.world_mut().resource_mut::<SimulationRunning>().0 = true;
+crates/oxurack/src/lib.rs:271:        self.app.world_mut().resource_mut::<SimulationRunning>().0 = false;
+crates/oxurack/src/lib.rs:288:    pub fn advance_samples(&mut self, count: u64) -> Result<u64, CoreError> {
+crates/oxurack/src/lib.rs:608:                .add_systems(schedule, live_behavior_system.in_set(TickPhase::Produce));
+crates/oxurack/src/lib.rs:745:            rack.advance_samples(1).expect("manual sample should run"),
+crates/oxurack/src/lib.rs:797:            rack.advance_samples(1).expect("manual sample should run"),

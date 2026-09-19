@@ -1,0 +1,12 @@
+default	manual-process1	0	expected trace relationship reproduced	probe-final-default-manual-process1.log
+default	manual-process2	0	expected trace relationship reproduced	probe-final-default-manual-process2.log
+default	live-grouped	0	expected trace relationship reproduced	probe-final-default-live-grouped.log
+default	reordered	0	expected trace relationship reproduced	probe-final-default-reordered.log
+default	changed-seed	0	expected trace relationship reproduced	probe-final-default-changed-seed.log
+default	mid-stop	101	reproduced defect: requested/returned 3, completed 1, clocks 3ms	probe-final-default-mid-stop.log
+no-default	manual-process1	0	expected trace relationship reproduced	probe-final-no-default-manual-process1.log
+no-default	manual-process2	0	expected trace relationship reproduced	probe-final-no-default-manual-process2.log
+no-default	live-grouped	0	expected trace relationship reproduced	probe-final-no-default-live-grouped.log
+no-default	reordered	0	expected trace relationship reproduced	probe-final-no-default-reordered.log
+no-default	changed-seed	0	expected trace relationship reproduced	probe-final-no-default-changed-seed.log
+no-default	mid-stop	101	reproduced defect: requested/returned 3, completed 1, clocks 3ms	probe-final-no-default-mid-stop.log

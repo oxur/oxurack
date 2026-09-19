@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc09-executable-rack/slice04-sample-stop-accounting/artifacts/verify-slice04-planning.py", line 205, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc09-executable-rack/slice04-sample-stop-accounting/artifacts/verify-slice04-planning.py", line 187, in main
+    texts = load_texts(root)
+            ^^^^^^^^^^^^^^^^
+  File "/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc09-executable-rack/slice04-sample-stop-accounting/artifacts/verify-slice04-planning.py", line 123, in load_texts
+    texts = {relative: read(root, relative) for relative in required}
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc09-executable-rack/slice04-sample-stop-accounting/artifacts/verify-slice04-planning.py", line 123, in <dictcomp>
+    texts = {relative: read(root, relative) for relative in required}
+                       ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc09-executable-rack/slice04-sample-stop-accounting/artifacts/verify-slice04-planning.py", line 35, in read
+    raise ValueError(f"missing required file: {relative}")
+ValueError: missing required file: project01-mvp/arc09-executable-rack/slice04-sample-stop-accounting/slice-plan.md

@@ -1,0 +1,4 @@
+baseline planning verification passed
+negative control passed: missing-row
+negative control passed: stale-assignment
+negative control passed: invalid-open-status

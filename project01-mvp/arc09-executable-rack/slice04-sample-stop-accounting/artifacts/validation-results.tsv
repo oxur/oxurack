@@ -1,0 +1,23 @@
+command	feature_set	environment	exit	result	log	notes
+cargo test --locked -p oxurack stop_accounting -- --nocapture	default	restricted	0	PASS	logs/05-focused-default.log	9 focused tests passed; filtered integration targets recorded in log
+cargo test --locked -p oxurack --no-default-features stop_accounting -- --nocapture	no-default	restricted	0	PASS	logs/06-focused-no-default.log	9 focused tests passed; filtered integration targets recorded in log
+cargo test --locked -p oxurack-core	default	restricted	0	PASS	logs/02-core-package-default.log	414 core unit tests plus core integration suites passed
+cargo test --locked -p oxurack	default	restricted	0	PASS	logs/01-package-default.log	24 umbrella unit tests plus integration suites passed
+cargo test --locked -p oxurack --no-default-features	no-default	restricted	0	PASS	logs/03-package-no-default.log	22 umbrella unit tests plus integration suites passed
+cargo test --locked -p oxurack-core --no-default-features	no-default	restricted	0	PASS	logs/04-core-no-default.log	414 core unit tests plus core integration suites passed
+cargo test --locked --workspace --all-features	all-features	restricted	101	ENVIRONMENT	logs/07-workspace-all-features.log	146 passed, 4 MIDI initialization failures, 3 ignored; host retry retained
+cargo test --locked --workspace --all-features	all-features	host retry	0	PASS	logs/07-workspace-all-features.host-retry.log	Same exact command passed with host MIDI access; block 0.1.6 future-Rust warning retained
+cargo test --locked --workspace --no-default-features	no-default	restricted	101	ENVIRONMENT	logs/08-workspace-no-default.log	146 passed, 4 MIDI initialization failures, 3 ignored; host retry retained
+cargo test --locked --workspace --no-default-features	no-default	host retry	0	PASS	logs/08-workspace-no-default.host-retry.log	Same exact command passed with host MIDI access; block 0.1.6 future-Rust warning retained
+cargo clippy --locked --workspace --all-features --all-targets -- -D warnings	all-features	restricted	0	PASS	logs/09-clippy-all-features.log	All-targets Clippy passed; existing block 0.1.6 future-Rust warning retained
+cargo fmt --all -- --check	all	restricted	0	PASS	logs/10-fmt-check.log	No formatting differences
+RUSTDOCFLAGS=-Dwarnings cargo doc --locked --workspace --all-features --no-deps	all-features	restricted	0	PASS	logs/11-doc-workspace-all-features.log	Strict workspace docs passed; existing block 0.1.6 future-Rust warning retained
+RUSTDOCFLAGS=-Dwarnings cargo doc --locked -p oxurack --no-default-features --no-deps	no-default	restricted	0	PASS	logs/12-doc-oxurack-no-default.log	Strict oxurack docs passed
+make check	all	restricted	2	ENVIRONMENT	logs/13-make-check.log	Native gate reached tests and hit the same 4 MIDI failures; host retry retained
+make check	all	host retry	0	PASS	logs/13-make-check.host-retry.log	Full Make gate passed; warnings and ignored tests retained
+cargo outdated --root-deps-only --ignore-external-rel	all	restricted	1	ENVIRONMENT	logs/14-cargo-outdated.log	crates.io config DNS resolution failed; host retry retained
+cargo outdated --root-deps-only --ignore-external-rel	all	host retry	0	PASS	logs/14-cargo-outdated.host-retry.log	Dependency observation completed
+python3 .worktrees/planning/project01-mvp/arc09-executable-rack/slice04-sample-stop-accounting/artifacts/verify-slice04-planning.py --negative-cases	planning checker	main checkout	1	LAYOUT	logs/16-checker-main-root.log	Literal repository-root invocation cannot resolve planning-relative project01-mvp paths from the main checkout
+python3 project01-mvp/arc09-executable-rack/slice04-sample-stop-accounting/artifacts/verify-slice04-planning.py --negative-cases	planning checker	planning worktree	0	PASS	logs/17-checker-planning-root.log	Baseline passed; missing-row, stale-assignment and invalid-open-status negative controls passed
+python3 project01-mvp/arc09-executable-rack/slice04-sample-stop-accounting/artifacts/verify-slice04-planning.py --negative-cases	planning checker	planning worktree	0	PASS	logs/18-checker-final.log	Final post-evidence rerun passed with all three negative controls
+python3 project01-mvp/arc09-executable-rack/slice04-sample-stop-accounting/artifacts/verify-slice04-planning.py --negative-cases	planning checker	planning worktree	0	PASS	logs/19-checker-final-after-report.log	Final rerun after closing-report edits passed with all three negative controls
