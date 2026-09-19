@@ -1,4 +1,4 @@
-# Arc10 M1 design — version 1.0
+# Arc10 M1 design — version 1.1
 
 2026-09-18, CDC. Binding elaboration within Operator-selected TM-first scope.
 Baseline `37deeace`; predecessor: execution-contract.md sections 2–5 under
@@ -46,6 +46,10 @@ Getters read actual engine state. Each mapping must be delivered or assigned an
 explicit successor/re-entry; no silent first-audible-subset scope reduction.
 Stop preserves RNG/register/edge history; seed restart reconstructs the engine,
 while reset is the existing register/divider reset and is not seed restart.
+The required actual-source inventory and complete mapping are now resolved in
+[Slice02's plan](slice02-turing-machine-adapter/slice-plan.md); that packet is
+the binding detail for adapter parameters, 32 ports, Scale conversion, action
+priority, modulation and one-sample publication.
 
 ## 3. MIDI batches, bounded storage and failure
 
@@ -119,3 +123,9 @@ requires a named endpoint, host/toolchain/seed/patch, witness observations and
 explicit Operator acceptance; mock success cannot close that row. No endpoint
 is selected or opened by this planning assignment. Final MIDI sync P99 timing,
 95% coverage, resource/soak and broader musical acceptance remain project gates.
+
+## Version history
+
+- v1.1 — 2026-09-19: linked the current-source Slice02 inventory that fulfills
+  the pre-issue mapping gate; no MIDI/runtime or acceptance contract changed.
+- v1.0 — 2026-09-18: CDC established the five-slice M1 architecture and bounds.

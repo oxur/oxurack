@@ -1,8 +1,8 @@
 # Slice01 — musical Clock
 
-Version 1.1 — 2026-09-19. Status: open, corrective pass 1/5 active.
+Version 1.2 — 2026-09-19. Status: closed; CRC accepted after corrective pass 1/5.
 CDC authors, CC implements, CRC reviews.
-Current assignment: `arc10-turing-machine-midi/slice01-musical-clock/cc-prompt-iteration01.md`.
+Accepted assignment: `arc10-turing-machine-midi/slice01-musical-clock/cc-prompt-iteration01.md`.
 Source baseline: `37deeace90e7fe2dff633ada9d58ef9051577c3d`, clean
 `.worktrees/codex-oxurack-module-behavior-installation` on its existing branch.
 Planning baseline before this issue: `f6c778e`; exact full hash in Arc09 review07.
@@ -171,6 +171,9 @@ Slice02 only after acceptance and its complete author-readiness check.
   iteration00 review; predecessor `cc-prompt.md`; active corrective pass 1/5.
   It retains the design/source fence and repairs spawn diagnostics plus the
   missing standalone, adapter and manual/Live discriminating oracles.
+- 2026-09-19: CC returned source `a19cfd1` and evidence `ef9d99f`; CRC
+  independently reproduced the corrected behavior and gates. Accepted and
+  closed after corrective pass 1/5.
 
 ## CRC corrective author readiness — iteration01, 2026-09-19
 
@@ -198,3 +201,5 @@ Slice02 only after acceptance and its complete author-readiness check.
 - v1.1 — 2026-09-19: CRC returned iteration00 for a reproduced spawn-error
   attribution defect and incomplete discriminating tests; issued corrective
   iteration01 without changing the approved Clock design or source fence.
+- v1.2 — 2026-09-19: CRC accepted source `a19cfd1`, closed C-01–C-06 and
+  advanced to the separately inventoried Slice02 adapter packet.

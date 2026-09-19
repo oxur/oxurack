@@ -1,6 +1,6 @@
 # Arc10 — Turing Machine MIDI in the rack
 
-Version 1.0 — 2026-09-18. Status: open; Slice01 issued by CDC after Arc09 acceptance.
+Version 1.1 — 2026-09-19. Status: open; Slice01 accepted, Slice02 issued by CRC.
 Depends on: Arc09 at source `37deeace90e7fe2dff633ada9d58ef9051577c3d`.
 Blocks: M1 endpoint playback and Arc11 observation workbench.
 Workflow: Three contributors, Expedited Mode; Duncan relays CDC/CRC/CC packets.
@@ -26,8 +26,8 @@ changes through Duncan to CDC. No scope is delegated through an empty placeholde
 
 | Slice | Capability / dependencies | Current state |
 | --- | --- | --- |
-| slice01-musical-clock | Validated standalone sample Clock plus installed Gate output, fractional timing, edit/pause semantics; consumes Arc09 | Open; [CC assignment](slice01-musical-clock/cc-prompt.md) |
-| slice02-turing-machine-adapter | Opt-in rack adapter around existing seeded engine, full capability inventory, scalar snapshots and rising-edge stepping; consumes Clock | Planned; CRC authors after Slice01 acceptance |
+| slice01-musical-clock | Validated standalone sample Clock plus installed Gate output, fractional timing, edit/pause semantics; consumes Arc09 | Closed; CRC accepted source `a19cfd1` after iteration01 |
+| slice02-turing-machine-adapter | Opt-in rack adapter around existing seeded engine, full capability inventory, scalar snapshots and rising-edge stepping; consumes Clock | Open; [CC assignment](slice02-turing-machine-adapter/cc-prompt.md) |
 | slice03-midi-output | Coherent snapshot consumption, ordered atomic batches, offline capture and bounded refusal/cleanup contract; consumes adapter | Planned; CRC authors after Slice02 acceptance |
 | slice04-output-runtime | Output-only runtime, batch/control lanes, session owner and explicit lifecycle/recovery; consumes sink | Planned; CRC authors after Slice03 acceptance |
 | slice05-endpoint-acceptance | Integrated static fixture, fresh-process MIDI oracle, real selected endpoint witness and lifecycle tests | Planned; physical device/Operator evidence required before final close |
@@ -52,6 +52,8 @@ Arc11 reuses this Clock and adds LFO/Scope; no second clock design is implied.
 
 ## Version history
 
+- v1.1 — 2026-09-19: CRC accepted Slice01 after one corrective pass and opened
+  the fully inventoried Slice02 adapter packet. Arc composition rows remain open.
 - v1.0 — 2026-09-18: CDC accepted Arc09's repaired composition and opened the
   existing five-slice M1 roadmap. First-slice timing/edit semantics and later
   batch/control ownership are explicit; no inherited criterion removed.

@@ -581,3 +581,30 @@ Current CC assignment relative to `project01-mvp`:
 - v3.13 — 2026-09-19: Returned Clock iteration00 after reproducing a diagnostic
   defect and evidence gaps; issued guide-authored iteration01 without changing
   Arc10 architecture, sequence or scope.
+
+## CRC Clock acceptance and Slice02 issue — v3.14, 2026-09-19
+
+Sofie/CRC independently accepted corrected Clock source `a19cfd1` and CC
+evidence `ef9d99f`. C-01–C-06 are done after corrective pass 1/5: the public
+diagnostic probe, exact pulse/edit matrices, full Manual/Live traces, lifecycle
+controls and strict host gates reproduce. Restricted CoreMIDI/DNS failures and
+successful host retries remain recorded. This closes only Arc10 Slice01.
+
+CRC then completed directive07's actual-source inventory for every existing
+Turing Machine setting/action and `StepOutputs` field. The new Slice02 packet
+fixes all nine parameters, 32 ports, Scale conversion, reset/move/clock priority,
+nonaccumulating write modulation, one-sample coherent publication and seeded
+fresh-process/standalone oracles before implementation.
+
+Current CC assignment relative to `project01-mvp`:
+`arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt.md`.
+All A-01–A-06 rows are open; correction count is 0/5. Arc10 T-01–T-05 remain
+open because no MIDI sink, runtime or endpoint has yet composed with the Clock
+and adapter.
+
+| Date | Packet | Predecessor | Status | Affected authority | Next action |
+| --- | --- | --- | --- | --- | --- |
+| 2026-09-19 | [TM adapter prompt](arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt.md) | accepted Clock `a19cfd1`; directive07 | issued initial pass | C-01–C-06 done; A-01–A-06 open | Duncan relays to CC; CRC reviews committed source/evidence |
+
+- v3.14 — 2026-09-19: Accepted corrected Clock and issued the fully inventoried,
+  guide-authored Turing Machine adapter slice; all composition/device gates retained.

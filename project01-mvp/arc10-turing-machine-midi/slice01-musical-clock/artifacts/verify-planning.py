@@ -15,7 +15,8 @@ FILES += [Path('project01-mvp/cdc-directive07.md')]
 
 def validate(texts):
     errors = []
-    if f'Current assignment: `{ASSIGNMENT}`' not in texts[FILES[0]]:
+    if (f'Current assignment: `{ASSIGNMENT}`' not in texts[FILES[0]]
+            and f'Accepted assignment: `{ASSIGNMENT}`' not in texts[FILES[0]]):
         errors.append('current assignment mismatch')
     if ASSIGNMENT not in texts[FILES[3]]:
         errors.append('prompt identity mismatch')

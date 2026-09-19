@@ -101,3 +101,51 @@ The Clock remains the correct first piece of Arc10 and the approved API/timing
 design remains viable. These findings concern implementation diagnostics and
 missing proof inside the existing slice. Arc10's slice breakdown, sequencing
 and scope do not change.
+
+## Iteration01 acceptance — 2026-09-19
+
+CRC independently reviewed clean source
+`a19cfd1a134c5934d270dc0ba72334d8f167fe2f` and CC evidence
+`ef9d99fe7ab4f38ca46a069c4e87cd4d2e10873f`. The correction from
+`3009b1e` changes exactly `clock.rs`, `rack.rs`, and the umbrella Clock test;
+the protected manifests, lockfile, README and fixture are unchanged.
+
+The repaired adapter rejects the lexically first unknown key before decoding,
+then validates known fields in fixed order and attributes each configuration
+failure to its responsible parameter. CRC's separate temporary public-API
+probe, which failed iteration00 on NaN BPM attribution, now passes. Source
+inspection and focused tests also reproduce the complete 120/4 and 137/4
+windows, edit continuation through rise 254, invalid-pending preservation,
+all setter/getter and failure paths, full manual/controlled-Live traces,
+pause/resume, reinstall, and reversed allocation controls.
+
+CRC reproduced these gates:
+
+- locked standalone, rack-feature, umbrella default/no-default and core tests;
+- both full workspace feature matrices;
+- normal dependency tree, all-target Clippy with denied warnings, formatting,
+  strict workspace and no-default umbrella rustdoc, and `git diff --check`;
+- the current planning checker with missing-row, stale-assignment and invalid-
+  status negative controls;
+- host `make check` and dependency freshness. The restricted attempts showed
+  the recorded four CoreMIDI initialization failures and crates.io DNS failure;
+  the corresponding host executions passed. Three existing RT timing tests
+  remain ignored under their declared permission/timing conditions.
+
+| Row | CRC disposition | Evidence |
+| --- | --- | --- |
+| C-01 | done | Exact integer/fractional windows and complete invalid matrix reproduce. |
+| C-02 | done | Edit, invalid-state and pause/resume transitions reproduce. |
+| C-03 | done | Complete named traces agree across manual/Live groupings and reorder/lifecycle controls. |
+| C-04 | done | Independent probe and adapter matrix reproduce precedence, attribution and no-mutation behavior. |
+| C-05 | done | Required package, workspace, lint, format, docs, Make and dependency gates pass on the host. |
+| C-06 | done | Revisions, exact correction scope, durable evidence and checker controls agree. |
+
+Verdict: Slice01 is accepted and closed at source `a19cfd1`; one of five
+permitted corrective passes was executed. This proves the reusable Clock
+prerequisite. It does not prove a TM adapter, MIDI output, physical endpoint,
+release timing, global coverage or musical acceptance.
+
+The bubble-up check found no Arc10 architecture or acceptance change. Slice02
+may proceed under the existing design after its required complete engine
+inventory and mapping are made explicit.

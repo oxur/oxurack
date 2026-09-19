@@ -559,3 +559,17 @@ unchanged by CDC. Arc10's first assignment is:
 `arc10-turing-machine-midi/slice01-musical-clock/cc-prompt.md`.
 Clock is planned and issued, not implemented. TM adapter/MIDI output still follow;
 no device playback, final timing, coverage or musical acceptance is claimed.
+
+## CRC Clock close / Turing Machine adapter handoff — 2026-09-19
+
+CRC independently accepted corrected Clock source `a19cfd1` with C-01–C-06
+done after one corrective pass. Exact pulse/edit behavior, diagnostics, full
+Manual/Live traces, stop/resume/reinstall and host quality gates reproduce.
+
+The current assignment is now
+`arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt.md`.
+Its plan inventories all engine settings/actions and all `StepOutputs` fields,
+with nine parameters and 32 ports, explicit Scale conversion and seeded
+standalone/fresh-process oracles. A-01–A-06 are open. MIDI output/runtime,
+physical playback, Arc11 LFO/Scope and retained project quality gates remain
+future work.
