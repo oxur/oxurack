@@ -48,22 +48,18 @@ That checker separately proved imported text/artifacts were preserved,
 checked carryover row coverage and planning links, and verified its open set.
 Those are structural self-checks only, not behavioral or independent acceptance.
 
-## Current implementation handoff
+## Current composition handoff
 
-The baseline slice and its checker are preserved evidence of the restart shape.
-Current slice is [arc09/slice01](arc09-executable-rack/slice01-module-behavior-installation/slice-plan.md),
-with [directive05](cdc-directive05.md) assigning CRC to author the detailed
-corrective iteration02 after partial review. Directive03 and exact successor routing still
-govern the design and deferred historical rows. Current structural command from
-the planning worktree:
+Arc09's [CDC review](arc09-executable-rack/cdc-verification.md) keeps the arc open
+for a reproduced stop-during-manual-batch defect. [Directive06](cdc-directive06.md)
+assigns CRC to author a bounded fourth slice; no new CC prompt is issued yet.
+Arc10 remains held. The inherited structural command below passes its preserved
+slice01 assignment/import/ledger/link checks; it does not prove arc composition
+or validate a future slice04 open set:
 
 ```sh
 python3 project01-mvp/arc09-executable-rack/slice01-module-behavior-installation/artifacts/verify-planning.py
 ```
 
-Run earlier snapshot checkers only against their recorded commits; their fixed
-arc/slice counts are historical assertions, not constraints on authorized new work.
-
-The structural command above currently fails its obsolete assignment assertion.
-Directive05 authorizes CC to repair that check and CRC to reproduce the complete
-result; do not report it passed until that work is verified.
+Earlier fixed-shape migration checks remain historical. Preserve their evidence
+and validate each new assignment against its own plan and ledger.

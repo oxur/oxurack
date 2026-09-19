@@ -1,0 +1,7 @@
+master_seed	name	derived	result
+0	''	a854da736b8befab	PASS
+42	'tm_a'	21819f1bfbd4fcea	PASS
+42	'tm_b'	21819e1bfbd4fb37	PASS
+43	'tm_a'	5365fb0ec2a0228b	PASS
+0	'vco_1'	fda42c6e50ff0d2a	PASS
+18446744073709551615	'é'	199408757f0d299d	PASS

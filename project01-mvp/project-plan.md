@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — arc09 slices closed; CRC composition assembly awaiting independent CDC gate |
+| status | active — arc09 composition failed stop-accounting boundary; directive06 remediation before arc10 |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
@@ -423,3 +423,21 @@ until that gate passes.
 - v3.7 — 2026-09-18: Closed slice03 after independent CRC reproduction and
   assembled arc09 composition for CDC review; retained all successor and
   project acceptance gates.
+
+## CDC composition return — v3.8, 2026-09-18
+
+[CDC review](arc09-executable-rack/cdc-verification.md) reproduced installed seeded
+composition and standard gates but found a mid-sample stop in a manual batch
+returns 3/advances 3 ms while completing only 1 sample. E-01/E-03 are reproduced
+on 642313a; E-02/E-04 remain open. [Directive06](cdc-directive06.md) adds a bounded
+arc09 slice04 and specifies partial-completion/time semantics. No original product
+capability is dropped. Three existing slices/18 rows retain historical acceptance;
+final planned accounting is four/24, once CRC authors/completes the remediation.
+Arc10 remains unopened; TM/MIDI then Clock/LFO/Scope stays the priority sequence.
+
+| Date | Packet | Predecessor | Status | Affected rows / authority | Next action |
+| --- | --- | --- | --- | --- | --- |
+| 2026-09-18 | cdc-directive06.md | arc09 CRC composition assembly / directive05 | issued; awaiting CRC acknowledgement | E-02/E-04 open; exact manual partial-result amendment | CRC authors slice04, reviews CC repair, reassembles for CDC before arc10 |
+
+- v3.8 — 2026-09-18: Arc09 CDC composition exposed shared-stop/manual-batch
+  interaction; plan amended to remediate it before advancing, preserving gates.

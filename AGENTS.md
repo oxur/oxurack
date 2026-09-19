@@ -17,7 +17,7 @@ the restart-planning conversation is CDC. CRC and CC are separate contexts
 selected by Duncan (Operator); no context is implicitly created or assigned.
 CDC owns architecture, arc plans and first slices; CRC reviews CC and advances
 approved slices. All handoffs pass through the Operator. Read the project plan
-and `project01-mvp/cdc-directive05.md` for the current assignment and gates.
+and `project01-mvp/cdc-directive06.md` for the current assignment and gates.
 Use `crc-verification.md` for new slice review, and both CRC and CDC records
 for arc/project closure. Never relabel historical evidence as independent.
 Expedited Mode requires explicit-path scoped commits, preserved prompts,
@@ -43,4 +43,4 @@ and companion `knowledge/engineering-methods/templates/cc-implementation-prompt.
 The author inspects source and relevant domain chapters, resolves consequential
 decisions, supplies a file/symbol recipe and behavioral test oracles, and records
 the six readiness checks in the slice plan. Asking CC to read skills is insufficient.
-Preserve issued prompts; directive04 governs authoring quality; directive05 governs the current corrective scope.
+Preserve issued prompts; directive04 governs authoring quality; directive06 governs the current composition-remediation scope.

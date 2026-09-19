@@ -1,10 +1,9 @@
 # project01-mvp — status
 
-> Current: Three contributors, Expedited Mode. All three arc09 slices are
-> independently CRC-closed. CRC's arc composition packet is ready; E-01–E-04
-> remain open for independent CDC verification. There is no current CC
-> assignment. TM/MIDI then Clock/LFO/Scope remain the product priority.
-> Earlier entries below are history.
+> Current: Arc09 remains open after CDC composition review. E-01/E-03 reproduced;
+> E-02/E-04 require stop-accounting remediation under
+> [directive06](../project01-mvp/cdc-directive06.md). CRC must author slice04;
+> no next CC prompt exists yet. Arc10 is held. Earlier snapshots are historical.
 
 **Best estimate: approximately 45% of the reconstructed MVP implemented**
 (plausible range **35–55%**). The infrastructure is much further along than the
@@ -514,3 +513,14 @@ CDC must independently review `arc09-executable-rack/closing-report.md`,
 `arc09-executable-rack/ledger.md`. Arc10 remains unopened and CDC-owned.
 Physical MIDI/timing, the three ignored RT tests, global 95% coverage,
 benchmarks, soak and musical acceptance retain their existing gates.
+
+## CDC Arc09 review06 — current, 2026-09-18
+
+All standard package/host gates reproduce and the connected seeded rack agrees
+across fresh processes, driver groupings and spawn reorderings. A new stop-during-
+batch probe fails in both graph modes: advance_samples(3) reports 3 and advances
+clocks 3 ms although only one sample completes. CDC rejected arc close and issued
+`cdc-directive06.md` for CRC to author `slice04-sample-stop-accounting`.
+The repair must finish the current latched sample, return actual partial progress
+and advance clocks only for completed samples. Source was not modified by CDC.
+Arc10/Clock opening waits for repaired composition and independent review.

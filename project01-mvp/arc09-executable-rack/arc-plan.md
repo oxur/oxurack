@@ -1,7 +1,7 @@
 # Arc09 — executable, reproducible rack
 
-Version 1.3 — 2026-09-18. Status: composition gate; all three slices closed,
-CRC assembly ready, independent CDC verification pending.
+Version 1.4 — 2026-09-18. Status: CDC composition review failed the stop boundary;
+three accepted slices, one planned stop-accounting remediation slice.
 Depends on: existing core/umbrella source and accepted arc08 baseline observations.
 Blocks: arc10 TM/MIDI and arc11 Clock/LFO/Scope workbench. Replaces no original
 acceptance criterion; receives the execution/seed portions of historical arcs02/05.
@@ -24,6 +24,7 @@ physical MIDI, live snapshotting and full transport are subsequent capabilities.
 | slice01-module-behavior-installation | Default behavior hook, once-per-type rack registration, recoverable kind conflict, bounded existing rustdoc repairs | Closed; six rows independently reproduced at source `6a31c0f` |
 | slice02-simulation-samples | Explicit sample driver, phase/merge/observe boundary and manual/live exclusivity; maintain legacy step semantics | Closed; six rows independently reproduced at source `5c1ce2c` |
 | slice03-seeded-spawn-context | Explicit pre-construction seed handoff, stable seed derivation and fresh-process replay fixtures | Closed; six rows independently reproduced at source `642313a` |
+| slice04-sample-stop-accounting | Correct manual partial progress/time after a shared mid-sample stop, with phase and resume proofs | Planned by directive06; CRC authors open set before execution |
 
 CRC may prepare slice02/03 within the governing design after acceptance of the
 previous slice. Substantive API, compatibility, timing or evidence changes require
@@ -53,3 +54,19 @@ behavior must be disclosed before implementation, not explained away afterward.
 - v1.3 — 2026-09-18: CRC independently closed slice03 and assembled the
   three-slice composition packet. No structural change was found; arc closure
   and arc10 opening remain gated by independent CDC review.
+
+## CDC composition finding and amendment — 2026-09-18
+
+[CDC review](cdc-verification.md) reproduced E-01/E-03 but found that manual
+batches return/advance requested work after a shared mid-sample stop prevents
+completion. E-02/E-04 remain open. [Directive06](../cdc-directive06.md) adds the
+bounded fourth slice and defines partial progress: finish the current latched
+sample, then return its completed count without advancing stopped samples' clocks.
+Normal uninterrupted behavior and the five-phase/seed/install design remain.
+The original three-slice scope is preserved above as history; composition exposed
+this additional interaction case. Final expected denominator becomes four slices,
+24 rows; currently only three directories/18 accepted child rows exist. CRC must
+author the fourth open set, then reassemble for independent CDC review. Arc10 held.
+
+- v1.4 — 2026-09-18: CDC composition F-01 adds slice04 after accepted slice02/03
+  interactions revealed missing stop-during-batch accounting. Arc remains open.

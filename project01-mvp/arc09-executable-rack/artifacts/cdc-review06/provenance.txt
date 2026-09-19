@@ -1,0 +1,13 @@
+CDC review06, 2026-09-18
+Source: 642313a62db437ee2bf0b3d5b97fcdcffa16782a
+Planning intake: b2574a583f9d73bb533f606e3e6f6cb3d1217d5e
+Source checkout: /Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+rustc 1.98.0 (88d9e12ae 2026-08-18)
+binary: rustc
+commit-hash: 88d9e12ae178fab0fb5cc050a94da85685d449ea
+commit-date: 2026-08-18
+host: aarch64-apple-darwin
+release: 1.98.0
+LLVM version: 22.1.8
+cargo 1.98.0 (797e8a9bc 2026-08-05)
+Source worktree clean at intake; product source not changed. Review-only external probe lives under /tmp and uses the source target directory for build outputs.

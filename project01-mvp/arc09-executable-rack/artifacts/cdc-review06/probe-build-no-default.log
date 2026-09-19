@@ -1,0 +1,13 @@
+   Compiling oxurack-core v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack-core)
+   Compiling oxurack v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack)
+   Compiling cdc-arc09-probe v0.0.0 (/tmp/oxurack-cdc-arc09/probe)
+warning: unused import: `FixedUpdate`
+ --> src/main.rs:2:20
+  |
+2 | use bevy_app::{App,FixedUpdate};
+  |                    ^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `cdc-arc09-probe` (bin "cdc-arc09-probe") generated 1 warning (run `cargo fix --bin "cdc-arc09-probe" -p cdc-arc09-probe` to apply 1 suggestion)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.47s

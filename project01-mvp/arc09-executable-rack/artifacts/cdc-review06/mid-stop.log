@@ -1,0 +1,20 @@
+   Compiling cdc-arc09-probe v0.0.0 (/tmp/oxurack-cdc-arc09/probe)
+warning: unused import: `FixedUpdate`
+ --> src/main.rs:2:20
+  |
+2 | use bevy_app::{App,FixedUpdate};
+  |                    ^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `cdc-arc09-probe` (bin "cdc-arc09-probe") generated 1 warning (run `cargo fix --bin "cdc-arc09-probe" -p cdc-arc09-probe` to apply 1 suggestion)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.64s
+     Running `.worktrees/codex-oxurack-module-behavior-installation/target/debug/cdc-arc09-probe mid-stop /tmp/oxurack-cdc-arc09/probe/probe.ron`
+requested=3 returned=3 completed=1 last_index=Some(0)
+fixed_elapsed=3ms virtual_elapsed=3ms
+
+thread 'main' (20358697) panicked at src/main.rs:31:648:
+assertion `left == right` failed: returned sample count disagrees with actual completed pipeline
+  left: 3
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

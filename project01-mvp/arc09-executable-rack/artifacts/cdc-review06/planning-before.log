@@ -1,0 +1,6 @@
+PASS: 23 imported documents preserved; 24 exact deferred rows assigned successors
+PASS: six arc CDC records; child denominator 0/0/2/3/0/1; no behavior upgraded
+PASS: project/arc09/slice01 rows 7/4/6; complete open set and directive03; 365 local links
+PASS: current assignment metadata and history resolve to /Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc09-executable-rack/slice01-module-behavior-installation/cc-prompt-iteration02.md
+Structural self-check only; arc09 composition and project acceptance remain pending
+Exit: 0

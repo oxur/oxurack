@@ -1,0 +1,4 @@
+(version:"1.0",master_seed:42,bpm:120.0,modules:[
+(kind:"cdc_probe",instance_name:"tm_a",parameters:{"offset":Int(2)}),
+(kind:"cdc_probe",instance_name:"tm_b",parameters:{"offset":Int(3)})],
+cables:[(source:("tm_a","out"),target:("tm_b","in"))])

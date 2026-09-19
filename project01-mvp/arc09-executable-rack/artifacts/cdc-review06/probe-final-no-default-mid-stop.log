@@ -1,0 +1,8 @@
+requested=3 returned=3 completed=1 last_index=Some(0)
+fixed_elapsed=3ms virtual_elapsed=3ms
+
+thread 'main' (20367645) panicked at src/main.rs:31:648:
+assertion `left == right` failed: returned sample count disagrees with actual completed pipeline
+  left: 3
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
