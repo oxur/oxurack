@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — arc09 composition failed stop-accounting boundary; directive06 remediation before arc10 |
+| status | active — arc09 accepted at 37deeace; arc10 musical Clock first slice issued under directive07 |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
@@ -221,7 +221,7 @@ does not create the next implementation slice or accept an arc capability.
 | --- | --- | --- | --- | --- | --- |
 | 2026-09-17 | [crc-escalation03.md](crc-escalation03.md) | cdc-directive02.md and CC `df6ec0a` | sent for Operator relay to CDC | R-01–R-06 done as evidence; 12 S rows deferred; 12 A rows open | CDC independently reviews six arc assemblies and designs TM prerequisite slice(s) |
 
-## Current roadmap — maintained through v3.7, 2026-09-18
+## Current roadmap — maintained through v3.11, 2026-09-18
 
 CDC reviewed CRC's actual `390d2aa` packet and resolved escalation03 through
 [cdc-directive03.md](cdc-directive03.md). All six historical slices and arcs01–06
@@ -232,16 +232,16 @@ P-01–P-06 remain open. Arc08/slice01 is accepted as observation evidence only.
 
 | Current owner | Scope / concrete next identifiers | State and dependency |
 | --- | --- | --- |
-| [Arc09 executable rack](arc09-executable-rack/arc-plan.md) | slice01-module-behavior-installation; slice02-simulation-samples; slice03-seeded-spawn-context | All slices CRC-closed; arc composition assembled, independent CDC gate pending |
-| arc10-turing-machine-midi | slice01-musical-clock; slice02-turing-machine-adapter; slice03-midi-output; slice04-output-runtime; slice05-endpoint-acceptance | Planned after arc09; internal Clock is pulled forward because M1 needs a real pulse source |
+| [Arc09 executable rack](arc09-executable-rack/arc-plan.md) | Three original slices plus slice04-sample-stop-accounting | Closed; CDC accepts four rows at 37deeace |
+| [Arc10 TM/MIDI](arc10-turing-machine-midi/arc-plan.md) | slice01-musical-clock; slice02-turing-machine-adapter; slice03-midi-output; slice04-output-runtime; slice05-endpoint-acceptance | Active: Slice01 Clock issued; remaining slices planned in dependency order |
 | arc11-observation-workbench | slice01-lfo; slice02-scope-capture; slice03-workbench-integration | Planned after M1; enrich existing Clock, bounded scalar/event observation and minimal inspection |
 | arc12-live-rack-operations | slice01-live-persistence; slice02-events-and-metadata; slice03-graph-composition; slice04-runtime-api | Retains remaining original arcs02–05 obligations after M1/M2; original requirements remain the input when detailed |
 | arc13-remaining-module-catalog | slice01-catalog-reentry, then per-module slices selected from the retained catalog | Planned after M2; preserves the original eleven-module denominator, standalone compatibility, MIDI-in and extension deferrals |
 | Arc07 live interface | Minimal workbench presentation, then full approved CLI/REPL/controller needs | Existing planned domain; no mandatory four-pane UI or broader feature expansion |
 | Arc08 validation | slice02-coverage-provenance; slice03-coverage-hardening; slice04-hardware-timing; later system/soak/resource validation | Existing active validation domain; no global quality target is lowered |
 
-Only arc09's issued slice directories/open sets have been created. Arc10–13 and unissued slice IDs
-above are reserved roadmap destinations, not empty plans or implementation prompts.
+Arc09 has four accepted slice directories. Arc10 and its first Clock open set
+now exist; unissued Arc10 slices and Arc11–13 remain roadmap destinations.
 Dependencies, not arc numbers, set execution order. Feature completion of old arcs
 is not a prerequisite fiction: known source foundations can be used with exact
 current validation, while missing acceptance remains explicitly tracked.
@@ -264,7 +264,7 @@ sample-quantized playback does not claim final low-jitter release readiness.
   against the unchanged 95% floor after Q-02. CRC's 93.47% remains a failing,
   qualified observation. New code must have meaningful tests immediately.
 
-### Design handoff history — current
+### Design handoff history — historical v3.0
 
 Current directive: `cdc-directive03.md`. Current CC assignment:
 `arc09-executable-rack/slice01-module-behavior-installation/cc-prompt.md`.
@@ -503,3 +503,30 @@ priority sequence.
 
 - v3.10 — 2026-09-18: Independently closed Slice04 and reassembled the repaired
   four-slice Arc09 candidate; CDC composition gate and all project gates retained.
+
+## CDC Arc09 acceptance / Arc10 opening — v3.11, 2026-09-18
+
+Arc09 review07 independently accepts the repaired source `37deeace` and closes all
+four E rows (four slices/24 child rows). The additional stop-accounting slice
+resolved the previously missing partial-progress interaction; original accepted
+records and the failed predecessor proof remain intact. No further dependency
+or project scope change was exposed. P-01–P-07 remain open, including deferred
+historical obligations not wholly discharged by this infrastructure arc.
+
+CDC opens the already planned Arc10 with its five-slice design and complete
+musical Clock open set. Exact fractional timing, per-module tempo authority,
+one-low-sample rate-edit restart, immutable validated config and optional rack
+packaging are now specified. These detail the planned Clock capability. Later
+TM/MIDI batching/control/session responsibilities remain separate slices; source
+has not been changed by CDC. This replaces earlier Arc09-held current banners.
+
+Current directive: `cdc-directive07.md`. Current CC assignment:
+`arc10-turing-machine-midi/slice01-musical-clock/cc-prompt.md`.
+
+| Date | Packet | Predecessor | Status | Affected authority | Next action |
+| --- | --- | --- | --- | --- | --- |
+| 2026-09-18 | cdc-directive07.md | CRC Arc09 repaired composition / directive06 | issued; awaiting CRC acknowledgement | Arc09 E-01–04 done; Arc10 T-01–05 and Clock C-01–06 open | Duncan relays to CRC; CRC acknowledges and routes issued first prompt to CC |
+
+- v3.11 — 2026-09-18: Arc09 repaired composition independently accepted;
+  existing Arc10 roadmap activated with CDC-authored Clock first slice. Retained
+  quality/physical/project gates and TM-first/workbench-second sequence unchanged.

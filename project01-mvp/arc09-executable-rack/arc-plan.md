@@ -1,7 +1,7 @@
 # Arc09 — executable, reproducible rack
 
-Version 1.6 — 2026-09-18. Status: four slices CRC-accepted; repaired composition
-reassembled for independent CDC review.
+Version 1.7 — 2026-09-18. Status: closed; CDC independently accepted repaired
+composition at source 37deeace (four slices, 24 child rows, four arc rows).
 Depends on: existing core/umbrella source and accepted arc08 baseline observations.
 Blocks: arc10 TM/MIDI and arc11 Clock/LFO/Scope workbench. Replaces no original
 acceptance criterion; receives the execution/seed portions of historical arcs02/05.
@@ -89,3 +89,12 @@ Arc09 remains open and Arc10 remains held pending CDC.
 
 - v1.6 — 2026-09-18: CRC closed Slice04 and reassembled four-slice/24-row
   composition after independent stop-accounting reproduction; CDC gate pending.
+
+## Final acceptance
+
+[CDC review07](cdc-verification.md#cdc-repaired-candidate-acceptance--review07-2026-09-18)
+closes the composition gate. [Directive07](../cdc-directive07.md) opens the existing
+Arc10 roadmap and its first Clock slice. Earlier held/open statements are history.
+
+- v1.7 — 2026-09-18: CDC reproduced repaired stop accounting and connected
+  composition, accepted all four rows and completed the project bubble-up.

@@ -33,3 +33,11 @@ No original criterion, target or verifier is removed.
 | ID | Criterion | Verify | Significance | Origin | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | P-07 | TM plays through the Bevy rack and Clock/LFO/Scope make it observable | Reproduce seeded static-patch MIDI stream, witness selected physical endpoint playback, then inspect known signals and MIDI with bounded workbench capture | correctness-grade | Operator TM-first/workbench-second selection; CDC directive03 | open | — | M1 precedes M2; physical observation and final timing gates remain distinct |
+
+## Arc09 acceptance — 2026-09-18
+
+[CDC review07](arc09-executable-rack/cdc-verification.md#cdc-repaired-candidate-acceptance--review07-2026-09-18)
+accepts executable/sample/seed composition at `37deeace`; this is supporting evidence
+for P-01/P-02/P-05/P-07, not their closure. All seven project rows remain open.
+Arc10 now owns the planned Clock→TM→MIDI delivery and physical endpoint witness;
+historical deferred rows retain successor/re-entry conditions.

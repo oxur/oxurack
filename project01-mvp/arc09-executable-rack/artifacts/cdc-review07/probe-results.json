@@ -1,0 +1,146 @@
+[
+  {
+    "feature": "default",
+    "case": "manual-process1",
+    "command": [
+      "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/target/debug/cdc-arc09-probe",
+      "manual",
+      "/tmp/oxurack-cdc-arc09-review07/probe/probe.ron"
+    ],
+    "exit": 0,
+    "result": "expected trace relationship reproduced",
+    "log": "probe-final-default-manual-process1.log"
+  },
+  {
+    "feature": "default",
+    "case": "manual-process2",
+    "command": [
+      "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/target/debug/cdc-arc09-probe",
+      "manual",
+      "/tmp/oxurack-cdc-arc09-review07/probe/probe.ron"
+    ],
+    "exit": 0,
+    "result": "expected trace relationship reproduced",
+    "log": "probe-final-default-manual-process2.log"
+  },
+  {
+    "feature": "default",
+    "case": "live-grouped",
+    "command": [
+      "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/target/debug/cdc-arc09-probe",
+      "live",
+      "/tmp/oxurack-cdc-arc09-review07/probe/probe.ron"
+    ],
+    "exit": 0,
+    "result": "expected trace relationship reproduced",
+    "log": "probe-final-default-live-grouped.log"
+  },
+  {
+    "feature": "default",
+    "case": "reordered",
+    "command": [
+      "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/target/debug/cdc-arc09-probe",
+      "manual",
+      "/tmp/oxurack-cdc-arc09-review07/probe/reordered.ron"
+    ],
+    "exit": 0,
+    "result": "expected trace relationship reproduced",
+    "log": "probe-final-default-reordered.log"
+  },
+  {
+    "feature": "default",
+    "case": "changed-seed",
+    "command": [
+      "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/target/debug/cdc-arc09-probe",
+      "manual",
+      "/tmp/oxurack-cdc-arc09-review07/probe/changed.ron"
+    ],
+    "exit": 0,
+    "result": "expected trace relationship reproduced",
+    "log": "probe-final-default-changed-seed.log"
+  },
+  {
+    "feature": "default",
+    "case": "mid-stop",
+    "command": [
+      "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/target/debug/cdc-arc09-probe",
+      "mid-stop",
+      "/tmp/oxurack-cdc-arc09-review07/probe/probe.ron"
+    ],
+    "exit": 0,
+    "result": "repair reproduced: requested 3, returned/completed 1, clocks 1ms",
+    "log": "probe-final-default-mid-stop.log"
+  },
+  {
+    "feature": "no-default",
+    "case": "manual-process1",
+    "command": [
+      "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/target/debug/cdc-arc09-probe",
+      "manual",
+      "/tmp/oxurack-cdc-arc09-review07/probe/probe.ron"
+    ],
+    "exit": 0,
+    "result": "expected trace relationship reproduced",
+    "log": "probe-final-no-default-manual-process1.log"
+  },
+  {
+    "feature": "no-default",
+    "case": "manual-process2",
+    "command": [
+      "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/target/debug/cdc-arc09-probe",
+      "manual",
+      "/tmp/oxurack-cdc-arc09-review07/probe/probe.ron"
+    ],
+    "exit": 0,
+    "result": "expected trace relationship reproduced",
+    "log": "probe-final-no-default-manual-process2.log"
+  },
+  {
+    "feature": "no-default",
+    "case": "live-grouped",
+    "command": [
+      "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/target/debug/cdc-arc09-probe",
+      "live",
+      "/tmp/oxurack-cdc-arc09-review07/probe/probe.ron"
+    ],
+    "exit": 0,
+    "result": "expected trace relationship reproduced",
+    "log": "probe-final-no-default-live-grouped.log"
+  },
+  {
+    "feature": "no-default",
+    "case": "reordered",
+    "command": [
+      "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/target/debug/cdc-arc09-probe",
+      "manual",
+      "/tmp/oxurack-cdc-arc09-review07/probe/reordered.ron"
+    ],
+    "exit": 0,
+    "result": "expected trace relationship reproduced",
+    "log": "probe-final-no-default-reordered.log"
+  },
+  {
+    "feature": "no-default",
+    "case": "changed-seed",
+    "command": [
+      "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/target/debug/cdc-arc09-probe",
+      "manual",
+      "/tmp/oxurack-cdc-arc09-review07/probe/changed.ron"
+    ],
+    "exit": 0,
+    "result": "expected trace relationship reproduced",
+    "log": "probe-final-no-default-changed-seed.log"
+  },
+  {
+    "feature": "no-default",
+    "case": "mid-stop",
+    "command": [
+      "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/target/debug/cdc-arc09-probe",
+      "mid-stop",
+      "/tmp/oxurack-cdc-arc09-review07/probe/probe.ron"
+    ],
+    "exit": 0,
+    "result": "repair reproduced: requested 3, returned/completed 1, clocks 1ms",
+    "log": "probe-final-no-default-mid-stop.log"
+  }
+]

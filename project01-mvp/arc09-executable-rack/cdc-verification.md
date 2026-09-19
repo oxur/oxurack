@@ -96,3 +96,73 @@ the new directory/open set must be authored before execution, not assumed presen
 All claims here are bounded by their actual commands/source. E-01/E-03 are pinned
 to this candidate and must be checked for regressions when the remedial candidate
 returns. Arc10/TM-MIDI then the observation workbench remains the priority order.
+
+## CDC repaired-candidate acceptance — review07, 2026-09-18
+
+**Accepted for Arc09 closure. E-01–E-04 are independently reproduced/done on
+`37deeace90e7fe2dff633ada9d58ef9051577c3d`.** The rejection above remains the
+historical verdict for `642313a`; it is superseded only for the repaired candidate.
+Planning intake/CRC assembly: `f6c778e` (full hash in
+[provenance](artifacts/cdc-review07/provenance.txt)). Source remained clean and
+unchanged throughout CDC's review. CRC's operational and CDC's independent
+records now concern the same source. This is arc acceptance, not release or
+project acceptance.
+
+### Reproduction and scope
+
+I inspected the one-file Slice04 diff and complete focused test harness against
+directive06. Production changes are confined to advance_samples and its docs:
+Live error still precedes mutation; each iteration checks running before advancing
+time, finishes the existing latched schedule, restores generic Virtual time,
+then increments completed. The loop returns actual progress, without rollback,
+return-only clamping, new APIs or per-phase running checks. Nine stop-accounting
+tests pass in both modes, including all three stop phases, later stop, no-op,
+resume, false-then-true and error precedence.
+
+CDC rebuilt the original independent, connected two-instance probe against the
+repaired source and ran 12 processes. The former failure now reports request 3,
+returned 1, completed 1/index 0, Fixed 1 ms/Virtual 1 ms in both graph modes. The runner
+checks both count and clocks, so a return-only repair fails. Ten normal trace
+controls still match their independent oracle across processes, grouped Live and
+spawn reorderings, with changed seed differing. This is the same reviewer-owned
+probe that rejected the predecessor, not a replacement assertion tailored to
+CC's implementation.
+
+All 13 independently rerun gates pass: focused default/no-default, core,
+umbrella default/no-default, both full host workspace matrices, all-targets
+Clippy, formatting, two strict docs, native make check and separate outdated.
+Host access was requested up front for known MIDI/network requirements; prior
+restricted failures remain preserved. Workspace RT reports 150 passed/3 existing
+ignored, with the pre-existing block 0.1.6 future-incompatibility notice. No
+hardware playback, timing, coverage, benchmark, soak or musical claim follows.
+Source scope and diff checks pass. Slice04's current structural checker passes
+its baseline and rejects missing-row, stale-assignment and invalid-status cases.
+
+[Evidence index](artifacts/cdc-review07/README.md) links the reproducible fixture,
+commands/exits and raw logs. The four-child walk confirms 24 done rows; child
+acceptance records were preserved at their original candidates. F-02's correction
+is present in CRC's closing-report addendum: Slice01 one corrective pass,
+Slice02 one proof repair, Slice03/04 zero. Neither finding remains open.
+
+### Final four-row walk
+
+| Row | Final disposition and independent basis |
+| --- | --- |
+| E-01 | done / reproduced: full installation suites plus connected two-instance probe preserve once-per-type execution, reinstall state and kind-conflict behavior. |
+| E-02 | done / reproduced: exact manual/grouped-Live phase traces and merge latency pass; original failure now returns/counts/advances only completed samples, with complete current phase and resume semantics. |
+| E-03 | done / reproduced: seeded constructor/package fresh-process suites and connected reviewer probe retain same-seed/order invariants and changed-seed controls. |
+| E-04 | done / reconciled and reproduced: 4/4 accepted slices, 24/24 child rows, corrected refinement counts, bounded one-file repair, full gates and retained successor obligations. |
+
+### Bubble-up and what worked
+
+Arc09 delivers the executable, deterministic sample/seed substrate promised by
+the roadmap. Composition exposed one missing stop-during-batch interaction;
+the explicit amended contract, phase-aware partial-result oracles and CRC's
+single bounded Slice04 resolved it without another corrective pass. Carry that
+interaction-based prompt practice into Clock rate edits and later MIDI cleanup.
+
+No original capability or quality criterion is dropped. Historical carried-over
+rows remain deferred where they also require live persistence/RT/catalog work.
+P-01–P-07 stay open. The dependency gate for the existing Arc10 roadmap is now
+satisfied: [directive07](../cdc-directive07.md) opens Arc10 and issues its first
+musical Clock slice. TM/MIDI remains first milestone, LFO/Scope workbench second.

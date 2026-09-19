@@ -1,10 +1,9 @@
 # project01-mvp — status
 
-> Current: CRC independently closed the
-> [Slice04 stop-accounting repair](../project01-mvp/arc09-executable-rack/slice04-sample-stop-accounting/crc-verification.md)
-> and reassembled Arc09 at source `37deeace`. All four slices/24 child rows are
-> CRC-accepted; E-01–E-04 are open for CDC review of this exact repaired candidate.
-> Arc09 remains open and Arc10 is held. Earlier snapshots are historical.
+> Current: Arc09 independently accepted at source `37deeace`; all four E rows done.
+> Arc10 is active. CDC issued the musical Clock first slice under
+> [directive07](../project01-mvp/cdc-directive07.md); CRC routes it to CC.
+> TM/MIDI remains first milestone, LFO/Scope second. Earlier snapshots are history.
 
 **Best estimate: approximately 45% of the reconstructed MVP implemented**
 (plausible range **35–55%**). The infrastructure is much further along than the
@@ -548,3 +547,13 @@ Arc09's four slices/24 rows are CRC-accepted and reassembled in
 `arc09-executable-rack/closing-report.md` and `crc-verification.md`. E-01–E-04
 remain open for CDC's new-candidate review. Arc09 is not closed and Arc10 remains
 held; the next project exchange is CDC's independent verdict.
+
+## CDC Arc09 close / Clock handoff — 2026-09-18
+
+The stop-during-batch defect is independently reproduced as fixed: request 3
+returns/counts 1 with clocks 1 ms. Connected seeded composition and full gates pass
+on `37deeace`, closing Arc09 with four slices/24 child rows. Product source remains
+unchanged by CDC. Arc10's first assignment is:
+`arc10-turing-machine-midi/slice01-musical-clock/cc-prompt.md`.
+Clock is planned and issued, not implemented. TM adapter/MIDI output still follow;
+no device playback, final timing, coverage or musical acceptance is claimed.

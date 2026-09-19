@@ -134,3 +134,13 @@ CRC now judges E-01–E-04 operationally ready on `37deeace`. The arc remains op
 CDC must independently review this repaired candidate and assign the arc rows.
 The historical CDC review of `642313a` is not reused as final acceptance, and
 Arc10 remains held.
+
+## Independent CDC final gate — 2026-09-18
+
+[CDC review07](cdc-verification.md#cdc-repaired-candidate-acceptance--review07-2026-09-18)
+accepts the repaired source `37deeace`: E-01–E-04 done, 4/4 slices and 24/24
+child rows. The original public-rack failure probe now returns/counts one and
+advances clocks 1 ms; all normal seeded controls and 13 gates reproduce.
+Arc09 is closed. The earlier reports remain candidate-specific history.
+Directive07 opens Arc10 and its first Clock slice under the existing roadmap.
+No project, physical MIDI, final timing, coverage or release gate is closed.

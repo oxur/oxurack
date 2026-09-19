@@ -48,18 +48,14 @@ That checker separately proved imported text/artifacts were preserved,
 checked carryover row coverage and planning links, and verified its open set.
 Those are structural self-checks only, not behavioral or independent acceptance.
 
-## Current composition handoff
+## Current implementation handoff
 
-Arc09's [CDC review](arc09-executable-rack/cdc-verification.md) keeps the arc open
-for a reproduced stop-during-manual-batch defect. [Directive06](cdc-directive06.md)
-assigns CRC to author a bounded fourth slice; no new CC prompt is issued yet.
-Arc10 remains held. The inherited structural command below passes its preserved
-slice01 assignment/import/ledger/link checks; it does not prove arc composition
-or validate a future slice04 open set:
+Arc09's [CDC review07](arc09-executable-rack/cdc-verification.md#cdc-repaired-candidate-acceptance--review07-2026-09-18)
+accepts the repaired source `37deeace`. [Directive07](cdc-directive07.md) opens Arc10
+and issues its first [Clock prompt](arc10-turing-machine-midi/slice01-musical-clock/cc-prompt.md).
+CRC acknowledges and routes it through Duncan, then independently reviews CC.
 
-```sh
-python3 project01-mvp/arc09-executable-rack/slice01-module-behavior-installation/artifacts/verify-planning.py
-```
-
-Earlier fixed-shape migration checks remain historical. Preserve their evidence
-and validate each new assignment against its own plan and ledger.
+Arc09 Slice04's checker remains scoped to its preserved assignment/ledger;
+it does not validate the Clock open set or prove musical composition. New Clock
+structural/evidence checks belong to that slice. Historical fixed-shape migration
+checks remain tied to their recorded revisions.

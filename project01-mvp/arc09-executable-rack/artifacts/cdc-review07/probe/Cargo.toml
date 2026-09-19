@@ -1,0 +1,13 @@
+[package]
+name="cdc-arc09-probe"
+version="0.0.0"
+edition="2024"
+[workspace]
+[features]
+default=["oxurack/graph"]
+[dependencies]
+oxurack={path="/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack",default-features=false}
+oxurack-core={path="/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack-core"}
+bevy_app={version="=0.18.1",default-features=false,features=["std"]}
+bevy_ecs={version="=0.18.1",default-features=false,features=["std"]}
+bevy_time={version="=0.18.1",default-features=false,features=["std"]}

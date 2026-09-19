@@ -1,0 +1,221 @@
+[
+  {
+    "name": "focused",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "oxurack",
+      "stop_accounting",
+      "--",
+      "--nocapture"
+    ],
+    "cwd": "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation",
+    "source": "37deeace90e7fe2dff633ada9d58ef9051577c3d",
+    "exit": 0,
+    "log": "focused.log",
+    "offline": true,
+    "strict_docs": false
+  },
+  {
+    "name": "focused-no-default",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "oxurack",
+      "--no-default-features",
+      "stop_accounting",
+      "--",
+      "--nocapture"
+    ],
+    "cwd": "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation",
+    "source": "37deeace90e7fe2dff633ada9d58ef9051577c3d",
+    "exit": 0,
+    "log": "focused-no-default.log",
+    "offline": true,
+    "strict_docs": false
+  },
+  {
+    "name": "core",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "oxurack-core"
+    ],
+    "cwd": "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation",
+    "source": "37deeace90e7fe2dff633ada9d58ef9051577c3d",
+    "exit": 0,
+    "log": "core.log",
+    "offline": true,
+    "strict_docs": false
+  },
+  {
+    "name": "umbrella",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "oxurack"
+    ],
+    "cwd": "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation",
+    "source": "37deeace90e7fe2dff633ada9d58ef9051577c3d",
+    "exit": 0,
+    "log": "umbrella.log",
+    "offline": true,
+    "strict_docs": false
+  },
+  {
+    "name": "umbrella-no-default",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "oxurack",
+      "--no-default-features"
+    ],
+    "cwd": "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation",
+    "source": "37deeace90e7fe2dff633ada9d58ef9051577c3d",
+    "exit": 0,
+    "log": "umbrella-no-default.log",
+    "offline": true,
+    "strict_docs": false
+  },
+  {
+    "name": "workspace-all-host",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--workspace",
+      "--all-features"
+    ],
+    "cwd": "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation",
+    "source": "37deeace90e7fe2dff633ada9d58ef9051577c3d",
+    "exit": 0,
+    "log": "workspace-all-host.log",
+    "offline": true,
+    "strict_docs": false
+  },
+  {
+    "name": "workspace-no-default-host",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--workspace",
+      "--no-default-features"
+    ],
+    "cwd": "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation",
+    "source": "37deeace90e7fe2dff633ada9d58ef9051577c3d",
+    "exit": 0,
+    "log": "workspace-no-default-host.log",
+    "offline": true,
+    "strict_docs": false
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--workspace",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation",
+    "source": "37deeace90e7fe2dff633ada9d58ef9051577c3d",
+    "exit": 0,
+    "log": "clippy.log",
+    "offline": true,
+    "strict_docs": false
+  },
+  {
+    "name": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation",
+    "source": "37deeace90e7fe2dff633ada9d58ef9051577c3d",
+    "exit": 0,
+    "log": "fmt.log",
+    "offline": true,
+    "strict_docs": false
+  },
+  {
+    "name": "docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--workspace",
+      "--all-features",
+      "--no-deps"
+    ],
+    "cwd": "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation",
+    "source": "37deeace90e7fe2dff633ada9d58ef9051577c3d",
+    "exit": 0,
+    "log": "docs.log",
+    "offline": true,
+    "strict_docs": true
+  },
+  {
+    "name": "docs-no-default",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "oxurack",
+      "--no-default-features",
+      "--no-deps"
+    ],
+    "cwd": "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation",
+    "source": "37deeace90e7fe2dff633ada9d58ef9051577c3d",
+    "exit": 0,
+    "log": "docs-no-default.log",
+    "offline": true,
+    "strict_docs": true
+  },
+  {
+    "name": "make-check-host",
+    "command": [
+      "make",
+      "check"
+    ],
+    "cwd": "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation",
+    "source": "37deeace90e7fe2dff633ada9d58ef9051577c3d",
+    "exit": 0,
+    "log": "make-check-host.log",
+    "offline": true,
+    "strict_docs": false
+  },
+  {
+    "name": "outdated-host",
+    "command": [
+      "cargo",
+      "outdated",
+      "--root-deps-only",
+      "--ignore-external-rel"
+    ],
+    "cwd": "/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation",
+    "source": "37deeace90e7fe2dff633ada9d58ef9051577c3d",
+    "exit": 0,
+    "log": "outdated-host.log",
+    "offline": true,
+    "strict_docs": false
+  }
+]
