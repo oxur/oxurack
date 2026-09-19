@@ -215,7 +215,7 @@ fn expected_samples(rate_milli_bpm: u64, pulse_width_ms: usize, total: usize) ->
     let mut samples = vec![false; total];
     let maximum_pulse = (total as u128 * rate / MILLIS_PER_MINUTE) + 1;
     for pulse in 0..=maximum_pulse {
-        let rising = (pulse * MILLIS_PER_MINUTE + rate - 1) / rate;
+        let rising = (pulse * MILLIS_PER_MINUTE).div_ceil(rate);
         if rising >= total as u128 {
             break;
         }
