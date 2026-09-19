@@ -1,0 +1,14 @@
+     828 crates/oxurack-core/src/module.rs
+     494 crates/oxurack-core/src/parameter.rs
+     427 crates/oxurack-core/src/error.rs
+     441 crates/oxurack-core/src/port.rs
+    1577 crates/oxurack-core/src/tick.rs
+    3252 crates/oxurack-core/src/patch.rs
+    1761 crates/oxurack/src/lib.rs
+     715 crates/oxurack/tests/sample_pipeline.rs
+       3 Cargo.toml
+      21 crates/oxurack/Cargo.toml
+      21 crates/oxurack-mod-turingmachine/Cargo.toml
+     354 Makefile
+    2092 Cargo.lock
+   11986 total

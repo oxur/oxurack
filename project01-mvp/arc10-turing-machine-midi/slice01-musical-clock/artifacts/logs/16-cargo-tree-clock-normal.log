@@ -1,0 +1,11 @@
+oxurack-mod-clock v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack-mod-clock)
+└── thiserror v2.0.18
+    └── thiserror-impl v2.0.18 (proc-macro)
+        ├── proc-macro2 v1.0.106
+        │   └── unicode-ident v1.0.24
+        ├── quote v1.0.45
+        │   └── proc-macro2 v1.0.106 (*)
+        └── syn v2.0.117
+            ├── proc-macro2 v1.0.106 (*)
+            ├── quote v1.0.45 (*)
+            └── unicode-ident v1.0.24

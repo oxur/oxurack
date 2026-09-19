@@ -1,0 +1,10 @@
+    Blocking waiting for file lock on build directory
+   Compiling oxurack v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.48s
+     Running tests/clock.rs (target/debug/deps/clock-dffa8d831ca1e91e)
+
+running 2 tests
+test grouping_reinstall_stop_resume_and_spawn_permutation_preserve_behavior ... ok
+test installed_clocks_drive_connected_consumers_with_named_edges ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s

@@ -1,0 +1,73 @@
+    Blocking waiting for file lock on build directory
+   Compiling oxurack v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.51s
+     Running unittests src/lib.rs (target/debug/deps/oxurack-22f2e002df91ff70)
+
+running 22 tests
+test tests::test_new_has_simulation_running_false ... ok
+test tests::test_new_has_module_registry ... ok
+test tests::test_install_populates_registry ... ok
+test tests::test_new_has_time_fixed_at_1ms ... ok
+test tests::test_load_patch_unregistered_kind_errors ... ok
+test tests::test_driver_transitions_discard_overstep_without_catch_up ... ok
+test tests::test_install_then_apply_patch_spawns_entities ... ok
+test tests::test_load_patch_stores_handle ... ok
+test tests::test_step_does_not_panic ... ok
+test tests::test_load_patch_replaces_previous_handle ... ok
+test tests::test_reinstall_after_parameter_edit_preserves_loaded_state ... ok
+test tests::test_live_transitions_and_stop_start_discard_catch_up ... ok
+test tests::test_propagation_runs_in_fixed_update_not_update ... ok
+test tests::test_stop_accounting_live_error_precedes_mutation_for_all_counts ... ok
+test tests::test_stop_accounting_repeated_stopped_calls_are_full_noops ... ok
+test tests::test_stop_accounting_false_then_true_allows_next_sample ... ok
+test tests::test_stop_accounting_stops_at_sample_one_with_two_complete_samples ... ok
+test tests::test_stop_accounting_stops_in_consume_after_one_complete_sample ... ok
+test tests::test_stop_accounting_stops_in_observe_after_one_complete_sample ... ok
+test tests::test_stop_accounting_stops_in_produce_after_one_complete_sample ... ok
+test tests::test_stop_accounting_uninterrupted_manual_and_zero_count ... ok
+test tests::test_stop_accounting_start_resumes_against_uninterrupted_reference ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/clock.rs (target/debug/deps/clock-e8e1bd647746351e)
+
+running 2 tests
+test grouping_reinstall_stop_resume_and_spawn_permutation_preserve_behavior ... ok
+test installed_clocks_drive_connected_consumers_with_named_edges ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/module_installation.rs (target/debug/deps/module_installation-0726091e01ed97cf)
+
+running 5 tests
+test old_install_panics_clearly_but_try_install_is_typed ... ok
+test conflicting_type_returns_before_mutation_and_original_behavior_survives ... ok
+test installed_systems_execute_each_loaded_instance_on_fixed_update ... ok
+test same_type_reinstall_before_edit_keeps_system_single_and_accessors_registered ... ok
+test installations_are_rack_local_and_legacy_modules_still_load ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/sample_pipeline.rs (target/debug/deps/sample_pipeline-79fa5376b0407fb6)
+
+running 5 tests
+test last_wins_is_name_stable_with_spawn_permutation_and_unrelated_entity ... ok
+test manual_pipeline_has_indexed_latency_and_phase_order ... ok
+test stopped_manual_and_live_requests_do_not_change_sample_state ... ok
+test live_reentry_has_no_zero_elapsed_catch_up_sample ... ok
+test manual_and_controlled_live_drives_match_grouping ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/seeded_spawn_context.rs (target/debug/deps/seeded_spawn_context-0ebbfb7aec287a4b)
+
+running 1 test
+test public_umbrella_load_delivers_context_before_state_construction ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests oxurack
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

@@ -1,0 +1,27 @@
+    Blocking waiting for file lock on build directory
+   Compiling oxurack-mod-clock v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack-mod-clock)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.78s
+     Running unittests src/lib.rs (target/debug/deps/oxurack_mod_clock-9a60979b8e911482)
+
+running 10 tests
+test clock::tests::multiple_edits_coalesce_and_invalid_configuration_is_not_constructible ... ok
+test clock::tests::validation_order_and_bpm_canonicalization_are_stable ... ok
+test clock::tests::configuration_change_forces_one_low_sample_and_equal_is_noop ... ok
+test clock::tests::boundary_rate_has_a_low_sample ... ok
+test clock::tests::fractional_rate_uses_bounded_integer_accumulator ... ok
+test clock::tests::default_pulse_width_and_interval_are_exact ... ok
+test rack::tests::unknown_spawn_parameters_are_reported_in_lexical_order ... ok
+test rack::tests::aggregate_spawn_validation_happens_before_entity_creation ... ok
+test rack::tests::setters_validate_before_commit_and_getters_read_clock_state ... ok
+test rack::tests::adapter_uses_the_supplied_update_schedule ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests oxurack_mod_clock
+
+running 1 test
+test crates/oxurack-mod-clock/src/lib.rs - (line 10) ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+all doctests ran in 1.06s; merged doctests compilation took 0.61s

@@ -1,0 +1,4 @@
+Clock packet baseline passed: assignment, six rows, statuses, files/links
+negative control rejected: missing-row
+negative control rejected: stale-assignment
+negative control rejected: invalid-status

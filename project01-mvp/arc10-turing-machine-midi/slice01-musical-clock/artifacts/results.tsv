@@ -1,0 +1,20 @@
+check_id	command	result	evidence
+C-01	cargo test --locked -p oxurack-mod-clock	pass	logs/19-cargo-test-clock.log; six standalone tests and doctest
+C-02	cargo test --locked -p oxurack-mod-clock	pass	logs/19-cargo-test-clock.log; restart, no-op, coalescing, canonicalization tests
+C-03	cargo test --locked -p oxurack-mod-clock --features rack	pass	logs/33-cargo-test-clock-rack.log; adapter schedule and rack-feature tests
+C-03	cargo test --locked -p oxurack --test clock	pass	logs/34-cargo-test-oxurack-clock.log; installed cable fixture, consumers, stop/resume, reinstall, reversed order
+C-04	cargo test --locked -p oxurack --test clock	pass	logs/34-cargo-test-oxurack-clock.log; unordered maps, defaults, explicit per-module tempo and live fixture traces
+C-04	cargo test --locked -p oxurack-mod-clock --features rack	pass	logs/33-cargo-test-clock-rack.log; lexical unknowns, aggregate validation, setters/getters and no pre-spawn mutation
+C-05	cargo test --locked -p oxurack-mod-clock	pass	logs/19-cargo-test-clock.log; default-feature standalone build and doctest
+C-05	cargo tree --locked -p oxurack-mod-clock --edges normal	pass	logs/31-cargo-tree-clock-normal.log; normal tree contains thiserror only
+C-05	cargo test --locked --workspace --all-features	host pass; restricted fail	logs/06-cargo-test-workspace-all.log, logs/28-host-cargo-test-workspace-all.log; restricted MIDI/clock host failures, host retry passed
+C-05	cargo test --locked --workspace --no-default-features	host pass; restricted fail	logs/07-cargo-test-workspace-no-default.log, logs/29-host-cargo-test-workspace-no-default.log; restricted MIDI failures, host retry passed
+C-05	cargo clippy --locked --workspace --all-features --all-targets -- -D warnings	pass	logs/36-cargo-clippy.log
+C-05	cargo fmt --all -- --check	pass	logs/35-cargo-fmt-check.log
+C-05	RUSTDOCFLAGS='-Dwarnings' cargo doc --locked --workspace --all-features --no-deps	pass	logs/26-cargo-doc-workspace.log
+C-05	RUSTDOCFLAGS='-Dwarnings' cargo doc --locked -p oxurack --no-default-features --no-deps	pass	logs/27-cargo-doc-oxurack-no-default.log
+C-05	make check	host pass; restricted fail	logs/14-make-check.log, logs/30-host-make-check.log; restricted MIDI initialization failures, host retry passed
+C-05	cargo outdated --root-deps-only --ignore-external-rel	host pass; restricted DNS blocked	logs/15-cargo-outdated.log, logs/18-host-cargo-outdated.log
+C-05	git diff --check	pass	logs/32-git-diff-check.log
+C-06	python3 artifacts/verify-planning.py	pass	logs/37-planning-checker-final.log; baseline and three negative controls
+C-06	git commit --only source allowlist	pass	Source commit 3009b1efb8685e68d9fde9d8ca2bec4c40a0c979

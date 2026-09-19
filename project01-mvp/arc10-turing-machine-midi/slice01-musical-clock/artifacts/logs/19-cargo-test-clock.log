@@ -1,0 +1,21 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.04s
+     Running unittests src/lib.rs (target/debug/deps/oxurack_mod_clock-4c7aee38f8a65938)
+
+running 6 tests
+test clock::tests::configuration_change_forces_one_low_sample_and_equal_is_noop ... ok
+test clock::tests::boundary_rate_has_a_low_sample ... ok
+test clock::tests::default_pulse_width_and_interval_are_exact ... ok
+test clock::tests::multiple_edits_coalesce_and_invalid_configuration_is_not_constructible ... ok
+test clock::tests::fractional_rate_uses_bounded_integer_accumulator ... ok
+test clock::tests::validation_order_and_bpm_canonicalization_are_stable ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests oxurack_mod_clock
+
+running 1 test
+test crates/oxurack-mod-clock/src/lib.rs - (line 10) ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+all doctests ran in 0.65s; merged doctests compilation took 0.50s
