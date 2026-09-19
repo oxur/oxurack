@@ -5,8 +5,10 @@ import re
 
 ROOT = Path(__file__).resolve().parents[4]
 SLICE = Path('project01-mvp/arc10-turing-machine-midi/slice01-musical-clock')
-ASSIGNMENT = 'arc10-turing-machine-midi/slice01-musical-clock/cc-prompt.md'
-FILES = [SLICE / name for name in ('slice-plan.md', 'ledger.md', 'cc-prompt.md')]
+ASSIGNMENT = 'arc10-turing-machine-midi/slice01-musical-clock/cc-prompt-iteration01.md'
+FILES = [SLICE / name for name in (
+    'slice-plan.md', 'ledger.md', 'cc-prompt.md', 'cc-prompt-iteration01.md',
+    'crc-verification.md')]
 FILES += [SLICE.parent / name for name in ('arc-plan.md', 'design.md', 'ledger.md')]
 FILES += [Path('project01-mvp/cdc-directive07.md')]
 
@@ -15,7 +17,7 @@ def validate(texts):
     errors = []
     if f'Current assignment: `{ASSIGNMENT}`' not in texts[FILES[0]]:
         errors.append('current assignment mismatch')
-    if ASSIGNMENT not in texts[FILES[2]]:
+    if ASSIGNMENT not in texts[FILES[3]]:
         errors.append('prompt identity mismatch')
     rows = [line.split('|') for line in texts[FILES[1]].splitlines()
             if re.match(r'^\| C-\d\d \|', line)]

@@ -1,7 +1,8 @@
 # Slice01 — musical Clock
 
-Version 1.0 — 2026-09-18. Status: open. CDC authors, CC implements, CRC reviews.
-Current assignment: `arc10-turing-machine-midi/slice01-musical-clock/cc-prompt.md`.
+Version 1.1 — 2026-09-19. Status: open, corrective pass 1/5 active.
+CDC authors, CC implements, CRC reviews.
+Current assignment: `arc10-turing-machine-midi/slice01-musical-clock/cc-prompt-iteration01.md`.
 Source baseline: `37deeace90e7fe2dff633ada9d58ef9051577c3d`, clean
 `.worktrees/codex-oxurack-module-behavior-installation` on its existing branch.
 Planning baseline before this issue: `f6c778e`; exact full hash in Arc09 review07.
@@ -163,9 +164,37 @@ Slice02 only after acceptance and its complete author-readiness check.
 ## Assignment history
 
 - 2026-09-18: initial cc-prompt.md issued by CDC after independent Arc09 close;
-  no predecessor within this slice; 0 executed corrective passes (cap 5).
+  no predecessor within this slice. Returned by CC at source `3009b1ef`; CRC
+  review found one reproduced diagnostic defect plus incomplete C-01–C-04
+  behavioral evidence. Superseded by iteration01; all rows remain open.
+- 2026-09-19: `cc-prompt-iteration01.md` issued by CRC after the independent
+  iteration00 review; predecessor `cc-prompt.md`; active corrective pass 1/5.
+  It retains the design/source fence and repairs spawn diagnostics plus the
+  missing standalone, adapter and manual/Live discriminating oracles.
+
+## CRC corrective author readiness — iteration01, 2026-09-19
+
+1. Source-grounded: reviewed all three implementation/test files and reproduced
+   the invalid-BPM attribution through the public spawn trait. Existing compiled
+   sample-pipeline tests supply the Live runner shape.
+2. Design-complete: the existing contract already fixes validation precedence,
+   parameter attribution, edit preservation and driver equivalence. No new
+   architecture or product behavior is introduced.
+3. Guideline-applied: collaboration-framework 2.5.0 / engineering-methods
+   prompt-authoring 1.15.0, Rust 2.0.0 API-23/API-39/TD-05 and testing discipline
+   inform the typed boundary repair and behavior-first test matrix.
+4. Executable: iteration01 gives the two-stage decoder and error-mapping shape,
+   exact affected files and viable private/unit versus public integration homes.
+5. Falsifiable: mixed invalid/unknown maps reject the old interleaved decoder;
+   exact error parameters reject the current mapping; full traces distinguish
+   grouping, Live, reinstall and reset/catch-up errors.
+6. Coherent/portable: all six rows remain open, both prompts are preserved, the
+   original nine-path fence governs and only three existing files should change.
 
 ## Version history
 
 - v1.0 — 2026-09-18: CDC opened the planned musical Clock prerequisite with
   exact timing, lifecycle and error contracts before CC implementation.
+- v1.1 — 2026-09-19: CRC returned iteration00 for a reproduced spawn-error
+  attribution defect and incomplete discriminating tests; issued corrective
+  iteration01 without changing the approved Clock design or source fence.

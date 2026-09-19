@@ -1,0 +1,24 @@
+   Compiling oxurack-clock-crc-probe v0.0.0 (/private/tmp/oxurack-clock-crc-probe)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.29s
+     Running unittests src/lib.rs (target/debug/deps/oxurack_clock_crc_probe-3612b07567301fcb)
+
+running 1 test
+test tests::invalid_bpm_is_attributed_to_bpm ... FAILED
+
+failures:
+
+---- tests::invalid_bpm_is_attributed_to_bpm stdout ----
+
+thread 'tests::invalid_bpm_is_attributed_to_bpm' (22541842) panicked at src/lib.rs:18:21:
+assertion `left == right` failed: wrong parameter for BPM value NaN
+  left: "pulse_width_ms"
+ right: "bpm"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    tests::invalid_bpm_is_attributed_to_bpm
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

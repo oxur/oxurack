@@ -555,3 +555,29 @@ Current CC assignment relative to `project01-mvp`:
 
 - v3.12 — 2026-09-19: Acknowledged directive07 and checked its revisions,
   complete Clock packet and source anchors; relayed the issued prompt unchanged.
+
+## CRC Clock iteration00 return — v3.13, 2026-09-19
+
+Sofie/CRC reviewed CC source `3009b1efb8685e68d9fde9d8ca2bec4c40a0c979`
+and planning evidence `ee99804c19d4b6f9b26c5b193cc9fa3d162f50f9`.
+The focused standalone, rack-feature and umbrella Clock tests reproduce, and
+the initial packet is confirmed to use collaboration-framework 2.5.0 with the
+new prompt-authoring guide and Rust guidance. CRC nevertheless reproduced an
+invalid-BPM spawn diagnostic attributed to `pulse_width_ms` and found the
+assigned controlled-Live, full-trace and parameter-preservation oracles absent.
+
+Slice01 remains open with C-01–C-06 open. CRC issued corrective pass 1/5 within
+the approved Clock design and original nine-path source fence; no arc/design
+amendment or CDC escalation is needed. The initial prompt and CC evidence remain
+historical iteration00 records.
+
+Current CC assignment relative to `project01-mvp`:
+`arc10-turing-machine-midi/slice01-musical-clock/cc-prompt-iteration01.md`.
+
+| Date | Packet | Predecessor | Status | Affected authority | Next action |
+| --- | --- | --- | --- | --- | --- |
+| 2026-09-19 | [Clock iteration01](arc10-turing-machine-midi/slice01-musical-clock/cc-prompt-iteration01.md) | initial Clock prompt; source `3009b1e`; CRC iteration00 review | issued corrective pass 1/5 | C-01–C-06 open; existing design/fence retained | Duncan relays to CC; CC repairs diagnostics/proof matrix and returns committed evidence |
+
+- v3.13 — 2026-09-19: Returned Clock iteration00 after reproducing a diagnostic
+  defect and evidence gaps; issued guide-authored iteration01 without changing
+  Arc10 architecture, sequence or scope.

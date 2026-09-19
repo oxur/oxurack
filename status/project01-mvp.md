@@ -1,10 +1,10 @@
 # project01-mvp — status
 
 > Current: Arc09 independently accepted at source `37deeace`; all four E rows done.
-> Arc10 is active. CRC acknowledged
-> [directive07](../project01-mvp/cdc-directive07.md), checked the clean source and
-> planning revisions, and relays the unchanged musical Clock prompt to CC.
-> C-01–C-06 remain open with 0/5 corrective passes used.
+> Arc10 is active. Clock iteration00 returned at source `3009b1e`; CRC reproduced
+> a spawn-diagnostic defect and found incomplete C-01–C-04 behavioral evidence.
+> [Corrective iteration01](../project01-mvp/arc10-turing-machine-midi/slice01-musical-clock/cc-prompt-iteration01.md)
+> is active. C-01–C-06 remain open; corrective pass 1/5 is in use.
 > TM/MIDI remains first milestone, LFO/Scope second. Earlier snapshots are history.
 
 **Best estimate: approximately 45% of the reconstructed MVP implemented**
