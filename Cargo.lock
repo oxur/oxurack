@@ -990,6 +990,7 @@ dependencies = [
  "bevy_time",
  "oxurack-core",
  "oxurack-graph",
+ "oxurack-mod-clock",
  "pretty_assertions",
 ]
 
@@ -1031,6 +1032,16 @@ dependencies = [
  "bevy_reflect",
  "pretty_assertions",
  "serde",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "oxurack-mod-clock"
+version = "0.1.0"
+dependencies = [
+ "bevy_app",
+ "bevy_ecs",
+ "oxurack-core",
  "thiserror 2.0.18",
 ]
 

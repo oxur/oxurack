@@ -19,3 +19,4 @@ bevy_time     = { version = "0.18", default-features = false, features = ["std"]
 
 [dev-dependencies]
 pretty_assertions = "1"
+oxurack-mod-clock = { version = "0.1.0", path = "../oxurack-mod-clock", features = ["rack"] }
