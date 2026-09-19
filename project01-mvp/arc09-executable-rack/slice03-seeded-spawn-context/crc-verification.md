@@ -8,6 +8,7 @@ Assignment: `arc09-executable-rack/slice03-seeded-spawn-context/cc-prompt.md`.
 I reviewed clean source commit
 `642313a62db437ee2bf0b3d5b97fcdcffa16782a` and CC planning evidence
 `698d2d0` with metadata follow-up `cc35c4b955cb04a3e1ec841745f42d0969be43b2`.
+CRC closure and arc-assembly evidence is committed at `2a0411b`.
 The source diff from accepted predecessor `5c1ce2c` changes eleven allowlisted
 files: core seed/context/patch exports, the umbrella export, core manifest and
 Cargo-required lockfile cleanup, and bounded core/umbrella tests and RON

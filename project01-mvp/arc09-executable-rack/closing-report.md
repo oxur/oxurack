@@ -3,6 +3,7 @@
 Date: 2026-09-18. Workflow: Three-Contributor, Expedited Mode.
 Candidate source: `642313a62db437ee2bf0b3d5b97fcdcffa16782a`.
 Candidate planning predecessor: `cc35c4b955cb04a3e1ec841745f42d0969be43b2`.
+CRC slice-close and arc-assembly commit: `2a0411b`.
 
 ## Status and capability verdict
 
