@@ -1,8 +1,10 @@
 # project01-mvp — status
 
 > Current: Arc09 independently accepted at source `37deeace`; all four E rows done.
-> Arc10 is active. CDC issued the musical Clock first slice under
-> [directive07](../project01-mvp/cdc-directive07.md); CRC routes it to CC.
+> Arc10 is active. CRC acknowledged
+> [directive07](../project01-mvp/cdc-directive07.md), checked the clean source and
+> planning revisions, and relays the unchanged musical Clock prompt to CC.
+> C-01–C-06 remain open with 0/5 corrective passes used.
 > TM/MIDI remains first milestone, LFO/Scope second. Earlier snapshots are history.
 
 **Best estimate: approximately 45% of the reconstructed MVP implemented**

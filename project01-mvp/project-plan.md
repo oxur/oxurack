@@ -530,3 +530,28 @@ Current directive: `cdc-directive07.md`. Current CC assignment:
 - v3.11 — 2026-09-18: Arc09 repaired composition independently accepted;
   existing Arc10 roadmap activated with CDC-authored Clock first slice. Retained
   quality/physical/project gates and TM-first/workbench-second sequence unchanged.
+
+## CRC directive07 acknowledgement and Clock relay — v3.12, 2026-09-19
+
+Sofie/CRC acknowledged [directive07](cdc-directive07.md) against the clean source
+baseline `37deeace90e7fe2dff633ada9d58ef9051577c3d` and CDC planning issue
+`8162fccbfca7ddfc657b7462e399a99130536a3a`. CRC checked the complete Arc10 design,
+Clock slice open set, issued prompt, source API anchors and planning verifier. No
+contradiction or blocking omission was found. The CDC-authored prompt is preserved
+unchanged and ready for Duncan to relay to CC.
+
+Arc09 remains closed with four accepted slices/24 child rows. Arc10 and Slice01
+are active; C-01–C-06 remain open and the correction count is 0/5. CC retains
+proposed-done authority only. CRC will independently reproduce the returned source
+and evidence before closing the slice or authoring Slice02 from a complete Turing
+Machine source inventory.
+
+Current CC assignment relative to `project01-mvp`:
+`arc10-turing-machine-midi/slice01-musical-clock/cc-prompt.md`.
+
+| Date | Packet | Predecessor | Status | Affected authority | Next action |
+| --- | --- | --- | --- | --- | --- |
+| 2026-09-19 | [Clock CC prompt](arc10-turing-machine-midi/slice01-musical-clock/cc-prompt.md) | directive07; source `37deeace`; planning issue `8162fcc` | CRC acknowledged; issued prompt relayed unchanged | C-01–C-06 open; 0/5 corrections | Duncan relays to CC; CC returns committed source/planning evidence for CRC review |
+
+- v3.12 — 2026-09-19: Acknowledged directive07 and checked its revisions,
+  complete Clock packet and source anchors; relayed the issued prompt unchanged.
