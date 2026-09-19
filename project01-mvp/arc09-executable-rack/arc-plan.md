@@ -1,6 +1,7 @@
 # Arc09 — executable, reproducible rack
 
-Version 1.2 — 2026-09-18. Status: active; slices01–02 closed, slice03 issued.
+Version 1.3 — 2026-09-18. Status: composition gate; all three slices closed,
+CRC assembly ready, independent CDC verification pending.
 Depends on: existing core/umbrella source and accepted arc08 baseline observations.
 Blocks: arc10 TM/MIDI and arc11 Clock/LFO/Scope workbench. Replaces no original
 acceptance criterion; receives the execution/seed portions of historical arcs02/05.
@@ -22,7 +23,7 @@ physical MIDI, live snapshotting and full transport are subsequent capabilities.
 | --- | --- | --- |
 | slice01-module-behavior-installation | Default behavior hook, once-per-type rack registration, recoverable kind conflict, bounded existing rustdoc repairs | Closed; six rows independently reproduced at source `6a31c0f` |
 | slice02-simulation-samples | Explicit sample driver, phase/merge/observe boundary and manual/live exclusivity; maintain legacy step semantics | Closed; six rows independently reproduced at source `5c1ce2c` |
-| slice03-seeded-spawn-context | Explicit pre-construction seed handoff, stable seed derivation and fresh-process replay fixtures | Open after slice02; CRC prompt issued under execution-contract §3 |
+| slice03-seeded-spawn-context | Explicit pre-construction seed handoff, stable seed derivation and fresh-process replay fixtures | Closed; six rows independently reproduced at source `642313a` |
 
 CRC may prepare slice02/03 within the governing design after acceptance of the
 previous slice. Substantive API, compatibility, timing or evidence changes require
@@ -49,3 +50,6 @@ behavior must be disclosed before implementation, not explained away afterward.
 - v1.2 — 2026-09-18: CRC independently closed slice02 after one evidence
   refinement and opened the already planned seed-context slice03. The reported
   weak initial tests required proof repair, not a scope or design amendment.
+- v1.3 — 2026-09-18: CRC independently closed slice03 and assembled the
+  three-slice composition packet. No structural change was found; arc closure
+  and arc10 opening remain gated by independent CDC review.

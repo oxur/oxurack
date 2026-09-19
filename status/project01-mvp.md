@@ -1,9 +1,9 @@
 # project01-mvp — status
 
-> Current: Three contributors, Expedited Mode. Arc09/slices01–02 are closed
-> after independent CRC review. Slice03 seeded spawn context is open; its
-> [CC assignment](../project01-mvp/arc09-executable-rack/slice03-seeded-spawn-context/cc-prompt.md)
-> is current. TM/MIDI then Clock/LFO/Scope remain the product priority.
+> Current: Three contributors, Expedited Mode. All three arc09 slices are
+> independently CRC-closed. CRC's arc composition packet is ready; E-01–E-04
+> remain open for independent CDC verification. There is no current CC
+> assignment. TM/MIDI then Clock/LFO/Scope remain the product priority.
 > Earlier entries below are history.
 
 **Best estimate: approximately 45% of the reconstructed MVP implemented**
@@ -496,3 +496,21 @@ seed context, fixed FNV-1a vectors, legacy spawner compatibility and separate
 process replay. Relay the current CC prompt relative to project01-mvp:
 `arc09-executable-rack/slice03-seeded-spawn-context/cc-prompt.md`.
 Arc10 TM/MIDI remains CDC-owned and held for arc09 composition review.
+
+## CRC slice03 close and arc09 composition handoff — current, 2026-09-18
+
+CC source `642313a` and planning evidence `698d2d0`/`cc35c4b` were independently
+reviewed. CRC reproduced all six fixed seed vectors, both fresh child-process
+traces, changed seed/name and reordered controls, construction-time context,
+legacy registration fallback, failure isolation and core/umbrella patch paths.
+Core/package/no-default tests, both host workspace matrices, Clippy, format,
+strict docs, host `make check`, diff and planning checks pass. T-01–T-06 are
+done; no corrective iteration was needed.
+
+CRC assembled arc09's three slices and 18 accepted child rows against E-01–E-04.
+The composition packet is operationally ready, but the arc is not closed:
+CDC must independently review `arc09-executable-rack/closing-report.md`,
+`arc09-executable-rack/crc-verification.md`, and
+`arc09-executable-rack/ledger.md`. Arc10 remains unopened and CDC-owned.
+Physical MIDI/timing, the three ignored RT tests, global 95% coverage,
+benchmarks, soak and musical acceptance retain their existing gates.

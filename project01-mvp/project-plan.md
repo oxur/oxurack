@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — arc09/slice01 closed; slice02 deterministic samples issued to CC |
+| status | active — arc09 slices closed; CRC composition assembly awaiting independent CDC gate |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
@@ -221,7 +221,7 @@ does not create the next implementation slice or accept an arc capability.
 | --- | --- | --- | --- | --- | --- |
 | 2026-09-17 | [crc-escalation03.md](crc-escalation03.md) | cdc-directive02.md and CC `df6ec0a` | sent for Operator relay to CDC | R-01–R-06 done as evidence; 12 S rows deferred; 12 A rows open | CDC independently reviews six arc assemblies and designs TM prerequisite slice(s) |
 
-## Current roadmap — maintained through v3.6, 2026-09-17
+## Current roadmap — maintained through v3.7, 2026-09-18
 
 CDC reviewed CRC's actual `390d2aa` packet and resolved escalation03 through
 [cdc-directive03.md](cdc-directive03.md). All six historical slices and arcs01–06
@@ -232,7 +232,7 @@ P-01–P-06 remain open. Arc08/slice01 is accepted as observation evidence only.
 
 | Current owner | Scope / concrete next identifiers | State and dependency |
 | --- | --- | --- |
-| [Arc09 executable rack](arc09-executable-rack/arc-plan.md) | slice01-module-behavior-installation; slice02-simulation-samples; slice03-seeded-spawn-context | Active; slice01 independently closed, slice02 issued, slice03 planned |
+| [Arc09 executable rack](arc09-executable-rack/arc-plan.md) | slice01-module-behavior-installation; slice02-simulation-samples; slice03-seeded-spawn-context | All slices CRC-closed; arc composition assembled, independent CDC gate pending |
 | arc10-turing-machine-midi | slice01-musical-clock; slice02-turing-machine-adapter; slice03-midi-output; slice04-output-runtime; slice05-endpoint-acceptance | Planned after arc09; internal Clock is pulled forward because M1 needs a real pulse source |
 | arc11-observation-workbench | slice01-lfo; slice02-scope-capture; slice03-workbench-integration | Planned after M1; enrich existing Clock, bounded scalar/event observation and minimal inspection |
 | arc12-live-rack-operations | slice01-live-persistence; slice02-events-and-metadata; slice03-graph-composition; slice04-runtime-api | Retains remaining original arcs02–05 obligations after M1/M2; original requirements remain the input when detailed |
@@ -401,3 +401,25 @@ to project01-mvp:
 
 - v3.5 — 2026-09-17: Issued the bounded corrective assignment after directive05
   acknowledgment and six-part author readiness; no gate or source behavior changed.
+
+## CRC slice03 close and arc09 composition handoff — v3.7, 2026-09-18
+
+Sofie/CRC independently reviewed clean source `642313a` and CC planning evidence
+`698d2d0`/`cc35c4b`. All six slice03 rows are done: the fixed FNV-1a byte vectors,
+ModuleId migration, pre-construction context, legacy registration compatibility,
+real core/umbrella patch paths and two-child-process replay reproduce. Package,
+both host workspace feature matrices, Clippy, format, strict docs and host
+`make check` pass. Three pre-existing RT tests remain ignored; physical MIDI,
+timing, coverage and musical acceptance are not claimed.
+
+All three arc09 slices are now CRC-accepted. CRC assembled the formal
+[arc closing report](arc09-executable-rack/closing-report.md),
+[operational verification](arc09-executable-rack/crc-verification.md), and
+[composition ledger](arc09-executable-rack/ledger.md). E-01–E-04 remain open
+until CDC independently verifies this assembly. No structural project-plan
+change was discovered. Arc10 and its first slice remain CDC-owned and unopened
+until that gate passes.
+
+- v3.7 — 2026-09-18: Closed slice03 after independent CRC reproduction and
+  assembled arc09 composition for CDC review; retained all successor and
+  project acceptance gates.

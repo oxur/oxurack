@@ -1,6 +1,6 @@
 # Slice03 — seeded spawn context and fresh-process replay
 
-Version 1.0, 2026-09-18. Status: open; initial CC assignment issued.
+Version 1.1, 2026-09-18. Status: closed; six rows independently accepted.
 Workflow: CDC design / CRC review / CC implementation, Expedited Mode.
 Source predecessor: clean `5c1ce2ccb5e0ba36ac9fd2605a047e0ff45928b2`
 in `.worktrees/codex-oxurack-module-behavior-installation`.
@@ -129,10 +129,11 @@ Current assignment: `arc09-executable-rack/slice03-seeded-spawn-context/cc-promp
 
 | Date | Prompt | Predecessor | Reason | Disposition |
 | --- | --- | --- | --- | --- |
-| 2026-09-18 | cc-prompt.md | accepted slice02 at source `5c1ce2c`; CDC §3 | Implement seed handoff, fixed derivation and fresh-process replay | Active CC assignment; no implementation claimed |
+| 2026-09-18 | cc-prompt.md | accepted slice02 at source `5c1ce2c`; CDC §3 | Implement seed handoff, fixed derivation and fresh-process replay | Accepted by CRC at source `642313a`; six rows done; arc09 composition assembly follows |
 
-Executed corrective refinements: 0 of 5. Preserve issued prompts; CRC reviews
-CC's proposed-done return independently. Arc10 remains held for CDC.
+Executed corrective refinements: 0 of 5. The [CC closing report](closing-report.md)
+and [CRC independent close](crc-verification.md) preserve the implementation
+and review evidence. Arc10 remains held for CDC's arc09 composition gate.
 
 ## Author readiness — CRC
 
@@ -149,3 +150,5 @@ CC's proposed-done return independently. Arc10 remains held for CDC.
 
 - v1.0 — 2026-09-18: CRC opened the already planned third arc09 slice after
   independently closing slice02, detailing CDC §3 without expanding arc scope.
+- v1.1 — 2026-09-18: CRC independently reproduced source `642313a`, closed
+  T-01–T-06, and advanced to formal arc09 composition assembly.
