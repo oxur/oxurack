@@ -18,3 +18,22 @@ C-05	cargo outdated --root-deps-only --ignore-external-rel	host pass; restricted
 C-05	git diff --check	pass	logs/32-git-diff-check.log
 C-06	python3 artifacts/verify-planning.py	pass	logs/37-planning-checker-final.log; baseline and three negative controls
 C-06	git commit --only source allowlist	pass	Source commit 3009b1efb8685e68d9fde9d8ca2bec4c40a0c979
+C-01	cargo test --locked -p oxurack-mod-clock	pass	logs/63-cargo-test-clock-final.log; seven standalone tests and doctest, including 120/4 windows and complete rejection matrix
+C-02	cargo test --locked -p oxurack-mod-clock	pass	logs/63-cargo-test-clock-final.log; restart low separator through sample 254, no-op, coalescing and return-to-original coverage
+C-03	cargo test --locked -p oxurack-mod-clock --features rack	pass	logs/64-cargo-test-clock-rack-final.log; 13 adapter tests with spawn attribution, lexical unknowns, types, ranges, setters/getters and preservation
+C-03	cargo test --locked -p oxurack	pass	logs/66-cargo-test-oxurack-final.log; complete named cable traces, manual/live grouping, pause/resume, reinstall and reversed fixture
+C-04	cargo test --locked -p oxurack-mod-clock --features rack	pass	logs/64-cargo-test-clock-rack-final.log; two-stage spawn validation and exact parameter attribution
+C-04	cargo test --locked -p oxurack	pass	logs/66-cargo-test-oxurack-final.log; full fixture samples and per-module tempo independent of patch metadata
+C-05	cargo test --locked -p oxurack-mod-clock	pass	logs/63-cargo-test-clock-final.log; locked standalone package and doctest
+C-05	cargo tree --locked -p oxurack-mod-clock --edges normal	pass	logs/65-cargo-tree-clock-normal-final.log
+C-05	cargo test --locked --workspace --all-features	host pass; restricted fail	logs/69-cargo-test-workspace-all-final-restricted.log, logs/78-cargo-test-workspace-all-final-host.log; restricted oxurack-rt MIDI failures retained, host replay passed
+C-05	cargo test --locked --workspace --no-default-features	host pass; restricted fail	logs/70-cargo-test-workspace-no-default-final-restricted.log, logs/79-cargo-test-workspace-no-default-final-host.log; restricted oxurack-rt MIDI failures retained, host replay passed
+C-05	cargo clippy --locked --workspace --all-features --all-targets -- -D warnings	pass	logs/71-cargo-clippy-final.log; initial lint attempt retained in logs/52-cargo-clippy-iteration01.log and corrected without suppression
+C-05	cargo fmt --all -- --check	pass	logs/72-cargo-fmt-check-final.log
+C-05	RUSTDOCFLAGS='-Dwarnings' cargo doc --locked --workspace --all-features --no-deps	pass	logs/73-cargo-doc-workspace-final.log
+C-05	RUSTDOCFLAGS='-Dwarnings' cargo doc --locked -p oxurack --no-default-features --no-deps	pass	logs/74-cargo-doc-oxurack-no-default-final.log
+C-05	make check	host pass; restricted fail	logs/75-make-check-final-restricted.log, logs/80-make-check-final-host.log; restricted oxurack-rt MIDI failures retained, host replay passed
+C-05	cargo outdated --root-deps-only --ignore-external-rel	host pass; restricted DNS blocked	logs/76-cargo-outdated-final-restricted.log, logs/81-cargo-outdated-final-host.log
+C-05	git diff --check	pass	logs/77-git-diff-check-final.log
+C-06	python3 artifacts/verify-planning.py	pass	logs/82-planning-checker-iteration01-final.log; assignment, six-row denominator, statuses, links and negative controls
+C-06	git commit --only source allowlist	pass	Source commits 2e4bfac and a19cfd1; exactly three source paths changed

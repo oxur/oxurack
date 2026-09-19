@@ -1,0 +1,13 @@
+    Checking oxurack-mod-clock v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack-mod-clock)
+    Checking oxurack v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack)
+error: manually reimplementing `div_ceil`
+   --> crates/oxurack/tests/clock.rs:218:22
+    |
+218 |         let rising = (pulse * MILLIS_PER_MINUTE + rate - 1) / rate;
+    |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: consider using `.div_ceil()`: `(pulse * MILLIS_PER_MINUTE).div_ceil(rate)`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#manual_div_ceil
+    = note: `-D clippy::manual-div-ceil` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::manual_div_ceil)]`
+
+error: could not compile `oxurack` (test "clock") due to 1 previous error

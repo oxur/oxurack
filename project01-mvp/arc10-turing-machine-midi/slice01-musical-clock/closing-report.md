@@ -44,3 +44,30 @@ Planning remains at issue `622cb0d1fd592d46e3e982e53467ee93aef56349` before
 this evidence commit. The six ledger rows remain open. The planning evidence
 commit hash is supplied in the final handoff after this commit; independent
 CRC reproduction owns acceptance, ledger closure and any Arc10 advancement.
+
+## Iteration01 corrective closeout
+
+The corrective pass is proposed-done for CC review on source commits
+`2e4bfac` and `a19cfd1`. It repaired spawn validation precedence and error
+attribution, completed standalone and rack rejection/edit oracles, and
+expanded the umbrella evidence to full sample traces and `SampleTime` across
+manual/live grouping, pause/resume, reinstall and reversed-fixture paths.
+
+The source scope is closed at exactly these paths:
+
+- `crates/oxurack-mod-clock/src/clock.rs`
+- `crates/oxurack-mod-clock/src/rack.rs`
+- `crates/oxurack/tests/clock.rs`
+
+Protected manifests, lockfile, README and fixture were unchanged. The final
+validation replay passes the locked package and umbrella tests, rack feature,
+core tests, dependency tree, Clippy, format, rustdoc, host workspace tests,
+host `make check`, host `cargo outdated` and `git diff --check`. Restricted
+workspace/Make and dependency-freshness attempts remain recorded with their
+host retries rather than being collapsed into a single result. The initial
+strict-Clippy failure is retained with its follow-up pass.
+
+Final source HEAD is `a19cfd1a134c5934d270dc0ba72334d8f167fe2f`, and the
+source worktree is clean. This packet and its raw logs are the iteration
+planning evidence; the six ledger rows remain open and CRC reproduction
+remains the acceptance gate.

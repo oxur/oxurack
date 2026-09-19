@@ -1,0 +1,28 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.06s
+     Running unittests src/lib.rs (target/debug/deps/oxurack_mod_clock-9a60979b8e911482)
+
+running 13 tests
+test clock::tests::validation_order_and_bpm_canonicalization_are_stable ... ok
+test clock::tests::multiple_edits_coalesce_and_invalid_configuration_is_not_constructible ... ok
+test clock::tests::boundary_rate_has_a_low_sample ... ok
+test clock::tests::configuration_change_forces_one_low_sample_and_equal_is_noop ... ok
+test clock::tests::default_pulse_width_and_interval_are_exact ... ok
+test clock::tests::fractional_120_bpm_schedule_has_exact_high_and_low_windows ... ok
+test clock::tests::fractional_rate_uses_bounded_integer_accumulator ... ok
+test rack::tests::missing_and_non_clock_entities_are_unknown_modules ... ok
+test rack::tests::unknown_spawn_parameters_win_before_invalid_known_values ... ok
+test rack::tests::setters_decode_each_parameter_and_getters_read_clock_state ... ok
+test rack::tests::failed_spawns_report_the_responsible_parameter_without_entities ... ok
+test rack::tests::adapter_uses_the_supplied_update_schedule ... ok
+test rack::tests::invalid_edits_preserve_clock_state_and_held_value ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests oxurack_mod_clock
+
+running 1 test
+test crates/oxurack-mod-clock/src/lib.rs - (line 10) ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+all doctests ran in 0.52s; merged doctests compilation took 0.38s

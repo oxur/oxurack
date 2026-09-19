@@ -151,3 +151,73 @@ authority.
 No contradiction was found between the prompt, plan, directive, design,
 current source APIs or author checks. No scope expansion or CRC/CDC escalation
 is required before implementation.
+
+## Iteration01 intake and contract readback
+
+This corrective iteration was read from
+`arc10-turing-machine-midi/slice01-musical-clock/cc-prompt-iteration01.md`
+in full (209 lines). The CRC baseline was read from `crc-verification.md` in
+full (103 lines), and the slice plan was read from `slice-plan.md` in full.
+The predecessor prompt's source route, behavioral-oracle, validation and
+scope sections were reread. The source candidate is `3009b1efb8685e68d9fde9d8ca2bec4c40a0c979`
+and the planning intake containing this iteration prompt is
+`3c6f491b5b1221cf7540fb9cda85782bcb100ab3`. Both worktrees were clean before
+implementation; the raw status and HEAD records are retained in
+`artifacts/logs/41-source-status.log`, `41-source-head.log`,
+`41-planning-status.log` and `41-planning-head.log`.
+
+The current source extents are 319 lines for `clock.rs`, 421 for `rack.rs`,
+216 for the umbrella Clock test, 126 for the required fixture, and 715 for
+the existing sample-pipeline reference. The fixture is a protected input and
+must remain byte-identical. The exact source edit fence for this iteration is
+therefore only `crates/oxurack-mod-clock/src/clock.rs`,
+`crates/oxurack-mod-clock/src/rack.rs`, and `crates/oxurack/tests/clock.rs`.
+Cargo manifests, `Cargo.lock`, the README and the fixture are protected from
+changes. No TM, core/RT, MIDI, global-tempo, transport, UI, dependency or
+production-test-hook work is authorized.
+
+The repaired spawn contract is staged in two phases. First, all supplied
+parameter names are inspected without decoding values; the lexically first
+unknown name wins even when known invalid values are present. Second, known
+fields are decoded in the fixed `bpm`, `ppqn`, `pulse_width_ms` order and the
+complete candidate is validated once through `ClockConfig::try_new`. Spawn
+errors are attributed to the field responsible for the ClockConfig error;
+setter errors continue to be attributed to the edited field. Failed spawns
+must not create a Module or Port, and invalid edits must preserve both the
+Clock state and held `CurrentValue`.
+
+The standalone oracle must cover the 120/4 width-3 fractional schedule and
+its high/low windows; all non-finite and range failures; cross-field pulse
+overlap; the full edit restart boundary through the low sample and next rise;
+no-op/coalescing behavior; and return-to-original configuration. The rack
+oracle must cover every parameter's valid and wrong `ParameterValue` variants,
+all spawn failure categories and exact attribution, missing and non-Clock
+entities, all getters/setters, pending restart behavior, invalid-edit
+preservation, and overlap attribution.
+
+The integration oracle must compare full named per-sample traces and
+`SampleTime`, independently constructed from the fixture's rates and widths.
+It must exercise repeated installation before load, manual and controlled
+live grouping, the reversed fixture, pause/resume with stopped requests,
+stop-while-high behavior, and reinstall after progress. Rise lists alone are
+not sufficient evidence because grouping and held-value behavior can leave
+them unchanged while corrupting intermediate samples.
+
+Required guidance was rechecked before Rust edits: collaboration-framework
+2.5.0, project-management 2.18.0, work-verification 2.5.0,
+rust-guidelines 2.0.0 and testing 1.1.1. The Rust anti-pattern guidance was
+read in full for input-path error handling, private invariant state, and
+hot-path allocation/unsafe boundaries. The implementation-prompt-authoring
+and testing-discipline guidance was read in full for discriminating oracles,
+corrective scope, preserved failure evidence and independent verification.
+No public fallible API changes are planned, so the conditional API-23/API-39,
+TD-05 and DC-05 reload gate is not triggered. All six ledger rows remain
+proposed-done pending CRC; this intake does not close or advance them.
+
+The prior CRC findings F-01 through F-05 are reproduced as the direct repair
+targets: spawn error attribution, lexical unknown precedence, incomplete
+standalone coverage, incomplete rack coverage, and manual-only integration
+evidence. No design or scope conflict was found, and no CDC escalation is
+required. The previous probe and all prior validation attempts remain
+historical evidence; this iteration appends new results without deleting or
+rewriting them.

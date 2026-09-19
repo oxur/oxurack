@@ -1,0 +1,64 @@
+oxurack
+================
+Name       Project  Compat  Latest  Kind    Platform
+----       -------  ------  ------  ----    --------
+bevy_app   0.18.1   ---     0.19.1  Normal  ---
+bevy_ecs   0.18.1   ---     0.19.1  Normal  ---
+bevy_time  0.18.1   ---     0.19.1  Normal  ---
+
+oxurack-core
+================
+Name       Project  Compat  Latest   Kind    Platform
+----       -------  ------  ------   ----    --------
+bevy_app   0.18.1   ---     0.19.1   Normal  ---
+bevy_ecs   0.18.1   ---     0.19.1   Normal  ---
+rand       0.10.1   ---     0.10.2   Normal  ---
+ron        0.12.1   ---     0.12.2   Normal  ---
+rtrb       0.3.3    ---     0.4.0    Normal  ---
+serde      1.0.228  ---     1.0.229  Normal  ---
+smallvec   1.15.1   ---     1.16.1   Normal  ---
+thiserror  2.0.18   ---     2.0.20   Normal  ---
+
+oxurack-midi
+================
+Name          Project  Compat  Latest   Kind    Platform
+----          -------  ------  ------   ----    --------
+bevy_reflect  0.18.1   ---     0.19.1   Normal  ---
+serde         1.0.228  ---     1.0.229  Normal  ---
+thiserror     2.0.18   ---     2.0.20   Normal  ---
+
+oxurack-rt
+================
+Name                   Project  Compat  Latest   Kind         Platform
+----                   -------  ------  ------   ----         --------
+audio_thread_priority  0.34.0   ---     0.38.0   Normal       ---
+libc                   0.2.184  ---     0.2.189  Development  ---
+rtrb                   0.3.3    ---     0.4.0    Normal       ---
+thiserror              2.0.18   ---     2.0.20   Normal       ---
+
+oxurack-graph
+================
+Name        Project  Compat  Latest   Kind         Platform
+----        -------  ------  ------   ----         --------
+bevy_app    0.18.1   ---     0.19.1   Normal       ---
+bevy_ecs    0.18.1   ---     0.19.1   Normal       ---
+petgraph    0.7.1    ---     0.8.3    Normal       ---
+serde       1.0.228  ---     1.0.229  Normal       ---
+serde_json  1.0.149  ---     1.0.151  Development  ---
+thiserror   2.0.18   ---     2.0.20   Normal       ---
+
+oxurack-mod-clock
+================
+Name       Project  Compat  Latest  Kind    Platform
+----       -------  ------  ------  ----    --------
+bevy_app   0.18.1   ---     0.19.1  Normal  ---
+bevy_ecs   0.18.1   ---     0.19.1  Normal  ---
+thiserror  2.0.18   ---     2.0.20  Normal  ---
+
+oxurack-mod-turingmachine
+================
+Name       Project  Compat  Latest   Kind    Platform
+----       -------  ------  ------   ----    --------
+rand       0.10.1   ---     0.10.2   Normal  ---
+serde      1.0.228  ---     1.0.229  Normal  ---
+thiserror  2.0.18   ---     2.0.20   Normal  ---
