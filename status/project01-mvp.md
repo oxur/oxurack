@@ -1,11 +1,10 @@
 # project01-mvp — status
 
-> Current: Arc09 remains open after CDC composition review. E-01/E-03 reproduced;
-> E-02/E-04 require the now-open
-> [Slice04 stop-accounting repair](../project01-mvp/arc09-executable-rack/slice04-sample-stop-accounting/slice-plan.md)
-> under [directive06](../project01-mvp/cdc-directive06.md). Current CC assignment:
-> `arc09-executable-rack/slice04-sample-stop-accounting/cc-prompt.md`. Six M rows
-> await execution and CRC review; Arc10 is held. Earlier snapshots are historical.
+> Current: CRC independently closed the
+> [Slice04 stop-accounting repair](../project01-mvp/arc09-executable-rack/slice04-sample-stop-accounting/crc-verification.md)
+> and reassembled Arc09 at source `37deeace`. All four slices/24 child rows are
+> CRC-accepted; E-01–E-04 are open for CDC review of this exact repaired candidate.
+> Arc09 remains open and Arc10 is held. Earlier snapshots are historical.
 
 **Best estimate: approximately 45% of the reconstructed MVP implemented**
 (plausible range **35–55%**). The infrastructure is much further along than the
@@ -516,7 +515,7 @@ CDC must independently review `arc09-executable-rack/closing-report.md`,
 Physical MIDI/timing, the three ignored RT tests, global 95% coverage,
 benchmarks, soak and musical acceptance retain their existing gates.
 
-## CDC Arc09 review06 — current, 2026-09-18
+## CDC Arc09 review06 — historical candidate, 2026-09-18
 
 All standard package/host gates reproduce and the connected seeded rack agrees
 across fresh processes, driver groupings and spawn reorderings. A new stop-during-
@@ -527,7 +526,7 @@ The repair must finish the current latched sample, return actual partial progres
 and advance clocks only for completed samples. Source was not modified by CDC.
 Arc10/Clock opening waits for repaired composition and independent review.
 
-## CRC Slice04 issue — current, 2026-09-18
+## CRC Slice04 issue — historical handoff, 2026-09-18
 
 CRC acknowledged directive06 and opened the six-row stop-accounting slice at
 clean source `642313a` and planning `6a1bc13`. All six author-readiness checks
@@ -535,3 +534,17 @@ pass. The current assignment is
 `arc09-executable-rack/slice04-sample-stop-accounting/cc-prompt.md`; it permits
 only `crates/oxurack/src/lib.rs` plus the named Slice04 evidence outputs. M-01–M-06
 remain open, no corrective pass has run, and Arc10 remains held.
+
+## CRC Slice04 close and Arc09 reassembly — current, 2026-09-18
+
+CRC independently reproduced source `37deeace` and closed M-01–M-06 without a
+correction. Stops in Produce, Consume and Observe finish one five-phase sample
+and return/count/advance 1 ms; index-one stop yields two; stopped requests are
+stable; start resumes owned seeded state against an uninterrupted reference;
+false-then-true continues. Both feature matrices and strict repository gates pass
+with the retained three ignored RT tests.
+
+Arc09's four slices/24 rows are CRC-accepted and reassembled in
+`arc09-executable-rack/closing-report.md` and `crc-verification.md`. E-01–E-04
+remain open for CDC's new-candidate review. Arc09 is not closed and Arc10 remains
+held; the next project exchange is CDC's independent verdict.

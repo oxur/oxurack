@@ -1,7 +1,7 @@
 # Slice04 — sample stop accounting
 
-Version 1.0, 2026-09-18. Status: open; six rows await CC implementation and
-independent CRC review. Workflow: CDC design / CRC review / CC implementation,
+Version 1.1, 2026-09-18. Status: closed; six rows independently accepted.
+Workflow: CDC design / CRC review / CC implementation,
 Expedited Mode. Source predecessor: clean
 `642313a62db437ee2bf0b3d5b97fcdcffa16782a` in
 `.worktrees/codex-oxurack-module-behavior-installation`. Planning predecessor:
@@ -83,11 +83,11 @@ Current assignment: `arc09-executable-rack/slice04-sample-stop-accounting/cc-pro
 
 | Date | Prompt | Predecessor | Reason | Disposition |
 | --- | --- | --- | --- | --- |
-| 2026-09-18 | cc-prompt.md | directive06; source `642313a`; planning `6a1bc13` | Repair partial progress/time accounting after a shared mid-sample stop | Issued for relay; not executed |
+| 2026-09-18 | cc-prompt.md | directive06; source `642313a`; planning `6a1bc13` | Repair partial progress/time accounting after a shared mid-sample stop | Accepted by CRC at source `37deeace`; six rows done; arc09 reassembled for CDC |
 
-Executed corrective refinements: 0 of 5. This initial assignment is not a
-corrective pass. CC evidence remains proposed-done until CRC independently
-reproduces M-01–M-06.
+Executed corrective refinements: 0 of 5. This initial assignment required no
+correction. The [CC report](closing-report.md) remains its proposed-done record;
+the [CRC close](crc-verification.md) independently accepts M-01–M-06.
 
 ## Author readiness — CRC
 
@@ -106,3 +106,5 @@ All six author-readiness checks pass. No design blocker remains.
 
 - v1.0 — 2026-09-18: CRC acknowledged directive06, created the bounded open set
   and issued the guide-authored initial assignment. Six rows remain open.
+- v1.1 — 2026-09-18: CRC independently reproduced source `37deeace`, closed
+  M-01–M-06 and returned the four-slice arc09 composition to CDC review.

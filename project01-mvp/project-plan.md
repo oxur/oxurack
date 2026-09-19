@@ -471,3 +471,35 @@ CDC acceptance.
 
 - v3.9 — 2026-09-18: Acknowledged directive06 and issued the bounded Slice04
   repair assignment after six-part author readiness; no acceptance gate changed.
+
+## CRC Slice04 close and Arc09 reassembly — v3.10, 2026-09-18
+
+Sofie/CRC independently reviewed clean source
+`37deeace90e7fe2dff633ada9d58ef9051577c3d` and CC planning evidence
+`7efed01357a9332b5b00556daefcf8a0c1464d3a`. The one-file source diff implements
+directive06's per-attempt running check and exact completed counter. All nine
+focused tests pass in both feature modes: phase stops finish the latched sample,
+return/count/time agree, stopped requests preserve state, start resumes seeded
+state against an uninterrupted reference, and false-then-true follows final state.
+
+[Slice04 CRC verification](arc09-executable-rack/slice04-sample-stop-accounting/crc-verification.md)
+closes M-01–M-06 with no correction. Both full host workspace matrices, Clippy,
+format, strict docs, native Make, separate dependency observation, source scope
+and current planning controls pass. CC's restricted MIDI/DNS attempts and host
+retries remain preserved; three RT tests remain ignored. No retained project gate
+is inferred from those results.
+
+All four arc09 slices/24 child rows are now CRC-accepted. CRC refreshed the
+[arc closing report](arc09-executable-rack/closing-report.md),
+[operational verification](arc09-executable-rack/crc-verification.md), and
+[composition ledger](arc09-executable-rack/ledger.md) for source `37deeace`.
+E-01–E-04 are open for independent CDC review of this exact candidate. Arc09 is
+not closed, and Arc10 remains held; TM/MIDI then Clock/LFO/Scope remains the
+priority sequence.
+
+| Date | Packet | Predecessor | Status | Affected rows / authority | Next action |
+| --- | --- | --- | --- | --- | --- |
+| 2026-09-18 | [Arc09 repaired composition](arc09-executable-rack/closing-report.md#repaired-four-slice-assembly--crc-2026-09-18) | directive06; source `37deeace`; planning `7efed013` | CRC reassembled; awaiting independent CDC | M-01–M-06 done; E-01–E-04 open on final candidate | Duncan relays packet to CDC; CDC independently reviews before Arc10 |
+
+- v3.10 — 2026-09-18: Independently closed Slice04 and reassembled the repaired
+  four-slice Arc09 candidate; CDC composition gate and all project gates retained.

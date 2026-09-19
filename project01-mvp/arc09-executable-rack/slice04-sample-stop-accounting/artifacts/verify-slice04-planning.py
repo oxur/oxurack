@@ -165,10 +165,16 @@ def run_negative_cases(texts: dict[Path, str]) -> list[str]:
     cases.append(("stale-assignment", stale_assignment))
 
     invalid_status = dict(texts)
-    invalid_status[SLICE / "ledger.md"] = invalid_status[SLICE / "ledger.md"].replace(
-        "| open | — |", "| done | — |", 1
+    replacement = "done" if "Status: open" in texts[SLICE / "slice-plan.md"] else "open"
+    current = "open" if replacement == "done" else "done"
+    invalid_status[SLICE / "ledger.md"] = re.sub(
+        rf"(^\| M-01 \|.*?\| ){current}( \|)",
+        rf"\g<1>{replacement}\g<2>",
+        invalid_status[SLICE / "ledger.md"],
+        count=1,
+        flags=re.MULTILINE,
     )
-    cases.append(("invalid-open-status", invalid_status))
+    cases.append(("invalid-row-status", invalid_status))
 
     for name, mutated in cases:
         if validate_texts(mutated):

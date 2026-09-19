@@ -113,3 +113,24 @@ history is: the original prompt was held and never executed, iteration01 was the
 first execution, and iteration02 was one corrective pass (1 of 5). This addendum
 corrects the accounting without rewriting the original report. Slice04 starts
 with zero executed corrective refinements. Arc10 remains held.
+
+## Repaired four-slice assembly — CRC, 2026-09-18
+
+CRC independently accepted [Slice04](slice04-sample-stop-accounting/crc-verification.md)
+at source `37deeace90e7fe2dff633ada9d58ef9051577c3d`. Its loop-head running check
+and post-schedule completed counter repair the exact CDC failure: Produce,
+Consume and Observe stops each finish one five-phase sample, return/count one
+and advance Fixed/Virtual 1 ms; later stops, stopped no-ops, seeded resume and
+false-then-true continuation also reproduce.
+
+The current child denominator is 4/4 slices and 24/24 CRC-accepted rows. Slice01
+used one corrective pass; Slice02 used one proof-repair pass; Slice03 and Slice04
+used none. Both host workspace feature matrices, Clippy, format, strict docs,
+native Make, dependency observation, diff and current planning checks pass on
+the repaired candidate. Three RT tests remain ignored, and the retained coverage,
+physical MIDI/timing, benchmark, soak and musical gates remain outside this arc.
+
+CRC now judges E-01–E-04 operationally ready on `37deeace`. The arc remains open:
+CDC must independently review this repaired candidate and assign the arc rows.
+The historical CDC review of `642313a` is not reused as final acceptance, and
+Arc10 remains held.

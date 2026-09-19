@@ -1,7 +1,7 @@
 # Arc09 — executable, reproducible rack
 
-Version 1.5 — 2026-09-18. Status: CDC composition review failed the stop boundary;
-three accepted slices, one open stop-accounting remediation slice.
+Version 1.6 — 2026-09-18. Status: four slices CRC-accepted; repaired composition
+reassembled for independent CDC review.
 Depends on: existing core/umbrella source and accepted arc08 baseline observations.
 Blocks: arc10 TM/MIDI and arc11 Clock/LFO/Scope workbench. Replaces no original
 acceptance criterion; receives the execution/seed portions of historical arcs02/05.
@@ -24,7 +24,7 @@ physical MIDI, live snapshotting and full transport are subsequent capabilities.
 | slice01-module-behavior-installation | Default behavior hook, once-per-type rack registration, recoverable kind conflict, bounded existing rustdoc repairs | Closed; six rows independently reproduced at source `6a31c0f` |
 | slice02-simulation-samples | Explicit sample driver, phase/merge/observe boundary and manual/live exclusivity; maintain legacy step semantics | Closed; six rows independently reproduced at source `5c1ce2c` |
 | slice03-seeded-spawn-context | Explicit pre-construction seed handoff, stable seed derivation and fresh-process replay fixtures | Closed; six rows independently reproduced at source `642313a` |
-| [slice04-sample-stop-accounting](slice04-sample-stop-accounting/slice-plan.md) | Correct manual partial progress/time after a shared mid-sample stop, with phase and resume proofs | Open; six M rows and initial CC prompt issued, awaiting execution |
+| [slice04-sample-stop-accounting](slice04-sample-stop-accounting/slice-plan.md) | Correct manual partial progress/time after a shared mid-sample stop, with phase and resume proofs | Closed; six rows independently reproduced at source `37deeace` |
 
 CRC may prepare slice02/03 within the governing design after acceptance of the
 previous slice. Substantive API, compatibility, timing or evidence changes require
@@ -72,3 +72,20 @@ author the fourth open set, then reassemble for independent CDC review. Arc10 he
   interactions revealed missing stop-during-batch accounting. Arc remains open.
 - v1.5 — 2026-09-18: CRC acknowledged directive06, created Slice04's six-row
   open set and issued its guide-authored initial CC assignment. Arc10 remains held.
+
+## CRC repaired composition reassembly — 2026-09-18
+
+CRC independently closed Slice04 at source `37deeace`: mid-sample stops finish
+one latched sample, partial return/completed counts and 1 ms clock deltas agree,
+stopped calls preserve all observations, resume matches the uninterrupted seeded
+reference, and false-then-true follows the final shared value. All four slices
+and 24 child rows are now CRC-accepted. Full host matrices and strict gates pass.
+
+The refreshed [closing report](closing-report.md),
+[CRC assembly](crc-verification.md) and [composition ledger](ledger.md) are ready
+for CDC review of E-01–E-04 on candidate `37deeace`. The prior CDC rejection
+remains historical evidence for `642313a`; it is not acceptance of this candidate.
+Arc09 remains open and Arc10 remains held pending CDC.
+
+- v1.6 — 2026-09-18: CRC closed Slice04 and reassembled four-slice/24-row
+  composition after independent stop-accounting reproduction; CDC gate pending.

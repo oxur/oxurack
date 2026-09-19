@@ -83,3 +83,30 @@ four planned slices/24 child rows; the prior three/18 retain their accepted
 candidate evidence while M-01–M-06 are open. CRC must independently reproduce the
 repair and reassemble E-01–E-04 before another CDC review. This addendum does not
 accept new source or authorize arc10.
+
+## Repaired composition reassembly — 2026-09-18
+
+CRC independently reviewed source
+`37deeace90e7fe2dff633ada9d58ef9051577c3d` and CC evidence
+`7efed01357a9332b5b00556daefcf8a0c1464d3a`. The diff from `642313a` changes
+only `crates/oxurack/src/lib.rs`: a bounded production loop repair and focused
+private tests. [Slice04 verification](slice04-sample-stop-accounting/crc-verification.md)
+closes M-01–M-06 with 0 corrective passes.
+
+CRC reproduced the nine stop-accounting tests in default and no-default modes,
+the umbrella and core suites, both full host workspace matrices, all-targets
+Clippy, format, both strict doc gates, host `make check`, dependency observation,
+source scope/diff checks and the current planning checker with three negative
+controls. Exact phase/count/time/state and seeded resume observations match
+directive06. The pre-existing three ignored RT tests and `block 0.1.6` notice
+remain; no coverage, physical MIDI/timing or musical acceptance is inferred.
+
+| Row | CRC repaired-candidate result |
+| --- | --- |
+| E-01 | Ready: installation/reinstallation, two-instance execution, state/accessor preservation and typed conflict regressions pass unchanged on `37deeace`. |
+| E-02 | Ready: manual/live phase traces and ordering pass; mid-sample stops now finish the latched sample and return/count/advance only completed work, with stopped no-op and final-state continuation proven. |
+| E-03 | Ready: construction seed/fresh-process tests pass; Slice04 additionally proves stopped resume preserves owned seed/state and equals an uninterrupted reference. |
+| E-04 | Ready: four slice ledgers contain 24/24 CRC-accepted rows; scope, iteration counts, full gates, inherited gaps and successor routing reconcile. |
+
+These are CRC reassembly results, not CDC acceptance. CDC must independently
+review all four rows on `37deeace`. Arc09 and Arc10 remain held until that verdict.
