@@ -1,0 +1,5 @@
+Slice02 packet passed: assignment, six rows, mappings, denominators, links
+negative control rejected: missing-row
+negative control rejected: stale-assignment
+negative control rejected: missing-mapping
+negative control rejected: invalid-status

@@ -1,0 +1,18 @@
+command	cwd	source_revision	exit_code	result	log_path	observation
+cargo test --locked -p oxurack-mod-turingmachine	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/01-tm-default-test.log	112 passed; 0 failed; 0 ignored; doctest passed
+cargo tree --locked -p oxurack-mod-turingmachine --edges normal	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/02-tm-normal-tree.log	Normal tree contains no Bevy or oxurack-core dependency
+cargo test --locked -p oxurack-mod-turingmachine --features rack	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/03-tm-rack-test.log	120 passed; 0 failed; 0 ignored; doctest passed
+cargo test --locked -p oxurack --test turing_machine	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/04-umbrella-tm-test.log	5 passed; 0 failed; 0 ignored; full delayed/replay/lifecycle oracle
+cargo test --locked -p oxurack	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/05-umbrella-test.log	Umbrella tests passed; ignored counts retained in raw log
+cargo test --locked -p oxurack --no-default-features	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/06-umbrella-no-default-test.log	Umbrella no-default tests passed
+cargo test --locked -p oxurack-core	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/07-core-test.log	Core tests passed; 414 unit tests in raw log
+cargo test --locked --workspace --all-features	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	101	host-limited	artifacts/logs/08-workspace-all-features-test.log	146 passed; 4 pre-existing oxurack-rt MIDI initialization failures; 3 ignored
+cargo test --locked --workspace --no-default-features	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	101	host-limited	artifacts/logs/09-workspace-no-default-test.log	146 passed; 4 pre-existing oxurack-rt MIDI initialization failures; 3 ignored
+cargo clippy --locked --workspace --all-features --all-targets -- -D warnings	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/10-workspace-clippy.log	Workspace Clippy passed; dependency future-incompat warning retained
+cargo fmt --all -- --check	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/11-fmt-check.log	Format check passed
+RUSTDOCFLAGS='-Dwarnings' cargo doc --locked --workspace --all-features --no-deps	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/12-workspace-doc-all-features.log	Strict workspace rustdoc passed
+RUSTDOCFLAGS='-Dwarnings' cargo doc --locked -p oxurack --no-default-features --no-deps	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/13-umbrella-doc-no-default.log	Strict umbrella no-default rustdoc passed
+make check	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	2	host-limited	artifacts/logs/14-make-check.log	Reached tests; same 4 pre-existing oxurack-rt MIDI initialization failures; 3 ignored
+cargo outdated --root-deps-only --ignore-external-rel	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	1	network-blocked	artifacts/logs/15-cargo-outdated.log	Restricted crates.io DNS failure; no dependency changes
+git diff --check	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/16-git-diff-check.log	No whitespace errors
+python3 artifacts/verify-planning.py	P	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/17-planning-validator.log	Positive case and missing-row/stale-assignment/missing-mapping/invalid-status controls passed
