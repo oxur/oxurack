@@ -7,6 +7,8 @@ mod length;
 mod midi_io;
 mod outputs;
 mod quantizer;
+#[cfg(feature = "rack")]
+mod rack;
 mod shift_register;
 mod write_knob;
 
@@ -20,5 +22,7 @@ pub use length::LengthSelector;
 pub use midi_io::MidiTuringMachine;
 pub use outputs::StepOutputs;
 pub use quantizer::{Quantizer, Scale};
+#[cfg(feature = "rack")]
+pub use rack::TuringMachineModule;
 pub use shift_register::ShiftRegister;
 pub use write_knob::WriteKnob;

@@ -991,6 +991,7 @@ dependencies = [
  "oxurack-core",
  "oxurack-graph",
  "oxurack-mod-clock",
+ "oxurack-mod-turingmachine",
  "pretty_assertions",
 ]
 
@@ -1049,7 +1050,10 @@ dependencies = [
 name = "oxurack-mod-turingmachine"
 version = "0.1.0"
 dependencies = [
+ "bevy_app",
+ "bevy_ecs",
  "midir",
+ "oxurack-core",
  "pretty_assertions",
  "rand",
  "serde",

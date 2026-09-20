@@ -227,6 +227,24 @@ impl Quantizer {
         self.range = range;
     }
 
+    /// Returns the active scale.
+    #[must_use]
+    pub fn scale(&self) -> &Scale {
+        &self.scale
+    }
+
+    /// Returns the active root note.
+    #[must_use]
+    pub fn root(&self) -> u8 {
+        self.root
+    }
+
+    /// Returns the active MIDI note range.
+    #[must_use]
+    pub fn range(&self) -> RangeInclusive<u8> {
+        self.range.clone()
+    }
+
     /// Converts a raw 8-bit DAC value to a scale-quantized MIDI note.
     ///
     /// 1. Linearly maps `dac` (0–255) into the configured pitch range.
@@ -565,6 +583,16 @@ mod tests {
                 "note {note} should be within 48..=72 for dac={dac}"
             );
         }
+    }
+
+    #[test]
+    fn test_quantizer_getters_return_configured_values() {
+        let scale = Scale::new(vec![0, 2, 5, 7, 9], "Getter Scale");
+        let mut q = Quantizer::new(scale.clone(), 4);
+        q.set_range(41..=73);
+        assert_eq!(q.scale(), &scale);
+        assert_eq!(q.root(), 4);
+        assert_eq!(q.range(), 41..=73);
     }
 
     // -- quantize: above branch (near note 0) ---------------------------------

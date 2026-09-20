@@ -11,11 +11,15 @@ rand       = "0.10.1"
 midir      = { version = "0.11", optional = true }
 serde      = { version = "1", features = ["derive"], optional = true }
 thiserror  = "2"
+bevy_app = { version = "0.18", default-features = false, features = ["std"], optional = true }
+bevy_ecs = { version = "0.18", default-features = false, features = ["std"], optional = true }
+oxurack-core = { version = "0.1.0", path = "../oxurack-core", optional = true }
 
 [features]
 default    = []
 midi-io    = ["midir"]
 serde      = ["dep:serde"]
+rack       = ["dep:bevy_app", "dep:bevy_ecs", "dep:oxurack-core"]
 
 [dev-dependencies]
 pretty_assertions = "1"

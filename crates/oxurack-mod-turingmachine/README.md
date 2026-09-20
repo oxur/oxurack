@@ -11,6 +11,26 @@ The library is designed for two primary use cases:
 1. Embedding in an application (DAW plugin, standalone sequencer).
 2. Live-coding / REPL experimentation with a minimal-ceremony API.
 
+The optional `rack` feature exposes `TuringMachineModule`, an ECS adapter for
+the same seeded engine. It has four inputs (`clock`, `write_modulation`,
+`reset`, and `move`) and 28 scalar outputs: `step`; `note`/`note_valid`;
+`velocity`/`velocity_valid`; `gate`; `scale_note`/`scale_note_valid`;
+`pulse_1` through `pulse_6`; `gate_1` through `gate_8`; `div2`, `div4`,
+`noise_cc`, `register_bits`, `length`, and `write_probability`. Its nine
+parameters are `write_probability`, `length`, `length_position`, `scale`,
+`root`, `note_min`, `note_max`, `scale_output_scale`, and
+`scale_output_root`.
+
+The adapter follows the rack's five-phase sample contract. It reads input
+edges during `Consume`, advances the standalone engine there, and publishes
+the resulting `StepOutputs` during the following sample's `Produce` phase.
+Only a false-to-true gate transition triggers `clock`, `reset`, or `move`;
+simultaneous rising edges are resolved as reset, then move, then clock. A
+stopped rack preserves pending work and held outputs for resume. The adapter
+uses the patch's `ModuleSpawnContext` seed and does not open MIDI endpoints or
+perform real-time I/O; the existing `midi-io` feature remains a separate
+standalone wrapper.
+
 ## Signal chain
 
 The diagram below shows the hardware signal path and its Rust equivalent.

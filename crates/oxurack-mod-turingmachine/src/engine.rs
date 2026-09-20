@@ -180,6 +180,42 @@ impl TuringMachine {
         self.length.length()
     }
 
+    /// Returns the current loop selector position (0..=8).
+    #[must_use]
+    pub fn length_position(&self) -> usize {
+        self.length.position()
+    }
+
+    /// Returns the main quantizer's active scale.
+    #[must_use]
+    pub fn scale(&self) -> &Scale {
+        self.quantizer.scale()
+    }
+
+    /// Returns the main quantizer's active root note.
+    #[must_use]
+    pub fn root(&self) -> u8 {
+        self.quantizer.root()
+    }
+
+    /// Returns the main quantizer's MIDI note range.
+    #[must_use]
+    pub fn note_range(&self) -> RangeInclusive<u8> {
+        self.quantizer.range()
+    }
+
+    /// Returns the scale-output quantizer's active scale.
+    #[must_use]
+    pub fn scale_output_scale(&self) -> &Scale {
+        self.scale_quantizer.scale()
+    }
+
+    /// Returns the scale-output quantizer's active root note.
+    #[must_use]
+    pub fn scale_output_root(&self) -> u8 {
+        self.scale_quantizer.root()
+    }
+
     /// Returns the current write-knob probability.
     #[must_use]
     pub fn write_probability(&self) -> f32 {
@@ -446,6 +482,27 @@ mod tests {
             5,
             "set_length_position(3) should select length 5"
         );
+    }
+
+    #[test]
+    fn test_configuration_getters_cover_both_quantizers() {
+        let main_scale = Scale::new(vec![0, 2, 5, 7, 9], "Main Getter Scale");
+        let output_scale = Scale::new(vec![0, 3, 6, 8, 10], "Output Getter Scale");
+        let mut tm = TuringMachine::with_seed(42);
+        tm.set_length_position(3);
+        tm.set_scale(main_scale.clone());
+        tm.set_root(7);
+        tm.set_note_range(41..=73);
+        tm.set_scale_output_scale(output_scale.clone());
+        tm.set_scale_output_root(5);
+
+        assert_eq!(tm.length_position(), 3);
+        assert_eq!(tm.current_length(), 5);
+        assert_eq!(tm.scale(), &main_scale);
+        assert_eq!(tm.root(), 7);
+        assert_eq!(tm.note_range(), 41..=73);
+        assert_eq!(tm.scale_output_scale(), &output_scale);
+        assert_eq!(tm.scale_output_root(), 5);
     }
 
     // -- modulate_write test -------------------------------------------------
