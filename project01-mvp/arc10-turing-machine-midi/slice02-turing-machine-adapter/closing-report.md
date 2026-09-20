@@ -36,10 +36,14 @@ Clippy, formatting, strict rustdoc and diff check passed. The focused rack
 suite reports 120 passed and zero ignored; the public Turing Machine integration
 suite reports 5 passed and zero ignored. The workspace restricted matrices
 each report 146 passed, 4 failed and 3 ignored, with the same four existing
-`oxurack-rt` MIDI initialization tests failing because the host cannot
-initialize MIDI support. `make check` reaches that same host-limited failure.
-No RT/MIDI source was changed. `cargo outdated` is retained as network-blocked
-because the restricted environment could not resolve `index.crates.io`.
+`oxurack-rt` MIDI initialization tests failing because the restricted host
+cannot initialize MIDI support. `make check` reaches that same restricted
+failure. The elevated host retries pass: each workspace matrix reports 150 RT
+tests passed and 3 ignored, and the elevated `make check` completes all checks.
+No RT/MIDI source was changed. The restricted `cargo outdated` attempt is
+retained as network-blocked because that environment could not resolve
+`index.crates.io`; its elevated retry completes and lists available updates
+without changing dependencies.
 
 The dependency future-incompatibility warning for `block v0.1.6` is retained
 in the successful Clippy and rustdoc logs. These limitations do not establish
@@ -55,10 +59,11 @@ release, physical MIDI, Slice03 or Arc10 composition claim is made.
 * `artifacts/validation-results.tsv` — every required command, exit code,
   result category and raw-log path.
 * `artifacts/logs/` — individually named command receipts, including restricted
-  workspace/Make failures and the restricted freshness DNS failure.
+  workspace/Make failures, elevated host retries and the restricted freshness
+  DNS failure.
 * `ledger.md` — six rows updated only to CC proposed-done language; all remain
   `open` pending CRC.
 
-The planning evidence commit is supplied with the final handoff after the
-explicit planning file-list commit. The source commit remains
+The planning evidence commit, including the explicit host-retry receipts, is
+supplied with the final handoff. The source commit remains
 `9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2`.

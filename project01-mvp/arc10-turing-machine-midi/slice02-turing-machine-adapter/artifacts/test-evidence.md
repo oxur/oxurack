@@ -107,24 +107,28 @@ retain command output. Passing source-specific and umbrella results include:
   commands, and `git diff --check`;
 * the planning checker with its positive case and four negative controls.
 
-The two workspace test matrices reached 146 passing tests, 4 failing tests and
-3 ignored tests. The same four existing `oxurack-rt` MIDI tests failed in both
-restricted runs because MIDI support could not be initialized:
+The two restricted workspace test matrices reached 146 passing tests, 4
+failing tests and 3 ignored tests. The same four existing `oxurack-rt` MIDI
+tests failed in both restricted runs because MIDI support could not be
+initialized:
 `test_list_input_ports`, `test_list_output_ports`,
 `test_open_input_nonexistent_returns_error`, and
 `test_open_nonexistent_port_returns_error`. `make check` reaches the same
-host-limited test failure. No RT/MIDI source was changed. The ignored count of
-3 is retained in the raw workspace logs; Slice02-focused suites report zero
-ignored tests.
+restricted host-limited test failure. The required elevated retries then pass:
+each workspace matrix reports 150 RT tests passed and 3 ignored, and the
+elevated `make check` completes all build, lint, format and test gates. No
+RT/MIDI source was changed. The ignored count of 3 is retained in both
+restricted and host-retry logs; Slice02-focused suites report zero ignored
+tests.
 
 `cargo outdated --root-deps-only --ignore-external-rel` exited 1 because the
 restricted environment could not resolve `index.crates.io`; the raw log keeps
-the DNS error. No host retry was available in this run. Workspace Clippy and
-rustdoc retain the dependency future-incompatibility warning for `block
-v0.1.6`, while the required commands exit successfully.
+the DNS error. The elevated retry completed and listed available updates
+without changing dependencies. Workspace Clippy and rustdoc retain the
+dependency future-incompatibility warning for `block v0.1.6`, while the
+required commands exit successfully.
 
 These host and network observations are validation limits, not claims about
 the Turing Machine adapter's behavior. They remain explicit for CRC/CDC
 review. No acceptance, release, MIDI-device, Slice03 or Arc10 composition
 claim is made.
-

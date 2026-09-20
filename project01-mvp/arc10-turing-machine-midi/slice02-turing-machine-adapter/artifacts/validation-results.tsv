@@ -16,3 +16,7 @@ make check	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	2	host-limited	artifacts/l
 cargo outdated --root-deps-only --ignore-external-rel	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	1	network-blocked	artifacts/logs/15-cargo-outdated.log	Restricted crates.io DNS failure; no dependency changes
 git diff --check	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/16-git-diff-check.log	No whitespace errors
 python3 artifacts/verify-planning.py	P	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/17-planning-validator.log	Positive case and missing-row/stale-assignment/missing-mapping/invalid-status controls passed
+cargo test --locked --workspace --all-features [host retry]	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/18-workspace-all-features-host-retry.log	Host access: 150 oxurack-rt tests passed; 3 ignored; MIDI tests passed
+cargo test --locked --workspace --no-default-features [host retry]	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/19-workspace-no-default-host-retry.log	Host access: 150 oxurack-rt tests passed; 3 ignored; MIDI tests passed
+make check [host retry]	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/20-make-check-host-retry.log	Host access: all build, lint, format and workspace tests passed; 3 ignored
+cargo outdated --root-deps-only --ignore-external-rel [host retry]	S	9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2	0	pass	artifacts/logs/21-cargo-outdated-host-retry.log	Host access: audit completed and listed updates; no dependencies changed
