@@ -584,6 +584,18 @@ mod tests {
     }
 
     #[test]
+    fn zero_sample_runner_finishes_without_sends() {
+        let (mut rack, path) = fast_rack();
+        let mut session = Session::new(Recorder::default());
+        let cancellation = AtomicBool::new(false);
+        play(&mut rack, &mut session, 0, &cancellation, &mut Vec::new()).unwrap();
+        assert!(session.sender.sent.is_empty());
+        assert_eq!(rack.sample_time().completed_samples(), 0);
+        assert_eq!(rack.advance_samples(1).unwrap(), 0);
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
     fn production_runner_keeps_primary_send_failure_and_runs_cleanup() {
         let observed = Arc::new(std::sync::Mutex::new(Vec::new()));
         let sender = Recorder {
@@ -607,6 +619,8 @@ mod tests {
         );
         assert!(trace.starts_with(b"5|90 "));
         assert_eq!(trace.iter().filter(|byte| **byte == b'\n').count(), 1);
+        assert_eq!(rack.drain_midi().count(), 0);
+        assert_eq!(rack.advance_samples(1).unwrap(), 0);
         let _ = std::fs::remove_file(path);
     }
 
