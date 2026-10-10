@@ -83,3 +83,12 @@ command logs and CLI controls are not durable supporting artifacts. Issued promp
 and CC report preserved. What worked: a narrow sender seam exercises the actual
 loaded runner while literal cleanup cases and an independent engine oracle prove
 separate boundaries without another runtime or validation framework.
+
+## Operator runbook added — 2026-10-10
+
+At Duncan's request, added [operator-runbook.md](artifacts/operator-runbook.md)
+as a slice supporting artifact, linked from slice-plan v1.2. Checked command
+flags against the actual example and fixture; executed its 5,000-sample offline
+reference: exit0, 34 rows, hash `918f4883252988093f737571cbb862aa29a33b737d0db026c98a7d7fea652d17`.
+Live/interrupt/restart commands are instructions for Duncan, not executed
+witness evidence. No source or verdict change; O-05 remains open.

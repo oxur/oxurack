@@ -1,6 +1,6 @@
 # Slice04 — direct MIDI playback, cleanup and first musical trial
 
-Version 1.1 — 2026-10-10. Status: open; software accepted, Operator witness pending.
+Version 1.2 — 2026-10-10. Status: open; software accepted, Operator witness pending.
 Project01 / Arc10, Three-Contributor Workflow, Expedited Mode.
 Current assignment: `arc10-turing-machine-midi/slice04-output-runtime/cc-prompt.md`.
 Accepted predecessor: `2942c594a445b5de3ef8f131cdedaa6095aa1529`, clean on
@@ -106,3 +106,13 @@ No corrective prompt, slice close, arc acceptance or Arc11 advancement. Issued
 assignment is preserved; source remains clean and unchanged by CRC.
 
 Version history: v1.1 records partial acceptance without changing the contract.
+
+## Operator runbook — 2026-10-10
+
+Duncan requested exact witness commands/operations.
+[Operator runbook](artifacts/operator-runbook.md) supplies routing, offline
+reference, finite playback, Ctrl-C, fresh-session replay and report-back steps.
+The 5,000-sample offline reference was executed at unchanged `65522f1`: 34 rows,
+SHA-256 `918f4883252988093f737571cbb862aa29a33b737d0db026c98a7d7fea652d17`.
+No endpoint was connected and O-05 remains open. Version1.2 adds this supporting
+artifact without changing acceptance or issuing a new CC assignment.
