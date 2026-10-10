@@ -107,6 +107,19 @@ that explored the same design space. The modular-MIDI stance and the
 rough shape of the module catalog carry forward; the architecture is new,
 built on Bevy ECS as the runtime substrate.
 
+### Stream a Turing Machine MIDI trace
+
+The installed `midi_out` sink can stream a deterministic sample-indexed MIDI
+byte trace without opening a MIDI device:
+
+```bash
+cargo run -p oxurack --example turing-machine-midi -- \
+  --patch crates/oxurack/examples/patches/turing-machine-midi.ron --samples 2000
+```
+
+Each output row is `sample|STATUS DATA1 DATA2`, with uppercase hexadecimal
+bytes. Drain output before advancing the next sample.
+
 ## License
 
 MIT

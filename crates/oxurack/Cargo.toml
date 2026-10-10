@@ -12,6 +12,7 @@ graph   = ["dep:oxurack-graph"]
 
 [dependencies]
 oxurack-core  = { version = "0.1.0", path = "../oxurack-core" }
+oxurack-mod-midiout = { version = "0.1.0", path = "../oxurack-mod-midiout" }
 oxurack-graph = { version = "0.1.0", path = "../oxurack-graph", optional = true }
 bevy_app      = { version = "0.18", default-features = false, features = ["std"] }
 bevy_ecs      = { version = "0.18", default-features = false, features = ["std"] }
@@ -21,3 +22,4 @@ bevy_time     = { version = "0.18", default-features = false, features = ["std"]
 pretty_assertions = "1"
 oxurack-mod-clock = { version = "0.1.0", path = "../oxurack-mod-clock", features = ["rack"] }
 oxurack-mod-turingmachine = { version = "0.1.0", path = "../oxurack-mod-turingmachine", features = ["rack"] }
+clap = { version = "4", features = ["derive"] }

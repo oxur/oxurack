@@ -64,8 +64,9 @@ pub use value::{MidiMessage, Value, ValueKind};
 // Phase 2
 pub use rng::{derive_module_rng, derive_seed};
 pub use tick::{
-    MergeBuffers, PropagationOrder, PropagationOrderDirty, SampleTime, SimulationRunning, TickNow,
-    TickOrder, TickPhase, compute_tick_order, mark_propagation_order_dirty,
+    MergeBuffers, PropagationOrder, PropagationOrderDirty, SampleStart, SampleTime,
+    SimulationRunning, TickNow, TickOrder, TickPhase, compute_tick_order,
+    mark_propagation_order_dirty,
 };
 
 // Phase 4
@@ -209,7 +210,9 @@ fn build_core_plugin(app: &mut App, schedule: impl ScheduleLabel + Clone) {
         .add_systems(
             schedule.clone(),
             (
-                tick::begin_sample_system.before(TickPhase::Produce),
+                tick::begin_sample_system
+                    .in_set(tick::SampleStart)
+                    .before(TickPhase::Produce),
                 tick::rebuild_propagation_order_system
                     .in_set(TickPhase::Propagate)
                     .before(tick::propagate_cables_system),

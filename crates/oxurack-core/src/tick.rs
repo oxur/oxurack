@@ -47,6 +47,13 @@ pub enum TickPhase {
     Observe,
 }
 
+/// Ordering point immediately before the existing sample-start latch.
+///
+/// Admission guards placed before this set can prevent a sample from
+/// beginning without changing the five-phase sample pipeline.
+#[derive(SystemSet, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct SampleStart;
+
 /// Authoritative logical time for rack samples.
 ///
 /// A running sample publishes the prior completed count as its zero-based

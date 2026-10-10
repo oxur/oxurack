@@ -157,7 +157,7 @@ pub enum PatchError {
 
 /// Errors that can occur during frame processing (tick).
 #[non_exhaustive]
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Clone, thiserror::Error)]
 pub enum TickError {
     /// A module panicked during its tick callback.
     #[error("module '{0}' panicked during tick")]
@@ -166,6 +166,41 @@ pub enum TickError {
     /// The real-time MIDI queue overflowed; events were dropped.
     #[error("RT queue full; dropped {0} MIDI events this frame")]
     MidiQueueOverflow(usize),
+
+    /// New samples were denied because unread output or a terminal fault remains.
+    #[error(
+        "MIDI output backpressure with {pending_messages} pending messages after {completed_samples} completed samples"
+    )]
+    OutputBackpressure {
+        /// Events still awaiting drain.
+        pending_messages: usize,
+        /// Samples completed by the current facade request.
+        completed_samples: u64,
+    },
+
+    /// A used MIDI sink input contained an invalid value.
+    #[error(
+        "invalid MIDI output at {module}::{port}: {reason} (after {completed_samples} completed samples)"
+    )]
+    InvalidMidiOutput {
+        /// Sink instance name.
+        module: String,
+        /// Input port name.
+        port: String,
+        /// Validation failure.
+        reason: String,
+        /// Samples completed by the current facade request.
+        completed_samples: u64,
+    },
+
+    /// Static event storage could not be constructed or admitted safely.
+    #[error("MIDI output capacity error: {reason} (after {completed_samples} completed samples)")]
+    OutputCapacity {
+        /// Capacity failure detail.
+        reason: String,
+        /// Samples completed by the current facade request.
+        completed_samples: u64,
+    },
 }
 
 #[cfg(test)]

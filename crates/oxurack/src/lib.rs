@@ -28,9 +28,11 @@ pub use oxurack_graph;
 pub use oxurack_core::OxurackModule as Module;
 
 pub use oxurack_core::{
-    CoreError, CorePlugin, CorePluginFixed, ModuleSpawnContext, PatchHandle, SampleTime, Scale,
-    SimulationRunning,
+    CoreError, CorePlugin, CorePluginFixed, ModuleSpawnContext, PatchHandle, SampleStart,
+    SampleTime, Scale, SimulationRunning, TickError,
 };
+
+pub use oxurack_mod_midiout::{MidiOutModule, MidiOutputBuffer, MidiOutputEvent};
 
 pub use oxurack_core::{
     CableConfig, CableTransform, ModuleConfig, ParameterValue, Patch, Value, ValueKind,
@@ -73,6 +75,7 @@ impl Oxurack {
 
         app.add_plugins(bevy_time::TimePlugin);
         app.add_plugins(oxurack_core::CorePlugin::fixed());
+        app.world_mut().init_resource::<MidiOutputBuffer>();
 
         #[cfg(feature = "graph")]
         app.add_plugins(oxurack_graph::RackGraphPlugin);
@@ -280,13 +283,41 @@ impl Oxurack {
         *self.app.world().resource::<SampleTime>()
     }
 
+    /// Drains MIDI events produced by completed samples, in sink/message order.
+    ///
+    /// The returned borrow must be consumed or dropped before advancing again.
+    /// Dropping it early discards remaining events. Draining does not clear a
+    /// terminal output fault; a fresh rack is required to resume after one.
+    pub fn drain_midi(&mut self) -> std::vec::Drain<'_, MidiOutputEvent> {
+        self.app
+            .world_mut()
+            .resource_mut::<MidiOutputBuffer>()
+            .into_inner()
+            .drain()
+    }
+
+    /// Returns the first terminal MIDI output fault, if one has been latched.
+    #[must_use]
+    pub fn midi_output_error(&self) -> Option<&TickError> {
+        self.app.world().resource::<MidiOutputBuffer>().fault()
+    }
+
     /// Advances up to `count` complete samples under the manual driver.
     ///
     /// The return value is the number of samples that completed. A shared stop
     /// after a sample begins lets that latched sample finish, then prevents the
-    /// next sample from starting. A stopped rack or zero-count request returns
-    /// zero without changing state. A live rack returns
+    /// next sample from starting. Drain all MIDI events before requesting
+    /// another sample: this facade applies a conservative single-slot admission
+    /// rule even when the next sample might be idle. A stopped rack or
+    /// zero-count request returns zero without changing state. A live rack returns
     /// [`CoreError::ManualSampleRequiresManualDriver`] before mutation.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CoreError::ManualSampleRequiresManualDriver`] in live mode, or
+    /// [`CoreError::Tick`] for output backpressure or a latched MIDI output fault.
+    /// A tick error reports the number of samples completed by this call;
+    /// a fault found during Consume includes that finalized sample.
     pub fn advance_samples(&mut self, count: u64) -> Result<u64, CoreError> {
         if self.driver != SimulationDriver::Manual {
             return Err(CoreError::ManualSampleRequiresManualDriver);
@@ -295,11 +326,32 @@ impl Oxurack {
             return Ok(0);
         }
 
-        let mut completed = 0;
+        let request_start = self.sample_time().completed_samples();
         for _ in 0..count {
             if !self.is_running() {
                 break;
             }
+
+            if let Err(error) = self
+                .app
+                .world()
+                .resource::<MidiOutputBuffer>()
+                .check_admission()
+            {
+                {
+                    let mut buffer = self.app.world_mut().resource_mut::<MidiOutputBuffer>();
+                    buffer.latch_fault(error.clone());
+                }
+                self.app.world_mut().resource_mut::<SimulationRunning>().0 = false;
+                return Err(CoreError::Tick(with_completed_samples(
+                    error,
+                    self.sample_time()
+                        .completed_samples()
+                        .saturating_sub(request_start),
+                )));
+            }
+
+            let before = self.sample_time().completed_samples();
 
             {
                 let world = self.app.world_mut();
@@ -318,10 +370,20 @@ impl Oxurack {
                 *world.resource_mut::<Time>() = virtual_time;
             }
 
-            completed += 1;
+            let after = self.sample_time().completed_samples();
+            if let Some(error) = self.midi_output_error().cloned() {
+                return Err(CoreError::Tick(with_completed_samples(
+                    error,
+                    after.saturating_sub(request_start),
+                )));
+            }
+            debug_assert!(after >= before);
         }
 
-        Ok(completed)
+        Ok(self
+            .sample_time()
+            .completed_samples()
+            .saturating_sub(request_start))
     }
 
     fn is_running(&self) -> bool {
@@ -368,6 +430,33 @@ impl Oxurack {
     #[cfg(test)]
     fn world_mut(&mut self) -> &mut bevy_ecs::world::World {
         self.app.world_mut()
+    }
+}
+
+fn with_completed_samples(error: TickError, completed_samples: u64) -> TickError {
+    match error {
+        TickError::OutputBackpressure {
+            pending_messages, ..
+        } => TickError::OutputBackpressure {
+            pending_messages,
+            completed_samples,
+        },
+        TickError::InvalidMidiOutput {
+            module,
+            port,
+            reason,
+            ..
+        } => TickError::InvalidMidiOutput {
+            module,
+            port,
+            reason,
+            completed_samples,
+        },
+        TickError::OutputCapacity { reason, .. } => TickError::OutputCapacity {
+            reason,
+            completed_samples,
+        },
+        other => other,
     }
 }
 
@@ -1707,6 +1796,129 @@ mod tests {
         let mut oxa = Oxurack::new();
         oxa.step();
         oxa.step();
+    }
+
+    #[test]
+    fn midi_facade_denies_unread_next_sample_before_either_clock_advances() {
+        let mut rack = Oxurack::new();
+        rack.try_install::<MidiOutModule>().unwrap();
+        let sink = MidiOutModule::spawn(rack.world_mut(), "sink", &HashMap::new()).unwrap();
+        for (port, value) in [
+            ("step", Value::Gate(true)),
+            ("note_valid", Value::Gate(true)),
+            ("velocity_valid", Value::Gate(true)),
+            ("gate", Value::Gate(true)),
+            ("note", Value::Raw(60)),
+            ("velocity", Value::Raw(100)),
+            ("noise_cc", Value::Raw(0)),
+        ] {
+            set_port_value(&mut rack, sink, port, value);
+        }
+        rack.set_driver_mode(SimulationDriver::Manual).start();
+        let error = rack.advance_samples(5).unwrap_err();
+        assert!(matches!(
+            error,
+            CoreError::Tick(TickError::OutputBackpressure {
+                pending_messages: 1,
+                completed_samples: 1
+            })
+        ));
+        assert_eq!(rack.sample_time().completed_samples(), 1);
+        assert_eq!(
+            rack.world().resource::<Time<Fixed>>().elapsed(),
+            Duration::from_millis(1)
+        );
+        assert_eq!(
+            rack.world().resource::<Time<Virtual>>().elapsed(),
+            Duration::from_millis(1)
+        );
+        assert_eq!(
+            rack.drain_midi()
+                .map(|event| event.message.to_bytes())
+                .collect::<Vec<_>>(),
+            vec![[0x90, 60, 100]]
+        );
+        assert!(matches!(
+            rack.midi_output_error(),
+            Some(TickError::OutputBackpressure { .. })
+        ));
+        assert_eq!(
+            rack.advance_samples(1).unwrap(),
+            0,
+            "drain does not clear the terminal fault or restart the rack"
+        );
+    }
+
+    #[test]
+    fn installed_sink_without_sink_instances_keeps_grouped_advancement() {
+        let mut rack = Oxurack::new();
+        rack.try_install::<MidiOutModule>().unwrap();
+        rack.set_driver_mode(SimulationDriver::Manual).start();
+        assert_eq!(rack.advance_samples(3).unwrap(), 3);
+        assert!(rack.drain_midi().next().is_none());
+    }
+
+    #[test]
+    fn ordinary_stop_preserves_pending_output_and_resumes_after_drain() {
+        let mut rack = Oxurack::new();
+        rack.try_install::<MidiOutModule>().unwrap();
+        let sink = MidiOutModule::spawn(rack.world_mut(), "sink", &HashMap::new()).unwrap();
+        for (port, value) in [
+            ("step", Value::Gate(true)),
+            ("note_valid", Value::Gate(true)),
+            ("velocity_valid", Value::Gate(true)),
+            ("gate", Value::Gate(true)),
+            ("note", Value::Raw(60)),
+            ("velocity", Value::Raw(100)),
+        ] {
+            set_port_value(&mut rack, sink, port, value);
+        }
+        rack.set_driver_mode(SimulationDriver::Manual).start();
+        assert_eq!(rack.advance_samples(1).unwrap(), 1);
+        rack.try_install::<MidiOutModule>().unwrap();
+        assert_eq!(rack.sample_time().completed_samples(), 1);
+        rack.stop();
+        assert_eq!(rack.sample_time().completed_samples(), 1);
+        assert!(rack.midi_output_error().is_none());
+        assert_eq!(
+            rack.drain_midi()
+                .map(|event| event.message.to_bytes())
+                .collect::<Vec<_>>(),
+            vec![[0x90, 60, 100]]
+        );
+        rack.start();
+        assert_eq!(rack.advance_samples(1).unwrap(), 1);
+        assert_eq!(rack.sample_time().completed_samples(), 2);
+    }
+
+    #[test]
+    fn facade_reports_consume_fault_after_failing_sample_finalizes() {
+        let mut rack = Oxurack::new();
+        rack.try_install::<MidiOutModule>().unwrap();
+        let sink = MidiOutModule::spawn(rack.world_mut(), "sink", &HashMap::new()).unwrap();
+        for (port, value) in [
+            ("step", Value::Gate(true)),
+            ("note_valid", Value::Gate(true)),
+            ("velocity_valid", Value::Gate(true)),
+            ("gate", Value::Gate(true)),
+            ("note", Value::Raw(128)),
+            ("velocity", Value::Raw(100)),
+        ] {
+            set_port_value(&mut rack, sink, port, value);
+        }
+        rack.set_driver_mode(SimulationDriver::Manual).start();
+        assert!(matches!(
+            rack.advance_samples(3),
+            Err(CoreError::Tick(TickError::InvalidMidiOutput {
+                module,
+                port,
+                completed_samples: 1,
+                ..
+            })) if module == "sink" && port == "note"
+        ));
+        assert_eq!(rack.sample_time().completed_samples(), 1);
+        assert!(!rack.world().resource::<SimulationRunning>().0);
+        assert!(rack.drain_midi().next().is_none());
     }
 
     // ── Graph tests (feature-gated) ───────────────────────────────

@@ -1,0 +1,16 @@
+[package]
+name = "oxurack-mod-midiout"
+version = "0.1.0"
+edition = "2024"
+description = "A bounded, sample-driven MIDI output sink for oxurack."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/oxur/oxurack"
+
+[dependencies]
+bevy_app = { version = "0.18", default-features = false, features = ["std"] }
+bevy_ecs = { version = "0.18", default-features = false, features = ["std"] }
+oxurack-core = { version = "0.1.0", path = "../oxurack-core" }
+oxurack-midi = { version = "0.1.0", path = "../oxurack-midi" }
+
+[dev-dependencies]
+pretty_assertions = "1"
