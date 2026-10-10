@@ -1,0 +1,18 @@
+command	cwd	source_revision	exit_code	log_path
+cargo test --locked -p oxurack-mod-turingmachine	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	b2ffb16d342d9a6cc800bab2713813d9646fb505	0	01-default.log
+cargo test --locked -p oxurack-mod-turingmachine --features rack	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	b2ffb16d342d9a6cc800bab2713813d9646fb505	0	02-rack.log
+cargo test --locked -p oxurack --test turing_machine	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	b2ffb16d342d9a6cc800bab2713813d9646fb505	0	03-integration.log
+cargo test --locked -p oxurack --no-default-features --test turing_machine	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	b2ffb16d342d9a6cc800bab2713813d9646fb505	0	04-integration-no-default.log
+cargo tree --locked -p oxurack-mod-turingmachine --edges normal	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	b2ffb16d342d9a6cc800bab2713813d9646fb505	0	05-tree.log
+cargo clippy --locked --workspace --all-features --all-targets -- -D warnings	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	b2ffb16d342d9a6cc800bab2713813d9646fb505	0	06-clippy.log
+cargo fmt --all -- --check	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	b2ffb16d342d9a6cc800bab2713813d9646fb505	0	07-format.log
+cargo test --locked --workspace --all-features	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	b2ffb16d342d9a6cc800bab2713813d9646fb505	0	08-workspace-all-host.log
+cargo test --locked --workspace --no-default-features	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	b2ffb16d342d9a6cc800bab2713813d9646fb505	0	09-workspace-no-default-host.log
+RUSTDOCFLAGS='-D warnings' cargo doc --locked --workspace --all-features --no-deps	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	b2ffb16d342d9a6cc800bab2713813d9646fb505	0	10-doc-workspace.log
+RUSTDOCFLAGS='-D warnings' cargo doc --locked -p oxurack --no-default-features --no-deps	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	b2ffb16d342d9a6cc800bab2713813d9646fb505	0	11-doc-no-default.log
+CRC source/planning scope audit, incorrect multi-author planning range	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	b2ffb16d342d9a6cc800bab2713813d9646fb505	1	12-scope-audit-initial.log
+CRC source/planning scope audit, CC-only planning delta	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	b2ffb16d342d9a6cc800bab2713813d9646fb505	0	13-scope-audit.log
+make check	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	b2ffb16d342d9a6cc800bab2713813d9646fb505	0	14-make-check-host.log
+cargo outdated --root-deps-only --ignore-external-rel	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	b2ffb16d342d9a6cc800bab2713813d9646fb505	0	15-outdated-host.log
+python3 artifacts/verify-planning.py	/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc10-turing-machine-midi/slice02-turing-machine-adapter	b2ffb16d342d9a6cc800bab2713813d9646fb505	0	16-planning.log
+python3 artifacts/verify-planning.py --require-return	/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc10-turing-machine-midi/slice02-turing-machine-adapter	b2ffb16d342d9a6cc800bab2713813d9646fb505	0	17-planning-return.log

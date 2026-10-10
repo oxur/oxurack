@@ -1,10 +1,10 @@
 # Slice02 — Turing Machine rack adapter
 
-Version 1.1 — 2026-10-10. Status: open; corrective iteration01 issued.
+Version 1.2 — 2026-10-10. Status: closed; CRC accepted iteration01 at `b2ffb16`.
 CRC authors and reviews, CC implements, CDC reviews Arc10 composition.
 Current assignment:
 `arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt-iteration01.md`.
-Current source baseline: `9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2`, clean
+Accepted source: `b2ffb16d342d9a6cc800bab2713813d9646fb505`, clean
 `.worktrees/codex-oxurack-module-behavior-installation` on
 `codex/oxurack-module-behavior-installation`.
 Current planning predecessor: `2eb5ac138fedf21d4185d1cc2f1dd3df84c4972d`.
@@ -200,7 +200,7 @@ Avoid assertions limited to final state, row counts or adapter-vs-adapter
 agreement. Preserve complete named traces and the independently derived
 standalone expectations.
 
-## Corrective iteration01 — current execution scope
+## Corrective iteration01 — preserved execution scope
 
 CRC independently reviewed the initial CC return on 2026-10-10; the full
 [review](crc-verification.md) preserves reproduced checks, limitations and
@@ -309,8 +309,11 @@ tests remain counted and explained.
 - 2026-10-10: current
   `arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt-iteration01.md`
   issued by CRC, predecessor `cc-prompt.md`, reason F-01–F-05 missing/weak
-  behavioral and return evidence. Disposition: active, awaiting CC execution;
-  corrective pass1/5 authorized, none executed yet. Slice03 remains held.
+  behavioral and return evidence. Disposition: returned by CC at `b2ffb16`, planning `61671a3`, independently
+  accepted by CRC on 2026-10-10; corrective pass1/5 executed. Slice03 released
+  for authoring under directive08.
+- v1.2 — 2026-10-10: accepted corrected test/evidence packet after independent
+  reproduction; six rows done; production/fixture/dependency bytes unchanged.
 - v1.1 — 2026-10-10: independent partial review and bounded test/evidence
   corrective iteration01; acceptance/architecture unchanged.
 - v1.0 — 2026-09-19: opened complete adapter mapping, lifecycle and proof set.

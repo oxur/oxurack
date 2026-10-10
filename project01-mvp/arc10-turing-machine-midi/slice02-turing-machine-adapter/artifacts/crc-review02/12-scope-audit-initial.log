@@ -1,0 +1,1 @@
+CRC audit exited 1 after source four-path/prefix checks passed. Planning range 32e6934..61671a3 also includes authorized CDC directive08 changes at 9cbcd02; treating that whole range as a CC-only delta was a CRC method error. Retry inspects CC commit 61671a3 alone. No source defect observed.

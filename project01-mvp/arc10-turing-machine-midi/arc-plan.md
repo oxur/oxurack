@@ -1,6 +1,6 @@
 # Arc10 — Turing Machine MIDI in the rack
 
-Version 1.3 — 2026-10-10. Status: open; Slice01 accepted, Slice02 correction issued by CRC.
+Version 1.4 — 2026-10-10. Status: open; Slices01–02 accepted, Slice03 ready for CRC authoring.
 Depends on: Arc09 at source `37deeace90e7fe2dff633ada9d58ef9051577c3d`.
 Delivers: M1 playback; software composition enables Arc11 observation workbench.
 Workflow: Three contributors, Expedited Mode; Duncan relays CDC/CRC/CC packets.
@@ -27,7 +27,7 @@ changes through Duncan to CDC. No scope is delegated through an empty placeholde
 | Slice | Capability / dependencies | Current state |
 | --- | --- | --- |
 | slice01-musical-clock | Validated standalone sample Clock plus installed Gate output, fractional timing, edit/pause semantics; consumes Arc09 | Closed; CRC accepted source `a19cfd1` after iteration01 |
-| slice02-turing-machine-adapter | Opt-in rack adapter around existing seeded engine, full capability inventory, scalar snapshots and rising-edge stepping; consumes Clock | Open; [iteration01 CC assignment](slice02-turing-machine-adapter/cc-prompt-iteration01.md), proof correction after CRC review of `9ba55dd` |
+| slice02-turing-machine-adapter | Opt-in rack adapter around existing seeded engine, full capability inventory, scalar snapshots and rising-edge stepping; consumes Clock | Closed; CRC accepted [iteration01](slice02-turing-machine-adapter/crc-verification.md#iteration01-review--accepted-2026-10-10) at `b2ffb16`; six rows done |
 | slice03-midi-output | Installed MIDI-out, bounded drain and executable seeded RON-to-MIDI trace; consumes adapter | Planned; CRC authors after Slice02 acceptance |
 | slice04-output-runtime | Extend the same example to real MIDI playback, stop/error cleanup and musical trial; consumes sink | Planned; direct single-owner runner, no new RT service |
 
@@ -70,6 +70,10 @@ Persistence, Chord, remaining modules, live controls and synchronization retain
 their existing project/backlog owners after those two musical milestones.
 
 ## Version history
+
+- v1.4 — 2026-10-10: CRC independently accepted Slice02 correction at `b2ffb16`;
+  six child rows done. No architecture/acceptance amendment; Slice03 may open
+  against this accepted predecessor under directive08. Arc rows remain open.
 
 - v1.3 — 2026-10-10: At Operator request during Slice02 review, recalibrated
   unissued Slice03 onward for unreleased software: four slices instead of five,

@@ -1,0 +1,12 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.07s
+     Running tests/turing_machine.rs (target/debug/deps/turing_machine-6362d70e0dad6d38)
+
+running 5 tests
+test public_fixture_has_complete_delayed_trace_and_standalone_oracle ... ok
+test changed_seed_and_instance_name_change_trace ... ok
+test stop_pending_resume_and_reinstall_preserve_progress ... ok
+test fresh_process_replays_canonical_trace_twice ... ok
+test manual_live_groupings_and_reversed_patch_order_match ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+

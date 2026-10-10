@@ -152,3 +152,79 @@ The correction preserves TM-first, followed by MIDI-output/runtime/endpoint
 acceptance; Arc11 LFO/Scope and retained project quality/hardware gates stay
 assigned. The current status header is refreshed because it still described
 the already-accepted Clock correction as active.
+
+## Iteration01 review — accepted, 2026-10-10
+
+Sofie/CRC independently reviewed the current `cc-prompt-iteration01.md` return:
+source `b2ffb16d342d9a6cc800bab2713813d9646fb505`, CC evidence
+`61671a3eb487cbc433f721d59d645ffd60ebfb19`; planning intake `e70620b`.
+Three contributors and Expedited Mode remain active. Directive08 is acknowledged
+and does not amend this issued correction's criteria or gates.
+
+CRC inspected all corrected adapter tests, the complete public integration
+runner, getter-test diffs, the current intake/readback, six-row CC close and
+command matrix. The four source paths are the exact authorized test paths;
+all three production prefixes are byte-identical to `9ba55dd`. Manifests,
+lockfile, fixture and other implementation paths are unchanged. The CC-only
+planning delta preserves issued prompts, prior CRC records, checker and
+iteration00 artifacts.
+
+### Independent reproduction and retained evidence
+
+Commands, exits and receipts are in [crc-review02/results.tsv](artifacts/crc-review02/results.tsv).
+New reproduction at `b2ffb16`: standalone 112 tests; rack 129; public TM
+integration five each in default/no-default modes; normal dependency tree
+without Bevy/core; all-target/all-feature workspace Clippy; formatting; both
+host workspace feature matrices; both strict rustdoc modes; host `make check`;
+and host dependency observation. All pass. Both workspace runs retain 150
+passing RT tests and three ignored timing tests; no focused test is ignored.
+The all-feature workspace enables existing midi-io tests, giving 134 TM tests,
+versus 129 in the focused rack-only run. Both current checker modes and their
+same-predicate negatives pass; their scope is packet structure only.
+
+One initial CRC scope audit incorrectly treated `32e6934..61671a3` as a CC-only
+planning delta. That range includes CDC's intervening `9cbcd02`; the failure
+and corrected CC-commit-only audit are preserved in receipts 12/13. It is a
+CRC inspection-method error, not a source/evidence defect.
+
+Retain the iteration00 production review and independent sample/seed findings
+at their original `9ba55dd` revision: algorithm, adapter production bytes,
+fixture and dependencies are unchanged, and no new finding invalidates those
+methods. Repaired tests and downstream integration were freshly reproduced
+rather than inferred from that retention. CC's restricted MIDI/DNS failures
+remain in its matrix alongside host retries. CRC used host access for these
+known environmental gates. Dependency observation reports available updates
+without changing source or dependencies; it is not an upgrade assignment.
+
+### Six-row acceptance
+
+| Row | CRC disposition | Checked behavior |
+| --- | --- | --- |
+| A-01 | done; reproduced | Default dependency isolation, standalone regression and seeded real rack construction; protected production bytes unchanged. |
+| A-02 | done; reproduced | All 32 port declarations/nine defaults and actual registered setter/getter readbacks; full wrong-variant/range/Scale spawn and setter rejection, attribution, no orphans, deep snapshots and forward standalone seeded continuation. |
+| A-03 | done; reproduced | Actual Produce sentinel publication, absent optional values, Some(0) validity and idle holding; all 28 outputs at all 24 integration sample indices match a separately configured engine. |
+| A-04 | done; reproduced | Scripted reset/move/clock conflicts and consumed held edges, isolated actions, positive/negative/zero/clamped modulation and real two-cable Sum; full pause/pending/reinstall continuation and sample accounting. Existing unchanged engine owns divider/reset behavior; public reference spans 12 ticks. |
+| A-05 | done; reproduced | Exact fresh-child equality, corresponding changed seed/name contents and renamed standalone oracle, unchanged secondary, reversal plus independent observer insertion/removal. |
+| A-06 | done; reproduced | Current assignment/readback/close, exact source and protected evidence boundaries, complete gate receipts, retained failures/ignored counts, bubble-up and artifact placement. |
+
+F-01–F-05 are resolved. Six rows opened, six rows done; no deferred/no-op rows
+or silent drops. The getter range observation is owned, and DC-05 is correctly
+interpreted as Errors documentation in the corrective intake. CC's canonical
+report remains its original proposed-done attestation; this record supplies
+independent acceptance.
+
+## Bubble-up to arc — accepted correction
+
+Slice02 delivers the complete seeded rack adapter assigned by Arc10, including
+all settings/actions and 28 published scalar outputs. Its supporting evidence
+lives in the existing `artifacts/` home: intake, test evidence, matrices, logs,
+structural checker, preserved iteration00 material and CRC review receipts.
+Both issued prompts remain at their slice-root paths. No production repair,
+missing capability or new architectural dependency emerged from correction.
+No substantive arc-plan amendment is needed; record routine Slice02 acceptance
+and advance under CDC's already approved directive08/design v1.2.
+
+Verdict: **Slice02 closed at `b2ffb16`**. Repin that accepted predecessor and
+open Slice03 MIDI-out plus runnable seeded trace. Arc10/project composition
+rows remain open; endpoint witnessing, playback cleanup and release obligations
+are not accepted here.

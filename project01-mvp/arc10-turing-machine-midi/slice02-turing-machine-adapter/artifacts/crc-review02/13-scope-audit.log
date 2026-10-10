@@ -1,0 +1,5 @@
+Exactly four authorized test paths.
+Production prefix identical: crates/oxurack-mod-turingmachine/src/engine.rs
+Production prefix identical: crates/oxurack-mod-turingmachine/src/quantizer.rs
+Production prefix identical: crates/oxurack-mod-turingmachine/src/rack.rs
+CC evidence commit preserves issued/reviewer/historical artifacts; intervening CDC design commit excluded.

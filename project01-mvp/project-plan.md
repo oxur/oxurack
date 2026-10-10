@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — Arc09 and Arc10 Clock accepted; Arc10 TM adapter correction iteration01 returned at b2ffb16, pending CRC review; directive08 acknowledged for playable increments from Slice03 onward |
+| status | active — Arc09 and Arc10 Clock accepted; Arc10 TM adapter accepted at b2ffb16; Slice03 ready for CRC authoring; directive08 acknowledged for playable increments from Slice03 onward |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
@@ -59,7 +59,7 @@ must use this policy, not mechanically copy the old packets.
 
 | Date | Packet | Predecessor / initiation | Status | Affected authority | Next action |
 | --- | --- | --- | --- | --- | --- |
-| 2026-10-10 | [cdc-directive08.md](cdc-directive08.md) | directive07; Duncan's project recalibration request during Arc10/Slice02; directive relayed by Duncan | CRC acknowledged after live-state check | Unissued Slice03 onward; Arc10 T-01–T-05 and P-07 interpretation, future prompt/proof policy | CRC reviews returned Slice02 correction, then authors Slice03 at its accepted source |
+| 2026-10-10 | [cdc-directive08.md](cdc-directive08.md) | directive07; Duncan's project recalibration request during Arc10/Slice02; directive relayed by Duncan | CRC acknowledged after live-state check | Unissued Slice03 onward; Arc10 T-01–T-05 and P-07 interpretation, future prompt/proof policy | CRC accepted Slice02 at b2ffb16; authors Slice03 at that accepted source |
 
 CRC acknowledgement — 2026-10-10: read directive08, this current plan, Arc10
 arc-plan v1.3/design v1.2 and the amended project/arc ledgers. Live planning
@@ -700,3 +700,11 @@ acceptance, arc scope or deferred-feature ownership changes.
 
 - v3.15 — 2026-10-10: Refreshed current status and issued Slice02 test/evidence
   correction after independent partial review. No higher-scale closure claimed.
+
+## CRC Slice02 acceptance — 2026-10-10
+
+CRC independently accepted the iteration01 correction at `b2ffb16`: all six
+A rows are done, with [reproduction and bubble-up](arc10-turing-machine-midi/slice02-turing-machine-adapter/crc-verification.md#iteration01-review--accepted-2026-10-10).
+No substantive design change arose. Directive08 governs immediate Slice03
+authoring at this accepted source. Arc10 and all project composition rows
+remain open; this is adapter acceptance, not MIDI playback acceptance.

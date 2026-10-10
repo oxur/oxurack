@@ -2,11 +2,11 @@
 
 > Current (2026-10-10): Arc09 is accepted at `37deeace`; Arc10 Clock is accepted
 > at `a19cfd1` with C-01–C-06 done. CRC reviewed TM adapter source `9ba55dd`:
-> focused gates pass, but required behavioral proof is incomplete. All A rows
-> remain open. [Slice02 corrective iteration01](../project01-mvp/arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt-iteration01.md)
+> its proof correction is now independently accepted at `b2ffb16`. A-01–A-06
+> are done. [Slice02 corrective iteration01](../project01-mvp/arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt-iteration01.md)
 > is the current assignment, authorized pass1/5; CC returned source `b2ffb16`
-> with planning evidence `61671a3`. Independent CRC review remains pending.
-> Slice03 MIDI output remains held; Duncan renewed Expedited Mode today.
+> with planning evidence `61671a3`; CRC acceptance is recorded in the slice review.
+> Slice03 MIDI output is released for authoring; Expedited Mode remains active.
 > [CDC directive08](../project01-mvp/cdc-directive08.md) now replans unissued Slice03 onward:
 > MIDI-out + runnable trace, then a direct playback runner with the endpoint trial
 > included (four Arc10 slices, was five). CRC acknowledged the directive in the
@@ -610,7 +610,7 @@ broader catalog/persistence and other retained project gates remain assigned.
 Earlier handoff sections above are history; the opening estimate is explicitly
 the unrecomputed 2026-09-17 snapshot. No new percentage is asserted.
 
-## Directive08 acknowledgement / Slice02 return — current, 2026-10-10
+## Directive08 acknowledgement / Slice02 return — prior state, 2026-10-10
 
 CRC refreshed project-plan v3.16, Arc10 arc-plan v1.3/design v1.2, the amended
 ledgers and directive08 against clean planning `61671a3` and implementation
@@ -633,3 +633,13 @@ real endpoint witness; an unavailable endpoint remains an explicit CDC-owned
 disposition. Async output/reconnect belongs to Arc12 when needed, and release
 coverage/timing/benchmark/soak obligations remain with Arc08. No ledger status
 or acceptance result changed during this refresh.
+
+## CRC Slice02 accepted — current, 2026-10-10
+
+Source `b2ffb16` is independently accepted: six A rows done after corrected
+behavioral tests, source-boundary inspection, host workspace matrices, strict
+docs, Clippy/format, Make and dependency observation. Full receipts and retained
+limitations are in Slice02 `crc-verification.md` and `artifacts/crc-review02/`.
+No production edit or design escalation was needed. Slice03 is now ready for
+CRC authoring under directive08 at this accepted predecessor. Arc10/project
+rows remain open; MIDI playback and the endpoint witness remain ahead.

@@ -1,0 +1,11 @@
+Slice02 packet passed: assignment, six rows, mappings, denominators, links, canonical close
+iteration01 return passed: identity, source hash, six rows, bubble-up (structural only)
+negative control rejected: missing-row
+negative control rejected: stale-assignment
+negative control rejected: missing-mapping
+negative control rejected: invalid-status
+negative control rejected: missing-close
+negative control rejected: stale-return
+negative control rejected: missing-bubble-up
+negative control rejected: missing-return-row
+negative control rejected: missing-source-hash
