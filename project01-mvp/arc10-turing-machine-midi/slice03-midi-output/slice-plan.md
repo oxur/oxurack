@@ -1,6 +1,6 @@
 # Slice03 — installed MIDI output and executable seeded trace
 
-Version 1.0 — 2026-10-10. Status: open; initial CC assignment issued by CRC.
+Version 1.1 — 2026-10-10. Status: closed; CRC accepted source `2942c59`.
 Project01 / Arc10; Three-Contributor Workflow, Expedited Mode.
 Current assignment: `arc10-turing-machine-midi/slice03-midi-output/cc-prompt.md`.
 Accepted source predecessor: `b2ffb16d342d9a6cc800bab2713813d9646fb505`, branch
@@ -86,3 +86,10 @@ and explicit; CC proposed-done cannot close a row independently.
 
 - 2026-10-10: CRC issued initial `cc-prompt.md` after accepting Slice02 at
   `b2ffb16`; zero corrective passes. Five rows open. Slice04 remains unissued.
+
+- 2026-10-10: CRC accepted all five rows after independent source review and required gates; source `2942c594a445b5de3ef8f131cdedaa6095aa1529`, CC evidence `cf9188d`. Initial prompt preserved.
+
+## Version history
+
+- v1.1 — 2026-10-10: Slice03 accepted without correction; five rows done, successor Slice04 may open under directive08.
+- v1.0 — 2026-10-10: initial assignment issued.

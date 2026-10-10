@@ -1,6 +1,6 @@
 # Arc10 — Turing Machine MIDI in the rack
 
-Version 1.5 — 2026-10-10. Status: open; Slices01–02 accepted, Slice03 issued to CC.
+Version 1.6 — 2026-10-10. Status: open; Slices01–03 accepted; Slice04 preparation authorized.
 Depends on: Arc09 at source `37deeace90e7fe2dff633ada9d58ef9051577c3d`.
 Delivers: M1 playback; software composition enables Arc11 observation workbench.
 Workflow: Three contributors, Expedited Mode; Duncan relays CDC/CRC/CC packets.
@@ -28,7 +28,7 @@ to CDC. No scope is delegated through an empty placeholder.
 | --- | --- | --- |
 | slice01-musical-clock | Validated standalone sample Clock plus installed Gate output, fractional timing, edit/pause semantics; consumes Arc09 | Closed; CRC accepted source `a19cfd1` after iteration01 |
 | slice02-turing-machine-adapter | Opt-in rack adapter around existing seeded engine, full capability inventory, scalar snapshots and rising-edge stepping; consumes Clock | Closed; CRC accepted [iteration01](slice02-turing-machine-adapter/crc-verification.md#iteration01-review--accepted-2026-10-10) at `b2ffb16`; six rows done |
-| slice03-midi-output | Installed MIDI-out, bounded drain and executable seeded RON-to-MIDI trace; consumes adapter | Open; [CC assignment](slice03-midi-output/cc-prompt.md) issued at accepted `b2ffb16`; five rows open |
+| slice03-midi-output | Installed MIDI-out, bounded drain and executable seeded RON-to-MIDI trace; consumes adapter | Closed; [CRC accepted](slice03-midi-output/crc-verification.md) at `2942c59`; five rows done |
 | slice04-output-runtime | Extend the same example to real MIDI playback, stop/error cleanup and musical trial; consumes sink | Planned; direct single-owner runner, no new RT service |
 
 Was: three remaining slices separating sink, asynchronous service and endpoint
@@ -70,6 +70,8 @@ Persistence, Chord, remaining modules, live controls and synchronization retain
 their existing project/backlog owners after those two musical milestones.
 
 ## Version history
+
+- v1.6 — 2026-10-10: Slice03 independently accepted at `2942c59`; installed sink/trace and all five rows delivered. No design or sequence amendment; Slice04 next, parent rows open.
 
 - v1.5 — 2026-10-10: opened Slice03 installed MIDI-out and executable trace at
   accepted `b2ffb16`, with concrete buffer/admission/error API and five criteria.

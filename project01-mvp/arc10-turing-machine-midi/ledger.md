@@ -27,3 +27,7 @@ Clock and TM adapter child slices are independently accepted at `a19cfd1` and
 This supplies partial T-01/T-02 support only; sink/byte composition, note cleanup
 and endpoint witness remain unproved. T-01–T-05 remain open. Four-slice denominator
 and directive08 witness/release policy are unchanged.
+
+## Slice03 acceptance — 2026-10-10
+
+CRC accepted five M rows at `2942c59`; [independent record](slice03-midi-output/crc-verification.md) reproduces installed trace, literal ordering, bounded admission and native gates. T-01/T-02 now have actual sink/trace support, T-03 has buffer/transition support; direct playback/cleanup and endpoint witness remain Slice04 work. All five composition rows remain open pending assembly and CDC review.
