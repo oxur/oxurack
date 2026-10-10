@@ -4,11 +4,13 @@
 > at `a19cfd1` with C-01–C-06 done. CRC reviewed TM adapter source `9ba55dd`:
 > focused gates pass, but required behavioral proof is incomplete. All A rows
 > remain open. [Slice02 corrective iteration01](../project01-mvp/arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt-iteration01.md)
-> is the current CC assignment, authorized pass1/5, awaiting execution.
+> is the current assignment, authorized pass1/5; CC returned source `b2ffb16`
+> with planning evidence `61671a3`. Independent CRC review remains pending.
 > Slice03 MIDI output remains held; Duncan renewed Expedited Mode today.
 > [CDC directive08](../project01-mvp/cdc-directive08.md) now replans unissued Slice03 onward:
 > MIDI-out + runnable trace, then a direct playback runner with the endpoint trial
-> included (four Arc10 slices, was five). CRC's current Slice02 packet is unchanged.
+> included (four Arc10 slices, was five). CRC acknowledged the directive in the
+> project handoff history; the current Slice02 packet is unchanged.
 > Framework 2.6.0 prompt detail/proportionate proof applies to future assignments.
 > TM/MIDI remains first milestone, LFO/Scope second. Release stress/timing/coverage
 > work remains tracked, without blocking initial use. Earlier snapshots are history.
@@ -580,7 +582,7 @@ standalone/fresh-process oracles. A-01–A-06 are open. MIDI output/runtime,
 physical playback, Arc11 LFO/Scope and retained project quality gates remain
 future work.
 
-## CRC Slice02 review / iteration01 handoff — current, 2026-10-10
+## CRC Slice02 review / iteration01 handoff — prior state, 2026-10-10
 
 Source is clean at `9ba55dd`; CC planning packet `516afcd`/`2eb5ac1` is the
 correct latest return. CRC independently reran standalone112/rack120/TM
@@ -607,3 +609,27 @@ remain the product priorities; physical endpoint, release timing, coverage,
 broader catalog/persistence and other retained project gates remain assigned.
 Earlier handoff sections above are history; the opening estimate is explicitly
 the unrecomputed 2026-09-17 snapshot. No new percentage is asserted.
+
+## Directive08 acknowledgement / Slice02 return — current, 2026-10-10
+
+CRC refreshed project-plan v3.16, Arc10 arc-plan v1.3/design v1.2, the amended
+ledgers and directive08 against clean planning `61671a3` and implementation
+`b2ffb16d342d9a6cc800bab2713813d9646fb505`. The directive is acknowledged in
+the project plan's current Design handoff history. Three contributors and
+Expedited Mode remain active.
+
+CC has returned the test-only Slice02 iteration01 correction, with its canonical
+closing report and validation evidence in planning `61671a3`. This supersedes
+the preceding "not executed" status, not the issued assignment or prior CRC
+findings. CC reports 112 standalone, 129 rack-feature and five integration tests
+passing, with host retries retained; these results are attested until CRC
+reproduces the affected proof. A-01–A-06 remain open. Slice03 remains held until
+Slice02 acceptance and source repinning.
+
+Subsequent delivery is installed MIDI-out plus a runnable seeded sample/byte
+trace, then direct endpoint playback and stop/error cleanup in the same example,
+then Arc11's LFO/Scope workbench. Software or hardware is sufficient for the first
+real endpoint witness; an unavailable endpoint remains an explicit CDC-owned
+disposition. Async output/reconnect belongs to Arc12 when needed, and release
+coverage/timing/benchmark/soak obligations remain with Arc08. No ledger status
+or acceptance result changed during this refresh.

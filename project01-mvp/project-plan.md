@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — Arc09 and Arc10 Clock accepted; Arc10 TM adapter correction iteration01 issued after CRC review of 9ba55dd; Slice03 onward replanned for playable increments under directive08 |
+| status | active — Arc09 and Arc10 Clock accepted; Arc10 TM adapter correction iteration01 returned at b2ffb16, pending CRC review; directive08 acknowledged for playable increments from Slice03 onward |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
@@ -59,7 +59,19 @@ must use this policy, not mechanically copy the old packets.
 
 | Date | Packet | Predecessor / initiation | Status | Affected authority | Next action |
 | --- | --- | --- | --- | --- | --- |
-| 2026-10-10 | [cdc-directive08.md](cdc-directive08.md) | directive07; Duncan's project recalibration request during Arc10/Slice02 | issued; awaiting CRC acknowledgement | Unissued Slice03 onward; Arc10 T-01–T-05 and P-07 interpretation, future prompt/proof policy | Duncan relays; CRC finishes Slice02 and authors Slice03 at its accepted source |
+| 2026-10-10 | [cdc-directive08.md](cdc-directive08.md) | directive07; Duncan's project recalibration request during Arc10/Slice02; directive relayed by Duncan | CRC acknowledged after live-state check | Unissued Slice03 onward; Arc10 T-01–T-05 and P-07 interpretation, future prompt/proof policy | CRC reviews returned Slice02 correction, then authors Slice03 at its accepted source |
+
+CRC acknowledgement — 2026-10-10: read directive08, this current plan, Arc10
+arc-plan v1.3/design v1.2 and the amended project/arc ledgers. Live planning
+was clean at `61671a3eb487cbc433f721d59d645ffd60ebfb19`, including CDC's
+`9cbcd02` amendments and CC's corrective evidence. Implementation was clean at
+`b2ffb16d342d9a6cc800bab2713813d9646fb505`. This is newer than directive08's
+inspected `32e6934`/`9ba55dd`: CC has returned Slice02 iteration01 as
+proposed-done. A-01–A-06 remain open pending independent CRC review; the issued
+assignment and its gates remain unchanged. No slice/arc/project acceptance is
+claimed by this acknowledgement. CRC will repin the accepted predecessor before
+opening Slice03 and apply directive08's concrete prompt and proportionate-proof
+policy to subsequent work. Three contributors and Expedited Mode remain active.
 
 Version history: **v3.16 — 2026-10-10:** Operator's review of Arc10 progress
 triggered this smaller delivery sequence and proportionate proof policy; accepted
