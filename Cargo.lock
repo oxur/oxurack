@@ -1097,6 +1097,8 @@ dependencies = [
  "bevy_ecs",
  "bevy_time",
  "clap",
+ "ctrlc",
+ "midir",
  "oxurack-core",
  "oxurack-graph",
  "oxurack-mod-clock",

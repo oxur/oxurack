@@ -3,7 +3,11 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use oxurack::{Oxurack, Patch, SimulationDriver, TickError};
 use oxurack_core::{deserialize_patch, save_patch_to_file};
 use oxurack_mod_clock::ClockModule;
-use oxurack_mod_turingmachine::{Scale, StepOutputs, TuringMachine, TuringMachineModule};
+use oxurack_mod_turingmachine::TuringMachineModule;
+
+#[path = "../examples/turing_machine_midi/oracle.rs"]
+mod oracle;
+use oracle::expected_trace;
 
 const FIXTURE: &str = concat!(
     env!("CARGO_MANIFEST_DIR"),
@@ -36,44 +40,6 @@ fn with_patch(patch: &Patch) -> (Oxurack, std::path::PathBuf) {
     rack.load_patch(&path).unwrap();
     rack.set_driver_mode(SimulationDriver::Manual).start();
     (rack, path)
-}
-
-fn expected_engine() -> TuringMachine {
-    let mut engine =
-        TuringMachine::with_seed(oxurack::ModuleSpawnContext::new(42, "tm_main").instance_seed());
-    engine.set_write(0.75);
-    engine.set_length(8);
-    engine.set_scale(Scale::new(vec![0, 2, 4, 7, 9], "Major Pentatonic"));
-    engine.set_note_range(48..=72);
-    engine
-}
-
-fn expected_trace(samples: u64) -> Vec<(u64, [u8; 3])> {
-    let mut engine = expected_engine();
-    let mut pending: Option<StepOutputs> = None;
-    let mut active_note = None;
-    let mut expected = Vec::new();
-    for sample in 0..samples {
-        if sample % 2 == 1 {
-            let output = pending.take().expect("Clock edge at previous even sample");
-            if let Some(old) = active_note.take() {
-                expected.push((sample, [0x80, old, 0]));
-            }
-            if let Some(note) = output.note
-                && output.gate
-            {
-                let velocity = output.velocity.unwrap_or(64);
-                if velocity > 0 {
-                    expected.push((sample, [0x90, note, velocity]));
-                    active_note = Some(note);
-                }
-            }
-        }
-        if sample % 2 == 0 {
-            pending = Some(engine.tick());
-        }
-    }
-    expected
 }
 
 fn installed_seeded_trace_matches_standalone_and_literal_transition() {

@@ -107,10 +107,12 @@ that explored the same design space. The modular-MIDI stance and the
 rough shape of the module catalog carry forward; the architecture is new,
 built on Bevy ECS as the runtime substrate.
 
-### Stream a Turing Machine MIDI trace
+### Run a Turing Machine MIDI patch
 
 The installed `midi_out` sink can stream a deterministic sample-indexed MIDI
-byte trace without opening a MIDI device:
+byte trace without opening a MIDI device. The default run advances 2,000
+1 ms samples; set `--samples 0` for an empty trace or choose another finite
+sample count:
 
 ```bash
 cargo run -p oxurack --example turing-machine-midi -- \
@@ -118,7 +120,31 @@ cargo run -p oxurack --example turing-machine-midi -- \
 ```
 
 Each output row is `sample|STATUS DATA1 DATA2`, with uppercase hexadecimal
-bytes. Drain output before advancing the next sample.
+bytes. The example drains each completed sample before advancing the rack.
+
+To list the MIDI outputs available to the current host:
+
+```bash
+cargo run -p oxurack --example turing-machine-midi -- --list-outputs
+```
+
+Choose one listed output by its exact, unique name or its zero-based index to
+play the patch live. Refresh the listing before using an index because
+available indices can change between runs:
+
+```bash
+cargo run -p oxurack --example turing-machine-midi -- \
+  --patch crates/oxurack/examples/patches/turing-machine-midi.ron \
+  --output-index 0 --samples 2000
+```
+
+Live playback also ends at the sample limit. Press Ctrl-C to stop after the
+current MIDI send and trace row; the example then attempts active-note offs,
+All Notes Off, and All Sound Off on channels it used. Cleanup is best effort:
+a disconnected endpoint or forced process termination can prevent delivery.
+Live samples are paced at 1 ms and do not catch up in bursts after a slow rack
+step or MIDI send. The sample-indexed trace records successfully sent patch
+messages only; it does not prove that a synthesizer rendered or recorded them.
 
 ## License
 
