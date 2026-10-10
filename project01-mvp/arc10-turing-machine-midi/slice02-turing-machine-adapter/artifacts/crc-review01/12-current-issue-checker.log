@@ -1,0 +1,12 @@
+UTC: 2026-10-10T14:42:48.200324+00:00
+COMMAND: python3 artifacts/verify-planning.py
+CWD: /Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc10-turing-machine-midi/slice02-turing-machine-adapter
+PLANNING STATE: CRC iteration01 issue draft, not yet committed
+Slice02 packet passed: assignment, six rows, mappings, denominators, links, canonical close
+negative control rejected: missing-row
+negative control rejected: stale-assignment
+negative control rejected: missing-mapping
+negative control rejected: invalid-status
+negative control rejected: missing-close
+
+EXIT: 0

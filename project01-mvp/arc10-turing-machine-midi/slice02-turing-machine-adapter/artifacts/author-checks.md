@@ -33,3 +33,42 @@ wrong policies disagree. The source fence requires no core/RT/MIDI change.
 The structural checker passes assignment, six-row denominator, mappings,
 source allowlist and link checks, and rejects its missing-row, stale-assignment,
 missing-mapping and invalid-status controls. These are structural checks only.
+
+## CRC corrective iteration01 authoring — 2026-10-10
+
+Source baseline `9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2`, planning
+predecessor `2eb5ac138fedf21d4185d1cc2f1dd3df84c4972d`. This is the
+author's design/checker self-review; it does not independently accept a future
+CC implementation. All A rows are open. The initial author record above is
+preserved byte-identically under `iteration00/author-checks.md`.
+
+Loaded framework2.6.0, engineering-methods1.16.0 authoring guide/template,
+project-management iteration/closure rules, independent correction-review
+rules, testing discipline and Rust2.0.0 entrypoint/complete anti-patterns.
+Domain sections actually read: API-23/API-39, TD-05, DC-05. Critical source
+reads cover complete adapter/public integration/fixture, engine and quantizer
+getter diff, registry and core schedule/merge/Cable/spawn APIs. Omitted portions
+of bounded tool output were recovered before reliance; a heading hit alone
+was not treated as reading a guide. Bevy0.18.1 resource_scope signature was
+checked in the installed dependency source, not inferred from memory.
+
+The new prompt applies concrete typed error matches, strict input populations,
+private-state observations, explicit borrow scopes and actual default/length/
+scale precedence. Its examples are source-checked sketches, not compiled test
+code. The public integration sequence retains the rack until all stop/resume/
+reinstall work completes, then consumes it once. The name oracle compares
+corresponding row values and independently derived renamed seed output.
+
+The six readiness checks are recorded in the slice plan. Complete per-sample
+publication, explicit conflict inputs, summed modulation and continuing seeded
+lifecycle oracles address the actual review gaps. A test exposing a production
+defect returns to CRC; it cannot authorize production edits. The four source
+test regions, protected fixtures/dependencies and narrow CC evidence paths are
+explicit. Initial prompts/reports and raw receipts remain historical.
+
+Checker changes are bounded to the existing predicate: current assignment,
+canonical close presence and optional current-return identity/source field/
+six-row walk/bubble-up. Issue mode passes on the actual draft; return mode must
+reject the actual historical close until CC executes. New return predicates
+are exercised using a clearly labelled in-memory synthetic structural fixture,
+not a fabricated doer return. Detailed receipts live in `crc-review01/`.

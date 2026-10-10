@@ -1,13 +1,13 @@
 # Slice02 — Turing Machine rack adapter
 
-Version 1.0 — 2026-09-19. Status: open; initial assignment issued.
+Version 1.1 — 2026-10-10. Status: open; corrective iteration01 issued.
 CRC authors and reviews, CC implements, CDC reviews Arc10 composition.
 Current assignment:
-`arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt.md`.
-Source baseline: `a19cfd1a134c5934d270dc0ba72334d8f167fe2f`, clean
+`arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt-iteration01.md`.
+Current source baseline: `9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2`, clean
 `.worktrees/codex-oxurack-module-behavior-installation` on
 `codex/oxurack-module-behavior-installation`.
-Planning predecessor: `ef9d99fe7ab4f38ca46a069c4e87cd4d2e10873f`.
+Current planning predecessor: `2eb5ac138fedf21d4185d1cc2f1dd3df84c4972d`.
 Authority: [directive07](../../cdc-directive07.md), [Arc10 design](../design.md),
 and accepted [Slice01 Clock](../slice01-musical-clock/crc-verification.md).
 
@@ -200,7 +200,60 @@ Avoid assertions limited to final state, row counts or adapter-vs-adapter
 agreement. Preserve complete named traces and the independently derived
 standalone expectations.
 
-## Source scope and validation
+## Corrective iteration01 — current execution scope
+
+CRC independently reviewed the initial CC return on 2026-10-10; the full
+[review](crc-verification.md) preserves reproduced checks, limitations and
+F-01–F-05. All six rows stay open. The initial implementation appears to follow
+the approved adapter design, but the parameter/schema/preservation matrix,
+absent/idle publication, conflicts/modulation, continuing lifecycle and real
+name/unrelated-allocation negatives need discriminating evidence.
+
+The current [iteration01 assignment](cc-prompt-iteration01.md) is a test/evidence
+correction, pass 1/5. Source edits are restricted to cfg(test) portions of
+TM `rack.rs`, `engine.rs`, `quantizer.rs`, and umbrella `tests/turing_machine.rs`.
+Production sections, manifests/dependencies, tracked fixture and other source
+paths stay byte-identical to `9ba55dd`. A new test revealing a production failure
+returns to CRC before production edits. This explicit current fence supersedes
+the initial ten-path implementation allowlist below; no behavior or acceptance
+change is authorized. All initial quality gates remain required, plus focused
+umbrella TM tests in no-default mode and the current-return checker.
+
+CRC preserved the initial reports/intake/matrix/checker under
+`artifacts/iteration00/`; old logs and issued prompts are immutable. CC may
+append iteration01 intake/test evidence/results, write fresh iteration01 logs,
+update the canonical close and proposed-done ledger notes only. CRC review and
+`artifacts/crc-review01/` remain independent, protected evidence. The updated
+existing checker defaults to issuance checks; `--require-return` enforces the
+current return identity, source field, six-row walk and bubble-up. Historical
+return is intentionally rejected in that mode until CC actually returns.
+
+### Iteration01 author readiness — 2026-10-10
+
+1. **Source-grounded:** CRC inspected the complete adapter/public integration,
+   engine/getter diff and core registry/phase/merge APIs at clean `9ba55dd`;
+   the independent name-control probe reproduces the false-positive predicate.
+2. **Design-complete:** no new production behavior; the prompt resolves the
+   actual snapshot population, conflict script, numeric/Scale matrix, seeded
+   reference and resume ownership within the existing contract.
+3. **Guideline-applied:** framework2.6.0 guide/template and testing discipline;
+   Rust2.0.0 anti-patterns and verified API-23/API-39, TD-05, DC-05 sections.
+   Prompt guidance table corrects the prior broad DC-05 label and ties each
+   decision to the strict boundary, private state and observable proof.
+4. **Executable:** unit tests retain private app access; registry uses verified
+   Bevy resource_scope; integration completes all wrapper actions before its
+   consuming into_app. Sketches are explicitly source-checked, not compiled.
+5. **Falsifiable:** real name-content inequality rejects an identity-only rename;
+   complete idle/pending/continued traces distinguish clearing, lost publication,
+   duplicate systems and reseeding; both spawn and registered APIs exercise
+   strict rejection/preservation. Same-predicate checker negatives remain.
+6. **Coherent/portable:** current prompt/plan/ledger/status agree; installed skill
+   paths resolve on this host, a bounded required-reading manifest preserves
+   the governing text with implementation/recovery headroom. Current source
+   fence and permitted evidence updates are explicit; older issued documents
+   and attested claims stay historical. MIDI/Arc11 remain future work.
+
+## Initial source scope and required validation
 
 Authorized source paths:
 
@@ -248,6 +301,16 @@ tests remain counted and explained.
 ## Assignment history and versions
 
 - 2026-09-19: initial `cc-prompt.md` issued by CRC after accepting Slice01 and
-  completing directive07's required actual-source inventory. Correction count
-  starts at 0/5.
+  completing directive07's required actual-source inventory. Initial source
+  `a19cfd1a134c5934d270dc0ba72334d8f167fe2f`, planning predecessor
+  `ef9d99fe7ab4f38ca46a069c4e87cd4d2e10873f`; correction count0/5.
+  Returned by CC at `9ba55dd`, planning `516afcd`/`2eb5ac1`.
+  Disposition: returned for correction after CRC review, preserved unchanged.
+- 2026-10-10: current
+  `arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt-iteration01.md`
+  issued by CRC, predecessor `cc-prompt.md`, reason F-01–F-05 missing/weak
+  behavioral and return evidence. Disposition: active, awaiting CC execution;
+  corrective pass1/5 authorized, none executed yet. Slice03 remains held.
+- v1.1 — 2026-10-10: independent partial review and bounded test/evidence
+  corrective iteration01; acceptance/architecture unchanged.
 - v1.0 — 2026-09-19: opened complete adapter mapping, lifecycle and proof set.

@@ -1,0 +1,10 @@
+UTC: 2026-10-10T14:42:48.236671+00:00
+COMMAND: python3 artifacts/verify-planning.py --require-return
+CWD: /Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc10-turing-machine-midi/slice02-turing-machine-adapter
+PLANNING STATE: CRC iteration01 issue draft, not yet committed
+return assignment mismatch
+missing return bubble-up disposition
+missing full source provenance hash
+
+EXIT: 1
+EXPECTED: nonzero; the historical iteration00 close is not an iteration01 return.

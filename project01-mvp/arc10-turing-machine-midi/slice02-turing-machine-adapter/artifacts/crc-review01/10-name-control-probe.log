@@ -1,0 +1,10 @@
+UTC: 2026-10-10T14:28:54.325131+00:00
+COMMAND: python3 artifacts/crc-review01/name-control-probe.py
+CWD: /Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc10-turing-machine-midi/slice02-turing-machine-adapter
+candidate source: 9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2
+canonical population: 2 named instances x 24 samples x 28 output values
+current whole-Trace rename predicate: PASSES with unchanged sample/output content
+required corresponding-row content predicate: REJECTS that counterexample
+scope: oracle false positive; no production seed defect inferred
+
+EXIT: 0

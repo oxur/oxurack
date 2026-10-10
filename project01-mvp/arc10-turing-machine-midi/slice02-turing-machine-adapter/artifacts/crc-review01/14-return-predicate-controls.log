@@ -1,0 +1,9 @@
+Synthetic in-memory return fixture only; not a CC return or execution receipt.
+Checker: current CRC issue draft artifacts/verify-planning.py, same validate(texts, True) predicate.
+valid: accepted; []
+stale-return: rejected; ['return assignment mismatch']
+missing-bubble-up: rejected; ['missing return bubble-up disposition']
+missing-source-hash: rejected; ['missing full source provenance hash']
+missing-return-row: rejected; ['current return six-row walk mismatch']
+missing-close: rejected; ['missing canonical closing report', 'return assignment mismatch', 'missing return bubble-up disposition', 'missing full source provenance hash', 'current return six-row walk mismatch']
+EXIT: 0

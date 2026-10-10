@@ -1,0 +1,9 @@
+UTC: 2026-10-10T14:27:47.486005+00:00
+COMMAND: cargo clippy --locked --workspace --all-features --all-targets -- -D warnings
+CWD: /Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation
+SOURCE: 9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.30s
+warning: the following packages contain code that will be rejected by a future version of Rust: block v0.1.6
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+
+EXIT: 0

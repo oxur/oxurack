@@ -1,14 +1,15 @@
 # project01-mvp — status
 
-> Current: Arc09 independently accepted at source `37deeace`; all four E rows done.
-> Arc10 is active. Clock iteration00 returned at source `3009b1e`; CRC reproduced
-> a spawn-diagnostic defect and found incomplete C-01–C-04 behavioral evidence.
-> [Corrective iteration01](../project01-mvp/arc10-turing-machine-midi/slice01-musical-clock/cc-prompt-iteration01.md)
-> is active. C-01–C-06 remain open; corrective pass 1/5 is in use.
+> Current (2026-10-10): Arc09 is accepted at `37deeace`; Arc10 Clock is accepted
+> at `a19cfd1` with C-01–C-06 done. CRC reviewed TM adapter source `9ba55dd`:
+> focused gates pass, but required behavioral proof is incomplete. All A rows
+> remain open. [Slice02 corrective iteration01](../project01-mvp/arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt-iteration01.md)
+> is the current CC assignment, authorized pass1/5, awaiting execution.
+> Slice03 MIDI output remains held; Duncan renewed Expedited Mode today.
 > TM/MIDI remains first milestone, LFO/Scope second. Earlier snapshots are history.
 
-**Best estimate: approximately 45% of the reconstructed MVP implemented**
-(plausible range **35–55%**). The infrastructure is much further along than the
+**Historical estimate (2026-09-17): approximately 45% of the reconstructed MVP implemented**
+(plausible range **35–55%**; not recomputed for the current candidate). The infrastructure is much further along than the
 musician-facing product: a substantial engine exists, but a usable rack with
 musical modules, live controls and demonstrated recording behavior is still ahead.
 
@@ -573,3 +574,31 @@ with nine parameters and 32 ports, explicit Scale conversion and seeded
 standalone/fresh-process oracles. A-01–A-06 are open. MIDI output/runtime,
 physical playback, Arc11 LFO/Scope and retained project quality gates remain
 future work.
+
+## CRC Slice02 review / iteration01 handoff — current, 2026-10-10
+
+Source is clean at `9ba55dd`; CC planning packet `516afcd`/`2eb5ac1` is the
+correct latest return. CRC independently reran standalone112/rack120/TM
+integration5 tests, normal dependency tree, full all-target Clippy, format,
+diff and planning checks. These pass, but the full required behavioral matrix
+is not established: registered parameters/deep failure preservation, None/held
+publication, conflicts/modulation, continuing pause/reinstall and meaningful
+name/unrelated-allocation controls need repair. The name assertion accepts an
+identity-only rename with identical values; this is a test-oracle defect, not
+a claimed production seed defect.
+
+Relay to CC relative to project01-mvp:
+`arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt-iteration01.md`.
+All A rows remain open. Corrective pass1/5 is authorized but not executed.
+The prompt follows framework2.6.0/authoring guide and Rust2.0.0, with exact
+test recipes, state/ownership shapes and expected observations. Production
+source is protected. Initial evidence is preserved, with the independent
+review in Slice02 `crc-verification.md`. Full workspace/docs/Make/freshness
+were not rerun by CRC during this partial review; CC's prior attempts stay
+attested and the corrected candidate must return all gates.
+
+Arc10 remains open; Slice03 MIDI output stays held. TM MIDI then LFO/Scope
+remain the product priorities; physical endpoint, release timing, coverage,
+broader catalog/persistence and other retained project gates remain assigned.
+Earlier handoff sections above are history; the opening estimate is explicitly
+the unrecomputed 2026-09-17 snapshot. No new percentage is asserted.

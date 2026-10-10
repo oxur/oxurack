@@ -1,0 +1,15 @@
+id	command	cwd	exit	log
+01-tm-default	cargo test --locked -p oxurack-mod-turingmachine	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	0	01-tm-default.log
+02-tm-rack	cargo test --locked -p oxurack-mod-turingmachine --features rack	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	0	02-tm-rack.log
+03-integration	cargo test --locked -p oxurack --test turing_machine	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	0	03-integration.log
+04-tree	cargo tree --locked -p oxurack-mod-turingmachine --edges normal	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	0	04-tree.log
+05-clippy	cargo clippy --locked --workspace --all-features --all-targets -- -D warnings	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	0	05-clippy.log
+06-format	cargo fmt --all -- --check	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	0	06-format.log
+07-source-diff	git diff --check	/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation	0	07-source-diff.log
+08-planning	python3 artifacts/verify-planning.py	/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc10-turing-machine-midi/slice02-turing-machine-adapter/artifacts	2	08-planning.log
+09-planning-cwd-retry	python3 artifacts/verify-planning.py	/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc10-turing-machine-midi/slice02-turing-machine-adapter	0	09-planning-cwd-retry.log
+10-name-control-probe	python3 artifacts/crc-review01/name-control-probe.py	/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc10-turing-machine-midi/slice02-turing-machine-adapter	0	10-name-control-probe.log
+11-scope-audit	git -C ../codex-oxurack-module-behavior-installation diff --name-status a19cfd1..9ba55dd	/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning	0	11-scope-audit.log
+12-current-issue-checker	python3 artifacts/verify-planning.py	/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc10-turing-machine-midi/slice02-turing-machine-adapter	0	12-current-issue-checker.log
+13-prior-return-held	python3 artifacts/verify-planning.py --require-return	/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc10-turing-machine-midi/slice02-turing-machine-adapter	1	13-prior-return-held.log
+14-return-predicate-controls	Python in-memory validate(texts, True) controls; see raw method receipt	/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning/project01-mvp/arc10-turing-machine-midi/slice02-turing-machine-adapter	0	14-return-predicate-controls.log

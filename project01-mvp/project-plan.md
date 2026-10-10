@@ -3,7 +3,7 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — arc09 accepted at 37deeace; arc10 musical Clock first slice issued under directive07 |
+| status | active — Arc09 and Arc10 Clock accepted; Arc10 TM adapter correction iteration01 issued after CRC review of 9ba55dd; MIDI-output Slice03 held |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
@@ -608,3 +608,27 @@ and adapter.
 
 - v3.14 — 2026-09-19: Accepted corrected Clock and issued the fully inventoried,
   guide-authored Turing Machine adapter slice; all composition/device gates retained.
+
+## CRC Slice02 review and corrective handoff — v3.15, 2026-10-10
+
+Duncan renewed Expedited Mode after the month-long pause. CRC verified that
+CC's `9ba55dd` / `516afcd` / `2eb5ac1` packet is still the latest Slice02
+candidate. Independent focused gates reproduce, but strict API/preservation,
+complete publication/action/lifecycle and seed-control proof is incomplete.
+All A-01–A-06 remain open. [CRC review](arc10-turing-machine-midi/slice02-turing-machine-adapter/crc-verification.md)
+records the exact independent subset and a reproduced identity-only rename
+false positive; no production seed failure is inferred.
+
+Current CC assignment relative to `project01-mvp`:
+`arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt-iteration01.md`.
+It is a bounded test/evidence correction, authorized pass1/5, awaiting execution.
+The initial packet is preserved; source remains clean at `9ba55dd`.
+Slice03 stays held pending corrected candidate acceptance. No architecture,
+acceptance, arc scope or deferred-feature ownership changes.
+
+| Date | Packet | Predecessor | Status | Affected authority | Next action |
+| --- | --- | --- | --- | --- | --- |
+| 2026-10-10 | [TM adapter iteration01](arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt-iteration01.md) | initial adapter prompt; source `9ba55dd`; CRC review F-01–F-05 | issued correction, awaiting CC | All A rows open; existing design, test-only source fence | Duncan relays to CC; CC completes proof and returns committed evidence to CRC |
+
+- v3.15 — 2026-10-10: Refreshed current status and issued Slice02 test/evidence
+  correction after independent partial review. No higher-scale closure claimed.
