@@ -26,7 +26,7 @@ Authority is directive08 and design v1.2 §§4–5. The accepted endpoint implem
 
 ## Source candidate
 
-Source commit: `829feb99279b11b3f46a11e513aba577eacd6fd1` (`feat(example): add selected MIDI playback`). It follows the accepted Slice03 source directly and contains exactly these seven authorized paths:
+Source commits: `829feb99279b11b3f46a11e513aba577eacd6fd1` (`feat(example): add selected MIDI playback`) and follow-up `65522f116a12a9ac96d35cfe25ed9c184f5bddcb` (`test(example): cover zero-sample playback`). Final source head is `65522f116a12a9ac96d35cfe25ed9c184f5bddcb`; the first source commit follows the accepted Slice03 source directly. The seven authorized paths across those two source commits are:
 
 - `Cargo.lock`
 - `README.md`
@@ -44,8 +44,8 @@ The Cargo.lock delta adds only umbrella dev-dependency edges for the already loc
 
 All commands below ran from S after the final source edits unless marked as a host retry:
 
-- `cargo test --locked -p oxurack --example turing-machine-midi`: 10 passed.
-- `cargo test --locked --no-default-features -p oxurack --example turing-machine-midi`: 10 passed.
+- `cargo test --locked -p oxurack --example turing-machine-midi`: 11 passed.
+- `cargo test --locked --no-default-features -p oxurack --example turing-machine-midi`: 11 passed.
 - `cargo test --locked -p oxurack --test midi_output`: 2 passed.
 - `cargo test --locked --no-default-features -p oxurack --test midi_output`: 2 passed.
 - `make test`: passed on the host; the final RT library result was 150 passed, 0 failed, 3 ignored. The initial sandbox run failed four existing CoreMIDI initialization tests (`test_list_output_ports`, `test_open_nonexistent_port_returns_error`, `test_open_input_nonexistent_returns_error`, `test_list_input_ports`) with “MIDI support could not be initialized”; 146 tests passed and the same 3 were ignored. The exact full gate was retried on the host and passed. The 3 ignores are existing RT timing/scheduling tests.
@@ -63,7 +63,7 @@ Built-executable controls:
 - `--patch ... --output-index 999` first failed in the restricted sandbox at MIDI initialization; the host retry exited nonzero with `MIDI output index 999 is out of range; run --list-outputs for a fresh index` and no stdout rows.
 - Host `--list-outputs` on the final built executable succeeded and printed exactly `0|MIDI Bus 1` and `1|nanoKEY2 CTRL`. The sandbox listing attempt itself failed at MIDI initialization, so this host result is the relevant endpoint inventory.
 - Inline CLI checks cover listing without patch, required patch, list/selector conflicts, selector mutual exclusion, negative index, empty name and valid zero samples. Pure selection checks cover exact `AB`, ambiguous duplicate `A`, nonmatching substring `B`, duplicate index 2 and out-of-range index 3.
-- Runner tests use the actual loaded fast fixture and same `play` path: 24-sample performance trace compared with the independent oracle, note-off retry and successful-off ownership, failed first note-on/channel cleanup, ascending multi-channel cleanup despite failure, terminal/idempotent finish, primary plus cleanup error, cancellation during a successful send, fresh-session replay, and on-time/late deadline values. Cleanup bytes never enter the trace.
+- Runner tests use the actual loaded fast fixture and same `play` path: 24-sample performance trace compared with the independent oracle, zero-sample finish with no sends, note-off retry and successful-off ownership, failed first note-on/channel cleanup, ascending multi-channel cleanup despite failure, terminal/idempotent finish, primary plus cleanup error, cancellation during a successful send, fresh-session replay, and on-time/late deadline values. Cleanup bytes never enter the trace.
 
 ## Five-row proposed disposition
 
