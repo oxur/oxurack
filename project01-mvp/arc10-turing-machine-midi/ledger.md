@@ -31,3 +31,7 @@ and directive08 witness/release policy are unchanged.
 ## Slice03 acceptance — 2026-10-10
 
 CRC accepted five M rows at `2942c59`; [independent record](slice03-midi-output/crc-verification.md) reproduces installed trace, literal ordering, bounded admission and native gates. T-01/T-02 now have actual sink/trace support, T-03 has buffer/transition support; direct playback/cleanup and endpoint witness remain Slice04 work. All five composition rows remain open pending assembly and CDC review.
+
+## Slice04 issue — 2026-10-10
+
+[Direct playback/cleanup assignment](slice04-output-runtime/cc-prompt.md) issued at accepted `2942c59` with five O rows open, including actual endpoint witness. No composition row is closed by issue; unavailable O-05 must return as an explicit gap for CDC T-04 disposition.

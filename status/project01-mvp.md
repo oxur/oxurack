@@ -3,7 +3,8 @@
 > Current (2026-10-10): Arc09 accepted at `37deeace`; Arc10 Clock accepted at
 > `a19cfd1`, TM adapter at `b2ffb16` (six A rows done after independent CRC review).
 > Slice03 installed MIDI-out/trace is [CRC accepted](../project01-mvp/arc10-turing-machine-midi/slice03-midi-output/crc-verification.md)
-> at `2942c59`, five M rows done. Slice04 playback/cleanup preparation is next.
+> at `2942c59`, five M rows done. [Slice04 playback/cleanup](../project01-mvp/arc10-turing-machine-midi/slice04-output-runtime/cc-prompt.md)
+> is issued to CC at that predecessor; five O rows open, including Operator witness.
 > Three contributors and Expedited Mode remain active. Directive08 is acknowledged:
 > installed MIDI-out + runnable trace, then direct endpoint playback/cleanup in the
 > same example, then Arc11 LFO/Scope. Framework 2.6.0 authoring/proportionate proof
