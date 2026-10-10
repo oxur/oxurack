@@ -1,6 +1,6 @@
 # Slice04 — direct MIDI playback, cleanup and first musical trial
 
-Version 1.0 — 2026-10-10. Status: open; initial CC assignment issued by CRC.
+Version 1.1 — 2026-10-10. Status: open; software accepted, Operator witness pending.
 Project01 / Arc10, Three-Contributor Workflow, Expedited Mode.
 Current assignment: `arc10-turing-machine-midi/slice04-output-runtime/cc-prompt.md`.
 Accepted predecessor: `2942c594a445b5de3ef8f131cdedaa6095aa1529`, clean on
@@ -95,3 +95,14 @@ preserved. Commits use only explicit actual path lists, source before evidence.
 - 2026-10-10: CRC opened/issued initial cc-prompt.md after independently closing
   Slice03 at `2942c59`. Five O rows open, including explicit Operator witness O-05.
   No corrective pass and no Arc10/Arc11 advancement by this issue.
+
+## CRC software review — 2026-10-10
+
+[Independent review](crc-verification.md) accepts O-01–O-04 at `65522f1`; all
+required software gates and original trace compatibility reproduce. O-05 stays
+open for Duncan's named endpoint, receiver/routing, musical and stop observation.
+Actual host outputs exist; this is not an unavailable-endpoint disposition.
+No corrective prompt, slice close, arc acceptance or Arc11 advancement. Issued
+assignment is preserved; source remains clean and unchanged by CRC.
+
+Version history: v1.1 records partial acceptance without changing the contract.
