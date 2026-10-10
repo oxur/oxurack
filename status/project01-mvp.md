@@ -6,7 +6,12 @@
 > remain open. [Slice02 corrective iteration01](../project01-mvp/arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt-iteration01.md)
 > is the current CC assignment, authorized pass1/5, awaiting execution.
 > Slice03 MIDI output remains held; Duncan renewed Expedited Mode today.
-> TM/MIDI remains first milestone, LFO/Scope second. Earlier snapshots are history.
+> [CDC directive08](../project01-mvp/cdc-directive08.md) now replans unissued Slice03 onward:
+> MIDI-out + runnable trace, then a direct playback runner with the endpoint trial
+> included (four Arc10 slices, was five). CRC's current Slice02 packet is unchanged.
+> Framework 2.6.0 prompt detail/proportionate proof applies to future assignments.
+> TM/MIDI remains first milestone, LFO/Scope second. Release stress/timing/coverage
+> work remains tracked, without blocking initial use. Earlier snapshots are history.
 
 **Historical estimate (2026-09-17): approximately 45% of the reconstructed MVP implemented**
 (plausible range **35–55%**; not recomputed for the current candidate). The infrastructure is much further along than the

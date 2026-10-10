@@ -32,7 +32,7 @@ No original criterion, target or verifier is removed.
 
 | ID | Criterion | Verify | Significance | Origin | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| P-07 | TM plays through the Bevy rack and Clock/LFO/Scope make it observable | Reproduce seeded static-patch MIDI stream, witness selected physical endpoint playback, then inspect known signals and MIDI with bounded workbench capture | correctness-grade | Operator TM-first/workbench-second selection; CDC directive03 | open | — | M1 precedes M2; physical observation and final timing gates remain distinct |
+| P-07 | TM plays through the Bevy rack and Clock/LFO/Scope make it observable | Reproduce seeded static-patch MIDI stream, witness selected software or hardware MIDI endpoint playback and inspect known signals and MIDI with bounded workbench capture | correctness-grade | Operator TM-first/workbench-second selection; CDC directive03 | open | — | Witness remains required for this row; Arc11 may proceed with the device gap explicit under directive08; P-03 hardware timing unchanged |
 
 ## Arc09 acceptance — 2026-09-18
 
@@ -41,3 +41,13 @@ accepts executable/sample/seed composition at `37deeace`; this is supporting evi
 for P-01/P-02/P-05/P-07, not their closure. All seven project rows remain open.
 Arc10 now owns the planned Clock→TM→MIDI delivery and physical endpoint witness;
 historical deferred rows retain successor/re-entry conditions.
+
+## Delivery-policy amendment — 2026-10-10
+
+Directive08, authorized by Duncan's Arc10 progress review, amends P-07's initial
+endpoint to software OR hardware (was physical-only) and permits workbench work
+while the witness is unavailable; it does not close P-07. P-03/P-04/P-05 retain
+physical timing, final musical acceptance and release validation obligations.
+These are not entry gates for M1/M2. All seven project rows remain open. Arc10's
+unissued endpoint-only slice is absorbed into playback; future async output is
+owned by Arc12 runtime API, re-entering when concurrent live operation needs it.

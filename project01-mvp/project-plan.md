@@ -3,14 +3,70 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — Arc09 and Arc10 Clock accepted; Arc10 TM adapter correction iteration01 issued after CRC review of 9ba55dd; MIDI-output Slice03 held |
+| status | active — Arc09 and Arc10 Clock accepted; Arc10 TM adapter correction iteration01 issued after CRC review of 9ba55dd; Slice03 onward replanned for playable increments under directive08 |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
 | source baseline | `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` on `main`; original migration baseline retained below |
 | planning home | `planning` branch, `.worktrees/planning/project01-mvp` |
 
-## Purpose and definition of done
+## Current direction — v3.16, 2026-10-10
+
+Duncan requested a recalibration during Arc10/Slice02 review: this is unreleased
+open-source music software, and excessive defensive infrastructure, proof tooling
+and reporting have delayed usable behavior. [Directive08](cdc-directive08.md)
+is current authority for **unissued work from Slice03 onward**, applying
+collaboration-framework **2.6.0**. Slice02's issued correction/review is unchanged.
+The older sections below are a dated history; their old "current" assignments
+and superseded future design/gates must not be inherited into new prompts.
+
+The immediate product is a Turing Machine playing through the Bevy rack, followed
+by Clock/LFO/Scope as a useful testing workbench. Plan and assess progress by
+runnable musical capabilities. The broad reconstructed catalog is a retained
+backlog/release envelope, not a prerequisite to testing this first instrument.
+
+| Order | Deliverable | Boundary |
+| --- | --- | --- |
+| Arc10/Slice02 | Finish the current adapter correction and independent review | Existing assignment, no restart or changed acceptance |
+| Arc10/Slice03 | Installed MIDI-out plus a runnable seeded RON patch emitting a sample/byte trace | Real module/schedule integration and a small drain API |
+| Arc10/Slice04 | The same example plays a selected software or hardware MIDI endpoint and cleans up on stop/error | Single-owner direct runner; musical witness included |
+| Arc11 | LFO with a runnable modulation example, bounded Scope capture, then an inspection workbench | Reuse Clock, rack execution and MIDI trace; defer polished UI |
+| Arc12/13 and Arc07 | Live persistence/API/events, remaining catalog, CLI/REPL/controllers | Re-enter from musical use; preserve inventory and Chord candidate |
+| Arc08 / release | Coverage provenance/95%, hardware jitter, benchmarks, soak, broader musical acceptance | Retained obligations, not M1/M2 entry gates |
+
+**Was:** Arc10 had three remaining slices, including a dedicated asynchronous
+output service and standalone endpoint acceptance. **Now:** two remaining slices;
+unissued Slice05 is folded into Slice04, with fresh-process replay in Slice03.
+Arc10 design v1.2 replaces the mandatory batch/control/ack/join machinery. Arc12's
+runtime API owns future concurrent output/reconnect if needed; old exact mechanics
+are alternatives to evaluate, not inherited compulsory work. No future directories
+or acceptance records are created merely to hold that intention.
+
+Real endpoint witnessing remains required to claim demonstrated M1 playback.
+Software MIDI is an acceptable first destination. If none is available, CDC may
+close software composition with T-04 explicitly deferred to Arc08's musical/device
+acceptance and proceed to Arc11; M1 witness remains outstanding. P-03's physical
+hardware timing and P-04's final musical session are unchanged.
+
+For all remaining prompts, the author does the larger design thinking and supplies
+concrete types, wiring, examples, failure policy and discriminating test oracles.
+CC gets tactical freedom inside approved behavior. Directive08 specifies bounded
+reading, checks and evidence retention. New validation tools need a named gap;
+planning/reporting is not itself the default next deliverable. Future arc planning
+must use this policy, not mechanically copy the old packets.
+
+### Design handoff history — current
+
+| Date | Packet | Predecessor / initiation | Status | Affected authority | Next action |
+| --- | --- | --- | --- | --- | --- |
+| 2026-10-10 | [cdc-directive08.md](cdc-directive08.md) | directive07; Duncan's project recalibration request during Arc10/Slice02 | issued; awaiting CRC acknowledgement | Unissued Slice03 onward; Arc10 T-01–T-05 and P-07 interpretation, future prompt/proof policy | Duncan relays; CRC finishes Slice02 and authors Slice03 at its accepted source |
+
+Version history: **v3.16 — 2026-10-10:** Operator's review of Arc10 progress
+triggered this smaller delivery sequence and proportionate proof policy; accepted
+work, current Slice02 and the broader release backlog are retained. No evidence
+or ledger status upgraded by planning changes.
+
+## Purpose and definition of done — retained release envelope
 
 Deliver a small, reproducible modular MIDI rack: assemble modules, route typed
 signals, save/load seeded patches, drive an external synth or DAW, and operate
@@ -233,8 +289,8 @@ P-01–P-06 remain open. Arc08/slice01 is accepted as observation evidence only.
 | Current owner | Scope / concrete next identifiers | State and dependency |
 | --- | --- | --- |
 | [Arc09 executable rack](arc09-executable-rack/arc-plan.md) | Three original slices plus slice04-sample-stop-accounting | Closed; CDC accepts four rows at 37deeace |
-| [Arc10 TM/MIDI](arc10-turing-machine-midi/arc-plan.md) | slice01-musical-clock; slice02-turing-machine-adapter; slice03-midi-output; slice04-output-runtime; slice05-endpoint-acceptance | Active: Slice01 Clock issued; remaining slices planned in dependency order |
-| arc11-observation-workbench | slice01-lfo; slice02-scope-capture; slice03-workbench-integration | Planned after M1; enrich existing Clock, bounded scalar/event observation and minimal inspection |
+| [Arc10 TM/MIDI](arc10-turing-machine-midi/arc-plan.md) | slice01-musical-clock; slice02-turing-machine-adapter; slice03-midi-output; slice04-output-runtime | Current four-slice sequence: see v3.16 above; unissued Slice05 absorbed |
+| arc11-observation-workbench | slice01-lfo; slice02-scope-capture; slice03-workbench-integration | Planned after Arc10 software composition; reuse Clock, bounded scalar/event observation and minimal inspection |
 | arc12-live-rack-operations | slice01-live-persistence; slice02-events-and-metadata; slice03-graph-composition; slice04-runtime-api | Retains remaining original arcs02–05 obligations after M1/M2; original requirements remain the input when detailed |
 | arc13-remaining-module-catalog | slice01-catalog-reentry, then per-module slices selected from the retained catalog | Planned after M2; preserves the original eleven-module denominator, standalone compatibility, MIDI-in and extension deferrals |
 | Arc07 live interface | Minimal workbench presentation, then full approved CLI/REPL/controller needs | Existing planned domain; no mandatory four-pane UI or broader feature expansion |

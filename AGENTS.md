@@ -17,7 +17,8 @@ the restart-planning conversation is CDC. CRC and CC are separate contexts
 selected by Duncan (Operator); no context is implicitly created or assigned.
 CDC owns architecture, arc plans and first slices; CRC reviews CC and advances
 approved slices. All handoffs pass through the Operator. Read the project plan
-and `project01-mvp/cdc-directive07.md` for the current assignment and gates.
+and `project01-mvp/cdc-directive08.md` for future work from Arc10/Slice03;
+Slice02 retains its explicitly recorded active assignment and gates.
 Use `crc-verification.md` for new slice review, and both CRC and CDC records
 for arc/project closure. Never relabel historical evidence as independent.
 Expedited Mode requires explicit-path scoped commits, preserved prompts,
@@ -43,4 +44,16 @@ and companion `knowledge/engineering-methods/templates/cc-implementation-prompt.
 The author inspects source and relevant domain chapters, resolves consequential
 decisions, supplies a file/symbol recipe and behavioral test oracles, and records
 the six readiness checks in the slice plan. Asking CC to read skills is insufficient.
-Preserve issued prompts; directive04 governs authoring quality; directive07 governs the current Arc10/Clock handoff.
+Preserve issued prompts. Framework 2.6.0 and directive08 govern authoring/proof
+from Arc10/Slice03 onward. Earlier directives/prompts are historical unless the
+active assignment names a still-binding section. Read the current section at
+the top of project-plan.md; do not treat its appended historical "current" notes
+as simultaneous instructions.
+
+This is unreleased music software. Future feature prompts authorize implementation
+and related integration changes; a blanket "production code protected" rule is
+inappropriate. Authors resolve strategic decisions and supply worked code shapes;
+CC may adapt local mechanics within approved behavior. Reuse real execution tests,
+retain unaffected independent evidence where justified, and justify any new proof
+tooling. Deliver runnable musical behavior in each feature slice. Reports stay in
+the existing records with concise command/results; no new process layer by default.
