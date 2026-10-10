@@ -3,14 +3,14 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — Arc09 and Arc10 Clock accepted; Arc10 TM adapter accepted at b2ffb16; Slice03 ready for CRC authoring; directive08 acknowledged for playable increments from Slice03 onward |
+| status | active — Arc09 and Arc10 Clock accepted; Arc10 TM adapter accepted at b2ffb16; Slice03 MIDI-out/trace assignment issued; directive08 acknowledged for playable increments from Slice03 onward |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
 | source baseline | `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` on `main`; original migration baseline retained below |
 | planning home | `planning` branch, `.worktrees/planning/project01-mvp` |
 
-## Current direction — v3.16, 2026-10-10
+## Current direction — v3.17, 2026-10-10
 
 Duncan requested a recalibration during Arc10/Slice02 review: this is unreleased
 open-source music software, and excessive defensive infrastructure, proof tooling
@@ -27,7 +27,7 @@ backlog/release envelope, not a prerequisite to testing this first instrument.
 
 | Order | Deliverable | Boundary |
 | --- | --- | --- |
-| Arc10/Slice02 | Finish the current adapter correction and independent review | Existing assignment, no restart or changed acceptance |
+| Arc10/Slice02 | Complete seeded adapter; CRC accepted at `b2ffb16` | Six child rows done; source becomes Slice03 predecessor |
 | Arc10/Slice03 | Installed MIDI-out plus a runnable seeded RON patch emitting a sample/byte trace | Real module/schedule integration and a small drain API |
 | Arc10/Slice04 | The same example plays a selected software or hardware MIDI endpoint and cleans up on stop/error | Single-owner direct runner; musical witness included |
 | Arc11 | LFO with a runnable modulation example, bounded Scope capture, then an inspection workbench | Reuse Clock, rack execution and MIDI trace; defer polished UI |
@@ -59,7 +59,7 @@ must use this policy, not mechanically copy the old packets.
 
 | Date | Packet | Predecessor / initiation | Status | Affected authority | Next action |
 | --- | --- | --- | --- | --- | --- |
-| 2026-10-10 | [cdc-directive08.md](cdc-directive08.md) | directive07; Duncan's project recalibration request during Arc10/Slice02; directive relayed by Duncan | CRC acknowledged after live-state check | Unissued Slice03 onward; Arc10 T-01–T-05 and P-07 interpretation, future prompt/proof policy | CRC accepted Slice02 at b2ffb16; authors Slice03 at that accepted source |
+| 2026-10-10 | [cdc-directive08.md](cdc-directive08.md) | directive07; Duncan's project recalibration request during Arc10/Slice02; directive relayed by Duncan | CRC acknowledged after live-state check | Unissued Slice03 onward; Arc10 T-01–T-05 and P-07 interpretation, future prompt/proof policy | CRC accepted Slice02 at b2ffb16; issued Slice03 MIDI-out/trace assignment |
 
 CRC acknowledgement — 2026-10-10: read directive08, this current plan, Arc10
 arc-plan v1.3/design v1.2 and the amended project/arc ledgers. Live planning
@@ -73,7 +73,11 @@ claimed by this acknowledgement. CRC will repin the accepted predecessor before
 opening Slice03 and apply directive08's concrete prompt and proportionate-proof
 policy to subsequent work. Three contributors and Expedited Mode remain active.
 
-Version history: **v3.16 — 2026-10-10:** Operator's review of Arc10 progress
+Version history: **v3.17 — 2026-10-10:** CRC accepted Slice02 at `b2ffb16`
+and issued the [Slice03 MIDI-out/trace packet](arc10-turing-machine-midi/slice03-midi-output/cc-prompt.md);
+all parent composition rows remain open.
+
+**v3.16 — 2026-10-10:** Operator's review of Arc10 progress
 triggered this smaller delivery sequence and proportionate proof policy; accepted
 work, current Slice02 and the broader release backlog are retained. No evidence
 or ledger status upgraded by planning changes.
@@ -708,3 +712,13 @@ A rows are done, with [reproduction and bubble-up](arc10-turing-machine-midi/sli
 No substantive design change arose. Directive08 governs immediate Slice03
 authoring at this accepted source. Arc10 and all project composition rows
 remain open; this is adapter acceptance, not MIDI playback acceptance.
+
+## Slice03 CC handoff — 2026-10-10
+
+Current assignment: `arc10-turing-machine-midi/slice03-midi-output/cc-prompt.md`,
+at accepted clean source `b2ffb16`, planning predecessor `95bf441`. Five M rows
+open. The packet implements directive08/design v1.2: installed sink, bounded
+facade drain and runnable seeded trace, with code sketches and real behavior
+oracles. A narrow ordering label on the existing core sample-start boundary
+allows admission before the latch; no phase/driver/clock is added. CRC performs
+independent review after CC return. Slice04 remains unissued.

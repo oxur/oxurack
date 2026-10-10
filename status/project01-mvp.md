@@ -1,19 +1,15 @@
 # project01-mvp — status
 
-> Current (2026-10-10): Arc09 is accepted at `37deeace`; Arc10 Clock is accepted
-> at `a19cfd1` with C-01–C-06 done. CRC reviewed TM adapter source `9ba55dd`:
-> its proof correction is now independently accepted at `b2ffb16`. A-01–A-06
-> are done. [Slice02 corrective iteration01](../project01-mvp/arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt-iteration01.md)
-> is the current assignment, authorized pass1/5; CC returned source `b2ffb16`
-> with planning evidence `61671a3`; CRC acceptance is recorded in the slice review.
-> Slice03 MIDI output is released for authoring; Expedited Mode remains active.
-> [CDC directive08](../project01-mvp/cdc-directive08.md) now replans unissued Slice03 onward:
-> MIDI-out + runnable trace, then a direct playback runner with the endpoint trial
-> included (four Arc10 slices, was five). CRC acknowledged the directive in the
-> project handoff history; the current Slice02 packet is unchanged.
-> Framework 2.6.0 prompt detail/proportionate proof applies to future assignments.
-> TM/MIDI remains first milestone, LFO/Scope second. Release stress/timing/coverage
-> work remains tracked, without blocking initial use. Earlier snapshots are history.
+> Current (2026-10-10): Arc09 accepted at `37deeace`; Arc10 Clock accepted at
+> `a19cfd1`, TM adapter at `b2ffb16` (six A rows done after independent CRC review).
+> [Slice03 MIDI-out/trace assignment](../project01-mvp/arc10-turing-machine-midi/slice03-midi-output/cc-prompt.md)
+> is issued to CC at accepted `b2ffb16`; five M rows open. Slice04 remains unissued.
+> Three contributors and Expedited Mode remain active. Directive08 is acknowledged:
+> installed MIDI-out + runnable trace, then direct endpoint playback/cleanup in the
+> same example, then Arc11 LFO/Scope. Framework 2.6.0 authoring/proportionate proof
+> and Rust 2.0.0 are applied. Arc10/project composition rows remain open;
+> no MIDI endpoint witness is claimed. Async output has an Arc12 successor;
+> coverage/timing/benchmark/soak remain Arc08/release work. Earlier snapshots are history.
 
 **Historical estimate (2026-09-17): approximately 45% of the reconstructed MVP implemented**
 (plausible range **35–55%**; not recomputed for the current candidate). The infrastructure is much further along than the
@@ -634,7 +630,7 @@ disposition. Async output/reconnect belongs to Arc12 when needed, and release
 coverage/timing/benchmark/soak obligations remain with Arc08. No ledger status
 or acceptance result changed during this refresh.
 
-## CRC Slice02 accepted — current, 2026-10-10
+## CRC Slice02 accepted — prior handoff state, 2026-10-10
 
 Source `b2ffb16` is independently accepted: six A rows done after corrected
 behavioral tests, source-boundary inspection, host workspace matrices, strict
@@ -643,3 +639,14 @@ limitations are in Slice02 `crc-verification.md` and `artifacts/crc-review02/`.
 No production edit or design escalation was needed. Slice03 is now ready for
 CRC authoring under directive08 at this accepted predecessor. Arc10/project
 rows remain open; MIDI playback and the endpoint witness remain ahead.
+
+## Slice03 MIDI-out/trace issued — current, 2026-10-10
+
+CRC closed Slice02 and committed independent acceptance as `95bf441`. Source
+remains clean at `b2ffb16d342d9a6cc800bab2713813d9646fb505`. Current CC prompt:
+`arc10-turing-machine-midi/slice03-midi-output/cc-prompt.md`. Five M rows open.
+The packet supplies concrete Rust data/API shapes, note/CC transitions, strict
+validation, bounded output and pre-latch admission/partial completion, real RON
+wiring and focused tests. Its runnable headless example is the next deliverable;
+Slice04 adds actual endpoint playback. No additional design gate is needed
+within directive08; CC implementation and independent CRC review are next.

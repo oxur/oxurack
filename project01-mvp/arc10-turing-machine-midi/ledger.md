@@ -19,3 +19,11 @@ unissued async admission/recovery machinery with the direct runner contract;
 T-04 permits an actual software endpoint and an explicit availability deferral;
 T-05 counts four slices (was five). All five rows remain open. Physical timing
 stays project P-03/Arc08; the old protocol is preserved in Git at `32e6934`.
+
+## Slice02 acceptance / Slice03 issue — 2026-10-10
+
+Clock and TM adapter child slices are independently accepted at `a19cfd1` and
+`b2ffb16`. Slice03 installed MIDI-out/trace is now issued with five M rows open.
+This supplies partial T-01/T-02 support only; sink/byte composition, note cleanup
+and endpoint witness remain unproved. T-01–T-05 remain open. Four-slice denominator
+and directive08 witness/release policy are unchanged.

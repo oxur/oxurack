@@ -1,6 +1,6 @@
 # Arc10 — Turing Machine MIDI in the rack
 
-Version 1.4 — 2026-10-10. Status: open; Slices01–02 accepted, Slice03 ready for CRC authoring.
+Version 1.5 — 2026-10-10. Status: open; Slices01–02 accepted, Slice03 issued to CC.
 Depends on: Arc09 at source `37deeace90e7fe2dff633ada9d58ef9051577c3d`.
 Delivers: M1 playback; software composition enables Arc11 observation workbench.
 Workflow: Three contributors, Expedited Mode; Duncan relays CDC/CRC/CC packets.
@@ -18,9 +18,9 @@ accepted foundations. No new simulation or independent RT clock authority.
 
 The detailed [M1 design](design.md) refines the existing execution contract.
 Slice01's exact Clock contract lives in its [plan](slice01-musical-clock/slice-plan.md).
-Later slices receive full API/test recipes before issue; their directories do
-not exist yet. CRC details them within this design, escalating incompatible
-changes through Duncan to CDC. No scope is delegated through an empty placeholder.
+Slice03 now has its concrete API/test packet; Slice04 remains unissued. CRC
+details them within this design, escalating incompatible changes through Duncan
+to CDC. No scope is delegated through an empty placeholder.
 
 ## Slice sequence
 
@@ -28,7 +28,7 @@ changes through Duncan to CDC. No scope is delegated through an empty placeholde
 | --- | --- | --- |
 | slice01-musical-clock | Validated standalone sample Clock plus installed Gate output, fractional timing, edit/pause semantics; consumes Arc09 | Closed; CRC accepted source `a19cfd1` after iteration01 |
 | slice02-turing-machine-adapter | Opt-in rack adapter around existing seeded engine, full capability inventory, scalar snapshots and rising-edge stepping; consumes Clock | Closed; CRC accepted [iteration01](slice02-turing-machine-adapter/crc-verification.md#iteration01-review--accepted-2026-10-10) at `b2ffb16`; six rows done |
-| slice03-midi-output | Installed MIDI-out, bounded drain and executable seeded RON-to-MIDI trace; consumes adapter | Planned; CRC authors after Slice02 acceptance |
+| slice03-midi-output | Installed MIDI-out, bounded drain and executable seeded RON-to-MIDI trace; consumes adapter | Open; [CC assignment](slice03-midi-output/cc-prompt.md) issued at accepted `b2ffb16`; five rows open |
 | slice04-output-runtime | Extend the same example to real MIDI playback, stop/error cleanup and musical trial; consumes sink | Planned; direct single-owner runner, no new RT service |
 
 Was: three remaining slices separating sink, asynchronous service and endpoint
@@ -70,6 +70,10 @@ Persistence, Chord, remaining modules, live controls and synchronization retain
 their existing project/backlog owners after those two musical milestones.
 
 ## Version history
+
+- v1.5 — 2026-10-10: opened Slice03 installed MIDI-out and executable trace at
+  accepted `b2ffb16`, with concrete buffer/admission/error API and five criteria.
+  Directive08 design/sequence retained; no new acceptance or architecture gate.
 
 - v1.4 — 2026-10-10: CRC independently accepted Slice02 correction at `b2ffb16`;
   six child rows done. No architecture/acceptance amendment; Slice03 may open
