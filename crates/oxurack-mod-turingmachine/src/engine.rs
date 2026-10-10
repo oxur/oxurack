@@ -489,6 +489,8 @@ mod tests {
         let main_scale = Scale::new(vec![0, 2, 5, 7, 9], "Main Getter Scale");
         let output_scale = Scale::new(vec![0, 3, 6, 8, 10], "Output Getter Scale");
         let mut tm = TuringMachine::with_seed(42);
+        tm.set_length(12);
+        assert_eq!(tm.current_length(), 12);
         tm.set_length_position(3);
         tm.set_scale(main_scale.clone());
         tm.set_root(7);
@@ -503,6 +505,9 @@ mod tests {
         assert_eq!(tm.note_range(), 41..=73);
         assert_eq!(tm.scale_output_scale(), &output_scale);
         assert_eq!(tm.scale_output_root(), 5);
+        tm.set_length(16);
+        assert_eq!(tm.length_position(), 8);
+        assert_eq!(tm.current_length(), 16);
     }
 
     // -- modulate_write test -------------------------------------------------

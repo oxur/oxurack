@@ -252,9 +252,9 @@ fn optional_values(
     values.push((valid_name.to_owned(), Value::Gate(value.is_some())));
 }
 
-fn configured_engine(instance_name: &str, primary: bool) -> TuringMachine {
+fn configured_engine(master_seed: u64, instance_name: &str, primary: bool) -> TuringMachine {
     let mut engine = TuringMachine::with_seed(
-        oxurack_core::ModuleSpawnContext::new(42, instance_name).instance_seed(),
+        oxurack_core::ModuleSpawnContext::new(master_seed, instance_name).instance_seed(),
     );
     if primary {
         engine.set_write(0.75);
@@ -278,7 +278,11 @@ fn configured_engine(instance_name: &str, primary: bool) -> TuringMachine {
 }
 
 fn assert_delayed_standalone_match(run: &Run) {
-    for (name, primary) in [("tm_primary", true), ("tm_secondary", false)] {
+    assert_delayed_standalone_match_for(run, 42, "tm_primary");
+}
+
+fn assert_delayed_standalone_match_for(run: &Run, master_seed: u64, primary_name: &str) {
+    for (name, primary) in [(primary_name, true), ("tm_secondary", false)] {
         let rows = run.trace.rows.get(name).expect("TM trace should exist");
         assert_eq!(rows.len(), 24, "complete Observe trace for {name}");
         for (sample, row) in rows.iter().enumerate() {
@@ -292,18 +296,32 @@ fn assert_delayed_standalone_match(run: &Run) {
                 OUTPUT_NAMES
             );
         }
-        let mut engine = configured_engine(name, primary);
+        let mut engine = configured_engine(master_seed, name, primary);
         let mut pending = None;
+        let mut last_published = expected_step_values(&StepOutputs::default());
+        last_published[0].1 = Value::Gate(false);
         for sample in 0..24_u64 {
+            let expected = if sample == 0 {
+                last_published.clone()
+            } else if sample % 2 == 1 {
+                last_published = expected_step_values(
+                    pending
+                        .take()
+                        .as_ref()
+                        .expect("delayed odd sample has pending step"),
+                );
+                last_published.clone()
+            } else {
+                let mut held = last_published.clone();
+                held[0].1 = Value::Gate(false);
+                held
+            };
+            assert_eq!(
+                rows[sample as usize].values, expected,
+                "standalone full-sample oracle differs for {name} at sample {sample}",
+            );
             if sample % 2 == 0 {
                 pending = Some(engine.tick());
-            }
-            if sample % 2 == 1 {
-                assert_eq!(
-                    run.trace.rows[name][sample as usize].values,
-                    expected_step_values(pending.as_ref().expect("odd sample has pending step")),
-                    "standalone oracle differs for {name} at sample {sample}",
-                );
             }
         }
     }
@@ -365,15 +383,55 @@ fn manual_live_groupings_and_reversed_patch_order_match() {
     reversed.modules.reverse();
     reversed.cables.reverse();
     assert_eq!(run_patch(&reversed, &[24], false), manual_one);
+
+    let mut inserted = patch.clone();
+    let mut extra_observer = inserted
+        .modules
+        .iter()
+        .find(|module| module.kind == TraceObserver::KIND)
+        .expect("fixture observer")
+        .clone();
+    extra_observer.instance_name = "trace_extra".to_owned();
+    let first_tm = inserted
+        .modules
+        .iter()
+        .position(|module| module.kind == TuringMachineModule::KIND)
+        .expect("fixture TM");
+    inserted.modules.insert(first_tm, extra_observer);
+    assert_eq!(run_patch(&inserted, &[24], false), manual_one);
+
+    let mut removed = patch.clone();
+    removed
+        .modules
+        .retain(|module| module.instance_name != "trace_unrelated");
+    assert_eq!(run_patch(&removed, &[24], false), manual_one);
 }
 
 #[test]
 fn changed_seed_and_instance_name_change_trace() {
     let patch = fixture();
     let baseline = run_patch(&patch, &[24], false);
+    assert_delayed_standalone_match(&baseline);
+
     let mut seed_changed = patch.clone();
     seed_changed.master_seed = 43;
-    assert_ne!(run_patch(&seed_changed, &[24], false).trace, baseline.trace);
+    let changed_seed_run = run_patch(&seed_changed, &[24], false);
+    assert_delayed_standalone_match_for(&changed_seed_run, 43, "tm_primary");
+    assert_eq!(
+        changed_seed_run.trace.rows["tm_primary"].len(),
+        baseline.trace.rows["tm_primary"].len()
+    );
+    assert_eq!(
+        changed_seed_run.trace.rows["tm_secondary"].len(),
+        baseline.trace.rows["tm_secondary"].len()
+    );
+    assert!(
+        baseline.trace.rows["tm_primary"]
+            .iter()
+            .zip(&changed_seed_run.trace.rows["tm_primary"])
+            .any(|(before, after)| before.values != after.values),
+        "changed master seed must change primary output contents"
+    );
 
     let mut name_changed = patch.clone();
     for module in &mut name_changed.modules {
@@ -386,41 +444,127 @@ fn changed_seed_and_instance_name_change_trace() {
             cable.target.0 = "tm_renamed".to_owned();
         }
     }
-    assert_ne!(run_patch(&name_changed, &[24], false).trace, baseline.trace);
+    let renamed_run = run_patch(&name_changed, &[24], false);
+    assert_delayed_standalone_match_for(&renamed_run, 42, "tm_renamed");
+    let baseline_rows = &baseline.trace.rows["tm_primary"];
+    let renamed_rows = &renamed_run.trace.rows["tm_renamed"];
+    assert_eq!(baseline_rows.len(), renamed_rows.len());
+    assert!(
+        baseline_rows
+            .iter()
+            .zip(renamed_rows)
+            .any(|(a, b)| a.values != b.values)
+    );
+    assert_eq!(
+        baseline.trace.rows["tm_secondary"],
+        renamed_run.trace.rows["tm_secondary"]
+    );
 }
 
 #[test]
 fn stop_pending_resume_and_reinstall_preserve_progress() {
-    let path = Path::new(FIXTURE);
-    let mut rack = new_rack();
-    rack.load_patch(path).expect("fixture should load");
-    rack.set_driver_mode(SimulationDriver::Manual).start();
-    assert_eq!(rack.advance_samples(1).unwrap(), 1);
-    rack.stop();
-    assert_eq!(rack.advance_samples(3).unwrap(), 0);
-    rack.install::<ClockModule>();
-    rack.install::<TuringMachineModule>();
-    rack.start();
-    assert_eq!(rack.advance_samples(1).unwrap(), 1);
-    rack.stop();
-    let app = rack.into_app();
-    let trace = app.world().resource::<Trace>();
-    assert_eq!(trace.rows["tm_primary"][0].sample, 0);
+    fn collect(rack: Oxurack) -> Run {
+        let app = rack.into_app();
+        Run {
+            trace: app.world().resource::<Trace>().clone(),
+            sample_time: *app.world().resource::<SampleTime>(),
+        }
+    }
+    fn assert_stopped(rack: &mut Oxurack) {
+        let time = rack.sample_time();
+        assert_eq!(rack.advance_samples(0).unwrap(), 0);
+        assert_eq!(rack.advance_samples(3).unwrap(), 0);
+        assert_eq!(
+            rack.sample_time(),
+            time,
+            "stopped calls leave SampleTime unchanged"
+        );
+    }
+
+    let uninterrupted = run_patch(&fixture(), &[24], false);
+    assert_delayed_standalone_match(&uninterrupted);
+
+    // Stop after Consume created the sample-0 snapshot but before Produce 1.
+    // Clock is high at this boundary and its pending TM snapshot must survive.
+    let mut pending = new_rack();
+    pending.load_patch(Path::new(FIXTURE)).unwrap();
+    pending.set_driver_mode(SimulationDriver::Manual).start();
+    assert_eq!(pending.advance_samples(1).unwrap(), 1);
+    pending.stop();
+    assert_stopped(&mut pending);
+    pending.install::<ClockModule>();
+    pending.install::<TuringMachineModule>();
+    pending.start();
+    assert_eq!(pending.advance_samples(23).unwrap(), 23);
+    pending.stop();
+    let pending_run = collect(pending);
     assert_eq!(
-        trace.rows["tm_primary"][0].values[0],
-        ("step".to_owned(), Value::Gate(false))
+        pending_run, uninterrupted,
+        "pending snapshot and idempotent reinstall preserve full trace"
     );
-    assert_eq!(trace.rows["tm_primary"][1].sample, 1);
+    assert_delayed_standalone_match(&pending_run);
+
+    // Pause after sample 1 published a step; resume through the same remaining
+    // 22 executed samples and compare every named value and time index.
+    let mut published = new_rack();
+    published.load_patch(Path::new(FIXTURE)).unwrap();
+    published.set_driver_mode(SimulationDriver::Manual).start();
+    assert_eq!(published.advance_samples(2).unwrap(), 2);
+    published.stop();
+    assert_stopped(&mut published);
+    published.start();
+    assert_eq!(published.advance_samples(22).unwrap(), 22);
+    published.stop();
+    let published_run = collect(published);
     assert_eq!(
-        trace.rows["tm_primary"][1].values[0],
-        ("step".to_owned(), Value::Gate(true))
+        published_run, uninterrupted,
+        "pause after publication preserves continued lifecycle"
     );
+    assert_delayed_standalone_match(&published_run);
+
+    // Exercise the high Clock boundary independently from the pending/reinstall
+    // case: a held high across stop/resume cannot create an additional edge.
+    let mut high_boundary = new_rack();
+    high_boundary.load_patch(Path::new(FIXTURE)).unwrap();
+    high_boundary
+        .set_driver_mode(SimulationDriver::Manual)
+        .start();
+    assert_eq!(high_boundary.advance_samples(1).unwrap(), 1);
+    high_boundary.stop();
+    assert_stopped(&mut high_boundary);
+    high_boundary.start();
+    assert_eq!(high_boundary.advance_samples(23).unwrap(), 23);
+    high_boundary.stop();
+    let high_run = collect(high_boundary);
+    assert_eq!(
+        high_run, uninterrupted,
+        "held Clock input does not retrigger on resume"
+    );
+    assert_delayed_standalone_match(&high_run);
 }
 
 #[test]
 fn fresh_process_replays_canonical_trace_twice() {
-    if env::var_os(CHILD_ENV).is_some() {
-        let run = run_patch(&fixture(), &[24], false);
+    if let Some(mode) = env::var_os(CHILD_ENV) {
+        let mut patch = fixture();
+        match mode.to_string_lossy().as_ref() {
+            "seed43" => patch.master_seed = 43,
+            "renamed" => {
+                for module in &mut patch.modules {
+                    if module.instance_name == "tm_primary" {
+                        module.instance_name = "tm_renamed".to_owned();
+                    }
+                }
+                for cable in &mut patch.cables {
+                    if cable.target.0 == "tm_primary" {
+                        cable.target.0 = "tm_renamed".to_owned();
+                    }
+                }
+            }
+            "canonical" => {}
+            other => panic!("unknown child mode {other}"),
+        }
+        let run = run_patch(&patch, &[24], false);
         println!("TRACE_BEGIN");
         for (name, rows) in run.trace.rows {
             for row in rows {
@@ -431,14 +575,14 @@ fn fresh_process_replays_canonical_trace_twice() {
         return;
     }
 
-    fn child() -> String {
+    fn child(mode: &str) -> String {
         let output = Command::new(env::current_exe().expect("test executable path"))
             .args([
                 "--exact",
                 "fresh_process_replays_canonical_trace_twice",
                 "--nocapture",
             ])
-            .env(CHILD_ENV, "1")
+            .env(CHILD_ENV, mode)
             .output()
             .expect("child process should start");
         assert!(
@@ -455,5 +599,43 @@ fn fresh_process_replays_canonical_trace_twice() {
         stdout[begin + "TRACE_BEGIN\n".len()..begin + end].to_owned()
     }
 
-    assert_eq!(child(), child());
+    fn rows(trace: &str) -> BTreeMap<(String, u64), String> {
+        trace
+            .lines()
+            .map(|line| {
+                let mut parts = line.splitn(3, '|');
+                let name = parts.next().unwrap().to_owned();
+                let sample = parts.next().unwrap().parse().unwrap();
+                let values = parts.next().unwrap().to_owned();
+                ((name, sample), values)
+            })
+            .collect()
+    }
+
+    let canonical = child("canonical");
+    assert_eq!(canonical, child("canonical"));
+    let canonical_rows = rows(&canonical);
+    let changed_seed_rows = rows(&child("seed43"));
+    assert!(
+        canonical_rows.iter().any(|((name, sample), values)| {
+            name == "tm_primary" && changed_seed_rows.get(&(name.clone(), *sample)) != Some(values)
+        }),
+        "fresh child with master seed 43 must change corresponding primary content"
+    );
+    let renamed_rows = rows(&child("renamed"));
+    let primary_changed = (0..24_u64).any(|sample| {
+        canonical_rows.get(&("tm_primary".to_owned(), sample))
+            != renamed_rows.get(&("tm_renamed".to_owned(), sample))
+    });
+    assert!(
+        primary_changed,
+        "fresh child rename must change corresponding output content"
+    );
+    for sample in 0..24_u64 {
+        assert_eq!(
+            canonical_rows.get(&("tm_secondary".to_owned(), sample)),
+            renamed_rows.get(&("tm_secondary".to_owned(), sample)),
+            "renaming primary must preserve secondary sample {sample}",
+        );
+    }
 }

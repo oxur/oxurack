@@ -587,12 +587,22 @@ mod tests {
 
     #[test]
     fn test_quantizer_getters_return_configured_values() {
+        let initial = Scale::new(vec![0, 1, 4, 6, 8, 11], "Initial Scale");
         let scale = Scale::new(vec![0, 2, 5, 7, 9], "Getter Scale");
-        let mut q = Quantizer::new(scale.clone(), 4);
+        let mut q = Quantizer::new(initial, 1);
+        q.set_scale(scale.clone());
+        q.set_root(4);
         q.set_range(41..=73);
         assert_eq!(q.scale(), &scale);
         assert_eq!(q.root(), 4);
-        assert_eq!(q.range(), 41..=73);
+        let observed_range = q.range();
+        q.set_range(0..=127);
+        assert_eq!(
+            observed_range,
+            41..=73,
+            "range getter returns an owned snapshot"
+        );
+        assert_eq!(q.range(), 0..=127);
     }
 
     // -- quantize: above branch (near note 0) ---------------------------------
