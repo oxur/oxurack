@@ -1,0 +1,128 @@
+   Compiling oxurack-mod-turingmachine v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack-mod-turingmachine)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.90s
+     Running unittests src/lib.rs (target/debug/deps/oxurack_mod_turingmachine-b9ffa1a81aad4588)
+
+running 112 tests
+test clock::tests::div1_always_fires ... ok
+test clock::tests::test_division_getter ... ok
+test engine::tests::display_shows_brackets ... ok
+test clock::tests::div2_fires_every_other_tick ... ok
+test clock::tests::div4_fires_every_fourth_tick ... ok
+test clock::tests::reset_restarts_counters ... ok
+test clock::tests::test_div2_many_ticks ... ok
+test engine::tests::deterministic_with_seed ... ok
+test engine::tests::fully_random_no_repeat ... ok
+test engine::tests::pulses_are_and_of_adjacent_bits ... ok
+test engine::tests::locked_loop_repeats ... ok
+test engine::tests::reset_zeroes_register ... ok
+test engine::tests::step_count_increments ... ok
+test engine::tests::test_all_ones_register ... ok
+test engine::tests::test_all_zeros_register ... ok
+test engine::tests::test_configuration_getters_cover_both_quantizers ... ok
+test engine::tests::test_default_impl ... ok
+test engine::tests::test_display_default_length ... ok
+test engine::tests::test_display_short_length ... ok
+test engine::tests::test_length_in_outputs ... ok
+test engine::tests::test_modulate_write ... ok
+test engine::tests::test_move_step_advances_register ... ok
+test engine::tests::test_move_step_vs_tick ... ok
+test engine::tests::test_new_produces_output ... ok
+test engine::tests::test_noise_cc_range ... ok
+test engine::tests::test_reset_clears_dividers ... ok
+test engine::tests::test_reset_clears_step_count ... ok
+test engine::tests::test_scale_note_independent_of_main_note ... ok
+test engine::tests::test_set_length_position ... ok
+test engine::tests::test_set_note_range ... ok
+test engine::tests::test_set_root_changes_output ... ok
+test engine::tests::test_set_scale_changes_output ... ok
+test engine::tests::test_set_scale_output_root ... ok
+test engine::tests::test_set_scale_output_scale ... ok
+test engine::tests::test_write_probability_in_outputs ... ok
+test length::tests::decrement_saturates ... ok
+test length::tests::default_is_16 ... ok
+test length::tests::increment_saturates ... ok
+test length::tests::round_trip ... ok
+test length::tests::set_length_snaps ... ok
+test length::tests::set_position_clamps ... ok
+test quantizer::tests::test_augmented_intervals ... ok
+test quantizer::tests::test_chromatic_passthrough ... ok
+test quantizer::tests::test_diminished_intervals ... ok
+test quantizer::tests::test_dorian_intervals ... ok
+test quantizer::tests::test_harmonic_minor_intervals ... ok
+test quantizer::tests::test_lydian_intervals ... ok
+test quantizer::tests::test_major_snaps_correctly ... ok
+test quantizer::tests::test_mixolydian_intervals ... ok
+test quantizer::tests::test_natural_minor_intervals ... ok
+test quantizer::tests::test_note_from_dac_full_range ... ok
+test quantizer::tests::test_note_from_dac_high_range ... ok
+test quantizer::tests::test_note_from_dac_low_range_start ... ok
+test quantizer::tests::test_note_from_dac_narrow_range ... ok
+test quantizer::tests::test_note_from_dac_never_zero ... ok
+test quantizer::tests::test_note_from_dac_with_major_scale ... ok
+test quantizer::tests::test_note_from_dac_with_pentatonic_and_root ... ok
+test quantizer::tests::test_note_from_dac_zero_range ... ok
+test quantizer::tests::test_pentatonic_minor_intervals ... ok
+test quantizer::tests::test_pentatonic_quantize ... ok
+test quantizer::tests::test_phrygian_intervals ... ok
+test quantizer::tests::test_quantize_at_boundaries ... ok
+test quantizer::tests::test_quantize_blues ... ok
+test quantizer::tests::test_quantize_exact_match ... ok
+test quantizer::tests::test_quantize_harmonic_minor ... ok
+test quantizer::tests::test_quantize_near_127_finds_below ... ok
+test quantizer::tests::test_quantize_near_zero_finds_above ... ok
+test quantizer::tests::test_quantize_note_126_root_only ... ok
+test quantizer::tests::test_quantize_note_zero_not_in_scale ... ok
+test quantizer::tests::test_quantize_whole_tone ... ok
+test quantizer::tests::test_quantize_with_nonzero_root ... ok
+test quantizer::tests::test_quantizer_clone_eq ... ok
+test quantizer::tests::test_quantizer_debug ... ok
+test quantizer::tests::test_quantizer_getters_return_configured_values ... ok
+test quantizer::tests::test_quantizer_set_range ... ok
+test quantizer::tests::test_quantizer_set_root_clamps ... ok
+test quantizer::tests::test_quantizer_set_root_wraps_or_clamps ... ok
+test quantizer::tests::test_quantizer_set_scale ... ok
+test quantizer::tests::test_range_respected ... ok
+test quantizer::tests::test_scale_clone ... ok
+test quantizer::tests::test_scale_debug ... ok
+test quantizer::tests::test_scale_eq ... ok
+test quantizer::tests::test_scale_name ... ok
+test quantizer::tests::test_scale_ne ... ok
+test quantizer::tests::test_scale_new_all_out_of_range ... ok
+test quantizer::tests::test_scale_new_empty_gets_root ... ok
+test quantizer::tests::test_scale_new_filters_out_of_range ... ok
+test quantizer::tests::test_scale_new_sorts_and_deduplicates ... ok
+test quantizer::tests::test_scale_root_only ... ok
+test quantizer::tests::test_velocity_from_dac_lower_7_bits ... ok
+test quantizer::tests::test_velocity_from_dac_max ... ok
+test quantizer::tests::test_velocity_from_dac_zero ... ok
+test quantizer::tests::test_velocity_never_zero ... ok
+test quantizer::tests::test_whole_tone_intervals ... ok
+test shift_register::tests::test_clock_overflow_discards_bit_16 ... ok
+test shift_register::tests::test_clock_shifts_left ... ok
+test shift_register::tests::test_dac_byte_length_16_is_upper_byte ... ok
+test shift_register::tests::test_dac_byte_length_8_is_lower_byte ... ok
+test shift_register::tests::test_dac_byte_length_less_than_8 ... ok
+test shift_register::tests::test_default_delegates_to_new ... ok
+test shift_register::tests::test_feedback_bit_length_one ... ok
+test shift_register::tests::test_feedback_bit_maximum_length ... ok
+test shift_register::tests::test_feedback_bit_respects_length ... ok
+test shift_register::tests::test_new_random_produces_value ... ok
+test shift_register::tests::test_new_returns_zeroed_register ... ok
+test shift_register::tests::test_pulse_bit_is_msb_of_dac_byte ... ok
+test shift_register::tests::test_reset_clears_register ... ok
+test shift_register::tests::test_to_bools_order ... ok
+test write_knob::tests::modulate_clamps ... ok
+test write_knob::tests::new_clamps ... ok
+test write_knob::tests::probability_0_ignores_feedback ... ok
+test write_knob::tests::probability_1_always_keeps ... ok
+
+test result: ok. 112 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+   Doc-tests oxurack_mod_turingmachine
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+COMMAND=cargo test --locked -p oxurack-mod-turingmachine
+EXIT_CODE=0

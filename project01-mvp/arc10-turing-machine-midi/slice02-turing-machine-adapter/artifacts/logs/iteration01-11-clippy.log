@@ -1,0 +1,7 @@
+    Checking oxurack-mod-turingmachine v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack-mod-turingmachine)
+    Checking oxurack v0.1.0 (/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation/crates/oxurack)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 9.59s
+warning: the following packages contain code that will be rejected by a future version of Rust: block v0.1.6
+note: to see what the problems were, use the option `--future-incompat-report`, or run `cargo report future-incompatibilities --id 1`
+COMMAND=cargo clippy --locked --workspace --all-features --all-targets -- -D warnings
+EXIT_CODE=0

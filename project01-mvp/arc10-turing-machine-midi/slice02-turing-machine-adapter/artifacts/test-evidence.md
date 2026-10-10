@@ -132,3 +132,97 @@ These host and network observations are validation limits, not claims about
 the Turing Machine adapter's behavior. They remain explicit for CRC/CDC
 review. No acceptance, release, MIDI-device, Slice03 or Arc10 composition
 claim is made.
+
+## Corrective iteration01 — CC proposed-done evidence
+
+Current assignment: `arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt-iteration01.md`.
+Source candidate committed from the pinned clean `9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2`
+baseline as `b2ffb16d342d9a6cc800bab2713813d9646fb505`. The source worktree is
+clean after that commit. The planning worktree began at
+`32e693466827eeab1c842931d74772820c2f6032`; its iteration01 changes remain the
+current proposed evidence until the following explicit-path commit. All ledger
+rows remain open for CRC.
+
+### Corrected behavioral proof
+
+* **F-01 / A-02:** `schema_declares_complete_port_and_parameter_inventory`
+  compares every port's ordered name/direction/kind/policy, all nine defaults,
+  and unique registered names. `registered_setters_and_getters_cover_every_valid_value_and_alias`
+  calls every registered function and checks explicit readback, including all
+  nine selector lengths/positions, custom main and output scales, roots,
+  ranges, endpoint equality and effective probability. Spawn precedence covers
+  length-only, both length forms, embedded roots and explicit-root override.
+  `every_invalid_spawn_variant_and_range_is_rejected_without_orphans` and
+  `every_invalid_spawn_and_registered_setter_is_atomic_with_seeded_continuation`
+  exercise the five value variants, all specified numeric/Scale/range negatives,
+  actual error module/parameter, unrelated-entity and whole-entity/module/port
+  counts, a complete 32-port/deep-state snapshot, and subsequent output against
+  a separately configured standalone engine. Unknown-key tests include
+  opposite insertion orders, invalid known values and zeta-only precedence.
+  `every_registered_accessor_rejects_missing_and_non_turing_entities` covers
+  missing, bare and non-TM module entities. The engine and quantizer getter
+  tests verify post-setter scale/root/range values, owned range snapshots and
+  both length forms.
+* **F-02 / A-03:** `real_produce_publication_maps_options_and_holds_all_values_on_idle`
+  inserts distinct sentinel `StepOutputs` into private pending state and runs
+  the actual CorePlugin Produce path. It checks all 28 fields, all three
+  absent-option pairs, `Some(0)` versus `None`, and that idle Produce clears
+  only `step`. `assert_delayed_standalone_match_for` checks every named output
+  at all 24 sample indices: initial zeros, independently ticked odd-sample
+  publication and even-sample held values with `step=false`.
+* **F-03 / A-04:** `consume_priority_consumes_losing_edges_and_matches_scripted_engine`
+  follows samples 0–10 with an independently action-driven engine, checking
+  each pending `StepOutputs`, engine count/register and every published field;
+  it covers wide high, move-over-clock, reset-over-both and consumed losing
+  edges. `standalone_move_and_reset_actions_work_without_competing_edges`
+  proves each operation alone, retained configuration/RNG stream and held
+  scalar behavior. `held_modulation_reconciles_targets_and_registered_base_edits`
+  exercises offsets -1/-0.25/0/+0.25/+1 for repeated samples, following
+  snapshots and a registered base edit with an older pending snapshot.
+  `two_real_sum_cables_drive_write_modulation_through_core_phases` wires two
+  actual Bipolar output ports into the adapter through Cable, Propagate and
+  MergeInputs, checking +0.75/+0.75, -0.75/-0.75, and +0.25/-0.25 repeatedly.
+  `pause_preserves_consumed_high_edges_pending_outputs_and_sample_time` pauses
+  private Clock/reset/move levels after edge consumption and verifies full
+  state and SampleTime stability and no invented resume edge.
+* **F-04 / A-05:** the public test now compares baseline and renamed primary
+  rows by equal-length corresponding contents, checks the renamed rows against
+  a separately configured engine using the renamed context, and preserves the
+  unchanged secondary trace. Seed43 compares the same named rows against its
+  standalone expectation and must change primary values. Fresh child runs
+  compare canonical output bytes twice and independently change seed/name
+  without accepting key-only inequality. The order test separately inserts a
+  no-port observer before the TMs and removes the existing observer; both
+  preserve named TM traces and SampleTime. Manual/Live grouping and reversal
+  comparisons remain.
+* **F-05 / A-06:** the source commit changed exactly the four authorized test
+  paths. A `git show 9ba55dd:<path>` byte comparison confirms each protected
+  production prefix is identical for `engine.rs`, `quantizer.rs`, and `rack.rs`;
+  the umbrella file is itself an integration-test file. The tracked fixture,
+  manifests and lockfile are unchanged. CRC review/probe/receipts and every
+  iteration00 report/log remain preserved.
+
+### Corrected candidate gates and limits
+
+The focused source suite reports 129 passed, 0 failed, 0 ignored; both default
+and no-default umbrella Turing Machine integration commands report 5 passed,
+0 failed, 0 ignored. The standalone default suite reports 112 passed and the
+normal dependency tree has no Bevy/core. `oxurack` default/no-default, core
+(414 tests), Clippy `-D warnings`, format, both strict rustdoc commands, and
+`git diff --check` pass.
+
+Restricted all-features and no-default workspace runs each report 146 passed,
+4 failed, 3 ignored (153 total). The four failures are the same existing
+`oxurack-rt` CoreMIDI initialization tests. Restricted `make check` exits 2 on
+those failures. Required host retries pass: both workspace feature matrices,
+`make check`, and `cargo outdated --root-deps-only --ignore-external-rel` exit 0;
+the workspace logs show 150 RT tests passed and 3 ignored. Restricted
+`cargo outdated` exits 1 because `index.crates.io` cannot resolve. Both
+restricted and host receipts are retained. The `block v0.1.6`
+future-incompatibility warning remains visible where emitted.
+
+The planning checker is structural only. Its default mode and `--require-return`
+mode each run the built-in same-predicate negative controls; neither constitutes
+CRC behavior acceptance. No production defect was observed and no design or
+scope change is proposed. Slice03 remains held. A-01–A-06 are CC proposed-done
+only and still open pending CRC reproduction and acceptance.

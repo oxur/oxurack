@@ -1,0 +1,12 @@
+SOURCE_BASE=9ba55dd0a4c8aa7d67fe26c30f878d89ead34aa2
+SOURCE_COMMIT=b2ffb16d342d9a6cc800bab2713813d9646fb505
+PRECOMMIT_DIRTY_PATHS_INFERRED_FROM_COMMITTED_DIFF:
+crates/oxurack-mod-turingmachine/src/engine.rs
+crates/oxurack-mod-turingmachine/src/quantizer.rs
+crates/oxurack-mod-turingmachine/src/rack.rs
+crates/oxurack/tests/turing_machine.rs
+PASS: production bytes before cfg(test) are identical in engine.rs, quantizer.rs, rack.rs
+PASS: source commit contains only the four authorized test paths
+PASS: source worktree is clean after commit
+COMMAND=git diff-tree path audit plus Python byte-boundary audit against 9ba55dd
+EXIT_CODE=0
