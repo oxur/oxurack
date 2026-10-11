@@ -156,6 +156,80 @@ stderr. Leaving out `--scope-port` captures MIDI only. Leaving out
 and the overwrite count without resetting sample time; loading a patch
 successfully disables the old selectors, so configure again for the new patch.
 
+For a terminal view without creating a file, add `--scope-view`. The view is
+printed to stderr after the finite run stops (and after live MIDI cleanup). It
+shows the patch path, authoritative completed sample count, mixed-record
+capacity, retained/overwritten counts, retained sample span, latest value for
+each selected signal, and separate recent signal and MIDI tails. Use
+`--scope-rows` to choose 1–1000 rows in each tail; the default is 12. The latest
+per-selector section is additional to those tails.
+
+```bash
+cargo run -p oxurack --example turing-machine-midi -- \
+  --patch crates/oxurack/examples/patches/turing-machine-lfo.ron \
+  --samples 10000 --scope-view \
+  --scope-port clock_main.pulse \
+  --scope-port lfo_main.bipolar_out \
+  --scope-port tm_main.write_modulation \
+  --scope-port tm_main.note
+```
+
+The view and CSV can be requested together. The sample-indexed MIDI trace stays
+on stdout, the human view goes to stderr, and the CSV keeps the same schema and
+retained records as a CSV-only run. With the fixture above and capacity 100,000,
+the retained view reports 10,000 completed samples, 40,070 records (40,000
+signals and 70 generated events), and no overwritten records. The CSV has
+40,071 lines including its header. `--scope-view` alone opens no file.
+
+```bash
+cargo run -p oxurack --example turing-machine-midi -- \
+  --patch crates/oxurack/examples/patches/turing-machine-lfo.ron \
+  --samples 10000 --scope-view --scope-rows 12 \
+  --scope-csv /tmp/oxurack-workbench.csv --scope-capacity 100000 \
+  --scope-port clock_main.pulse \
+  --scope-port lfo_main.bipolar_out \
+  --scope-port tm_main.write_modulation \
+  --scope-port tm_main.note \
+  > /tmp/oxurack-workbench.trace
+```
+
+The two tails describe only the records still retained in the one mixed FIFO.
+When capacity is reached, old records are evicted; a retained window can begin
+mid-sample and can include a generated event without its sent counterpart.
+Counts, span and latest values never reconstruct evicted history. A `generated`
+MIDI row was drained from the rack by the runner. A `sent` row means the live
+software sender accepted that event; neither label means a synthesizer rendered
+or recorded audio. Signal values are sampled scalar/Gate/Raw snapshots; a held
+MIDI-valued port is not an event history.
+
+For example, selecting only `lfo_main.bipolar_out` with `--scope-capacity 3`
+and `--samples 10000` retains the last three signal records (samples 9997–9999)
+and evicts the earlier 10,067 mixed records. The completed count remains 10,000
+and the MIDI trace remains the same 70 rows. With `--samples 0`, selected ports
+are shown as unobserved, both tails say `(none retained)`, and CSV contains its
+header only. These are retained-window observations, not a live redraw.
+
+`clear_scope` clears captured records and the overwrite count only. It leaves
+the rack's sample clock and module phases in place; stopping and starting also
+continues the same rack. A new process loads the seeded patch into a fresh rack
+and starts again from its initial phase and sample index. To clear and continue
+an already configured rack:
+
+```rust
+rack.stop();
+rack.clear_scope();
+rack.start();
+rack.advance_samples(100)?;
+// Drain and record generated MIDI as usual, then stop and inspect/export Scope.
+```
+
+Scope options are validated before playback: `--scope-port` and
+`--scope-capacity` require either `--scope-csv` or `--scope-view`, while
+`--scope-rows` requires `--scope-view`. Scope options cannot be combined with
+`--list-outputs`. A requested CSV file is opened before the rack starts or a
+live output is connected, so selector/configuration/file failures prevent the
+run.
+
 The same capture flags work with live output selection. For example, replace the
 sample-only command above with a current endpoint name selected from
 `--list-outputs`:

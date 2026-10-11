@@ -18,12 +18,15 @@ use oxurack_mod_turingmachine::TuringMachineModule;
 mod oracle;
 #[path = "turing_machine_midi/playback.rs"]
 mod playback;
+#[path = "turing_machine_midi/workbench.rs"]
+mod workbench;
 
 #[derive(Debug, Parser)]
 #[command(
     about = "Stream a seeded oxurack Turing Machine MIDI byte trace or play it to a MIDI output"
 )]
 #[command(group(ArgGroup::new("output-selection").args(["output_name", "output_index"]).multiple(false)))]
+#[command(group(ArgGroup::new("scope-output").args(["scope_csv", "scope_view"]).multiple(true)))]
 struct Cli {
     /// RON patch to load.
     #[arg(
@@ -47,12 +50,18 @@ struct Cli {
     /// Export bounded signal/MIDI capture as CSV (overwrites PATH).
     #[arg(long, conflicts_with = "list_outputs")]
     scope_csv: Option<PathBuf>,
-    /// Capture an exact MODULE.PORT scalar port; repeatable. Requires --scope-csv.
-    #[arg(long, value_parser = scope_selector, requires = "scope_csv", conflicts_with = "list_outputs")]
+    /// Capture an exact MODULE.PORT scalar port; repeatable. Requires CSV or view output.
+    #[arg(long, value_parser = scope_selector, requires = "scope-output", conflicts_with = "list_outputs")]
     scope_port: Vec<ScopeSelector>,
-    /// Maximum mixed signal/MIDI records; defaults to 100000. Requires --scope-csv.
-    #[arg(long, value_parser = positive_usize, requires = "scope_csv", conflicts_with = "list_outputs")]
+    /// Maximum mixed signal/MIDI records; defaults to 100000. Requires CSV or view output.
+    #[arg(long, value_parser = positive_usize, requires = "scope-output", conflicts_with = "list_outputs")]
     scope_capacity: Option<usize>,
+    /// Print the retained Scope workbench view to stderr after the run.
+    #[arg(long, conflicts_with = "list_outputs")]
+    scope_view: bool,
+    /// Number of retained signal and MIDI rows in each view tail (1..=1000; default: 12).
+    #[arg(long, value_parser = scope_rows, requires = "scope_view", conflicts_with = "list_outputs")]
+    scope_rows: Option<usize>,
 }
 
 fn nonempty(value: &str) -> Result<String, String> {
@@ -74,6 +83,17 @@ fn positive_usize(value: &str) -> Result<usize, String> {
     }
 }
 
+fn scope_rows(value: &str) -> Result<usize, String> {
+    let rows = value
+        .parse::<usize>()
+        .map_err(|_| "scope rows must be an integer from 1 to 1000".to_owned())?;
+    if (1..=1000).contains(&rows) {
+        Ok(rows)
+    } else {
+        Err("scope rows must be from 1 to 1000".to_owned())
+    }
+}
+
 fn scope_selector(value: &str) -> Result<ScopeSelector, String> {
     let Some((module, port)) = value.rsplit_once('.') else {
         return Err("scope port must be MODULE.PORT".to_owned());
@@ -85,44 +105,69 @@ fn scope_selector(value: &str) -> Result<ScopeSelector, String> {
 }
 
 fn prepare_scope(cli: &Cli, rack: &mut Oxurack) -> Result<Option<BufWriter<File>>, Box<dyn Error>> {
-    let Some(path) = &cli.scope_csv else {
+    if cli.scope_csv.is_none() && !cli.scope_view {
         return Ok(None);
-    };
+    }
     let capacity = cli.scope_capacity.unwrap_or(100_000);
     rack.configure_scope(&cli.scope_port, capacity)?;
-    let file = File::create(path)?;
-    Ok(Some(BufWriter::new(file)))
+    cli.scope_csv
+        .as_ref()
+        .map(|path| File::create(path).map(BufWriter::new).map_err(Into::into))
+        .transpose()
 }
 
-fn finish_scope(
+fn finalize_scope<C: Write, V: Write>(
+    cli: &Cli,
     rack: &Oxurack,
-    output: Option<BufWriter<File>>,
+    mut csv: Option<C>,
+    view: &mut V,
     primary: Result<(), Box<dyn Error>>,
 ) -> Result<(), Box<dyn Error>> {
-    let Some(mut writer) = output else {
-        return primary;
-    };
-    let mut export_errors = Vec::new();
+    let mut report_errors = Vec::new();
     if let Some(capture) = rack.scope() {
-        if let Err(error) = capture.write_csv(&mut writer) {
-            export_errors.push(format!("CSV write failed: {error}"));
+        if let Some(writer) = &mut csv {
+            if let Err(error) = capture.write_csv(writer) {
+                report_errors.push(format!("CSV write failed: {error}"));
+            }
+            if let Err(error) = writer.flush() {
+                report_errors.push(format!("CSV flush failed: {error}"));
+            }
         }
-        if let Err(error) = writer.flush() {
-            export_errors.push(format!("CSV flush failed: {error}"));
+        if cli.scope_view {
+            if let Some(patch) = cli.patch.as_deref() {
+                if let Err(error) = workbench::write_view(
+                    view,
+                    patch,
+                    rack.sample_time(),
+                    capture,
+                    cli.scope_rows.unwrap_or(12),
+                ) {
+                    report_errors.push(format!("Scope view write failed: {error}"));
+                }
+            } else {
+                report_errors.push("Scope view write failed: patch is unavailable".to_owned());
+            }
+            if let Err(error) = view.flush() {
+                report_errors.push(format!("Scope view flush failed: {error}"));
+            }
         }
-        eprintln!(
-            "turing-machine-midi: Scope capacity={} retained={} overwritten={}",
-            capture.capacity(),
-            capture.records().count(),
-            capture.overwritten()
-        );
+        if csv.is_some() {
+            eprintln!(
+                "turing-machine-midi: Scope capacity={} retained={} overwritten={}",
+                capture.capacity(),
+                capture.records().count(),
+                capture.overwritten()
+            );
+        }
+    } else if csv.is_some() || cli.scope_view {
+        report_errors.push("Scope report failed: capture is unavailable".to_owned());
     }
-    match (primary, export_errors.is_empty()) {
+    match (primary, report_errors.is_empty()) {
         (Ok(()), true) => Ok(()),
         (Err(primary), true) => Err(primary),
-        (Ok(()), false) => Err(io::Error::other(export_errors.join("; ")).into()),
+        (Ok(()), false) => Err(io::Error::other(report_errors.join("; ")).into()),
         (Err(primary), false) => {
-            Err(io::Error::other(format!("{primary}; {}", export_errors.join("; "))).into())
+            Err(io::Error::other(format!("{primary}; {}", report_errors.join("; "))).into())
         }
     }
 }
@@ -163,7 +208,7 @@ fn run_trace(cli: &Cli) -> Result<(), Box<dyn Error>> {
         Ok::<(), Box<dyn Error>>(())
     })();
     rack.stop();
-    finish_scope(&rack, capture_output, result)
+    finalize_scope(cli, &rack, capture_output, &mut io::stderr().lock(), result)
 }
 
 fn list_outputs() -> Result<(), Box<dyn Error>> {
@@ -229,7 +274,7 @@ fn run_live(cli: &Cli) -> Result<(), Box<dyn Error>> {
         Ok::<(), Box<dyn Error>>(())
     })();
     rack.stop();
-    finish_scope(&rack, capture_output, result)
+    finalize_scope(cli, &rack, capture_output, &mut io::stderr().lock(), result)
 }
 
 fn run(cli: Cli) -> Result<(), Box<dyn Error>> {
@@ -335,6 +380,96 @@ mod tests {
             ])
             .is_ok()
         );
+        assert!(Cli::try_parse_from(["example", "--patch", "x", "--scope-view"]).is_ok());
+        assert!(
+            Cli::try_parse_from([
+                "example",
+                "--patch",
+                "x",
+                "--scope-view",
+                "--scope-rows",
+                "1"
+            ])
+            .is_ok()
+        );
+        assert!(
+            Cli::try_parse_from([
+                "example",
+                "--patch",
+                "x",
+                "--scope-view",
+                "--scope-rows",
+                "1000"
+            ])
+            .is_ok()
+        );
+        assert!(
+            Cli::try_parse_from([
+                "example",
+                "--patch",
+                "x",
+                "--scope-view",
+                "--scope-rows",
+                "0"
+            ])
+            .is_err()
+        );
+        assert!(
+            Cli::try_parse_from([
+                "example",
+                "--patch",
+                "x",
+                "--scope-view",
+                "--scope-rows",
+                "1001"
+            ])
+            .is_err()
+        );
+        assert!(Cli::try_parse_from(["example", "--patch", "x", "--scope-rows", "2"]).is_err());
+        assert!(
+            Cli::try_parse_from([
+                "example",
+                "--patch",
+                "x",
+                "--scope-view",
+                "--scope-csv",
+                "capture.csv"
+            ])
+            .is_ok()
+        );
+        let combined = Cli::try_parse_from([
+            "example",
+            "--patch",
+            "x",
+            "--scope-view",
+            "--scope-port",
+            "module.with.dots.port",
+            "--scope-port",
+            "lfo_main.bipolar_out",
+            "--scope-capacity",
+            "1",
+        ])
+        .unwrap();
+        assert_eq!(combined.scope_rows.unwrap_or(12), 12);
+        assert_eq!(combined.scope_port[0].module, "module.with.dots");
+        assert_eq!(combined.scope_port[1].module, "lfo_main");
+        assert!(Cli::try_parse_from(["example", "--patch", "x", "--scope-capacity", "4"]).is_err());
+        assert!(
+            Cli::try_parse_from(["example", "--patch", "x", "--scope-view", "--list-outputs"])
+                .is_err()
+        );
+        assert!(
+            Cli::try_parse_from([
+                "example",
+                "--patch",
+                "x",
+                "--scope-view",
+                "--scope-rows",
+                "2",
+                "--list-outputs"
+            ])
+            .is_err()
+        );
         assert!(
             Cli::try_parse_from([
                 "example",
@@ -362,12 +497,269 @@ mod tests {
             std::env::temp_dir().join(format!("oxurack-scope-export-{}.csv", std::process::id()));
         let writer = BufWriter::new(File::create(&path).unwrap());
         let primary: Box<dyn Error> = io::Error::other("primary playback failure").into();
-        let error = finish_scope(&rack, Some(writer), Err(primary)).unwrap_err();
+        let cli = Cli::try_parse_from([
+            "example",
+            "--patch",
+            patch.to_str().unwrap(),
+            "--scope-csv",
+            path.to_str().unwrap(),
+        ])
+        .unwrap();
+        let error =
+            finalize_scope(&cli, &rack, Some(writer), &mut Vec::new(), Err(primary)).unwrap_err();
         assert!(error.to_string().contains("primary playback failure"));
         assert_eq!(
             std::fs::read_to_string(&path).unwrap(),
             "sample,record,module,port,value_kind,value,status,data1,data2\n"
         );
         let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn scope_preflight_rejects_selector_and_file_before_start() {
+        let patch = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("examples/patches/turing-machine-lfo.ron");
+        let mut rack = prepare_rack(&patch).unwrap();
+        let selector_cli = Cli::try_parse_from([
+            "example",
+            "--patch",
+            patch.to_str().unwrap(),
+            "--scope-view",
+            "--scope-port",
+            "unknown.port",
+        ])
+        .unwrap();
+        assert!(prepare_scope(&selector_cli, &mut rack).is_err());
+        assert_eq!(rack.sample_time().completed_samples(), 0);
+        assert!(rack.scope().is_none());
+
+        let bad_path = std::env::temp_dir().join(format!(
+            "oxurack-missing-dir-{}/capture.csv",
+            std::process::id()
+        ));
+        let file_cli = Cli::try_parse_from([
+            "example",
+            "--patch",
+            patch.to_str().unwrap(),
+            "--scope-csv",
+            bad_path.to_str().unwrap(),
+        ])
+        .unwrap();
+        assert!(prepare_scope(&file_cli, &mut rack).is_err());
+        assert_eq!(rack.sample_time().completed_samples(), 0);
+        assert_eq!(rack.advance_samples(1).unwrap(), 0);
+    }
+
+    struct FailingWriter {
+        label: &'static str,
+        calls: Arc<std::sync::Mutex<Vec<String>>>,
+    }
+
+    impl Write for FailingWriter {
+        fn write(&mut self, _bytes: &[u8]) -> io::Result<usize> {
+            self.calls
+                .lock()
+                .unwrap()
+                .push(format!("{} write", self.label));
+            Err(io::Error::other(format!("{} write injected", self.label)))
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            self.calls
+                .lock()
+                .unwrap()
+                .push(format!("{} flush", self.label));
+            Err(io::Error::other(format!("{} flush injected", self.label)))
+        }
+    }
+
+    #[test]
+    fn finalizer_attempts_each_report_in_order_and_preserves_primary_failure() {
+        let patch = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("examples/patches/turing-machine-lfo.ron");
+        let cli = Cli::try_parse_from([
+            "example",
+            "--patch",
+            patch.to_str().unwrap(),
+            "--scope-csv",
+            "capture.csv",
+            "--scope-view",
+        ])
+        .unwrap();
+        let mut rack = prepare_rack(&patch).unwrap();
+        rack.configure_scope(&[], 4).unwrap();
+        let calls = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let csv = FailingWriter {
+            label: "csv",
+            calls: Arc::clone(&calls),
+        };
+        let mut view = FailingWriter {
+            label: "view",
+            calls: Arc::clone(&calls),
+        };
+        let primary: Box<dyn Error> = io::Error::other("primary playback failure").into();
+        let error = finalize_scope(&cli, &rack, Some(csv), &mut view, Err(primary)).unwrap_err();
+        let message = error.to_string();
+        assert!(
+            message.find("primary playback failure").unwrap()
+                < message.find("CSV write failed").unwrap()
+        );
+        assert!(
+            message.find("CSV write failed").unwrap() < message.find("CSV flush failed").unwrap()
+        );
+        assert!(
+            message.find("CSV flush failed").unwrap()
+                < message.find("Scope view write failed").unwrap()
+        );
+        assert!(
+            message.find("Scope view write failed").unwrap()
+                < message.find("Scope view flush failed").unwrap()
+        );
+        assert_eq!(
+            *calls.lock().unwrap(),
+            ["csv write", "csv flush", "view write", "view flush"]
+        );
+    }
+
+    #[test]
+    fn finalizer_keeps_one_successful_report_when_the_other_output_fails() {
+        let patch = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("examples/patches/turing-machine-lfo.ron");
+        let cli = Cli::try_parse_from([
+            "example",
+            "--patch",
+            patch.to_str().unwrap(),
+            "--scope-csv",
+            "capture.csv",
+            "--scope-view",
+        ])
+        .unwrap();
+        let mut rack = prepare_rack(&patch).unwrap();
+        rack.configure_scope(&[], 4).unwrap();
+
+        let mut view = FailingWriter {
+            label: "view",
+            calls: Arc::default(),
+        };
+        let mut csv = Vec::new();
+        assert!(finalize_scope(&cli, &rack, Some(&mut csv), &mut view, Ok(())).is_err());
+        assert!(
+            csv.starts_with(b"sample,record,module,port,value_kind,value,status,data1,data2\n")
+        );
+
+        let failed_csv = FailingWriter {
+            label: "csv",
+            calls: Arc::default(),
+        };
+        let mut view = Vec::new();
+        assert!(finalize_scope(&cli, &rack, Some(failed_csv), &mut view, Ok(())).is_err());
+        assert!(
+            String::from_utf8(view)
+                .unwrap()
+                .starts_with("Scope workbench\n")
+        );
+    }
+
+    struct TestSender {
+        calls: Arc<std::sync::Mutex<Vec<[u8; 3]>>>,
+        fail_at: Option<usize>,
+    }
+
+    impl playback::MidiSender for TestSender {
+        fn send(&mut self, bytes: &[u8]) -> Result<(), Box<dyn Error>> {
+            let mut calls = self.calls.lock().unwrap();
+            let index = calls.len();
+            let event = [bytes[0], bytes[1], bytes[2]];
+            calls.push(event);
+            if self.fail_at == Some(index) {
+                Err(format!("injected send failure at {index}").into())
+            } else {
+                Ok(())
+            }
+        }
+    }
+
+    #[test]
+    fn actual_play_failure_is_finalized_after_cleanup_and_keeps_generated_sent_prefix() {
+        let source = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("examples/patches/turing-machine-midi.ron");
+        let mut parsed =
+            oxurack_core::deserialize_patch(&std::fs::read_to_string(&source).unwrap()).unwrap();
+        parsed.modules[0]
+            .parameters
+            .insert("bpm".into(), oxurack::ParameterValue::Float(1000.0));
+        parsed.modules[0]
+            .parameters
+            .insert("ppqn".into(), oxurack::ParameterValue::Int(30));
+        let fixture =
+            std::env::temp_dir().join(format!("oxurack-finalizer-{}.ron", std::process::id()));
+        oxurack_core::save_patch_to_file(&parsed, &fixture).unwrap();
+        let mut rack = prepare_rack(&fixture).unwrap();
+        rack.configure_scope(&[], 128).unwrap().start();
+        let sender_calls = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let mut session = playback::Session::new(TestSender {
+            calls: Arc::clone(&sender_calls),
+            fail_at: Some(1),
+        });
+        let error = playback::play(
+            &mut rack,
+            &mut session,
+            200,
+            &AtomicBool::new(false),
+            Vec::new(),
+        )
+        .unwrap_err();
+        rack.stop();
+        assert!(error.to_string().contains("injected send failure at 1"));
+        let records: Vec<_> = rack.scope().unwrap().records().copied().collect();
+        let generated = records
+            .iter()
+            .filter(|record| {
+                matches!(
+                    record,
+                    oxurack::ScopeRecord::Midi {
+                        delivery: oxurack::MidiDelivery::Generated,
+                        ..
+                    }
+                )
+            })
+            .count();
+        let sent = records
+            .iter()
+            .filter(|record| {
+                matches!(
+                    record,
+                    oxurack::ScopeRecord::Midi {
+                        delivery: oxurack::MidiDelivery::Sent,
+                        ..
+                    }
+                )
+            })
+            .count();
+        assert!(generated >= 2);
+        assert_eq!(sent, 1);
+        assert!(
+            sender_calls.lock().unwrap().len() > sent,
+            "cleanup sends precede finalization but stay outside Scope"
+        );
+        let cli = Cli::try_parse_from([
+            "example",
+            "--patch",
+            fixture.to_str().unwrap(),
+            "--scope-view",
+        ])
+        .unwrap();
+        let mut view = Vec::new();
+        let final_error =
+            finalize_scope(&cli, &rack, None::<Vec<u8>>, &mut view, Err(error.into())).unwrap_err();
+        assert!(
+            final_error
+                .to_string()
+                .contains("injected send failure at 1")
+        );
+        let view = String::from_utf8(view).unwrap();
+        assert!(view.contains(&format!("generated={generated} sent={sent}")));
+        assert!(view.contains("recent MIDI"));
+        let _ = std::fs::remove_file(fixture);
     }
 }
