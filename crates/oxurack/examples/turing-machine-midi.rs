@@ -1,5 +1,6 @@
 use std::error::Error;
-use std::io::{self, Write};
+use std::fs::File;
+use std::io::{self, BufWriter, Write};
 use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -7,7 +8,7 @@ use std::sync::atomic::AtomicBool;
 
 use clap::{ArgGroup, Parser};
 use midir::{MidiOutput, MidiOutputConnection};
-use oxurack::{MidiOutModule, Oxurack, SimulationDriver};
+use oxurack::{MidiOutModule, Oxurack, ScopeSelector, SimulationDriver};
 use oxurack_mod_clock::ClockModule;
 use oxurack_mod_lfo::LfoModule;
 use oxurack_mod_turingmachine::TuringMachineModule;
@@ -43,6 +44,15 @@ struct Cli {
     /// Select a MIDI output by its zero-based position in the current output list.
     #[arg(long, conflicts_with = "list_outputs")]
     output_index: Option<usize>,
+    /// Export bounded signal/MIDI capture as CSV (overwrites PATH).
+    #[arg(long, conflicts_with = "list_outputs")]
+    scope_csv: Option<PathBuf>,
+    /// Capture an exact MODULE.PORT scalar port; repeatable. Requires --scope-csv.
+    #[arg(long, value_parser = scope_selector, requires = "scope_csv", conflicts_with = "list_outputs")]
+    scope_port: Vec<ScopeSelector>,
+    /// Maximum mixed signal/MIDI records; defaults to 100000. Requires --scope-csv.
+    #[arg(long, value_parser = positive_usize, requires = "scope_csv", conflicts_with = "list_outputs")]
+    scope_capacity: Option<usize>,
 }
 
 fn nonempty(value: &str) -> Result<String, String> {
@@ -50,6 +60,70 @@ fn nonempty(value: &str) -> Result<String, String> {
         Err("output name must not be empty".to_owned())
     } else {
         Ok(value.to_owned())
+    }
+}
+
+fn positive_usize(value: &str) -> Result<usize, String> {
+    let capacity = value
+        .parse::<usize>()
+        .map_err(|_| "scope capacity must be a positive integer".to_owned())?;
+    if capacity == 0 {
+        Err("scope capacity must be positive".to_owned())
+    } else {
+        Ok(capacity)
+    }
+}
+
+fn scope_selector(value: &str) -> Result<ScopeSelector, String> {
+    let Some((module, port)) = value.rsplit_once('.') else {
+        return Err("scope port must be MODULE.PORT".to_owned());
+    };
+    if module.is_empty() || port.is_empty() {
+        return Err("scope module and port must not be empty".to_owned());
+    }
+    Ok(ScopeSelector::new(module, port))
+}
+
+fn prepare_scope(cli: &Cli, rack: &mut Oxurack) -> Result<Option<BufWriter<File>>, Box<dyn Error>> {
+    let Some(path) = &cli.scope_csv else {
+        return Ok(None);
+    };
+    let capacity = cli.scope_capacity.unwrap_or(100_000);
+    rack.configure_scope(&cli.scope_port, capacity)?;
+    let file = File::create(path)?;
+    Ok(Some(BufWriter::new(file)))
+}
+
+fn finish_scope(
+    rack: &Oxurack,
+    output: Option<BufWriter<File>>,
+    primary: Result<(), Box<dyn Error>>,
+) -> Result<(), Box<dyn Error>> {
+    let Some(mut writer) = output else {
+        return primary;
+    };
+    let mut export_errors = Vec::new();
+    if let Some(capture) = rack.scope() {
+        if let Err(error) = capture.write_csv(&mut writer) {
+            export_errors.push(format!("CSV write failed: {error}"));
+        }
+        if let Err(error) = writer.flush() {
+            export_errors.push(format!("CSV flush failed: {error}"));
+        }
+        eprintln!(
+            "turing-machine-midi: Scope capacity={} retained={} overwritten={}",
+            capture.capacity(),
+            capture.records().count(),
+            capture.overwritten()
+        );
+    }
+    match (primary, export_errors.is_empty()) {
+        (Ok(()), true) => Ok(()),
+        (Err(primary), true) => Err(primary),
+        (Ok(()), false) => Err(io::Error::other(export_errors.join("; ")).into()),
+        (Err(primary), false) => {
+            Err(io::Error::other(format!("{primary}; {}", export_errors.join("; "))).into())
+        }
     }
 }
 
@@ -67,6 +141,7 @@ fn prepare_rack(patch: &std::path::Path) -> Result<Oxurack, Box<dyn Error>> {
 fn run_trace(cli: &Cli) -> Result<(), Box<dyn Error>> {
     let patch = cli.patch.as_deref().ok_or("patch is required")?;
     let mut rack = prepare_rack(patch)?;
+    let capture_output = prepare_scope(cli, &mut rack)?;
     rack.start();
     let stdout = io::stdout();
     let mut output = stdout.lock();
@@ -75,7 +150,7 @@ fn run_trace(cli: &Cli) -> Result<(), Box<dyn Error>> {
             if rack.advance_samples(1)? == 0 {
                 break;
             }
-            for event in rack.drain_midi() {
+            for event in playback::drain_generated(&mut rack) {
                 let [status, data1, data2] = event.message.to_bytes();
                 writeln!(
                     output,
@@ -88,7 +163,7 @@ fn run_trace(cli: &Cli) -> Result<(), Box<dyn Error>> {
         Ok::<(), Box<dyn Error>>(())
     })();
     rack.stop();
-    result
+    finish_scope(&rack, capture_output, result)
 }
 
 fn list_outputs() -> Result<(), Box<dyn Error>> {
@@ -118,36 +193,43 @@ impl playback::MidiSender for NativeSender {
 fn run_live(cli: &Cli) -> Result<(), Box<dyn Error>> {
     let patch = cli.patch.as_deref().ok_or("patch is required")?;
     let mut rack = prepare_rack(patch)?;
+    let capture_output = prepare_scope(cli, &mut rack)?;
 
-    let cancellation = Arc::new(AtomicBool::new(false));
-    let handler_flag = Arc::clone(&cancellation);
-    ctrlc::try_set_handler(move || handler_flag.store(true, std::sync::atomic::Ordering::SeqCst))?;
+    let result = (|| {
+        let cancellation = Arc::new(AtomicBool::new(false));
+        let handler_flag = Arc::clone(&cancellation);
+        ctrlc::try_set_handler(move || {
+            handler_flag.store(true, std::sync::atomic::Ordering::SeqCst)
+        })?;
 
-    let output = MidiOutput::new("oxurack turing-machine-midi")?;
-    let ports = output.ports();
-    let mut names = Vec::with_capacity(ports.len());
-    for port in &ports {
-        names.push(output.port_name(port)?);
-    }
-    let selected = if let Some(name) = &cli.output_name {
-        playback::select_name(&names, name).map_err(io::Error::other)?
-    } else if let Some(index) = cli.output_index {
-        playback::select_index(&names, index).map_err(io::Error::other)?
-    } else {
-        return Err("live playback requires --output-name or --output-index".into());
-    };
-    let connection = output.connect(&ports[selected], "oxurack turing-machine-midi")?;
-    eprintln!(
-        "turing-machine-midi: connected to MIDI output {selected}|{}",
-        names[selected]
-    );
+        let output = MidiOutput::new("oxurack turing-machine-midi")?;
+        let ports = output.ports();
+        let mut names = Vec::with_capacity(ports.len());
+        for port in &ports {
+            names.push(output.port_name(port)?);
+        }
+        let selected = if let Some(name) = &cli.output_name {
+            playback::select_name(&names, name).map_err(io::Error::other)?
+        } else if let Some(index) = cli.output_index {
+            playback::select_index(&names, index).map_err(io::Error::other)?
+        } else {
+            return Err("live playback requires --output-name or --output-index".into());
+        };
+        let connection = output.connect(&ports[selected], "oxurack turing-machine-midi")?;
+        eprintln!(
+            "turing-machine-midi: connected to MIDI output {selected}|{}",
+            names[selected]
+        );
 
-    rack.start();
-    let stdout = io::stdout();
-    let output = stdout.lock();
-    let mut session = playback::Session::new(NativeSender(connection));
-    playback::play(&mut rack, &mut session, cli.samples, &cancellation, output)?;
-    Ok(())
+        rack.start();
+        let stdout = io::stdout();
+        let output = stdout.lock();
+        let mut session = playback::Session::new(NativeSender(connection));
+        playback::play(&mut rack, &mut session, cli.samples, &cancellation, output)?;
+        Ok::<(), Box<dyn Error>>(())
+    })();
+    rack.stop();
+    finish_scope(&rack, capture_output, result)
 }
 
 fn run(cli: Cli) -> Result<(), Box<dyn Error>> {
@@ -198,6 +280,94 @@ mod tests {
         assert!(Cli::try_parse_from(["example", "--patch", "x", "--output-index", "-1"]).is_err());
         assert!(Cli::try_parse_from(["example", "--patch", "x", "--output-name", ""]).is_err());
         assert!(Cli::try_parse_from(["example", "--patch", "x", "--samples", "0"]).is_ok());
+        assert!(
+            Cli::try_parse_from(["example", "--patch", "x", "--scope-csv", "capture.csv"]).is_ok()
+        );
+        assert!(
+            Cli::try_parse_from(["example", "--patch", "x", "--scope-port", "lfo_main.out"])
+                .is_err()
+        );
+        assert!(
+            Cli::try_parse_from([
+                "example",
+                "--patch",
+                "x",
+                "--scope-csv",
+                "capture.csv",
+                "--scope-port",
+                ".out"
+            ])
+            .is_err()
+        );
+        assert!(
+            Cli::try_parse_from([
+                "example",
+                "--patch",
+                "x",
+                "--scope-csv",
+                "capture.csv",
+                "--scope-port",
+                "lfo_main."
+            ])
+            .is_err()
+        );
+        assert!(
+            Cli::try_parse_from([
+                "example",
+                "--patch",
+                "x",
+                "--scope-csv",
+                "capture.csv",
+                "--scope-capacity",
+                "0"
+            ])
+            .is_err()
+        );
+        assert!(
+            Cli::try_parse_from([
+                "example",
+                "--patch",
+                "x",
+                "--scope-csv",
+                "capture.csv",
+                "--scope-capacity",
+                "1"
+            ])
+            .is_ok()
+        );
+        assert!(
+            Cli::try_parse_from([
+                "example",
+                "--patch",
+                "x",
+                "--scope-csv",
+                "capture.csv",
+                "--list-outputs"
+            ])
+            .is_err()
+        );
+        let selector = scope_selector("module.with.dots.port").unwrap();
+        assert_eq!(selector.module, "module.with.dots");
+        assert_eq!(selector.port, "port");
         Cli::command().debug_assert();
+    }
+
+    #[test]
+    fn csv_export_runs_after_primary_failure_and_keeps_that_failure() {
+        let patch = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("examples/patches/turing-machine-lfo.ron");
+        let mut rack = prepare_rack(&patch).unwrap();
+        rack.configure_scope(&[], 4).unwrap();
+        let path =
+            std::env::temp_dir().join(format!("oxurack-scope-export-{}.csv", std::process::id()));
+        let writer = BufWriter::new(File::create(&path).unwrap());
+        let primary: Box<dyn Error> = io::Error::other("primary playback failure").into();
+        let error = finish_scope(&rack, Some(writer), Err(primary)).unwrap_err();
+        assert!(error.to_string().contains("primary playback failure"));
+        assert_eq!(
+            std::fs::read_to_string(&path).unwrap(),
+            "sample,record,module,port,value_kind,value,status,data1,data2\n"
+        );
+        let _ = std::fs::remove_file(path);
     }
 }

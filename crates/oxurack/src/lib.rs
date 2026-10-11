@@ -16,6 +16,9 @@ use bevy_ecs::schedule::ScheduleLabel;
 use bevy_time::TimeUpdateStrategy;
 use bevy_time::prelude::{Fixed, Real, Time, Virtual};
 
+mod scope;
+pub use scope::{MidiDelivery, ScopeCapture, ScopeError, ScopeRecord, ScopeSelector};
+
 // ── Re-exports from oxurack-graph (feature-gated) ──────────────────
 #[cfg(feature = "graph")]
 pub use oxurack_graph;
@@ -76,6 +79,7 @@ impl Oxurack {
         app.add_plugins(bevy_time::TimePlugin);
         app.add_plugins(oxurack_core::CorePlugin::fixed());
         app.world_mut().init_resource::<MidiOutputBuffer>();
+        scope::install_observer(&mut app);
 
         #[cfg(feature = "graph")]
         app.add_plugins(oxurack_graph::RackGraphPlugin);
@@ -210,6 +214,9 @@ impl Oxurack {
                 Ok::<(), oxurack_core::CoreError>(())
             })?;
 
+        // Any prior selector bindings refer to the previous patch entities.
+        scope::disable(self.app.world_mut());
+
         // Freshness contract: run graph maintenance synchronously so
         // rack.graph().modules() reflects the just-loaded patch.
         #[cfg(feature = "graph")]
@@ -281,6 +288,50 @@ impl Oxurack {
     /// Returns a copy of the rack's authoritative sample clock.
     pub fn sample_time(&self) -> SampleTime {
         *self.app.world().resource::<SampleTime>()
+    }
+
+    /// Validates and enables bounded capture while the rack is stopped.
+    ///
+    /// Capacity counts mixed signal and MIDI records. The selector slice may
+    /// be empty for MIDI-only capture. A failed configuration leaves any
+    /// existing capture, records, and overwrite count unchanged.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ScopeError`] for running state, invalid capacity, missing
+    /// patch/selector, unsupported port kind/state, or allocation failure.
+    pub fn configure_scope(
+        &mut self,
+        selectors: &[ScopeSelector],
+        capacity: usize,
+    ) -> Result<&mut Self, ScopeError> {
+        scope::configure(self.app.world_mut(), selectors, capacity)?;
+        Ok(self)
+    }
+
+    /// Returns the currently enabled Scope capture, if any.
+    #[must_use]
+    pub fn scope(&self) -> Option<&ScopeCapture> {
+        self.app.world().get_resource::<ScopeCapture>()
+    }
+
+    /// Clears retained records and the overwrite count while keeping capture enabled.
+    pub fn clear_scope(&mut self) -> &mut Self {
+        scope::clear(self.app.world_mut());
+        self
+    }
+
+    /// Removes Scope capture. Calling this when capture is disabled is a no-op.
+    pub fn disable_scope(&mut self) -> &mut Self {
+        scope::disable(self.app.world_mut());
+        self
+    }
+
+    /// Copies an event explicitly drained by the caller into Scope, if enabled.
+    ///
+    /// Call only after the borrow returned by [`Self::drain_midi`] has ended.
+    pub fn record_scope_midi(&mut self, event: MidiOutputEvent, delivery: MidiDelivery) {
+        scope::record_midi(self.app.world_mut(), event, delivery);
     }
 
     /// Drains MIDI events produced by completed samples, in sink/message order.

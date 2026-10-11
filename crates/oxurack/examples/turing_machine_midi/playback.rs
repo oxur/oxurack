@@ -4,7 +4,9 @@ use std::io::{self, Write};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
-use oxurack::{MidiOutputEvent, Oxurack};
+#[cfg(test)]
+use oxurack::ScopeRecord;
+use oxurack::{MidiDelivery, MidiOutputEvent, Oxurack};
 
 const SAMPLE_PERIOD: Duration = Duration::from_millis(1);
 
@@ -207,7 +209,7 @@ where
 {
     let mut primary = run_samples(rack, session, samples, cancellation, &mut trace).err();
     rack.stop();
-    drop(rack.drain_midi());
+    let _ = drain_generated(rack);
     let cleanup = session.finish().to_vec();
     if let Err(error) = trace.flush()
         && primary.is_none()
@@ -219,6 +221,15 @@ where
     } else {
         Ok(())
     }
+}
+
+/// Drains exactly the runner-owned batch, then copies it after the rack borrow ends.
+pub(crate) fn drain_generated(rack: &mut Oxurack) -> Vec<MidiOutputEvent> {
+    let events: Vec<_> = rack.drain_midi().collect();
+    for event in &events {
+        rack.record_scope_midi(*event, MidiDelivery::Generated);
+    }
+    events
 }
 
 fn run_samples<S, W>(
@@ -242,12 +253,14 @@ where
         if rack.advance_samples(1)? == 0 {
             break;
         }
-        for event in rack.drain_midi() {
+        let events = drain_generated(rack);
+        for event in events {
             if cancellation.load(Ordering::SeqCst) {
                 break;
             }
             let [status, data1, data2] = event.message.to_bytes();
             session.send_performance(event)?;
+            rack.record_scope_midi(event, MidiDelivery::Sent);
             writeln!(
                 trace,
                 "{}|{status:02X} {data1:02X} {data2:02X}",
@@ -580,6 +593,186 @@ mod tests {
             &session.sender.sent[..expected_performance.len()],
             expected_performance
         );
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn capture_copies_generated_and_successfully_sent_events_without_changing_trace() {
+        let (mut baseline, baseline_path) = fast_rack();
+        let mut baseline_session = Session::new(Recorder::default());
+        let cancellation = AtomicBool::new(false);
+        let mut baseline_trace = Vec::new();
+        play(
+            &mut baseline,
+            &mut baseline_session,
+            200,
+            &cancellation,
+            &mut baseline_trace,
+        )
+        .unwrap();
+
+        let (mut captured, captured_path) = fast_rack();
+        captured.stop();
+        captured.configure_scope(&[], 2048).unwrap();
+        captured.start();
+        let mut session = Session::new(Recorder::default());
+        let mut trace = Vec::new();
+        play(
+            &mut captured,
+            &mut session,
+            200,
+            &AtomicBool::new(false),
+            &mut trace,
+        )
+        .unwrap();
+        assert_eq!(trace, baseline_trace);
+        let records: Vec<_> = captured.scope().unwrap().records().copied().collect();
+        let generated: Vec<_> = records
+            .iter()
+            .filter_map(|record| match record {
+                ScopeRecord::Midi {
+                    event,
+                    delivery: MidiDelivery::Generated,
+                } => Some(*event),
+                _ => None,
+            })
+            .collect();
+        let sent: Vec<_> = records
+            .iter()
+            .filter_map(|record| match record {
+                ScopeRecord::Midi {
+                    event,
+                    delivery: MidiDelivery::Sent,
+                } => Some(*event),
+                _ => None,
+            })
+            .collect();
+        let expected = super::super::oracle::expected_trace(200);
+        assert_eq!(
+            generated
+                .iter()
+                .map(|event| (event.sample, event.message.to_bytes()))
+                .collect::<Vec<_>>(),
+            expected
+        );
+        assert_eq!(sent, generated);
+        assert_eq!(trace, baseline_trace);
+        assert_eq!(
+            trace.iter().filter(|byte| **byte == b'\n').count(),
+            generated.len()
+        );
+        let mut csv = Vec::new();
+        captured.scope().unwrap().write_csv(&mut csv).unwrap();
+        let csv = String::from_utf8(csv).unwrap();
+        assert!(csv.starts_with("sample,record,module,port,value_kind,value,status,data1,data2\n"));
+        let first = generated[0];
+        let [status, data1, data2] = first.message.to_bytes();
+        assert!(csv.contains(&format!(
+            "{},midi_generated,,,midi,,{status:02X},{data1:02X},{data2:02X}\n",
+            first.sample
+        )));
+        let _ = std::fs::remove_file(baseline_path);
+        let _ = std::fs::remove_file(captured_path);
+    }
+
+    #[test]
+    fn failed_send_marks_only_successful_prefix_sent_and_excludes_cleanup() {
+        let (mut rack, path) = fast_rack();
+        rack.stop();
+        rack.configure_scope(&[], 128).unwrap();
+        rack.start();
+        let mut session = Session::new(Recorder {
+            sent: Vec::new(),
+            fail_at: vec![1],
+            cancel_after_success: None,
+            observed: None,
+        });
+        let error = play(
+            &mut rack,
+            &mut session,
+            200,
+            &AtomicBool::new(false),
+            &mut Vec::new(),
+        )
+        .unwrap_err();
+        assert!(error.to_string().contains("injected failure at 1"));
+        let records: Vec<_> = rack.scope().unwrap().records().copied().collect();
+        let generated: Vec<_> = records
+            .iter()
+            .filter(|record| {
+                matches!(
+                    record,
+                    ScopeRecord::Midi {
+                        delivery: MidiDelivery::Generated,
+                        ..
+                    }
+                )
+            })
+            .collect();
+        let sent: Vec<_> = records
+            .iter()
+            .filter(|record| {
+                matches!(
+                    record,
+                    ScopeRecord::Midi {
+                        delivery: MidiDelivery::Sent,
+                        ..
+                    }
+                )
+            })
+            .collect();
+        assert!(generated.len() >= 2);
+        assert_eq!(sent.len(), 1);
+        assert!(
+            session.sender.sent.len() > sent.len(),
+            "cleanup sends stay outside Scope"
+        );
+        assert_eq!(rack.drain_midi().count(), 0);
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn cancellation_after_success_keeps_generated_batch_and_sent_prefix() {
+        let (mut rack, path) = fast_rack();
+        rack.stop();
+        rack.configure_scope(&[], 128).unwrap();
+        rack.start();
+        let cancellation = Arc::new(AtomicBool::new(false));
+        let sender = Recorder {
+            sent: Vec::new(),
+            fail_at: Vec::new(),
+            cancel_after_success: Some((Arc::clone(&cancellation), 0)),
+            observed: None,
+        };
+        let mut session = Session::new(sender);
+        play(&mut rack, &mut session, 200, &cancellation, &mut Vec::new()).unwrap();
+        let records: Vec<_> = rack.scope().unwrap().records().copied().collect();
+        let generated = records
+            .iter()
+            .filter(|record| {
+                matches!(
+                    record,
+                    ScopeRecord::Midi {
+                        delivery: MidiDelivery::Generated,
+                        ..
+                    }
+                )
+            })
+            .count();
+        let sent = records
+            .iter()
+            .filter(|record| {
+                matches!(
+                    record,
+                    ScopeRecord::Midi {
+                        delivery: MidiDelivery::Sent,
+                        ..
+                    }
+                )
+            })
+            .count();
+        assert!(generated >= sent);
+        assert_eq!(sent, 1);
         let _ = std::fs::remove_file(path);
     }
 
