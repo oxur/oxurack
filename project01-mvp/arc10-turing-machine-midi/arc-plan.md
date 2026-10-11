@@ -1,6 +1,6 @@
 # Arc10 — Turing Machine MIDI in the rack
 
-Version 1.8 — 2026-10-10. Status: open; Slices01–03 accepted; Slice04 software accepted, witness pending.
+Version 1.9 — 2026-10-11. Status: open; four children accepted, CDC composition review pending.
 Depends on: Arc09 at source `37deeace90e7fe2dff633ada9d58ef9051577c3d`.
 Delivers: M1 playback; software composition enables Arc11 observation workbench.
 Workflow: Three contributors, Expedited Mode; Duncan relays CDC/CRC/CC packets.
@@ -29,7 +29,7 @@ to CDC. No scope is delegated through an empty placeholder.
 | slice01-musical-clock | Validated standalone sample Clock plus installed Gate output, fractional timing, edit/pause semantics; consumes Arc09 | Closed; CRC accepted source `a19cfd1` after iteration01 |
 | slice02-turing-machine-adapter | Opt-in rack adapter around existing seeded engine, full capability inventory, scalar snapshots and rising-edge stepping; consumes Clock | Closed; CRC accepted [iteration01](slice02-turing-machine-adapter/crc-verification.md#iteration01-review--accepted-2026-10-10) at `b2ffb16`; six rows done |
 | slice03-midi-output | Installed MIDI-out, bounded drain and executable seeded RON-to-MIDI trace; consumes adapter | Closed; [CRC accepted](slice03-midi-output/crc-verification.md) at `2942c59`; five rows done |
-| slice04-output-runtime | Extend the same example to real MIDI playback, stop/error cleanup and musical trial; consumes sink | Open; [CRC review](slice04-output-runtime/crc-verification.md) accepts O-01–O-04 at `65522f1`; O-05 Operator witness pending |
+| slice04-output-runtime | Extend the same example to real MIDI playback, stop/error cleanup and musical trial; consumes sink | Closed; [CRC review](slice04-output-runtime/crc-verification.md) accepts five O rows at `65522f1`; Duncan witnessed MIDI Bus1/PatchWork/Kontakt playback2026-10-11 |
 
 Was: three remaining slices separating sink, asynchronous service and endpoint
 acceptance. Now: two executable increments; the unissued Slice05 is absorbed by
@@ -70,6 +70,8 @@ Persistence, Chord, remaining modules, live controls and synchronization retain
 their existing project/backlog owners after those two musical milestones.
 
 ## Version history
+
+- v1.9 — 2026-10-11: Slice04 closed after Duncan's musical/stop witness; all four children/22 rows accepted. [CRC assembly](crc-verification.md) and [closure candidate](closing-report.md) ready for CDC review at `65522f1`. Five arc rows remain open; no architecture amendment or Arc11 issue by CRC.
 
 - v1.8 — 2026-10-10: independently accepted Slice04 software at `65522f1`; four O rows done, O-05 open for Duncan's routing/music/stop witness. No architecture amendment, arc close or Arc11 advancement.
 

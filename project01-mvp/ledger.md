@@ -51,3 +51,13 @@ physical timing, final musical acceptance and release validation obligations.
 These are not entry gates for M1/M2. All seven project rows remain open. Arc10's
 unissued endpoint-only slice is absorbed into playback; future async output is
 owned by Arc12 runtime API, re-entering when concurrent live operation needs it.
+
+## Arc10 CRC assembly / musical witness — 2026-10-11
+
+[CRC assembly](arc10-turing-machine-midi/crc-verification.md) at65522f1 accounts
+for four accepted children/22 rows and an actual MIDI Bus1 → PatchWork/Kontakt
+omni musical witness. Trace/replay/stop composition supplies P-02/P-07 support;
+CDC's Arc10 gate remains pending. P-07 still requires Arc11 LFO/Scope observation;
+P-03 physical timing, P-04 saved/live controls/controller acceptance, P-05 release
+quality and all other criteria retain their obligations. All seven rows remain
+open; no inherited deferred row or release gate is implicitly closed.
