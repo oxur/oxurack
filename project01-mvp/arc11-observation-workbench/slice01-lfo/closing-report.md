@@ -74,3 +74,156 @@ No additional supporting artifact was produced under the slice `artifacts/` dire
 ## Planning commit
 
 Planning commit: pending. The planning commit will contain only this `closing-report.md` and sibling `ledger.md`; no plan or Arc document is modified.
+
+## Iteration01 intake and contract readback — 2026-10-11
+
+Current assignment: `cc-prompt-iteration01.md`, SHA-256
+`1d777451c607735d538a29057b5141ed588428c6a512058a1780d3571b7c8a2c`.
+The issued initial prompt and original report above are preserved. Live source
+worktree is clean at `a9653866f6ba4e4f238137ad24c2c5a8720d3f83` on
+`codex/oxurack-module-behavior-installation`; planning worktree is clean at
+`90f48bfdd80da58b55cbfd7d55fd45de98b53d00` on `planning` before this report
+edit. Assignment is limited to `crates/oxurack-mod-lfo/src/rack.rs` and
+`crates/oxurack/tests/lfo.rs`; L-02 stays open pending CRC. Scope/Slice02 stays
+held. No implementation began before this intake/readback.
+
+Required-reading coverage: read this iteration prompt, sibling slice plan,
+ledger and CRC verification in full; CDC directive09 and Arc11 plan in full;
+source `CLAUDE.md` in full; initial prompt sections “Source-grounded design and
+engineering choices”, “Recommended API and implementation sequence”, “Tests and
+checks”, and “Scope, discretion and return”; both authorized source files in
+full; CorePlugin/CorePluginFixed, Port/CurrentValue/spawn initialization,
+TickPhase/SampleTime/running latch/finalization, and LFO `next_sample`/CV/sync
+sections; installed Rust-guidelines and testing skill entrypoints, AP-24/AP-25/
+AP-33, and the complete validation-gates guide. The applicable guidance treats
+broken internal invariants as panics, user/configuration errors as Results, and
+prohibits silent fallback of incompatible values. CorePlugin owns sample gates
+and the five-phase chain; typed port constructors initialize Float(0)/Gate(false).
+
+Source-cited contract readback: `slice-plan.md` “Binding rack integration and
+timing” requires the private adapter to retain controls from Consume, publish
+in Produce, and regard missing/wrong-typed internal values as invariant bugs;
+the standalone engine separately maps correctly typed non-finite frequency CV
+to neutral zero. Current `rack.rs` decoders (`:246-265`) instead map wrong
+variants to 0/false. `crates/oxurack-core/src/port.rs` (`:108-159`) confirms
+ports carry typed `CurrentValue` initialized by `Value::default_for_kind`.
+`crates/oxurack-core/src/lib.rs` (`:118-200`) confirms `CorePlugin` selects
+Update, `CorePlugin::fixed()` selects FixedUpdate, and both install the same
+core sample phases and running gate; `tick.rs` (`:37-123`) defines the five
+ordered phases and completed-sample accounting. Existing `tests/lfo.rs` uses
+the actual module and FixedUpdate for lifecycle/oracle checks but lacks the
+requested direct Update schedule proof. `lfo.rs` (`:201-247`) preserves typed
+Float NaN neutralization in `next_sample`. Therefore this pass adds four
+isolated wrong-type regressions with diagnostic evidence and common actual-module
+literal-sequence checks through each supplied schedule; it does not change
+engine CV semantics, scheduling, or public APIs.
+
+## Iteration01 implementation and evidence — 2026-10-11
+
+Source commit: `c4b517c89f51d44c0eb1bec4a7b891984d3e0a92`
+(`fix(lfo): enforce input invariants and verify supplied schedules`), based on
+`a9653866f6ba4e4f238137ad24c2c5a8720d3f83`. Its complete path list is exactly:
+
+- `crates/oxurack-mod-lfo/src/rack.rs`
+- `crates/oxurack/tests/lfo.rs`
+
+The private Float/Gate input decoders now panic with the input name, required
+Value variant and actual value when internal state has the wrong type. Missing
+component `expect`s and typed Float NaN handling are unchanged. Integration
+tests build an App with the real CorePlugin/CorePluginFixed and call
+`LfoModule::register_systems` on the supplied interned schedule; they use the
+actual spawned module and discover its ports by `Port.name`. No copied scheduler,
+facade schedule substitution, `App::update`, engine/core change or public API
+change was introduced.
+
+### F-01/F-02 regression evidence
+
+Before the adapter fix, the four new isolated corruption tests were run against
+baseline `a965386` with
+`cargo test --locked -p oxurack --test lfo schedule_rejects_wrong_ -- --nocapture`.
+All four failed as expected because the test did not panic: Update `freq_in =
+Gate(true)`, Update `sync_in = Float(0.5)`, FixedUpdate `freq_in = Gate(true)`,
+and FixedUpdate `sync_in = Float(0.5)`. Port lookup and schedule setup completed;
+none failed from a missing port. After the change all four pass only with their
+expected diagnostic text (`LFO freq_in must carry Value::Float` or `LFO sync_in
+must carry Value::Gate`), proving the invariant panic on both supplied schedules.
+
+The direct adapter sequence runs independently on Update and FixedUpdate with
+`saw_up`, 62.5 Hz, zero offset, width 0.5 and no cables. For both, a stopped
+schedule run leaves completed samples at 0 and both typed output defaults
+unchanged; four running runs publish bipolar `[-1.0, -0.875, -0.75, -0.625]`
+and unipolar `[0.0, 0.0625, 0.125, 0.1875]` with completed count 4; one stopped
+run changes neither outputs nor count; after resume the next output is bipolar
+`-0.5`, unipolar `0.25`, and count 5. This checks that the supplied schedule
+actually owns the adapter execution, that output is evaluated before phase
+advance, and that core stop/resume gating is honored without a second adapter
+gate.
+
+A separate run per supplied schedule starts `saw_up` at base 0 Hz, sets the
+actual `freq_in` port to correctly typed `Float(NaN)` before the first sample,
+then runs three samples. It publishes finite unipolar 0 and bipolar -1 throughout
+with completed count 3 and no invariant panic. This preserves the engine's
+typed-nonfinite CV-neutral policy. Existing loaded-patch, Clock/two-instance
+sync and latency, parameter, stop/resume/reinstall and cable-removed oracles all
+remain in `tests/lfo.rs` and pass.
+
+One initial post-fix focused run had 11/12 tests pass because the NaN case used
+the shared 62.5 Hz setup while asserting the zero-rate held-phase result. The
+test helper was parameterized and that case now explicitly uses base 0 Hz, as
+the assignment specifies; the corrected test and subsequent complete focused
+runs pass. The first `make lint` run passed Clippy but reported one rustfmt-only
+line-wrap difference; the formatting was corrected and the unchanged gate then
+passed.
+
+### Validation receipt
+
+All commands ran from S, the source worktree, against `c4b517c` unless noted.
+
+| Command | Result |
+| --- | --- |
+| `cargo test --locked -p oxurack-mod-lfo` | 4 unit tests + 1 doc test passed |
+| `cargo test --locked -p oxurack-mod-lfo --features rack` | 4 unit tests + 1 doc test passed |
+| `cargo test --locked -p oxurack --test lfo` | 12 passed; includes both supplied schedules and prior LFO oracles |
+| `cargo test --locked -p oxurack --no-default-features --test lfo` | 12 passed |
+| `cargo test --locked -p oxurack --test midi_output --example turing-machine-midi` | 2 integration tests + 11 example tests passed |
+| `make test` restricted attempt (before the final typed-output-default assertion was added) | 146 RT tests passed, 4 existing CoreMIDI discovery/open tests failed to initialize MIDI, 3 pre-existing RT tests ignored; other displayed workspace test groups passed |
+| `make test` unchanged host-access retry | Passed; RT 150 passed, 0 failed, 3 pre-existing timing/scheduling tests ignored; workspace and doc tests passed |
+| `make lint` | First attempt, before the final typed-output-default assertion: Clippy passed, formatting check found one line-wrap difference. After correction, Clippy and format checks passed; lint reran on the final source commit |
+| `cargo clippy --locked -p oxurack-mod-lfo -p oxurack --all-features --all-targets -- -D warnings` | Passed |
+| `RUSTDOCFLAGS='-D warnings' make docs` | Passed; docs generated |
+| `cargo build --locked -p oxurack --example turing-machine-midi` | Passed |
+| `git diff --check` | Passed before commit |
+
+The built example was run as two fresh processes against
+`turing-machine-lfo.ron` with `--samples 10000`; `cmp` passed, each output had
+70 rows and SHA-256
+`988563371b7473412325a22d6babb68cba1468b7719bef3512fafa431e8a687c`. The
+original `turing-machine-midi.ron` was run with `--samples 2000`; it had 13 rows
+and SHA-256
+`98e109812e40f52ebdd9ae419b8a04938eee84608462158ee10a068760f5dc7b`. Temporary
+outputs were under `/private/tmp`; no MIDI endpoint was opened. The existing
+`block0.1.6` future-incompatibility advisory appeared during Cargo commands; it
+did not fail a gate. Three existing RT ignores remain visible above; no new
+ignore or lint suppression was added.
+
+### Five-row proposed disposition
+
+The denominator remains five. The four prior CRC-done rows stay done at their
+reviewed revision; new CC runs refresh adapter-dependent evidence where noted.
+L-02 is CC-attested proposed-done only and remains open for CRC acceptance.
+
+| ID | Current status | Iteration evidence and qualification |
+| --- | --- | --- |
+| L-01 | CRC done at a965386 | Engine-only oscillator behavior and dependency boundary are unchanged; no engine path was edited |
+| L-02 | Open; CC proposed-done at c4b517c | Four invariant regressions reproduced red at a965386 and green with diagnostics at c4b517c; literal actual-module Update/FixedUpdate sequences, stopped state, resume and typed NaN neutralization pass; CRC review remains pending |
+| L-03 | CRC done at a965386 | Registered setter/getter, edit, invalidation and atomic-spawn tests reran as part of the 12 passing LFO integration tests |
+| L-04 | CRC done at a965386 | Loaded accelerated modulation/cable-removed oracle reran; both 10,000-sample fixture processes and original 2,000-sample compatibility hash reproduced |
+| L-05 | CRC done at a965386 | All assigned native gates were rerun. Restricted CoreMIDI failure and unchanged host retry are retained; host retry passed. Explicit source inventory is the two authorized paths |
+
+No additional source, design or scope effect emerged. No supporting artifact was
+needed; no new file was created. Scope capture remains held pending CRC review
+and acceptance. CC proposes L-02 done but does not change its open ledger status,
+close Slice01/Arc11, advance Scope or claim CRC acceptance.
+
+Planning commit: pending. It will contain exactly this `closing-report.md` and
+the sibling `ledger.md` L-02 evidence update.
