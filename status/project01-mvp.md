@@ -9,9 +9,9 @@
 > is now open. [Slice01 LFO](../project01-mvp/arc11-observation-workbench/slice01-lfo/crc-verification.md)
 > is CRC accepted at `c4b517c`: five child rows done after one correction.
 > Actual modulation traces, supplied schedules and affected native gates reproduce.
-> [Slice02 bounded Scope capture](../project01-mvp/arc11-observation-workbench/slice02-scope-capture/cc-prompt.md)
-> is issued under directive09 at `c4b517c`: five S rows open; CSV through the existing
-> runner, with Observe snapshots and sole-owner MIDI copies. Terminal view follows.
+> [Slice02 bounded Scope capture](../project01-mvp/arc11-observation-workbench/slice02-scope-capture/crc-verification.md)
+> is CRC accepted at `6c56e84`: five S rows done; CSV/native checks and unchanged
+> musical traces reproduce. Terminal Slice03 is next under directive09.
 > No endpoint was opened by CRC; Arc11 composition remains open.
 > Three contributors, Expedited Mode and directive08 proportionate proof remain.
 > All seven project rows remain open; P-07 needs LFO/Scope. Async output/live API,

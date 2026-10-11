@@ -1,6 +1,6 @@
 # Arc11 Slice02 — bounded Scope capture and CSV export
 
-Version 1.0 — 2026-10-11. Status: open; five S rows.
+Version 1.1 — 2026-10-11. Status: closed; five S rows independently done at6c56e84.
 Current assignment: `arc11-observation-workbench/slice02-scope-capture/cc-prompt.md`.
 CRC authors/reviews; CC implements; Duncan relays. Three contributors,
 Expedited Mode. Directive09 releases this slice after accepted LFO Slice01 at
@@ -122,9 +122,11 @@ leaving implementation/recovery headroom. All six readiness checks pass.
 
 | Date | Prompt | Predecessor / reason | Disposition |
 | --- | --- | --- | --- |
-| 2026-10-11 | arc11-observation-workbench/slice02-scope-capture/cc-prompt.md | directive09; accepted LFO at c4b517c; next approved workbench increment | Active; CC implements and returns to CRC |
+| 2026-10-11 | arc11-observation-workbench/slice02-scope-capture/cc-prompt.md | directive09; accepted LFO at c4b517c; next approved workbench increment | Accepted; CC return f2adf44, source6c56e84; CRC reproduced all five rows |
 
 ## Version history
+
+- v1.1 — 2026-10-11: CRC accepted all five rows at6c56e84; bounded capture/CSV and native gates reproduce. No design findings; Slice03 authoring released.
 
 - v1.0 — 2026-10-11: Opened on accepted LFO source; bounded Observe/MIDI copy
   capture plus runnable CSV export, leaving the terminal view to Slice03.
