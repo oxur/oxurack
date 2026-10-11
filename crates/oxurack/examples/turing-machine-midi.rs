@@ -663,6 +663,7 @@ mod tests {
     struct TestSender {
         calls: Arc<std::sync::Mutex<Vec<[u8; 3]>>>,
         fail_at: Option<usize>,
+        cancel_after: Option<(Arc<AtomicBool>, usize)>,
     }
 
     impl playback::MidiSender for TestSender {
@@ -674,6 +675,11 @@ mod tests {
             if self.fail_at == Some(index) {
                 Err(format!("injected send failure at {index}").into())
             } else {
+                if let Some((flag, after)) = &self.cancel_after
+                    && index == *after
+                {
+                    flag.store(true, std::sync::atomic::Ordering::SeqCst);
+                }
                 Ok(())
             }
         }
@@ -700,6 +706,7 @@ mod tests {
         let mut session = playback::Session::new(TestSender {
             calls: Arc::clone(&sender_calls),
             fail_at: Some(1),
+            cancel_after: None,
         });
         let error = playback::play(
             &mut rack,
@@ -757,6 +764,82 @@ mod tests {
                 .to_string()
                 .contains("injected send failure at 1")
         );
+        let view = String::from_utf8(view).unwrap();
+        assert!(view.contains(&format!("generated={generated} sent={sent}")));
+        assert!(view.contains("recent MIDI"));
+        let _ = std::fs::remove_file(fixture);
+    }
+
+    #[test]
+    fn actual_cancelled_play_renders_stopped_partial_capture_without_more_drain() {
+        let source = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("examples/patches/turing-machine-midi.ron");
+        let mut parsed =
+            oxurack_core::deserialize_patch(&std::fs::read_to_string(&source).unwrap()).unwrap();
+        parsed.modules[0]
+            .parameters
+            .insert("bpm".into(), oxurack::ParameterValue::Float(1000.0));
+        parsed.modules[0]
+            .parameters
+            .insert("ppqn".into(), oxurack::ParameterValue::Int(30));
+        let fixture = std::env::temp_dir().join(format!(
+            "oxurack-cancelled-workbench-{}.ron",
+            std::process::id()
+        ));
+        oxurack_core::save_patch_to_file(&parsed, &fixture).unwrap();
+        let mut rack = prepare_rack(&fixture).unwrap();
+        rack.configure_scope(&[], 128).unwrap().start();
+
+        let cancellation = Arc::new(AtomicBool::new(false));
+        let sender_calls = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let sender = TestSender {
+            calls: Arc::clone(&sender_calls),
+            fail_at: None,
+            cancel_after: Some((Arc::clone(&cancellation), 0)),
+        };
+        let mut session = playback::Session::new(sender);
+        playback::play(&mut rack, &mut session, 200, &cancellation, Vec::new()).unwrap();
+        assert_eq!(rack.advance_samples(1).unwrap(), 0);
+        assert_eq!(rack.drain_midi().count(), 0);
+
+        let records: Vec<_> = rack.scope().unwrap().records().copied().collect();
+        let generated = records
+            .iter()
+            .filter(|record| {
+                matches!(
+                    record,
+                    oxurack::ScopeRecord::Midi {
+                        delivery: oxurack::MidiDelivery::Generated,
+                        ..
+                    }
+                )
+            })
+            .count();
+        let sent = records
+            .iter()
+            .filter(|record| {
+                matches!(
+                    record,
+                    oxurack::ScopeRecord::Midi {
+                        delivery: oxurack::MidiDelivery::Sent,
+                        ..
+                    }
+                )
+            })
+            .count();
+        assert!(generated >= sent);
+        assert_eq!(sent, 1);
+        assert!(sender_calls.lock().unwrap().len() > sent);
+
+        let cli = Cli::try_parse_from([
+            "example",
+            "--patch",
+            fixture.to_str().unwrap(),
+            "--scope-view",
+        ])
+        .unwrap();
+        let mut view = Vec::new();
+        finalize_scope(&cli, &rack, None::<Vec<u8>>, &mut view, Ok(())).unwrap();
         let view = String::from_utf8(view).unwrap();
         assert!(view.contains(&format!("generated={generated} sent={sent}")));
         assert!(view.contains("recent MIDI"));
