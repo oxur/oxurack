@@ -82,8 +82,10 @@ sequence; no reset command is added.
 
 ## Implementation and proposed-done evidence
 
-Source implementation is committed at `f0b045330c8bb74fb3267ba8ef0a515dfaf1012e`
-on the accepted S branch. It changes exactly these paths:
+Source implementation is committed on the accepted S branch in
+`f0b045330c8bb74fb3267ba8ef0a515dfaf1012e`; a focused cancellation-finalizer
+test follow-up is committed at `22500fae234d5dbba599c7683f8893aabe70f47b`.
+Together they change exactly these paths:
 
 - `crates/oxurack/examples/turing-machine-midi.rs`
 - `crates/oxurack/examples/turing_machine_midi/workbench.rs` (new)
@@ -113,8 +115,10 @@ No API/dependency research beyond the required packet was needed.
   failing on its second performance send. It observes the Generated batch,
   one successful Sent event, cleanup calls before finalization, cleanup excluded
   from Scope, and the primary error retained with the final view. Existing
-  runner cancellation tests remain unchanged and are included in the focused
-  test run.
+  runner cancellation tests remain unchanged. A second real runner test sets
+  cancellation after the first successful send, verifies no later samples or
+  drain remain, and renders the stopped partial capture with generated/sent
+  counts and cleanup calls excluded from Scope.
 - `./target/debug/examples/turing-machine-midi --patch
   crates/oxurack/examples/patches/turing-machine-lfo.ron --samples 10000`
   with the four README selectors and `--scope-view --scope-rows 12
@@ -142,8 +146,8 @@ No API/dependency research beyond the required packet was needed.
 
 | Command / demonstration | Result |
 | --- | --- |
-| `cargo test --locked -p oxurack --example turing-machine-midi` | 24 passed, 0 failed, 0 ignored (default features). |
-| `cargo test --locked -p oxurack --no-default-features --example turing-machine-midi` | 24 passed, 0 failed, 0 ignored. |
+| `cargo test --locked -p oxurack --example turing-machine-midi` | 25 passed, 0 failed, 0 ignored (default features). |
+| `cargo test --locked -p oxurack --no-default-features --example turing-machine-midi` | 25 passed, 0 failed, 0 ignored. |
 | `cargo test --locked -p oxurack --test scope --test lfo --test midi_output` | 20 passed, 0 failed, 0 ignored. |
 | `cargo test --locked -p oxurack --no-default-features --test scope` | 6 passed, 0 failed, 0 ignored. |
 | `make test` restricted | Workspace run exits 2. The `oxurack-rt` suite reports 146 passed, 4 failed, 3 ignored. Four MIDI port tests fail because CoreMIDI reports `MIDI support could not be initialized`; other workspace suites and doctests pass. Raw log: `/tmp/oxurack-slice03-make-test-restricted.log`. |
@@ -158,7 +162,8 @@ All Cargo runs report the existing `block v0.1.6` future-incompatibility
 advisory; no warning was suppressed and no dependency was changed. During
 development, the first focused renderer attempt had 15 passed/4 failed because
 the test fixture setup omitted saw-up/accelerated clock parameters; after
-correcting the setup, the final default and no-default runs each passed 24/24.
+correcting the setup, the default and no-default runs each passed 25/25,
+including the added cancellation-finalizer integration case.
 The first `make lint` found formatting differences; exact changed Rust files
 were formatted and subsequent lint runs passed. These failed attempts are
 retained here rather than described as successful runs.
@@ -167,10 +172,10 @@ retained here rather than described as successful runs.
 
 | Row | CC evidence and status | CRC boundary |
 | --- | --- | --- |
-| B-01 | Proposed-done at `f0b045330c8bb74fb3267ba8ef0a515dfaf1012e`: literal loaded scalar sequence, stable selector order, exact independent MIDI bytes, bounded/mixed/empty/escaped cases and immutable snapshot/time are covered. | Open; CRC independently checks retained-window semantics and output literals. |
-| B-02 | Proposed-done at the same source commit: parser combinations/bounds/conflicts, preflight failures, unchanged CSV bytes and stdout trace are evidenced above. | Open; CRC checks CLI contract and baseline CSV/trace comparison. |
-| B-03 | Proposed-done at the same source commit: injected write/flush errors, primary-first aggregation, independent report success, real second-send failure and cleanup-before-view are evidenced above. | Open; CRC independently reviews finalizer ordering and runner integration. |
-| B-04 | Proposed-done at the same source commit: README recipes, pinned fixture hashes, fresh-process equality, baseline CSV equality, capacity-3 and zero-sample outputs, and all prompt gates are recorded above. | Open; CRC reviews runnable evidence and documentation. |
+| B-01 | Proposed-done at source `f0b045330c8bb74fb3267ba8ef0a515dfaf1012e`: literal loaded scalar sequence, stable selector order, exact independent MIDI bytes, bounded/mixed/empty/escaped cases and immutable snapshot/time are covered. | Open; CRC independently checks retained-window semantics and output literals. |
+| B-02 | Proposed-done at source `f0b045330c8bb74fb3267ba8ef0a515dfaf1012e`: parser combinations/bounds/conflicts, preflight failures, unchanged CSV bytes and stdout trace are evidenced above. | Open; CRC checks CLI contract and baseline CSV/trace comparison. |
+| B-03 | Proposed-done at source `22500fae234d5dbba599c7683f8893aabe70f47b`: injected write/flush errors, primary-first aggregation, independent report success, real second-send failure, cancellation and cleanup-before-view are evidenced above. | Open; CRC independently reviews finalizer ordering and runner integration. |
+| B-04 | Proposed-done at source `f0b045330c8bb74fb3267ba8ef0a515dfaf1012e`: README recipes, pinned fixture hashes, fresh-process equality, baseline CSV equality, capacity-3 and zero-sample outputs, and all prompt gates are recorded above. | Open; CRC reviews runnable evidence and documentation. |
 
 Self-review found no edits outside the three authorized S paths, no library,
 playback, fixture, manifest or lockfile changes, and no new dependency, API,
