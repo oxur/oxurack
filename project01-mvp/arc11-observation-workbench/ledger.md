@@ -1,7 +1,8 @@
 # Arc11 — composition ledger
 
 Opened 2026-10-11 before implementation. Three planned slices; four rows open.
-CRC assembles; CDC independently verifies arc composition. No work accepted yet.
+CRC assembles; CDC independently verifies arc composition. Slice01 has five
+CRC-accepted rows at c4b517c; parent rows remain open for full workbench composition.
 
 | ID | Criterion | Verify | Significance | Origin | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |

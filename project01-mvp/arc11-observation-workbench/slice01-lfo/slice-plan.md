@@ -1,7 +1,7 @@
 # Arc11 Slice01 — LFO that modulates the playable rack
 
-Version 1.1 — 2026-10-11. Status: open; four L rows done, L-02 open.
-Current assignment: `arc11-observation-workbench/slice01-lfo/cc-prompt-iteration01.md`.
+Version 1.2 — 2026-10-11. Status: closed; all five L rows done.
+Final accepted assignment: `arc11-observation-workbench/slice01-lfo/cc-prompt-iteration01.md`.
 CDC authors; CC implements; CRC independently reviews; Duncan relays.
 Source predecessor `65522f116a12a9ac96d35cfe25ed9c184f5bddcb` in the existing
 `codex/oxurack-module-behavior-installation` worktree. Arc10 is CDC accepted.
@@ -116,14 +116,21 @@ CV policy inspected; AP-24/AP-25/AP-33 applied; literal outputs, negative contro
 two-file scope and complete bounded reading/return contract supplied in the
 [new prompt](cc-prompt-iteration01.md). One refinement pass issued, not yet executed.
 
+CRC final acceptance — 2026-10-11: the two-file correction and all affected
+checks reproduce at c4b517c; five rows done. No arc design change. Scope follows
+under directive09. Earlier review/issue text above is preserved history.
+
 ## Assignment history
 
 | Date | Prompt | Predecessor | Disposition |
 | --- | --- | --- | --- |
 | 2026-10-11 | arc11-observation-workbench/slice01-lfo/cc-prompt.md | directive09; accepted Arc10 at65522f1 | Returned at a965386/353766a; CRC accepted four rows; L-02 requires correction |
-| 2026-10-11 | arc11-observation-workbench/slice01-lfo/cc-prompt-iteration01.md | cc-prompt.md | Active: repair wrong-type invariant fallback (F-01) and complete supplied Update proof (F-02); return to CRC |
+| 2026-10-11 | arc11-observation-workbench/slice01-lfo/cc-prompt-iteration01.md | cc-prompt.md | Accepted at c4b517c / planning return0e8de65; F-01/F-02 resolved, all five rows done |
 
 ## Version history
+
+- v1.2 — 2026-10-11: Corrective iteration independently accepted at c4b517c;
+  all five rows closed and bubbled up; bounded Scope capture is next.
 
 - v1.1 — 2026-10-11: CRC reviewed a965386, accepted four rows, kept L-02 open
   and issued one focused corrective iteration; original assignment preserved.

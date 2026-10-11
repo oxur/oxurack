@@ -6,12 +6,11 @@
 > setup. CDC reproduced single/two-sink traces and runner tests, and checked the
 > preserved Operator traces; no corrective assignment or endpoint deferral.
 > [Arc11 observation workbench](../project01-mvp/arc11-observation-workbench/arc-plan.md)
-> is now open. LFO candidate `a965386` runs the actual TM modulation patch; CRC
-> reproduced gates and traces and accepted four of five child rows. L-02 remains
-> open: wrong typed internal inputs silently become neutral; direct Update proof
-> is missing. [Corrective iteration01](../project01-mvp/arc11-observation-workbench/slice01-lfo/cc-prompt-iteration01.md)
-> is the current CC assignment. Bounded Scope capture stays held until acceptance.
-> Directive09 is acknowledged in project handoff history. No endpoint opened by CRC.
+> is now open. [Slice01 LFO](../project01-mvp/arc11-observation-workbench/slice01-lfo/crc-verification.md)
+> is CRC accepted at `c4b517c`: five child rows done after one correction.
+> Actual modulation traces, supplied schedules and affected native gates reproduce.
+> CRC prepares bounded Scope capture next under acknowledged directive09.
+> No endpoint was opened by CRC; Arc11 composition remains open.
 > Three contributors, Expedited Mode and directive08 proportionate proof remain.
 > All seven project rows remain open; P-07 needs LFO/Scope. Async output/live API,
 > remaining catalog and release coverage/timing/soak retain their existing owners.

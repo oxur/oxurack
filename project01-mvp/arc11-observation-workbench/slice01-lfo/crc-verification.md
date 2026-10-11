@@ -1,5 +1,8 @@
 # Slice01 LFO — CRC review
 
+**Current verdict (2026-10-11): accepted and closed at
+`c4b517c89f51d44c0eb1bec4a7b891984d3e0a92`; all five rows done.**
+
 2026-10-11, Sofie/CRC; Three-Contributor Workflow, Expedited Mode.
 Assignment reviewed: `cc-prompt.md`; CC return: `closing-report.md` in planning
 `353766a9f63b4139bba5a46dc93f11a8b4269147`.
@@ -7,7 +10,7 @@ Source reviewed: `a9653866f6ba4e4f238137ad24c2c5a8720d3f83`, based on accepted
 Arc10 `65522f116a12a9ac96d35cfe25ed9c184f5bddcb`. Both worktrees were clean.
 Main remains `a7ce6e61536ca96b6aeb2227ee06e430ed8df162`.
 
-## Verdict and authority
+## Initial review verdict and authority — historical
 
 Four rows are independently reproduced and accepted; **L-02 remains open**.
 The musical modulation path runs and native gates pass. One binding invariant
@@ -109,3 +112,62 @@ The correction does not invalidate engine-only L-01 claims. Adapter/integration
 checks are affected and must be refreshed; retain earlier evidence only after
 inspecting the corrected delta and recording applicability at its original
 revision/date. Passing gates alone do not close F-01 or F-02.
+
+
+## Iteration01 independent acceptance — 2026-10-11
+
+Reviewed `cc-prompt-iteration01.md` and CC's dated return in planning
+`0e8de65408cc79af355bcb090a2163c9b61a25ee`. Source/worktree clean at
+`c4b517c89f51d44c0eb1bec4a7b891984d3e0a92`. Source delta is exactly the two
+assigned paths: rack.rs replaces two fallback arms with descriptive invariant
+panics; tests/lfo.rs adds actual-module supplied-schedule regression evidence.
+No engine, configuration, dependencies, scheduler, fixture or runner changes.
+CC's readback correctly distinguishes internal variant corruption from numeric
+nonfinite CV sanitization. Initial return and both issued prompts are preserved.
+
+CRC freshly ran:
+
+- `cargo test --locked -p oxurack-mod-lfo`: 4 unit + 1 doc pass.
+- Same with `--features rack`: 4 unit + 1 doc pass.
+- `cargo test --locked -p oxurack --test lfo`: 12 pass.
+- Same with `--no-default-features`: 12 pass.
+- `cargo test --locked -p oxurack --test midi_output --example turing-machine-midi`:
+  2 integration + 11 example tests pass.
+- Host `make test`: workspace/doc tests pass; RT 150 pass, 3 existing ignores.
+- `make lint`, affected two-package/all-feature/all-target strict Clippy,
+  `RUSTDOCFLAGS='-D warnings' make docs`, example build and diff check: pass.
+- Two fresh built-example processes, new fixture10000: equal70 rows/hash
+  `988563371b7473412325a22d6babb68cba1468b7719bef3512fafa431e8a687c`.
+- Original fixture2000: 13 rows/hash
+  `98e109812e40f52ebdd9ae419b8a04938eee84608462158ee10a068760f5dc7b`.
+
+L-02's four wrong-type tests pass only on their matching diagnostic; both direct
+Update/FixedUpdate runs give the literal bipolar/unipolar sequence, typed initial
+values, stopped count0, running count4, stable pause, continuation count5. Typed
+Float(NaN) remains neutral and finite through both schedules. The earlier CRC
+actual-module a965386 probe above establishes the baseline failure; CC's new
+four red tests are attested, not represented as another fresh CRC baseline run.
+F-01 and F-02 are resolved. No production repair was authored by CRC.
+
+All five rows are accounted for: L-01 engine-only claims and standalone normal
+ dependency boundary retain a965386 evidence because their implementation,
+ dependencies and inputs are unchanged; engine tests additionally reran now.
+L-02 is newly reproduced/done; L-03 parameter/continuation and L-04 loaded
+modulation/control/trace checks freshly reproduce; L-05 native gates and strict
+ two-file scope freshly reproduce. No deferrals, no-ops or silent drops. CC's
+restricted CoreMIDI failures and final host retry stay in the closing report;
+CRC independently reproduced the host gate. Existing block0.1.6 advisory and
+three RT ignores remain baseline limitations. No endpoint audition or new
+release acceptance is claimed. Routine temporary logs/traces are not durable
+slice artifacts; supporting-artifact inventory remains none.
+
+## Final bubble-up check
+
+The slice delivers Arc11's installed five-waveform LFO and actual seeded TM
+modulation through the existing runner. The correction restores the existing
+invariant policy; no new dependency, scope or sequencing change emerged.
+Arc-plan needs routine child status/source updates, with its approved capture
+ownership/design intact. All five child rows are closed; Arc11's four composition
+rows and the project's seven rows stay open. CRC now authors Slice02 bounded
+Scope capture at accepted c4b517c under directive09. What worked remains the
+literal/control musical oracle and the direct supplied-schedule regression.

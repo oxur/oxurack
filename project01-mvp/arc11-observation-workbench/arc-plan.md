@@ -1,6 +1,6 @@
 # Arc11 — musical observation workbench
 
-Version 1.1 — 2026-10-11. Status: open; Slice01 corrective iteration01 issued by CRC.
+Version 1.2 — 2026-10-11. Status: open; Slice01 closed at c4b517c; CRC preparing Scope.
 Depends on Arc10, independently accepted at source `65522f1`.
 Authority: Operator's TM-first/workbench-second selection; directives08/09.
 Three contributors, Expedited Mode. CDC owns arc/first-slice design; CRC reviews
@@ -19,15 +19,15 @@ P-07 remains open until this composition is demonstrated; release gates are late
 
 | Slice | Result | Depends on / state |
 | --- | --- | --- |
-| slice01-lfo | Standalone and installed five-waveform LFO; real RON patch modulates TM write probability and plays through the existing runner | Arc10; [open set](slice01-lfo/slice-plan.md), four L rows done, L-02 open for private input invariant repair and supplied-schedule proof |
+| slice01-lfo | Standalone and installed five-waveform LFO; real RON patch modulates TM write probability and plays through the existing runner | Arc10; [closed slice](slice01-lfo/crc-verification.md), five L rows done at c4b517c |
 | slice02-scope-capture | Bounded in-memory scalar/Gate/Raw observation at Observe, with sample indices; actual emitted MIDI captured without competing with the runner's drain; a runnable capture/export | LFO; planned, CRC details on accepted source |
 | slice03-workbench-integration | Small usable terminal inspection view tying patch, selected signals and MIDI together; clear capture bounds, reset/new-run and export instructions | Capture; planned, CRC details on accepted source |
 
 The first slice's exact API and numerical semantics live in its plan/prompt.
-Only that slice is issued now. CRC reviewed a965386 and issued
-[slice01 iteration01](slice01-lfo/cc-prompt-iteration01.md); native gates and the
-modulated fixture pass, but L-02 must close before Scope is issued. Future slices
-receive concrete recipes when next.
+Slice01 is independently accepted after one correction. Its native gates,
+modulated fixture and supplied-schedule behavior reproduce at c4b517c.
+No design, dependency or sequencing change surfaced; CRC prepares Slice02 on
+this accepted source. Future slices receive concrete recipes when next.
 The workbench is a developer/musician inspection tool; full CLI/REPL/controller
 editing remains Arc07. Do not create an evidence-only composition slice.
 
@@ -64,6 +64,9 @@ remaining catalog/Chord, live persistence and broader interfaces retain their
 Arc08/13/12/07 owners. Nothing here closes their historical deferred rows.
 
 ## Version history
+
+- v1.2 — 2026-10-11: Slice01 correction accepted at c4b517c, all five L rows
+  done; Scope authoring released. Routine child status update; design unchanged.
 
 - v1.1 — 2026-10-11: CRC accepted four LFO rows at a965386; one correction
   restores the binding invariant policy and completes the requested schedule
