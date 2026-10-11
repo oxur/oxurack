@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use bevy_app::{App, FixedUpdate};
+use bevy_app::{App, FixedUpdate, Update};
 use bevy_ecs::prelude::{Entity, Query, ResMut, Resource, World};
-use bevy_ecs::schedule::IntoScheduleConfigs;
+use bevy_ecs::schedule::{InternedScheduleLabel, IntoScheduleConfigs, ScheduleLabel};
 use oxurack::{
-    CableConfig, CoreError, Module, ModuleConfig, Oxurack, ParameterValue, Patch, SimulationDriver,
-    TickPhase, Value,
+    CableConfig, CoreError, CorePlugin, Module, ModuleConfig, Oxurack, ParameterValue, Patch,
+    SampleTime, SimulationDriver, SimulationRunning, TickPhase, Value,
 };
 use oxurack_core::{
     CurrentValue, Module as ModuleComponent, ModuleKind, OxurackModule, ParameterRegistry, Port,
@@ -424,4 +424,150 @@ fn setters_getters_edits_validation_and_failed_spawn_are_atomic() {
 fn new_and_original_patch_files_are_parseable() {
     assert_eq!(read_patch(FIXTURE).modules.len(), 4);
     assert_eq!(read_patch(DEFAULT_FIXTURE).modules.len(), 3);
+}
+
+fn actual_schedule_app(fixed: bool) -> (App, InternedScheduleLabel, Entity) {
+    actual_schedule_app_with_frequency(fixed, 62.5)
+}
+
+fn actual_schedule_app_with_frequency(
+    fixed: bool,
+    frequency_hz: f32,
+) -> (App, InternedScheduleLabel, Entity) {
+    let mut app = App::new();
+    let schedule = if fixed {
+        app.add_plugins(CorePlugin::fixed());
+        FixedUpdate.intern()
+    } else {
+        app.add_plugins(CorePlugin);
+        Update.intern()
+    };
+    LfoModule::register_systems(&mut app, schedule);
+
+    let parameters = HashMap::from([
+        ("waveform".into(), ParameterValue::String("saw_up".into())),
+        ("frequency_hz".into(), ParameterValue::Float(frequency_hz)),
+        ("phase_offset".into(), ParameterValue::Float(0.0)),
+        ("pulse_width".into(), ParameterValue::Float(0.5)),
+    ]);
+    let lfo = LfoModule::spawn(app.world_mut(), "direct_lfo", &parameters).unwrap();
+    (app, schedule, lfo)
+}
+
+fn corrupt_input_and_run(fixed: bool, input_name: &str, wrong_value: Value) {
+    let (mut app, schedule, lfo) = actual_schedule_app(fixed);
+    let input = parameter_port(app.world_mut(), lfo, input_name);
+    app.world_mut().get_mut::<CurrentValue>(input).unwrap().0 = wrong_value;
+    app.world_mut().resource_mut::<SimulationRunning>().0 = true;
+    app.world_mut().run_schedule(schedule);
+}
+
+fn output_value(app: &App, port: Entity) -> Value {
+    app.world().get::<CurrentValue>(port).unwrap().0
+}
+
+fn exercise_supplied_schedule(fixed: bool) {
+    let (mut app, schedule, lfo) = actual_schedule_app(fixed);
+    let unipolar_out = parameter_port(app.world_mut(), lfo, "out");
+    let bipolar_out = parameter_port(app.world_mut(), lfo, "bipolar_out");
+    let initial_unipolar = output_value(&app, unipolar_out);
+    let initial_bipolar = output_value(&app, bipolar_out);
+    assert_eq!(initial_unipolar, Value::Float(0.0));
+    assert_eq!(initial_bipolar, Value::Bipolar(0.0));
+
+    app.world_mut().resource_mut::<SimulationRunning>().0 = false;
+    app.world_mut().run_schedule(schedule);
+    assert_eq!(app.world().resource::<SampleTime>().completed_samples(), 0);
+    assert_eq!(output_value(&app, unipolar_out), initial_unipolar);
+    assert_eq!(output_value(&app, bipolar_out), initial_bipolar);
+
+    app.world_mut().resource_mut::<SimulationRunning>().0 = true;
+    let mut bipolar = Vec::new();
+    let mut unipolar = Vec::new();
+    for _ in 0..4 {
+        app.world_mut().run_schedule(schedule);
+        let Value::Bipolar(bipolar_value) = output_value(&app, bipolar_out) else {
+            panic!("LFO bipolar_out must publish Value::Bipolar");
+        };
+        let Value::Float(unipolar_value) = output_value(&app, unipolar_out) else {
+            panic!("LFO out must publish Value::Float");
+        };
+        bipolar.push(bipolar_value);
+        unipolar.push(unipolar_value);
+    }
+    assert_eq!(bipolar, [-1.0, -0.875, -0.75, -0.625]);
+    assert_eq!(unipolar, [0.0, 0.0625, 0.125, 0.1875]);
+    assert_eq!(app.world().resource::<SampleTime>().completed_samples(), 4);
+
+    app.world_mut().resource_mut::<SimulationRunning>().0 = false;
+    app.world_mut().run_schedule(schedule);
+    assert_eq!(output_value(&app, unipolar_out), Value::Float(0.1875));
+    assert_eq!(output_value(&app, bipolar_out), Value::Bipolar(-0.625));
+    assert_eq!(app.world().resource::<SampleTime>().completed_samples(), 4);
+
+    app.world_mut().resource_mut::<SimulationRunning>().0 = true;
+    app.world_mut().run_schedule(schedule);
+    assert_eq!(output_value(&app, unipolar_out), Value::Float(0.25));
+    assert_eq!(output_value(&app, bipolar_out), Value::Bipolar(-0.5));
+    assert_eq!(app.world().resource::<SampleTime>().completed_samples(), 5);
+}
+
+#[test]
+fn installed_lfo_runs_once_per_sample_and_honors_core_gating_in_update() {
+    exercise_supplied_schedule(false);
+}
+
+#[test]
+fn installed_lfo_runs_once_per_sample_and_honors_core_gating_in_fixed_update() {
+    exercise_supplied_schedule(true);
+}
+
+#[test]
+fn installed_lfo_keeps_typed_nonfinite_cv_neutral_in_both_schedules() {
+    for fixed in [false, true] {
+        let (mut app, schedule, lfo) = actual_schedule_app_with_frequency(fixed, 0.0);
+        let frequency_in = parameter_port(app.world_mut(), lfo, "freq_in");
+        let unipolar_out = parameter_port(app.world_mut(), lfo, "out");
+        let bipolar_out = parameter_port(app.world_mut(), lfo, "bipolar_out");
+        app.world_mut()
+            .get_mut::<CurrentValue>(frequency_in)
+            .unwrap()
+            .0 = Value::Float(f32::NAN);
+        app.world_mut().resource_mut::<SimulationRunning>().0 = true;
+
+        for _ in 0..3 {
+            app.world_mut().run_schedule(schedule);
+            assert_eq!(output_value(&app, bipolar_out), Value::Bipolar(-1.0));
+            assert_eq!(output_value(&app, unipolar_out), Value::Float(0.0));
+            assert!(match output_value(&app, unipolar_out) {
+                Value::Float(value) => value.is_finite(),
+                _ => false,
+            });
+        }
+        assert_eq!(app.world().resource::<SampleTime>().completed_samples(), 3);
+    }
+}
+
+#[test]
+#[should_panic(expected = "LFO freq_in must carry Value::Float")]
+fn update_schedule_rejects_wrong_frequency_input_type() {
+    corrupt_input_and_run(false, "freq_in", Value::Gate(true));
+}
+
+#[test]
+#[should_panic(expected = "LFO sync_in must carry Value::Gate")]
+fn update_schedule_rejects_wrong_sync_input_type() {
+    corrupt_input_and_run(false, "sync_in", Value::Float(0.5));
+}
+
+#[test]
+#[should_panic(expected = "LFO freq_in must carry Value::Float")]
+fn fixed_update_schedule_rejects_wrong_frequency_input_type() {
+    corrupt_input_and_run(true, "freq_in", Value::Gate(true));
+}
+
+#[test]
+#[should_panic(expected = "LFO sync_in must carry Value::Gate")]
+fn fixed_update_schedule_rejects_wrong_sync_input_type() {
+    corrupt_input_and_run(true, "sync_in", Value::Float(0.5));
 }

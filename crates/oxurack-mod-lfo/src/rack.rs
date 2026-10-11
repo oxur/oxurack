@@ -250,7 +250,7 @@ fn float_value(values: &Query<&CurrentValue>, entity: Entity) -> f32 {
         .0
     {
         Value::Float(value) => value,
-        _ => 0.0,
+        actual => panic!("LFO freq_in must carry Value::Float; got {actual:?}"),
     }
 }
 
@@ -261,7 +261,7 @@ fn gate_value(values: &Query<&CurrentValue>, entity: Entity) -> bool {
         .0
     {
         Value::Gate(value) => value,
-        _ => false,
+        actual => panic!("LFO sync_in must carry Value::Gate; got {actual:?}"),
     }
 }
 
