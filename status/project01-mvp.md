@@ -11,10 +11,12 @@
 > Actual modulation traces, supplied schedules and affected native gates reproduce.
 > [Slice02 bounded Scope capture](../project01-mvp/arc11-observation-workbench/slice02-scope-capture/crc-verification.md)
 > is CRC accepted at `6c56e84`: five S rows done; CSV/native checks and unchanged
-> musical traces reproduce. Terminal Slice03 is next under directive09.
+> musical traces reproduce. [Terminal Slice03](../project01-mvp/arc11-observation-workbench/slice03-workbench-integration/cc-prompt.md)
+> is issued at `6c56e84` under directive09, four B rows open. Duncan relays to CC;
+> private post-stop inspection, CSV integration and reset/new-run recipes.
 > No endpoint was opened by CRC; Arc11 composition remains open.
 > Three contributors, Expedited Mode and directive08 proportionate proof remain.
-> All seven project rows remain open; P-07 needs LFO/Scope. Async output/live API,
+> All seven project rows remain open; P-07 needs complete Arc11 composition/CDC acceptance. Async output/live API,
 > remaining catalog and release coverage/timing/soak retain their existing owners.
 > Earlier snapshots below are history.
 
@@ -600,7 +602,7 @@ a claimed production seed defect.
 Relay to CC relative to project01-mvp:
 `arc10-turing-machine-midi/slice02-turing-machine-adapter/cc-prompt-iteration01.md`.
 All A rows remain open. Corrective pass1/5 is authorized but not executed.
-The prompt follows framework2.6.0/authoring guide and Rust2.0.0, with exact
+The prompt follows framework2.6.0/authoring guide and Rust 2.0.0, with exact
 test recipes, state/ownership shapes and expected observations. Production
 source is protected. Initial evidence is preserved, with the independent
 review in Slice02 `crc-verification.md`. Full workspace/docs/Make/freshness
