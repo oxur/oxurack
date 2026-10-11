@@ -3,14 +3,14 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — Arc10 accepted by CDC at 65522f1; Arc11 observation workbench open; Slice01 LFO accepted at c4b517c; Scope capture is next |
+| status | active — Arc10 accepted by CDC at 65522f1; Arc11 observation workbench open; Slice01 LFO accepted at c4b517c; Slice02 Scope capture issued |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
 | source baseline | `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` on `main`; original migration baseline retained below |
 | planning home | `planning` branch, `.worktrees/planning/project01-mvp` |
 
-## Current direction — v3.24, 2026-10-11
+## Current direction — v3.25, 2026-10-11
 
 Duncan requested a recalibration during Arc10/Slice02 review: this is unreleased
 open-source music software, and excessive defensive infrastructure, proof tooling
@@ -18,7 +18,7 @@ and reporting have delayed usable behavior. [Directive08](cdc-directive08.md)
 remains the playable-first/proportionate-proof policy, applying framework **2.6.0**.
 [Directive09](cdc-directive09.md) now accepts Arc10 and issues Arc11/Slice01 LFO.
 LFO source `c4b517c` is CRC accepted, based on accepted Arc10 `65522f1`;
-main remains `a7ce6e6`. All five L rows are done; CRC prepares Scope capture.
+main remains `a7ce6e6`. All five L rows are done; Slice02 Scope capture is issued with five S rows open.
 The older sections below are a dated history; their old "current" assignments
 and superseded future design/gates must not be inherited into new prompts.
 
@@ -30,7 +30,7 @@ backlog/release envelope, not a prerequisite to testing this first instrument.
 | Order | Deliverable | Boundary |
 | --- | --- | --- |
 | Arc10 | Playable seeded Clock/TM/MIDI rack, four children/22 rows; T-01–T-05 CDC accepted at65522f1 | Actual software endpoint witness; release timing remains open |
-| [Arc11](arc11-observation-workbench/arc-plan.md) | LFO with a runnable modulation example, bounded Scope capture, then an inspection workbench | [Slice01 LFO](arc11-observation-workbench/slice01-lfo/crc-verification.md) closed, five rows done; CRC prepares Scope capture |
+| [Arc11](arc11-observation-workbench/arc-plan.md) | LFO with a runnable modulation example, bounded Scope capture, then an inspection workbench | LFO closed; [Slice02 Scope capture](arc11-observation-workbench/slice02-scope-capture/cc-prompt.md) issued, five rows open; terminal view follows acceptance |
 | Arc12/13 and Arc07 | Live persistence/API/events, remaining catalog, CLI/REPL/controllers | Re-enter from musical use; preserve inventory and Chord candidate |
 | Arc08 / release | Coverage provenance/95%, hardware jitter, benchmarks, soak, broader musical acceptance | Retained obligations, not M1/M2 entry gates |
 
@@ -59,7 +59,7 @@ must use this policy, not mechanically copy the old packets.
 
 | Date | Packet | Predecessor / initiation | Status | Affected authority | Next action |
 | --- | --- | --- | --- | --- | --- |
-| 2026-10-11 | [cdc-directive09.md](cdc-directive09.md) | directive08; Duncan's Arc10 composition handoff | CRC acknowledged; LFO correction independently accepted | T-01–T-05 and all five L rows done | CRC authors Scope capture at c4b517c |
+| 2026-10-11 | [cdc-directive09.md](cdc-directive09.md) | directive08; Duncan's Arc10 composition handoff | CRC acknowledged; LFO correction independently accepted | T-01–T-05 and all five L rows done | Duncan relays Slice02 Scope capture prompt; CC implements at c4b517c |
 | 2026-10-10 | [cdc-directive08.md](cdc-directive08.md) | directive07; Duncan's project recalibration request during Arc10/Slice02; directive relayed by Duncan | CRC acknowledged after live-state check | Unissued Slice03 onward; Arc10 T-01–T-05 and P-07 interpretation, future prompt/proof policy | CRC closed Slice04 at 65522f1 after musical witness; Arc10 assembly ready for CDC |
 
 CRC acknowledgement — 2026-10-11: directive09 and current Arc11/LFO contracts
@@ -82,7 +82,9 @@ claimed by this acknowledgement. CRC will repin the accepted predecessor before
 opening Slice03 and apply directive08's concrete prompt and proportionate-proof
 policy to subsequent work. Three contributors and Expedited Mode remain active.
 
-Version history: **v3.24 — 2026-10-11:** CRC accepted LFO corrective source c4b517c, all five rows closed after fresh affected checks. No arc design change; Scope capture is next under directive09. Parent/project rows stay open.
+Version history: **v3.25 — 2026-10-11:** Issued Arc11/Slice02 Scope capture on accepted c4b517c. Concrete bounded observation/MIDI-copy API and CSV runner increment; no new scheduler/drain/dependency. All five S rows and parent composition remain open.
+
+**v3.24 — 2026-10-11:** CRC accepted LFO corrective source c4b517c, all five rows closed after fresh affected checks. No arc design change; Scope capture is next under directive09. Parent/project rows stay open.
 
 **v3.23 — 2026-10-11:** CRC reviewed LFO source a965386, accepted four rows, and issued one focused correction for L-02. Directive09 acknowledged; Slice01/Arc11 remain open and Scope stays held. Parent/project criteria unchanged.
 

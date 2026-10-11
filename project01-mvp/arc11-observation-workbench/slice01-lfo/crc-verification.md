@@ -150,11 +150,11 @@ four red tests are attested, not represented as another fresh CRC baseline run.
 F-01 and F-02 are resolved. No production repair was authored by CRC.
 
 All five rows are accounted for: L-01 engine-only claims and standalone normal
- dependency boundary retain a965386 evidence because their implementation,
- dependencies and inputs are unchanged; engine tests additionally reran now.
+dependency boundary retain a965386 evidence because their implementation,
+dependencies and inputs are unchanged; engine tests additionally reran now.
 L-02 is newly reproduced/done; L-03 parameter/continuation and L-04 loaded
 modulation/control/trace checks freshly reproduce; L-05 native gates and strict
- two-file scope freshly reproduce. No deferrals, no-ops or silent drops. CC's
+two-file scope freshly reproduce. No deferrals, no-ops or silent drops. CC's
 restricted CoreMIDI failures and final host retry stay in the closing report;
 CRC independently reproduced the host gate. Existing block0.1.6 advisory and
 three RT ignores remain baseline limitations. No endpoint audition or new
