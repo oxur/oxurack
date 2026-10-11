@@ -1102,6 +1102,7 @@ dependencies = [
  "oxurack-core",
  "oxurack-graph",
  "oxurack-mod-clock",
+ "oxurack-mod-lfo",
  "oxurack-mod-midiout",
  "oxurack-mod-turingmachine",
  "pretty_assertions",
@@ -1150,6 +1151,16 @@ dependencies = [
 
 [[package]]
 name = "oxurack-mod-clock"
+version = "0.1.0"
+dependencies = [
+ "bevy_app",
+ "bevy_ecs",
+ "oxurack-core",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "oxurack-mod-lfo"
 version = "0.1.0"
 dependencies = [
  "bevy_app",

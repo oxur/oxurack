@@ -9,6 +9,7 @@ use clap::{ArgGroup, Parser};
 use midir::{MidiOutput, MidiOutputConnection};
 use oxurack::{MidiOutModule, Oxurack, SimulationDriver};
 use oxurack_mod_clock::ClockModule;
+use oxurack_mod_lfo::LfoModule;
 use oxurack_mod_turingmachine::TuringMachineModule;
 
 #[cfg(test)]
@@ -55,6 +56,7 @@ fn nonempty(value: &str) -> Result<String, String> {
 fn prepare_rack(patch: &std::path::Path) -> Result<Oxurack, Box<dyn Error>> {
     let mut rack = Oxurack::new();
     rack.try_install::<ClockModule>()?;
+    rack.try_install::<LfoModule>()?;
     rack.try_install::<TuringMachineModule>()?;
     rack.try_install::<MidiOutModule>()?;
     rack.load_patch(patch)?;

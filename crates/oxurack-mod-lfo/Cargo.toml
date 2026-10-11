@@ -1,0 +1,17 @@
+[package]
+name = "oxurack-mod-lfo"
+version = "0.1.0"
+edition = "2024"
+description = "A deterministic sample-driven low-frequency oscillator for oxurack"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/oxur/oxurack"
+
+[features]
+default = []
+rack = ["dep:bevy_app", "dep:bevy_ecs", "dep:oxurack-core"]
+
+[dependencies]
+thiserror = "2"
+bevy_app = { version = "0.18", default-features = false, features = ["std"], optional = true }
+bevy_ecs = { version = "0.18", default-features = false, features = ["std"], optional = true }
+oxurack-core = { version = "0.1.0", path = "../oxurack-core", optional = true }

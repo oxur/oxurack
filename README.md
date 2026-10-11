@@ -122,6 +122,23 @@ cargo run -p oxurack --example turing-machine-midi -- \
 Each output row is `sample|STATUS DATA1 DATA2`, with uppercase hexadecimal
 bytes. The example drains each completed sample before advancing the rack.
 
+The LFO-modulated patch keeps the same seeded Turing Machine and MIDI route,
+with a slow sine LFO changing its write probability. Run its sample-indexed
+trace offline:
+
+```bash
+cargo run -p oxurack --example turing-machine-midi -- \
+  --patch crates/oxurack/examples/patches/turing-machine-lfo.ron --samples 10000
+```
+
+For live playback, choose an exact endpoint name from the current host's list:
+
+```bash
+cargo run -p oxurack --example turing-machine-midi -- \
+  --patch crates/oxurack/examples/patches/turing-machine-lfo.ron \
+  --output-name "MIDI Bus 1" --samples 10000
+```
+
 To list the MIDI outputs available to the current host:
 
 ```bash
