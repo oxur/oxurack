@@ -1,6 +1,6 @@
 # Slice04 — direct MIDI playback, cleanup and first musical trial
 
-Version 1.2 — 2026-10-10. Status: open; software accepted, Operator witness pending.
+Version 1.4 — 2026-10-11. Status: closed; all five rows accepted, Operator witness supplied.
 Project01 / Arc10, Three-Contributor Workflow, Expedited Mode.
 Current assignment: `arc10-turing-machine-midi/slice04-output-runtime/cc-prompt.md`.
 Accepted predecessor: `2942c594a445b5de3ef8f131cdedaa6095aa1529`, clean on
@@ -116,3 +116,21 @@ The 5,000-sample offline reference was executed at unchanged `65522f1`: 34 rows,
 SHA-256 `918f4883252988093f737571cbb862aa29a33b737d0db026c98a7d7fea652d17`.
 No endpoint was connected and O-05 remains open. Version1.2 adds this supporting
 artifact without changing acceptance or issuing a new CC assignment.
+
+## Operator return — 2026-10-11
+
+Duncan supplied successful finite/Ctrl-C/restart commands on `MIDI Bus 1`.
+[CRC receipt](crc-verification.md#operator-command-witness--2026-10-11-musical-observation-pending)
+independently checks actual trace files and fresh offline references; six files
+are preserved under `artifacts/operator-witness-2026-10-11/`. O-05 still needs
+receiver/routing and musical/stop observations. Version1.3 records this partial
+witness without a new assignment or changed acceptance. Source unchanged.
+
+## Slice closure — 2026-10-11
+
+Duncan confirms the instrument sounded amazing and every run behaved as expected;
+PatchWork/Kontakt are omni receive. O-05 is accepted with the named endpoint,
+receiver/preset screenshot, command results and independently checked traces.
+All five O rows are done; no deferral or corrective pass. See the final section
+of [CRC review](crc-verification.md). Version1.4 closes this child; prior
+partial-witness sections are dated history. Arc10 assembly/CDC review follows.

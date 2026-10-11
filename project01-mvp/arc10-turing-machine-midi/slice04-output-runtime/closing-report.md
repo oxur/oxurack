@@ -86,3 +86,36 @@ cargo run --locked -p oxurack --example turing-machine-midi -- \
 The live command prints successfully sent performance rows to stdout and connection/failure context to stderr. Record the selected software/hardware receiver and routing, audible musical behavior, interrupt/stop outcome, stuck-note observation, and compare the performance rows with the offline command at the same sample count. A fresh listing and the alternate exact name `nanoKEY2 CTRL` are available; no destination was guessed or opened here.
 
 Applied Rust choices followed the intake table: `Result` and contextual source-preserving send errors, private owned session state, typed clap fields and exact selection, a flag-only process handler, and documented cleanup/witness limitations. No lint suppression or public API was added. No broader arc bubble-up was found; O-05 remains the stated operator gate. No separate durable test artifact was created; this report is the evidence record. Planning worktree was clean at issue HEAD except for this pre-edit-created report; the evidence update is authorized only in this slice report/ledger scope. CRC independently accepts; this proposal does not advance Arc10 or Arc11.
+
+## Operator witness addendum — 2026-10-11 (compiled by CRC)
+
+This dated addendum preserves CC's original report above and records the
+subsequent Operator result required by design§5; it is not CC's implementation
+attestation. Source remains `65522f116a12a9ac96d35cfe25ed9c184f5bddcb`, fixture
+`crates/oxurack/examples/patches/turing-machine-midi.ron`, master seed42.
+
+Duncan refreshed the listing and explicitly selected `MIDI Bus 1`. Receiver:
+Blue Cat's PatchWork hosting Kontakt8, Electric Storm Deluxe (Melody),
+Dreamscapes (Melody)/36 Dreamscapes, Drive To Space sound preset; Bloom/Infinity
+in the post chain. Duncan confirms PatchWork/Kontakt omni receive. The command
+was the built example with `--patch` above and `--output-name 'MIDI Bus 1'`,
+using `--samples 5000` for finite and restarted runs, and `--samples 60000` for
+the interrupted run. Each live run printed its selected endpoint and returned0.
+
+Duncan reports “it sounded amazing” and “everything played out exactly as
+expected” after normal completion, Ctrl-C and fresh-session runs. CRC reads this
+as the requested audible/stop/restart confirmation, not hardware timing or a
+claim about forced termination. Musical observation is Operator-witnessed.
+
+CRC independently read and preserved all six trace files, reproduced both fresh
+offline references and confirmed finite/restarted5,000 traces are identical
+34-row streams, hash `918f4883252988093f737571cbb862aa29a33b737d0db026c98a7d7fea652d17`.
+Interrupted output is the exact four-row60,000-reference prefix. Screenshot
+and traces live in `artifacts/operator-witness-2026-10-11/`;
+[CRC verification](crc-verification.md) records hashes and evidence distinctions.
+
+Final child disposition: O-01–O-05 done; zero open/deferred/no-op. Slice04
+closed by CRC after independent software review and explicit Operator witness.
+No source changes during witnessing. Arc10's four children are ready for
+composition assembly and CDC review. Hardware timing, release coverage/soak,
+live persistence/controls and Arc11 observation work retain their planned owners.

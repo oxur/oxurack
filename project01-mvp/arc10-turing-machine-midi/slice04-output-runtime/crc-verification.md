@@ -1,7 +1,10 @@
-# Slice04 CRC verification — software accepted; witness pending
+# Slice04 CRC verification — accepted
 
 2026-10-10, Sofie/CRC; Three-Contributor Workflow, Expedited Mode.
 Independent of CC implementation; no CRC source changes.
+Current verdict (2026-10-11): O-01–O-05 done; Slice04 closed at unchanged source
+`65522f1`. Operator supplies the musical witness; CRC reproduces trace comparisons.
+Earlier pending-witness sections below retain their original dated context.
 Assignment: `arc10-turing-machine-midi/slice04-output-runtime/cc-prompt.md`.
 Source: `65522f116a12a9ac96d35cfe25ed9c184f5bddcb`, clean on the assigned
 implementation branch; includes `829feb99279b11b3f46a11e513aba577eacd6fd1`.
@@ -9,7 +12,7 @@ Planning intake: clean `514d599c21dd25c07ee24e18d4e0850ac9af354d`.
 Authority: directive08, Arc10 design v1.2 §§4–5 and the issued prompt.
 Framework 2.6.0 and Rust 2.0.0 applied to review.
 
-## Verdict and five-row walk
+## Initial software verdict and five-row walk — 2026-10-10
 
 Five opening rows and five reviewed rows: **O-01–O-04 done, reproduced;
 O-05 open, awaiting Operator witness**. No blocking software finding or
@@ -92,3 +95,77 @@ flags against the actual example and fixture; executed its 5,000-sample offline
 reference: exit0, 34 rows, hash `918f4883252988093f737571cbb862aa29a33b737d0db026c98a7d7fea652d17`.
 Live/interrupt/restart commands are instructions for Duncan, not executed
 witness evidence. No source or verdict change; O-05 remains open.
+
+## Operator command witness — 2026-10-11; musical observation pending
+
+Duncan supplied the runbook terminal transcript from lappy at source
+`65522f116a12a9ac96d35cfe25ed9c184f5bddcb`. It reports build success, current
+outputs `0|MIDI Bus 1` / `1|nanoKEY2 CTRL`, and three live connections to the
+explicitly selected `MIDI Bus 1`. Finite5,000 and restarted5,000 exit0, with
+comparison exit0. The longer60,000 session was interrupted with Ctrl-C, exited0
+and yielded four rows matching its offline reference prefix. These actual
+connection/exit observations are Operator-attested; CRC did not run live playback.
+
+CRC read all six actual trace files from Duncan's reported temporary directory
+and reproduced the file comparisons. Fresh offline executions at unchanged
+source for5,000 and60,000 samples independently reproduce both reference files.
+
+| Preserved file(s) | Rows | SHA-256 |
+| --- | --- | --- |
+| offline-5000.trace; live-5000.trace; restarted-5000.trace | 34 each; byte-identical | `918f4883252988093f737571cbb862aa29a33b737d0db026c98a7d7fea652d17` |
+| offline-60000.trace | 533 | `0577ebaf4fbdfd0e6034d1ccb9b11b97fa2d523e03bebf30d20e7a13b839c1cb` |
+| interrupted.trace; expected-interrupted-prefix.trace | 4 each; byte-identical first four reference rows | `8e2ddb1a32f8cc3f13fe75ec047fd180738e0df2f1239bc353f0324bbfd9e4b9` |
+
+The six byte-for-byte copies are preserved in
+[operator-witness-2026-10-11](artifacts/operator-witness-2026-10-11/), superseding
+reliance on temporary storage for this receipt. No extra checker or manifest.
+Original directory: `/tmp/oxurack-midi-witness.65522f116a12a9ac96d35cfe25ed9c184f5bddcb`.
+The interrupted trace ends at `751|80 40 00`, a note-off. It does not establish
+that Ctrl-C caught a sounding note or that a receiving instrument rendered or
+stopped the sound. Cleanup messages are excluded from performance traces by design.
+
+**O-05 stays open** only for the missing receiver/preset/channel/routing and
+Duncan's musical/normal-stop/interrupt-stop observations. The packet does not
+report those observations; neither success exits nor byte equality supplies them.
+CRC requested the missing details. No command/software failure identified, no
+corrective implementation iteration, and no demand to repeat successful commands
+without a concrete observation gap. No unavailable-endpoint claim or deferral.
+O-01–O-04 remain accepted; Slice04/Arc10 stay open and Arc11 is not advanced.
+
+Duncan then supplied a [receiver screenshot](artifacts/operator-witness-2026-10-11/receiver-setup.png).
+Visible setup: Blue Cat's PatchWork with Kontakt8 in parallel chain2,
+Electric Storm Deluxe (Melody), Dreamscapes (Melody)/36 Dreamscapes selected,
+sound preset Drive To Space; Bloom in the post chain with Infinity displayed.
+Zebra3 is also loaded in another parallel chain; its use in the witness is not
+inferred. The screenshot establishes displayed receiver configuration, not
+MIDI input selection/channel, audible rendering or absence of stuck notes.
+It is preserved alongside the six traces. Routing and musical/stop observations
+remain requested; O-05 is still open.
+
+## Final Operator witness and acceptance — 2026-10-11
+
+Duncan confirmed: “it sounded amazing” and “everything played out exactly as
+expected”, then specified PatchWork/Kontakt were set to omni receive. This follows
+the posted finite, Ctrl-C and fresh-session commands and the request for musical,
+normal-stop and interrupt-stop observations. Taken together, Duncan confirms
+audible playback and expected completion/interruption/restart behavior through
+MIDI Bus1 → PatchWork → Kontakt8 Electric Storm Deluxe (Melody), Dreamscapes;
+Bloom is present in the post chain. Omni accepts fixture channel1. Exact input
+menu settings are not visible in the image; actual routing is Operator-attested
+by the named output, receiver setup, omni setting and audible result.
+
+**O-05 done, Operator-witnessed; trace comparison reproduced by CRC.** CRC does
+not relabel the auditory observation as its own reproduction. The interrupted
+trace does not establish a sounding note at the instant of Ctrl-C; the witness
+confirms expected stop behavior, while the actual-runner fault/cancellation tests
+prove successful-send ownership and best-effort cleanup. No extra guarantee or
+new gate is inferred from this first musical trial.
+
+Final five-row disposition: O-01–O-05 done, zero deferred/no-op/open. Source
+unchanged; no corrective iteration needed. Slice04 closes. Arc10 can now be
+assembled for CDC's independent composition/design review; CRC does not close
+that arc or issue CDC's Arc11 first slice. All project/release gates remain.
+The original CC report remains in Git at planning `4f479c4`; the current report
+adds a clearly attributed Operator/CRC receipt, as required by design§5.
+Artifact inventory now includes the runbook plus six preserved trace files and
+one receiver screenshot. No additional validation tool or source edit.
