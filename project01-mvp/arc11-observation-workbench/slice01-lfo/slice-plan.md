@@ -1,7 +1,7 @@
 # Arc11 Slice01 — LFO that modulates the playable rack
 
-Version 1.0 — 2026-10-11. Status: open; five L rows.
-Current assignment: `arc11-observation-workbench/slice01-lfo/cc-prompt.md`.
+Version 1.1 — 2026-10-11. Status: open; four L rows done, L-02 open.
+Current assignment: `arc11-observation-workbench/slice01-lfo/cc-prompt-iteration01.md`.
 CDC authors; CC implements; CRC independently reviews; Duncan relays.
 Source predecessor `65522f116a12a9ac96d35cfe25ed9c184f5bddcb` in the existing
 `codex/oxurack-module-behavior-installation` worktree. Arc10 is CDC accepted.
@@ -103,13 +103,30 @@ prompt; tests distinguish phase latency, reset-on-level, missing modulation and
 setter reset errors. Reading is bounded, fixtures use real registry/runner, and
 code examples are explicitly uncompiled guidance. No unresolved binding choice.
 
+CRC review — 2026-10-11: [crc-verification.md](crc-verification.md) independently
+reproduces native gates, 70-row LFO trace and original trace compatibility at
+`a965386`. L-01/L-03/L-04/L-05 are done; L-02 is open. Scope capture remains held.
+Iteration01 restores the existing private input-invariant contract and supplies
+the already requested Update/FixedUpdate test. Only rack.rs and tests/lfo.rs
+are authorized source changes. No design/scope expansion or additional gate.
+
+Author readiness (CRC, 2026-10-11): all six checks pass for iteration01; actual
+module corruption reproduced in both core schedules; typed initialization and
+CV policy inspected; AP-24/AP-25/AP-33 applied; literal outputs, negative controls,
+two-file scope and complete bounded reading/return contract supplied in the
+[new prompt](cc-prompt-iteration01.md). One refinement pass issued, not yet executed.
+
 ## Assignment history
 
 | Date | Prompt | Predecessor | Disposition |
 | --- | --- | --- | --- |
-| 2026-10-11 | cc-prompt.md | directive09; accepted Arc10 at65522f1 | Initial implementation issued; return to CRC |
+| 2026-10-11 | arc11-observation-workbench/slice01-lfo/cc-prompt.md | directive09; accepted Arc10 at65522f1 | Returned at a965386/353766a; CRC accepted four rows; L-02 requires correction |
+| 2026-10-11 | arc11-observation-workbench/slice01-lfo/cc-prompt-iteration01.md | cc-prompt.md | Active: repair wrong-type invariant fallback (F-01) and complete supplied Update proof (F-02); return to CRC |
 
 ## Version history
+
+- v1.1 — 2026-10-11: CRC reviewed a965386, accepted four rows, kept L-02 open
+  and issued one focused corrective iteration; original assignment preserved.
 
 - v1.0 — 2026-10-11: CDC opened the first workbench slice after Arc10 acceptance;
   complete LFO behavior plus actual TM modulation example, with focused proof.

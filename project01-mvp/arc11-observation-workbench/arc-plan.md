@@ -1,6 +1,6 @@
 # Arc11 — musical observation workbench
 
-Version 1.0 — 2026-10-11. Status: open; Slice01 issued by CDC.
+Version 1.1 — 2026-10-11. Status: open; Slice01 corrective iteration01 issued by CRC.
 Depends on Arc10, independently accepted at source `65522f1`.
 Authority: Operator's TM-first/workbench-second selection; directives08/09.
 Three contributors, Expedited Mode. CDC owns arc/first-slice design; CRC reviews
@@ -19,12 +19,15 @@ P-07 remains open until this composition is demonstrated; release gates are late
 
 | Slice | Result | Depends on / state |
 | --- | --- | --- |
-| slice01-lfo | Standalone and installed five-waveform LFO; real RON patch modulates TM write probability and plays through the existing runner | Arc10; [open set](slice01-lfo/slice-plan.md), five L rows open |
+| slice01-lfo | Standalone and installed five-waveform LFO; real RON patch modulates TM write probability and plays through the existing runner | Arc10; [open set](slice01-lfo/slice-plan.md), four L rows done, L-02 open for private input invariant repair and supplied-schedule proof |
 | slice02-scope-capture | Bounded in-memory scalar/Gate/Raw observation at Observe, with sample indices; actual emitted MIDI captured without competing with the runner's drain; a runnable capture/export | LFO; planned, CRC details on accepted source |
 | slice03-workbench-integration | Small usable terminal inspection view tying patch, selected signals and MIDI together; clear capture bounds, reset/new-run and export instructions | Capture; planned, CRC details on accepted source |
 
 The first slice's exact API and numerical semantics live in its plan/prompt.
-Only that slice is issued now. Future slices receive concrete recipes when next.
+Only that slice is issued now. CRC reviewed a965386 and issued
+[slice01 iteration01](slice01-lfo/cc-prompt-iteration01.md); native gates and the
+modulated fixture pass, but L-02 must close before Scope is issued. Future slices
+receive concrete recipes when next.
 The workbench is a developer/musician inspection tool; full CLI/REPL/controller
 editing remains Arc07. Do not create an evidence-only composition slice.
 
@@ -61,6 +64,10 @@ remaining catalog/Chord, live persistence and broader interfaces retain their
 Arc08/13/12/07 owners. Nothing here closes their historical deferred rows.
 
 ## Version history
+
+- v1.1 — 2026-10-11: CRC accepted four LFO rows at a965386; one correction
+  restores the binding invariant policy and completes the requested schedule
+  proof. Scope remains held; arc design and parent criteria unchanged.
 
 - v1.0 — 2026-10-11: Opened after Arc10 acceptance. Delivers LFO modulation first,
   then bounded capture and a practical view, with no parallel output runtime.
