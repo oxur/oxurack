@@ -1,15 +1,15 @@
 # Arc10 — composition ledger
 
-Opened 2026-09-18 before implementation. Four planned slices as amended 2026-10-10; all four children/22 rows accepted. No CDC-accepted arc rows.
+Opened 2026-09-18 before implementation. Four planned slices as amended 2026-10-10; all four children/22 rows accepted. All five arc rows CDC-accepted on 2026-10-11.
 CRC assembles; CDC independently verifies; endpoint witness requires Operator.
 
 | ID | Criterion | Verify | Significance | Origin | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-01 | Static installed Clock→TM→MIDI-out composes with documented sample latency | Load real seeded RON; observe pulse edges, coherent next-sample snapshots and exact MIDI order across multiple instances | correctness-grade | M1; Arc09 successor | open | [CRC assembly](crc-verification.md); [closure candidate](closing-report.md) | At most one step per sample |
-| T-02 | Fresh processes reproduce MIDI and preserve standalone TM capability | Compare the executable fixture byte/sample trace in two fresh processes; reuse unaffected Slice02 mapping/seed evidence and check affected feature builds | correctness-grade | P-02/P-07; catalog carryover | open | [CRC assembly](crc-verification.md); [closure candidate](closing-report.md) | Locked implementation scope |
-| T-03 | Output storage and the direct playback lifecycle are bounded and cleanup-aware | Exercise unread output, retrigger, silence/invalid note, partial send failure, stop/interrupt cleanup and explicit new-session recovery; inspect no stale replay | correctness-grade | RT/API carryover | open | [CRC assembly](crc-verification.md); [closure candidate](closing-report.md) | No queue-atomicity or hard real-time claim; design v1.2 |
-| T-04 | Selected software or hardware MIDI endpoint plays the integrated fixture | Named endpoint/config/patch/seed, explicit play/stop, Operator witness and offline-to-device comparison | correctness-grade | M1 Operator acceptance | open | [CRC assembly](crc-verification.md); [closure candidate](closing-report.md) | Operator witness; availability deferral allowed under design section 5, never a simulated pass |
-| T-05 | Four child slices, applicable quality gates and inherited obligations reconcile | Walk actual slice ledgers/reports and integrated source; directive08 gates; successor comparison including new deferrals | serious | Framework composition | open | [CRC assembly](crc-verification.md); [closure candidate](closing-report.md) | No implicit closure of historical/project rows |
+| T-01 | Static installed Clock→TM→MIDI-out composes with documented sample latency | Load real seeded RON; observe pulse edges, coherent next-sample snapshots and exact MIDI order across multiple instances | correctness-grade | M1; Arc09 successor | done | [CDC acceptance](cdc-verification.md); [CRC assembly](crc-verification.md); [closure candidate](closing-report.md) | At most one step per sample |
+| T-02 | Fresh processes reproduce MIDI and preserve standalone TM capability | Compare the executable fixture byte/sample trace in two fresh processes; reuse unaffected Slice02 mapping/seed evidence and check affected feature builds | correctness-grade | P-02/P-07; catalog carryover | done | [CDC acceptance](cdc-verification.md); [CRC assembly](crc-verification.md); [closure candidate](closing-report.md) | Locked implementation scope |
+| T-03 | Output storage and the direct playback lifecycle are bounded and cleanup-aware | Exercise unread output, retrigger, silence/invalid note, partial send failure, stop/interrupt cleanup and explicit new-session recovery; inspect no stale replay | correctness-grade | RT/API carryover | done | [CDC acceptance](cdc-verification.md); [CRC assembly](crc-verification.md); [closure candidate](closing-report.md) | No queue-atomicity or hard real-time claim; design v1.2 |
+| T-04 | Selected software or hardware MIDI endpoint plays the integrated fixture | Named endpoint/config/patch/seed, explicit play/stop, Operator witness and offline-to-device comparison | correctness-grade | M1 Operator acceptance | done | [CDC acceptance](cdc-verification.md); [CRC assembly](crc-verification.md); [closure candidate](closing-report.md) | Operator witness; availability deferral allowed under design section 5, never a simulated pass |
+| T-05 | Four child slices, applicable quality gates and inherited obligations reconcile | Walk actual slice ledgers/reports and integrated source; directive08 gates; successor comparison including new deferrals | serious | Framework composition | done | [CDC acceptance](cdc-verification.md); [CRC assembly](crc-verification.md); [closure candidate](closing-report.md) | No implicit closure of historical/project rows |
 
 ## Amendment — 2026-10-10
 
@@ -46,3 +46,11 @@ open for CDC's independent composition/design verdict, with CRC recommending
 done for all five. No new deferral/no-op and no availability gap. Required next
 record: CDC-authored `cdc-verification.md`; no arc close or Arc11 issue is claimed
 by these two CRC-authored assembly records.
+
+## CDC acceptance — 2026-10-11
+
+[Independent CDC verification](cdc-verification.md) accepts T-01–T-05 at
+`65522f1`: five done, no deferred/no-op/open rows. Fresh loaded composition,
+real-runner tests and preserved Operator trace comparisons pass; unchanged
+independent child/native gate evidence is retained explicitly. Arc10 is closed;
+Arc11 may open. All project rows remain open.

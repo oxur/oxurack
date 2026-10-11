@@ -61,3 +61,12 @@ CDC's Arc10 gate remains pending. P-07 still requires Arc11 LFO/Scope observatio
 P-03 physical timing, P-04 saved/live controls/controller acceptance, P-05 release
 quality and all other criteria retain their obligations. All seven rows remain
 open; no inherited deferred row or release gate is implicitly closed.
+
+## Arc10 acceptance — 2026-10-11
+
+[CDC verification](arc10-turing-machine-midi/cdc-verification.md) accepts five
+composition rows at65522f1 and reconciles four children/22 accepted rows plus
+Duncan's actual MIDI Bus1 musical witness. This supports P-01/P-02/P-05/P-07;
+it does not close them. All seven project rows remain open. Arc11 now owns the
+LFO/Scope workbench, starting with slice01-lfo under directive09. Other successor
+and release obligations are unchanged.

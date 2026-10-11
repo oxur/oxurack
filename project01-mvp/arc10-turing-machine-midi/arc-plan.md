@@ -1,6 +1,6 @@
 # Arc10 — Turing Machine MIDI in the rack
 
-Version 1.9 — 2026-10-11. Status: open; four children accepted, CDC composition review pending.
+Version 1.10 — 2026-10-11. Status: closed; CDC accepted T-01–T-05 at `65522f1`.
 Depends on: Arc09 at source `37deeace90e7fe2dff633ada9d58ef9051577c3d`.
 Delivers: M1 playback; software composition enables Arc11 observation workbench.
 Workflow: Three contributors, Expedited Mode; Duncan relays CDC/CRC/CC packets.
@@ -70,6 +70,11 @@ Persistence, Chord, remaining modules, live controls and synchronization retain
 their existing project/backlog owners after those two musical milestones.
 
 ## Version history
+
+- v1.10 — 2026-10-11: [CDC acceptance](cdc-verification.md) independently reproduces
+  composition and accepts all five rows; four children/22 rows and Operator
+  software-MIDI witness complete M1. Arc11 opens; project/release gates retained.
+
 
 - v1.9 — 2026-10-11: Slice04 closed after Duncan's musical/stop witness; all four children/22 rows accepted. [CRC assembly](crc-verification.md) and [closure candidate](closing-report.md) ready for CDC review at `65522f1`. Five arc rows remain open; no architecture amendment or Arc11 issue by CRC.
 

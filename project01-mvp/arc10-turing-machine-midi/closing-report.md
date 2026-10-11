@@ -1,4 +1,8 @@
-# Arc10 closure candidate — playable seeded Turing Machine rack
+# Arc10 closing report — playable seeded Turing Machine rack
+
+> CDC acceptance, 2026-10-11: [independent review](cdc-verification.md) accepts
+> T-01–T-05 at `65522f1`; Arc10 is closed. CRC's original proposal below is
+> preserved as assembly history. Arc11 is now authorized by directive09.
 
 2026-10-11, Sofie/CRC; Three-Contributor Workflow, Expedited Mode.
 Source: `65522f116a12a9ac96d35cfe25ed9c184f5bddcb`, clean on

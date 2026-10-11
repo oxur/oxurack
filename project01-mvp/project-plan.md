@@ -3,20 +3,21 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — Arc09 and Arc10 Clock accepted; Arc10 TM adapter accepted at b2ffb16; Slice03 MIDI-out/trace accepted at 2942c59; Slice04 accepted at 65522f1 with Operator musical witness; Arc10 ready for CDC composition review; directive08 acknowledged for playable increments from Slice03 onward |
+| status | active — Arc10 accepted by CDC at 65522f1; Arc11 observation workbench open; Slice01 LFO implementation issued under directive09 |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
 | source baseline | `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` on `main`; original migration baseline retained below |
 | planning home | `planning` branch, `.worktrees/planning/project01-mvp` |
 
-## Current direction — v3.21, 2026-10-11
+## Current direction — v3.22, 2026-10-11
 
 Duncan requested a recalibration during Arc10/Slice02 review: this is unreleased
 open-source music software, and excessive defensive infrastructure, proof tooling
 and reporting have delayed usable behavior. [Directive08](cdc-directive08.md)
-is current authority for **unissued work from Slice03 onward**, applying
-collaboration-framework **2.6.0**. Slice02's issued correction/review is unchanged.
+remains the playable-first/proportionate-proof policy, applying framework **2.6.0**.
+[Directive09](cdc-directive09.md) now accepts Arc10 and issues Arc11/Slice01 LFO.
+The source predecessor is `65522f1`; main remains `a7ce6e6`.
 The older sections below are a dated history; their old "current" assignments
 and superseded future design/gates must not be inherited into new prompts.
 
@@ -27,10 +28,8 @@ backlog/release envelope, not a prerequisite to testing this first instrument.
 
 | Order | Deliverable | Boundary |
 | --- | --- | --- |
-| Arc10/Slice02 | Complete seeded adapter; CRC accepted at `b2ffb16` | Six child rows done; source becomes Slice03 predecessor |
-| Arc10/Slice03 | Installed MIDI-out plus a runnable seeded RON patch emitting a sample/byte trace | Real module/schedule integration and a small drain API |
-| Arc10/Slice04 | The same example plays a selected software or hardware MIDI endpoint and cleans up on stop/error | Single-owner direct runner; musical witness included |
-| Arc11 | LFO with a runnable modulation example, bounded Scope capture, then an inspection workbench | Reuse Clock, rack execution and MIDI trace; defer polished UI |
+| Arc10 | Playable seeded Clock/TM/MIDI rack, four children/22 rows; T-01–T-05 CDC accepted at65522f1 | Actual software endpoint witness; release timing remains open |
+| [Arc11](arc11-observation-workbench/arc-plan.md) | LFO with a runnable modulation example, bounded Scope capture, then an inspection workbench | [Slice01 LFO](arc11-observation-workbench/slice01-lfo/cc-prompt.md) issued; reuse Clock and runner, defer polished UI |
 | Arc12/13 and Arc07 | Live persistence/API/events, remaining catalog, CLI/REPL/controllers | Re-enter from musical use; preserve inventory and Chord candidate |
 | Arc08 / release | Coverage provenance/95%, hardware jitter, benchmarks, soak, broader musical acceptance | Retained obligations, not M1/M2 entry gates |
 
@@ -59,6 +58,7 @@ must use this policy, not mechanically copy the old packets.
 
 | Date | Packet | Predecessor / initiation | Status | Affected authority | Next action |
 | --- | --- | --- | --- | --- | --- |
+| 2026-10-11 | [cdc-directive09.md](cdc-directive09.md) | directive08; Duncan's Arc10 composition handoff | issued; awaiting CRC acknowledgement | T-01–T-05 accepted, Arc11 first slice L-01–L-05 opened | Duncan relays LFO prompt; CC implements, CRC reviews |
 | 2026-10-10 | [cdc-directive08.md](cdc-directive08.md) | directive07; Duncan's project recalibration request during Arc10/Slice02; directive relayed by Duncan | CRC acknowledged after live-state check | Unissued Slice03 onward; Arc10 T-01–T-05 and P-07 interpretation, future prompt/proof policy | CRC closed Slice04 at 65522f1 after musical witness; Arc10 assembly ready for CDC |
 
 CRC acknowledgement — 2026-10-10: read directive08, this current plan, Arc10
@@ -73,7 +73,9 @@ claimed by this acknowledgement. CRC will repin the accepted predecessor before
 opening Slice03 and apply directive08's concrete prompt and proportionate-proof
 policy to subsequent work. Three contributors and Expedited Mode remain active.
 
-Version history: **v3.21 — 2026-10-11:** Duncan witnessed MIDI Bus1 → PatchWork/Kontakt omni, Electric Storm Deluxe/Dreamscapes. Slice04 closes with five O rows done; [Arc10 CRC composition](arc10-turing-machine-midi/crc-verification.md) assembles four children/22 rows for CDC. Arc10 and all project rows remain open; CDC owns Arc11 opening after its verdict.
+Version history: **v3.22 — 2026-10-11:** [CDC review](arc10-turing-machine-midi/cdc-verification.md) accepts all five Arc10 rows after fresh composition/runner checks and trace comparisons. Opened Arc11 and its complete LFO implementation packet. No additional runtime/verification layer; all seven project rows remain open, P-07 awaits the workbench.
+
+**v3.21 — 2026-10-11:** Duncan witnessed MIDI Bus1 → PatchWork/Kontakt omni, Electric Storm Deluxe/Dreamscapes. Slice04 closes with five O rows done; [Arc10 CRC composition](arc10-turing-machine-midi/crc-verification.md) assembles four children/22 rows for CDC. Arc10 and all project rows remain open; CDC owns Arc11 opening after its verdict.
 
 **v3.20 — 2026-10-10:** [Slice04 CRC software review](arc10-turing-machine-midi/slice04-output-runtime/crc-verification.md) accepts O-01–O-04 at `65522f1`; O-05 awaits Duncan's named endpoint/routing and musical/stop observation. Slice04/Arc10 remain open; Arc11 is not advanced.
 

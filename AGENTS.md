@@ -17,8 +17,8 @@ the restart-planning conversation is CDC. CRC and CC are separate contexts
 selected by Duncan (Operator); no context is implicitly created or assigned.
 CDC owns architecture, arc plans and first slices; CRC reviews CC and advances
 approved slices. All handoffs pass through the Operator. Read the project plan
-and `project01-mvp/cdc-directive08.md` for future work from Arc10/Slice03;
-Slice02 retains its explicitly recorded active assignment and gates.
+and `project01-mvp/cdc-directive09.md` for current Arc11/LFO work; directive08
+retains the playable-first and proportionate-proof policy. Arc10 is accepted.
 Use `crc-verification.md` for new slice review, and both CRC and CDC records
 for arc/project closure. Never relabel historical evidence as independent.
 Expedited Mode requires explicit-path scoped commits, preserved prompts,

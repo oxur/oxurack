@@ -1,21 +1,19 @@
 # project01-mvp — status
 
-> Current (2026-10-11): Arc09 accepted at `37deeace`; Arc10 Clock accepted at
-> `a19cfd1`, TM adapter at `b2ffb16` (six A rows done after independent CRC review).
-> Slice03 installed MIDI-out/trace is [CRC accepted](../project01-mvp/arc10-turing-machine-midi/slice03-midi-output/crc-verification.md)
-> at `2942c59`, five M rows done. [Slice04 playback/cleanup](../project01-mvp/arc10-turing-machine-midi/slice04-output-runtime/cc-prompt.md)
-> software is [CRC accepted](../project01-mvp/arc10-turing-machine-midi/slice04-output-runtime/crc-verification.md)
-> at `65522f1`: all five O rows done. Duncan witnessed MIDI Bus1 → PatchWork/Kontakt
-> omni, Electric Storm Deluxe/Dreamscapes, with expected musical/stop/restart behavior.
-> Finite/interrupted/restarted traces independently match offline references.
-> Slice04 is closed; [Arc10 CRC assembly](../project01-mvp/arc10-turing-machine-midi/crc-verification.md)
-> accounts for four accepted children/22 rows. Arc10 stays open for CDC review; Arc11 is not issued.
-> Three contributors and Expedited Mode remain active. Directive08 is acknowledged:
-> installed MIDI-out + runnable trace, then direct endpoint playback/cleanup in the
-> same example, then Arc11 LFO/Scope. Framework 2.6.0 authoring/proportionate proof
-> and Rust 2.0.0 are applied. Arc10/project composition rows remain open;
-> the initial software endpoint witness is supplied. Async output has an Arc12 successor;
-> coverage/timing/benchmark/soak remain Arc08/release work. Earlier snapshots are history.
+> Current (2026-10-11): [Arc10 is CDC accepted](../project01-mvp/arc10-turing-machine-midi/cdc-verification.md)
+> at `65522f1`: four children/22 accepted rows; all five composition rows done.
+> The seeded Clock→TM→MIDI rack plays through Duncan's MIDI Bus1 → PatchWork/Kontakt
+> setup. CDC reproduced single/two-sink traces and runner tests, and checked the
+> preserved Operator traces; no corrective assignment or endpoint deferral.
+> [Arc11 observation workbench](../project01-mvp/arc11-observation-workbench/arc-plan.md)
+> is now open. [Slice01 LFO implementation](../project01-mvp/arc11-observation-workbench/slice01-lfo/cc-prompt.md)
+> is issued: five waveforms, CV/sync and a real TM modulation patch in the existing
+> example. Bounded Scope capture and a practical view follow. No LFO code is
+> claimed yet. Directive09 awaits CRC acknowledgement through Duncan.
+> Three contributors, Expedited Mode and directive08 proportionate proof remain.
+> All seven project rows remain open; P-07 needs LFO/Scope. Async output/live API,
+> remaining catalog and release coverage/timing/soak retain their existing owners.
+> Earlier snapshots below are history.
 
 **Historical estimate (2026-09-17): approximately 45% of the reconstructed MVP implemented**
 (plausible range **35–55%**; not recomputed for the current candidate). The infrastructure is much further along than the
