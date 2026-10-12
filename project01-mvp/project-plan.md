@@ -3,14 +3,14 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — Arc10 and Arc11 accepted; P-07 instrument/workbench milestone done; Arc12/Slice01 iteration01 issued under directive11 at source a3633bc; all five LP rows open |
+| status | active — Arc10 and Arc11 accepted; P-07 instrument/workbench milestone done; Arc12/Slice01 CRC accepted at fabfa1cb; Slice02 metadata/events issued; Arc12 composition remains open |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
 | source baseline | `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` on `main`; original migration baseline retained below |
 | planning home | `planning` branch, `.worktrees/planning/project01-mvp` |
 
-## Current direction — v3.33, 2026-10-11
+## Current direction — v3.34, 2026-10-12
 
 Duncan requested a recalibration during Arc10/Slice02 review: this is unreleased
 open-source music software, and excessive defensive infrastructure, proof tooling
@@ -23,15 +23,19 @@ current-configuration persistence. Duncan explicitly selected this continuation.
 the TM parameter getter must expose configured base, and parallel cables need
 logical patch-vector order through propagation/save/reload. CRC issued
 [iteration01](arc12-live-rack-operations/slice01-live-persistence/cc-prompt-iteration01.md);
-all five LP rows remain open. These were gaps in CDC
-authoring, not permission to weaken the base-value or stable-replay oracles.
+Was: five LP rows open after issuance. Now: CRC independently accepted all five
+at fabfa1cb, including native host and fresh-process replay;
+[Slice02 metadata/events](arc12-live-rack-operations/slice02-events-and-metadata/cc-prompt.md)
+is the next issued CC assignment. These were gaps in CDC authoring, resolved
+without weakening the base-value or stable-replay oracles.
 Arc11's three children/14 rows and four composition rows are independently done;
 P-07 is done with the reproduced workbench plus Arc10's preserved musical witness.
 P-01–P-06 and release obligations remain open. Main remains `a7ce6e6`.
 
 Was: CRC assembled Arc11 and CDC acceptance was pending. Now: the workbench is
-accepted; the next executable increment edits live parameters, saves current ECS
-configuration and replays it in a fresh rack. Exact engine-state checkpointing is
+accepted; live parameter edits/save/fresh replay are now independently delivered.
+The next executable increment edits live metadata, emits correct notifications
+and saves an annotated musical patch. Exact engine-state checkpointing is
 still a retained feature, not silently included in configuration persistence.
 Inspection surfaced append-only patch loading; Arc12/Slice04 owns actual replacement
 repair. First-slice save isolates the active handle and demonstrates fresh reload.
@@ -47,7 +51,7 @@ backlog/release envelope, not a prerequisite to testing this first instrument.
 | --- | --- | --- |
 | Arc10 | Playable seeded Clock/TM/MIDI rack, four children/22 rows; T-01–T-05 CDC accepted at65522f1 | Actual software endpoint witness; release timing remains open |
 | [Arc11](arc11-observation-workbench/arc-plan.md) | LFO modulation, bounded Scope and terminal/CSV workbench | CDC accepted at72fe6b5; 14 child/four composition rows done |
-| [Arc12](arc12-live-rack-operations/arc-plan.md) | Live persistence, metadata/events, cable/graph operations, coherent runtime lifecycle | Slice01 iteration01 issued under directive11; four-slice successor ownership retained |
+| [Arc12](arc12-live-rack-operations/arc-plan.md) | Live persistence, metadata/events, cable/graph operations, coherent runtime lifecycle | Slice01 accepted; Slice02 issued; four-slice successor ownership retained |
 | Arc13 and Arc07 | Remaining catalog and CLI/REPL/controllers | Preserve inventory, Chord and module-state checkpoint candidate |
 | Arc08 / release | Coverage provenance/95%, hardware jitter, benchmarks, soak, broader musical acceptance | Retained obligations, not M1/M2 entry gates |
 
@@ -76,12 +80,18 @@ must use this policy, not mechanically copy the old packets.
 
 | Date | Packet | Predecessor / initiation | Status | Affected authority | Next action |
 | --- | --- | --- | --- | --- | --- |
+| 2026-10-12 | [Arc12/Slice02](arc12-live-rack-operations/slice02-events-and-metadata/cc-prompt.md) | Slice01 CRC acceptance fabfa1cb/4c680b4; approved Arc12 successor | Initial CC implementation issued | M-01–M-05 open | Duncan relays prompt; CC returns to CRC |
 | 2026-10-11 | [cdc-directive11.md](cdc-directive11.md) | Duncan relayed CC a3633bc/9fdb2cd failure report | CRC acknowledged; iteration01 issued | LP-01–LP-05 open; configured getter and logical cable order authorized | Duncan relays iteration01, CC repairs, CRC independently reviews |
-| 2026-10-11 | [Arc12/Slice01 iteration01](arc12-live-rack-operations/slice01-live-persistence/cc-prompt-iteration01.md) | directive11; source a3633bc; author planning37d41f6 | active CC implementation correction1/5 | All LP rows open; nine-path correction fence | Return corrected source and separate planning evidence to CRC; later slices held |
+| 2026-10-11 | [Arc12/Slice01 iteration01](arc12-live-rack-operations/slice01-live-persistence/cc-prompt-iteration01.md) | directive11; source a3633bc; author planning37d41f6 | CRC accepted2026-10-12 at fabfa1cb/4c680b4 | All five LP rows done; original prompt/failed history retained | Approved Slice02 issued; arc/project remain open |
 | 2026-10-11 | [cdc-directive10.md](cdc-directive10.md) | Arc11 CRC packet; Duncan selected live persistence | CDC accepted; CRC handoff issued | W-01–W-04 and P-07 done; Arc12 LP-01–LP-05 open | Relay Arc12/Slice01 full prompt, then independent CRC review |
 | 2026-10-11 | [cdc-directive09.md](cdc-directive09.md) | directive08; Duncan's Arc10 composition handoff | CRC acknowledged; LFO correction independently accepted | T-01–T-05 and all five L rows done | CRC accepted Scope at `6c56e84`; CRC closed terminal Slice03 at `72fe6b5` and assembled Arc11 packet; Duncan relays closing-report.md, crc-verification.md, ledger.md to CDC |
 | 2026-10-11 | [Arc11 CRC composition](arc11-observation-workbench/closing-report.md) | directive09; final child closure `3aa15b4`/source `72fe6b5` | CDC accepted via directive10 | All 14 child/W-01–W-04 rows done; P-07 done, P-01–P-06 open | Arc12/Slice01 issued |
 | 2026-10-10 | [cdc-directive08.md](cdc-directive08.md) | directive07; Duncan's project recalibration request during Arc10/Slice02; directive relayed by Duncan | CRC acknowledged after live-state check | Unissued Slice03 onward; Arc10 T-01–T-05 and P-07 interpretation, future prompt/proof policy | CRC closed Slice04 at 65522f1 after musical witness; Arc10 assembly ready for CDC |
+
+CRC advancement — 2026-10-12: independently accepted Slice01 correction at
+fabfa1cb after both feature modes/native host gates and actual replay. Issued
+approved Slice02 with current guide07/Rust2.0, explicit APIs/cable selection,
+event/failure/persistence oracles and runnable recipe. No structural amendment.
 
 CRC acknowledgement — 2026-10-11: directive11 and current project/arc/slice
 contracts read at clean source a3633bc and planning37d41f6. CRC independently
@@ -112,7 +122,11 @@ claimed by this acknowledgement. CRC will repin the accepted predecessor before
 opening Slice03 and apply directive08's concrete prompt and proportionate-proof
 policy to subsequent work. Three contributors and Expedited Mode remain active.
 
-Version history: **v3.33 — 2026-10-11:** CRC acknowledged directive11 and issued Arc12/Slice01 iteration01 at source a3633bc after bounded reproduction/source inspection. The prompt applies current guide07/Rust guidance to configured readback, logical cable order and original preservation/replay checks. No LP acceptance, source repair or roadmap change by CRC.
+Version history: **v3.34 — 2026-10-12:** Arc12/Slice01 CRC accepted all five rows;
+opened the approved metadata/events successor. Configured replay and cable order
+now pass; no roadmap or project acceptance change.
+
+**v3.33 — 2026-10-11:** CRC acknowledged directive11 and issued Arc12/Slice01 iteration01 at source a3633bc after bounded reproduction/source inspection. The prompt applies current guide07/Rust guidance to configured readback, logical cable order and original preservation/replay checks. No LP acceptance, source repair or roadmap change by CRC.
 
 **v3.32 — 2026-10-11:** Arc12/Slice01 return exposed a historical effective-getter conflict and entity-allocation tie reversal. CDC reproduced and resolved both in directive11, expanding source scope for required dependencies without relaxing replay goals or adding a slice. CRC correction authoring next; five LP rows open.
 

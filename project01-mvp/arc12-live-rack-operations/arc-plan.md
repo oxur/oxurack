@@ -1,6 +1,6 @@
 # Arc12 — live rack operations
 
-Version1.2 — 2026-10-11. Status: active; Slice01 iteration01 issued under directive11; all LP rows remain open. Other slices remain planned.
+Version1.3 — 2026-10-12. Status: active; Slice01 CRC accepted at fabfa1cb; Slice02 metadata/events issued. Slice03/04 remain planned.
 Depends on accepted Arc10/Arc11; source predecessor72fe6b5. Blocks saved/live
 musical workflow and Arc07 controls. Related: carried-over Arcs02–05; Arc13 catalog.
 Authority: approved successor roadmap and Duncan's explicit “Continue with live
@@ -28,7 +28,9 @@ No RON schema or standalone engine change. The .25 base and .25 LastWins replay
 oracles remain binding. These repairs are part of Slice01, not additional slices.
 CRC issued [iteration01](slice01-live-persistence/cc-prompt-iteration01.md) at
 source a3633bc after reproducing the failed replay and inspecting the diagnostic
-tie assertion. All LP rows remain open until independent review after CC's return.
+tie assertion. Was: all LP rows open pending review. Now: CRC accepted all five at fabfa1cb;
+[Slice01 verification](slice01-live-persistence/crc-verification.md) retains
+independent evidence. Directive11 is fulfilled, with no additional design change.
 
 ## Four delivery slices and retained ownership
 
@@ -39,7 +41,9 @@ tie assertion. All LP rows remain open until independent review after CC's retur
 | slice03-graph-composition | Runtime cable edits with validation, event emission, immediate graph freshness and save/reload consistency | Slice02; Arc04 A-04-01/02 and all six child S rows; cable part of Arc05 |
 | slice04-runtime-api | Coherent unload/replacement/reset/transport and ergonomic instance operations, composing edit/save with lifecycle; address retained command-routing/API gaps | Prior slices; Arc05 A-05-01/02 and original lifecycle/handle/queued-operation requirements |
 
-Only Slice01's open set is authored now. The original successor IDs remain intact.
+Was: only Slice01's open set authored. Now: Slice01 closed and
+[Slice02's open set](slice02-events-and-metadata/slice-plan.md) issued by CRC.
+The original successor IDs remain intact.
 Graph composition is a product increment (actual cable operations plus their graph
 behavior), not a test-only arc inside the arc. CRC supplies concrete contracts and
 examples when each later slice opens, escalating any consequential choice not
@@ -107,6 +111,11 @@ remaining modules/Chord Arc13, full CLI/REPL/controllers Arc07. ProjectP-01–P-
 remain open. P-07's delivered instrument/workbench stays accepted.
 
 ## Version history
+
+- v1.3 — 2026-10-12: Slice01 correction independently accepted; no structural
+  bubble-up. Detailed approved Slice02 with shared synchronous metadata helpers,
+  occurrence-based cable selection, typed failures/events and runnable annotation.
+  No global ID/schema/queue change; lifecycle and remaining composition stay open.
 
 - v1.2 — 2026-10-11: CRC acknowledged directive11 and issued Slice01 correction1/5
   with source-grounded getter/order recipes and original preservation/replay gates.

@@ -1,6 +1,6 @@
 # project01-mvp — status
 
-> Current (2026-10-11): Arc10 and [Arc11](../project01-mvp/arc11-observation-workbench/cdc-verification.md)
+> Current (2026-10-12): Arc10 and [Arc11](../project01-mvp/arc11-observation-workbench/cdc-verification.md)
 > are CDC accepted. Arc11 source72fe6b5 delivers five-waveform LFO modulation,
 > bounded Scope capture and terminal/CSV inspection; 14 child and four arc rows done.
 > CDC reproduced46 focused tests and actual repeated10000-sample trace/view/CSV,
@@ -10,12 +10,12 @@
 > Duncan selected live persistence next. [Directive10](../project01-mvp/cdc-directive10.md)
 > opens [Arc12/Slice01](../project01-mvp/arc12-live-rack-operations/slice01-live-persistence/slice-plan.md):
 > public parameter edits, actual current-configuration snapshot/save and fresh replay.
-> CC returned source a3633bc / planning9fdb2cd with implementation and two conflicts.
-> [Directive11](../project01-mvp/cdc-directive11.md) records CDC reproduction and
-> authorizes base-parameter readback plus stable cable order repairs. CRC issued
-> [iteration01](../project01-mvp/arc12-live-rack-operations/slice01-live-persistence/cc-prompt-iteration01.md)
-> for CC at source a3633bc; five LP rows remain open. Replay currently fails; the passing tie
-> diagnostic currently asserts a reversal and is not acceptance evidence.
+> Was: initial return exposed configured/effective readback and cable tie-order gaps.
+> Now: CDC11 correction fabfa1cb is independently accepted by CRC; all five LP
+> rows done. Focused/default/no-default/native host gates and fresh-process replay
+> pass; saved1/saved2/reference traces are identical71 rows, original fixtures unchanged.
+> [Slice02 metadata/events prompt](../project01-mvp/arc12-live-rack-operations/slice02-events-and-metadata/cc-prompt.md)
+> is issued at fabfa1cb with M-01–M-05 open. Arc12 composition remains open.
 > Exact engine-state checkpoints remain future work. Existing append-only load
 > behavior is explicitly owned by Arc12/Slice04; Slice01 reloads into a fresh rack.
 > Catalog/Chord, full interfaces, hardware timing/coverage/benchmarks/soak retain

@@ -1,12 +1,13 @@
 # Arc12 Slice01 — live configuration persistence
 
-Version1.2 — 2026-10-11. Status: open; directive11 acknowledged, CRC iteration01 issued for CC implementation; all five rows await independent review.
+Version1.3 — 2026-10-12. Status: closed; CRC independently accepted LP-01–LP-05 at fabfa1cb.
 Current issued assignment: `arc12-live-rack-operations/slice01-live-persistence/cc-prompt-iteration01.md`.
 CDC author; CC implementation; CRC independent review; Duncan relays.
 Initial source72fe6b52197b7a138afc3d5d7ac970ddfdf66981; current CC return
-a3633bc0d0f468e933cc0f1463fb637a623b33d1, planning return9fdb2cd.
-The initial prompt/return remain historical. Iteration01 is now issued, refinement
-1/5; no implementation or acceptance under the new assignment is claimed.
+fabfa1cb4beab5fd79f05b88d4bbec34208a1cac, planning return4c680b4.
+The initial prompt/return and pre-review statements below remain historical.
+Iteration01, refinement1/5, is accepted; [CRC verification](crc-verification.md)
+records the independent row walk, native gates and actual fresh-process replay.
 
 ## Deliverable and contract
 
@@ -81,7 +82,7 @@ artifacts/. Source, tests, example and README live only in source worktree.
 | Date | Prompt | Predecessor / reason | Disposition |
 | --- | --- | --- | --- |
 | 2026-10-11 | arc12-live-rack-operations/slice01-live-persistence/cc-prompt.md | directive10; Arc11 CDC accepted; Operator selected live persistence | Returned at a3633bc/9fdb2cd; replay failed and tie-order diagnostic conflicts; directive11 resolves design for CRC iteration01 |
-| 2026-10-11 | arc12-live-rack-operations/slice01-live-persistence/cc-prompt-iteration01.md | initial prompt/CC return; directive11 resolves configured getter and logical cable order | Active CC implementation correction1/5; all LP rows open; CRC reproduction after return |
+| 2026-10-11 | arc12-live-rack-operations/slice01-live-persistence/cc-prompt-iteration01.md | initial prompt/CC return; directive11 resolves configured getter and logical cable order | Accepted2026-10-12 at fabfa1cb/4c680b4; CRC reproduced all five rows; correction1/5 |
 
 ## Correction readiness — CRC 2026-10-11
 
@@ -123,6 +124,10 @@ artifacts/. Source, tests, example and README live only in source worktree.
    and subsequent advancement remain gated by independent CRC review.
 
 ## Version history
+
+- v1.3 — 2026-10-12: CRC accepted correction1/5 after source review, both feature
+  modes, focused/native/host gates and actual fresh-process replay. All LP rows
+  done; approved Slice02 opens. Historical failed return retained.
 
 - v1.2 — 2026-10-11: CRC acknowledged directive11 and issued one guide-authored
   correction at source a3633bc. Configured getter/logical ordering repairs and
