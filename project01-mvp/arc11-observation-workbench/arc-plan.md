@@ -1,6 +1,7 @@
 # Arc11 — musical observation workbench
 
-Version 1.8 — 2026-10-11. Status: open for CDC composition; all three slices closed, 14/14 child rows independently accepted; CRC packet ready.
+Version 1.9 — 2026-10-11. Status: closed; CDC accepts W-01–W-04 at `72fe6b5`; three closed children/14 accepted rows.
+See [CDC verification](cdc-verification.md). Earlier pending/assembly notes below are history.
 Depends on Arc10, independently accepted at source `65522f1`.
 Authority: Operator's TM-first/workbench-second selection; directives08/09.
 Three contributors, Expedited Mode. CDC owns arc/first-slice design; CRC reviews
@@ -13,7 +14,7 @@ modulates it, capture bounded signal/MIDI observations, and provide a small
 workbench view/export for comparing what modules produced. Reuse Clock, the
 1 ms five-phase scheduler, seeded RON and direct MIDI runner. No second scheduler,
 async output framework, signal-processing platform or polished GUI prerequisite.
-P-07 remains open until this composition is demonstrated; release gates are later.
+P-07 is accepted with Arc10 musical witnessing and this reproduced composition; release gates remain later.
 
 ## Three executable slices
 
@@ -79,6 +80,8 @@ remaining catalog/Chord, live persistence and broader interfaces retain their
 Arc08/13/12/07 owners. Nothing here closes their historical deferred rows.
 
 ## Version history
+
+- v1.9 — 2026-10-11: CDC independently reproduced the composed workbench and accepted all four W rows; P-07 met with retained Arc10 witness. Operator selected live persistence next; directive10 opens Arc12. Was: CRC proposed-done pending CDC. Now: closed.
 
 - v1.8 — 2026-10-11: CRC assembled all three accepted children and reproduced the candidate workbench at `72fe6b5`. W-01–W-04 proposed-done/open pending CDC; composition packet ready, no project closure or next-arc issue.
 

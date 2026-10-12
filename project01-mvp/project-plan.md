@@ -3,22 +3,32 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — Arc10 accepted by CDC at 65522f1; Arc11 observation workbench open; Slice01 LFO accepted at c4b517c; Slice02 Scope capture accepted at `6c56e84`; Slice03 terminal accepted at `72fe6b5`; all 14 Arc11 child rows done; CDC composition pending |
+| status | active — Arc10 and Arc11 accepted; P-07 instrument/workbench milestone done; Arc12/Slice01 live persistence issued at72fe6b5 |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
 | source baseline | `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` on `main`; original migration baseline retained below |
 | planning home | `planning` branch, `.worktrees/planning/project01-mvp` |
 
-## Current direction — v3.30, 2026-10-11
+## Current direction — v3.31, 2026-10-11
 
 Duncan requested a recalibration during Arc10/Slice02 review: this is unreleased
 open-source music software, and excessive defensive infrastructure, proof tooling
 and reporting have delayed usable behavior. [Directive08](cdc-directive08.md)
 remains the playable-first/proportionate-proof policy, applying framework **2.6.0**.
-[Directive09](cdc-directive09.md) now accepts Arc10 and issues Arc11/Slice01 LFO.
-LFO source `c4b517c` is CRC accepted, based on accepted Arc10 `65522f1`;
-main remains `a7ce6e6`. All five L and five S rows are done; Scope source `6c56e84` is independently accepted. [Slice03 terminal workbench](arc11-observation-workbench/slice03-workbench-integration/crc-verification.md) is closed: B-01–B-03 retained at `22500fa`, B-04 accepted at `72fe6b5` after the executable recipe correction. All three children/14 rows are done; [Arc11 CRC composition packet](arc11-observation-workbench/closing-report.md) is ready at `72fe6b5` with fresh integrated proof. Four W rows remain open pending CDC acceptance.
+[Directive10](cdc-directive10.md) accepts Arc11 at `72fe6b5` and opens
+[Arc12 live rack operations](arc12-live-rack-operations/arc-plan.md), starting with
+current-configuration persistence. Duncan explicitly selected this continuation.
+Arc11's three children/14 rows and four composition rows are independently done;
+P-07 is done with the reproduced workbench plus Arc10's preserved musical witness.
+P-01–P-06 and release obligations remain open. Main remains `a7ce6e6`.
+
+Was: CRC assembled Arc11 and CDC acceptance was pending. Now: the workbench is
+accepted; the next executable increment edits live parameters, saves current ECS
+configuration and replays it in a fresh rack. Exact engine-state checkpointing is
+still a retained feature, not silently included in configuration persistence.
+Inspection surfaced append-only patch loading; Arc12/Slice04 owns actual replacement
+repair. First-slice save isolates the active handle and demonstrates fresh reload.
 The older sections below are a dated history; their old "current" assignments
 and superseded future design/gates must not be inherited into new prompts.
 
@@ -30,8 +40,9 @@ backlog/release envelope, not a prerequisite to testing this first instrument.
 | Order | Deliverable | Boundary |
 | --- | --- | --- |
 | Arc10 | Playable seeded Clock/TM/MIDI rack, four children/22 rows; T-01–T-05 CDC accepted at65522f1 | Actual software endpoint witness; release timing remains open |
-| [Arc11](arc11-observation-workbench/arc-plan.md) | LFO with a runnable modulation example, bounded Scope capture, then an inspection workbench | LFO and [Scope capture](arc11-observation-workbench/slice02-scope-capture/crc-verification.md) closed; [terminal Slice03](arc11-observation-workbench/slice03-workbench-integration/crc-verification.md) closed; all14 child rows done, CDC composition pending |
-| Arc12/13 and Arc07 | Live persistence/API/events, remaining catalog, CLI/REPL/controllers | Re-enter from musical use; preserve inventory and Chord candidate |
+| [Arc11](arc11-observation-workbench/arc-plan.md) | LFO modulation, bounded Scope and terminal/CSV workbench | CDC accepted at72fe6b5; 14 child/four composition rows done |
+| [Arc12](arc12-live-rack-operations/arc-plan.md) | Live persistence, metadata/events, cable/graph operations, coherent runtime lifecycle | Slice01 issued: edit/save/fresh replay; four-slice successor ownership retained |
+| Arc13 and Arc07 | Remaining catalog and CLI/REPL/controllers | Preserve inventory, Chord and module-state checkpoint candidate |
 | Arc08 / release | Coverage provenance/95%, hardware jitter, benchmarks, soak, broader musical acceptance | Retained obligations, not M1/M2 entry gates |
 
 **Was:** Arc10 had three remaining slices, including a dedicated asynchronous
@@ -59,8 +70,9 @@ must use this policy, not mechanically copy the old packets.
 
 | Date | Packet | Predecessor / initiation | Status | Affected authority | Next action |
 | --- | --- | --- | --- | --- | --- |
+| 2026-10-11 | [cdc-directive10.md](cdc-directive10.md) | Arc11 CRC packet; Duncan selected live persistence | CDC accepted; CRC handoff issued | W-01–W-04 and P-07 done; Arc12 LP-01–LP-05 open | Relay Arc12/Slice01 full prompt, then independent CRC review |
 | 2026-10-11 | [cdc-directive09.md](cdc-directive09.md) | directive08; Duncan's Arc10 composition handoff | CRC acknowledged; LFO correction independently accepted | T-01–T-05 and all five L rows done | CRC accepted Scope at `6c56e84`; CRC closed terminal Slice03 at `72fe6b5` and assembled Arc11 packet; Duncan relays closing-report.md, crc-verification.md, ledger.md to CDC |
-| 2026-10-11 | [Arc11 CRC composition](arc11-observation-workbench/closing-report.md) | directive09; final child closure `3aa15b4`/source `72fe6b5` | CRC assembled; independent CDC pending | All 14 child rows done; W-01–W-04 and P-01–P-07 open | Duncan relays the three arc packet paths; CDC records composition verdict and next-stage instructions |
+| 2026-10-11 | [Arc11 CRC composition](arc11-observation-workbench/closing-report.md) | directive09; final child closure `3aa15b4`/source `72fe6b5` | CDC accepted via directive10 | All 14 child/W-01–W-04 rows done; P-07 done, P-01–P-06 open | Arc12/Slice01 issued |
 | 2026-10-10 | [cdc-directive08.md](cdc-directive08.md) | directive07; Duncan's project recalibration request during Arc10/Slice02; directive relayed by Duncan | CRC acknowledged after live-state check | Unissued Slice03 onward; Arc10 T-01–T-05 and P-07 interpretation, future prompt/proof policy | CRC closed Slice04 at 65522f1 after musical witness; Arc10 assembly ready for CDC |
 
 CRC acknowledgement — 2026-10-11: directive09 and current Arc11/LFO contracts
@@ -83,7 +95,9 @@ claimed by this acknowledgement. CRC will repin the accepted predecessor before
 opening Slice03 and apply directive08's concrete prompt and proportionate-proof
 policy to subsequent work. Three contributors and Expedited Mode remain active.
 
-Version history: **v3.30 — 2026-10-11:** CRC assembled Arc11 composition at `72fe6b5` with fresh known-signal/modulation, trace/view/CSV, bounds/empty and native evidence. Three children/14 rows done; four W and all seven P rows remain open for independent gates. No roadmap amendment; CDC owns next arc.
+Version history: **v3.31 — 2026-10-11:** Arc11 CDC reproduction accepts the workbench and P-07 milestone; Operator explicitly selected live persistence. Opened Arc12 and a complete first implementation packet. New source finding: prior load appends entities; actual replacement repair owned by Slice04, active-handle snapshot isolation in Slice01. Configuration persistence is distinguished from retained runtime checkpoints; no scope removed.
+
+**v3.30 — 2026-10-11:** CRC assembled Arc11 composition at `72fe6b5` with fresh known-signal/modulation, trace/view/CSV, bounds/empty and native evidence. Three children/14 rows done; four W and all seven P rows remain open for independent gates. No roadmap amendment; CDC owns next arc.
 
 **v3.29 — 2026-10-11:** CRC accepted Slice03 iteration01 at `72fe6b5`; all 14 Arc11 child rows done. Recipe defect resolved; prior independent production evidence retained at its original revision/date. Arc11/project rows remain open for the composition gate.
 

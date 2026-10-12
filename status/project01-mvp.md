@@ -1,26 +1,20 @@
 # project01-mvp — status
 
-> Current (2026-10-11): [Arc10 is CDC accepted](../project01-mvp/arc10-turing-machine-midi/cdc-verification.md)
-> at `65522f1`: four children/22 accepted rows; all five composition rows done.
-> The seeded Clock→TM→MIDI rack plays through Duncan's MIDI Bus1 → PatchWork/Kontakt
-> setup. CDC reproduced single/two-sink traces and runner tests, and checked the
-> preserved Operator traces; no corrective assignment or endpoint deferral.
-> [Arc11 observation workbench](../project01-mvp/arc11-observation-workbench/arc-plan.md)
-> is now open. [Slice01 LFO](../project01-mvp/arc11-observation-workbench/slice01-lfo/crc-verification.md)
-> is CRC accepted at `c4b517c`: five child rows done after one correction.
-> Actual modulation traces, supplied schedules and affected native gates reproduce.
-> [Slice02 bounded Scope capture](../project01-mvp/arc11-observation-workbench/slice02-scope-capture/crc-verification.md)
-> is CRC accepted at `6c56e84`: five S rows done; CSV/native checks and unchanged
-> musical traces reproduce. [Terminal Slice03 review](../project01-mvp/arc11-observation-workbench/slice03-workbench-integration/crc-verification.md)
-> closes all four B rows: B-01–B-03 retained at22500fa, B-04 independently accepted
-> at `72fe6b5` after the README/test correction. All three Arc11 children/14 rows done.
-> [Arc11 CRC composition packet](../project01-mvp/arc11-observation-workbench/closing-report.md)
-> is ready at `72fe6b5`: fresh integrated traces/view/CSV, known signals, bounds and
-> affected gates pass. All four W and seven P rows remain open for CDC;
-> no endpoint was opened by CRC, no next arc is issued before CDC's verdict.
-> Three contributors, Expedited Mode and directive08 proportionate proof remain.
-> All seven project rows remain open; P-07 needs complete Arc11 composition/CDC acceptance. Async output/live API,
-> remaining catalog and release coverage/timing/soak retain their existing owners.
+> Current (2026-10-11): Arc10 and [Arc11](../project01-mvp/arc11-observation-workbench/cdc-verification.md)
+> are CDC accepted. Arc11 source72fe6b5 delivers five-waveform LFO modulation,
+> bounded Scope capture and terminal/CSV inspection; 14 child and four arc rows done.
+> CDC reproduced46 focused tests and actual repeated10000-sample trace/view/CSV,
+> all modulation observations, bounds and empty behavior. P-07 is done with the
+> preserved Arc10 MIDI Bus1 → PatchWork/Kontakt musical witness; six original
+> project rows and full project/release gates remain open.
+> Duncan selected live persistence next. [Directive10](../project01-mvp/cdc-directive10.md)
+> opens [Arc12/Slice01](../project01-mvp/arc12-live-rack-operations/slice01-live-persistence/slice-plan.md):
+> public parameter edits, actual current-configuration snapshot/save and fresh replay.
+> Five LP rows open; implementation prompt issued, no implementation claimed yet.
+> Exact engine-state checkpoints remain future work. Existing append-only load
+> behavior is explicitly owned by Arc12/Slice04; Slice01 reloads into a fresh rack.
+> Catalog/Chord, full interfaces, hardware timing/coverage/benchmarks/soak retain
+> Arc13/07/08 owners. Three contributors, Expedited Mode and directive08 policy apply.
 > Earlier snapshots below are history.
 
 **Historical estimate (2026-09-17): approximately 45% of the reconstructed MVP implemented**

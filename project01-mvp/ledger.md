@@ -6,6 +6,9 @@ All rows start open. One-Contributor checks will be recorded as attested; any
 required independent or Operator acceptance must be attributed when it occurs.
 Implementation status and commit pointers are in the project backlog.
 
+Current2026-10-11: P-07 done; P-01–P-06 open. Earlier open/pending notes below
+are preserved history; see the dated Arc11 CDC disposition.
+
 | ID | Criterion | Verify | Significance | Origin | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | P-01 | All eight arc capabilities compose into a usable rack | Walk arc ledgers and demonstrate one integrated saved patch through the live interface | serious | Project DoD | open | — | No arc closure claimed during migration |
@@ -32,7 +35,7 @@ No original criterion, target or verifier is removed.
 
 | ID | Criterion | Verify | Significance | Origin | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| P-07 | TM plays through the Bevy rack and Clock/LFO/Scope make it observable | Reproduce seeded static-patch MIDI stream, witness selected software or hardware MIDI endpoint playback and inspect known signals and MIDI with bounded workbench capture | correctness-grade | Operator TM-first/workbench-second selection; CDC directive03 | open | — | Witness remains required for this row; Arc11 may proceed with the device gap explicit under directive08; P-03 hardware timing unchanged |
+| P-07 | TM plays through the Bevy rack and Clock/LFO/Scope make it observable | Reproduce seeded static-patch MIDI stream, witness selected software or hardware MIDI endpoint playback and inspect known signals and MIDI with bounded workbench capture | correctness-grade | Operator TM-first/workbench-second selection; CDC directive03 | done | CDC reproduced Arc11 at72fe6b5 plus retained Arc10 Operator witness at65522f1; arc11-observation-workbench/cdc-verification.md | Accepted2026-10-11; no full project/release/hardware-timing acceptance |
 
 ## Arc09 acceptance — 2026-09-18
 
@@ -81,3 +84,13 @@ remain open for CDC's independent composition gate. This supplies candidate
 P-07 workbench evidence alongside accepted Arc10 musical witnessing at65522f1;
 P-07 and all seven project rows remain open. Arc12/13/07/08 retain their owners,
 with no implicit physical timing, broad musical, quality or release acceptance.
+
+## Arc11 CDC acceptance and live persistence — 2026-10-11
+
+[Independent composition](arc11-observation-workbench/cdc-verification.md) accepts
+four W rows with fresh46-test and executable capture/replay proof. Together with
+Arc10's preserved Operator playback witness and reproduced runner behavior, this
+meets P-07 as written; CDC marks that row done. Six original project rows remain
+open and project closure still requires its full independent/Operator gates.
+Directive10 opens Arc12/Slice01 at Duncan's request. P-02/P-04 gain future evidence
+from live configuration saves; their broader project acceptance is not claimed now.

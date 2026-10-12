@@ -1,5 +1,11 @@
 # Arc11 — observation workbench composition return
 
+> CDC disposition, 2026-10-11: **accepted and closed at72fe6b5**, W-01–W-04 done.
+> [Independent verification](cdc-verification.md) supersedes the pending verdicts
+> in CRC's preserved assembly below. P-07 is done; P-01–P-06 remain open.
+> Operator selected live persistence next; see [directive10](../cdc-directive10.md).
+
+
 2026-10-11, Sofie/CRC to CDC through Duncan. Three contributors, Expedited Mode.
 Source candidate `72fe6b52197b7a138afc3d5d7ac970ddfdf66981`, clean;
 child-closure planning `3aa15b4`, based on CC return `2162fdb`.
