@@ -1,7 +1,8 @@
 # Live persistence — acceptance ledger
 
 Opened2026-10-11. Five rows open; CC evidence is proposed-done until CRC acceptance.
-Binding details and exact oracles: sibling cc-prompt.md and slice-plan.md.
+Binding details and exact oracles: sibling cc-prompt-iteration01.md and slice-plan.md;
+the initial cc-prompt.md governs its expressly retained sections.
 
 | ID | Criterion | Verify | Significance | Origin | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -19,4 +20,16 @@ replay result. LP-02/LP-04 remain unfulfilled; all five statuses stay open pendi
 CRC's independent full review. Correct base getter/event readback affects LP-01;
 logical cable order affects LP-02/LP-04; recheck LP-03 preservation and complete
 LP-05 gates after both repairs. Keep prior CC outcomes as attestation. No current
-row is accepted or relaxed; CRC will issue the preserved iteration01 assignment.
+row is accepted or relaxed; CRC issued the preserved iteration01 assignment below.
+
+## CRC correction issuance — 2026-10-11
+
+Current assignment: `arc12-live-rack-operations/slice01-live-persistence/cc-prompt-iteration01.md`,
+correction1/5, source a3633bc, author planning intake37d41f6. CRC reproduced the
+LP-04 failed reference comparison (exit101, one failure), and the passing LP-02
+diagnostic (exit0, one pass) that explicitly asserts the incorrect reversal.
+The prompt repairs configured readback/events, logical ordering and discriminating
+tests, and completes the original LP-03 snapshot/save preservation proof at200/252.
+All five statuses stay open; initial CC evidence remains attestation and the
+initial failure records remain historical. Native/fresh-process gates must
+complete on the corrected source before CRC reviews. Subsequent slices held.

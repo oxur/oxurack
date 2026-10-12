@@ -1,12 +1,12 @@
 # Arc12 Slice01 — live configuration persistence
 
-Version1.1 — 2026-10-11. Status: open; initial CC implementation returned, two design conflicts resolved by directive11; CRC correction authoring pending.
-Last issued assignment (returned, not a new execution request): `arc12-live-rack-operations/slice01-live-persistence/cc-prompt.md`.
+Version1.2 — 2026-10-11. Status: open; directive11 acknowledged, CRC iteration01 issued for CC implementation; all five rows await independent review.
+Current issued assignment: `arc12-live-rack-operations/slice01-live-persistence/cc-prompt-iteration01.md`.
 CDC author; CC implementation; CRC independent review; Duncan relays.
 Initial source72fe6b52197b7a138afc3d5d7ac970ddfdf66981; current CC return
 a3633bc0d0f468e933cc0f1463fb637a623b33d1, planning return9fdb2cd.
-CRC must issue cc-prompt-iteration01.md before renewed CC implementation; that
-file is not yet issued by this CDC directive.
+The initial prompt/return remain historical. Iteration01 is now issued, refinement
+1/5; no implementation or acceptance under the new assignment is claimed.
 
 ## Deliverable and contract
 
@@ -40,8 +40,8 @@ CDC independently reproduced the failed fresh-replay test and the passing diagno
 that asserts a .25→.75 tie reversal. Both remain defects to repair. The historical
 readiness statement below overstated resolution of these two interactions; this
 amendment corrects it rather than presenting the original investigation as complete.
-CRC applies guide07 and records correction readiness at issuance; no acceptance or
-new iteration execution is claimed now. All five rows remain open.
+CRC applied guide07 and records correction readiness below. The issued iteration
+does not claim execution or acceptance. All five rows remain open.
 
 ## Acceptance and evidence
 
@@ -81,8 +81,52 @@ artifacts/. Source, tests, example and README live only in source worktree.
 | Date | Prompt | Predecessor / reason | Disposition |
 | --- | --- | --- | --- |
 | 2026-10-11 | arc12-live-rack-operations/slice01-live-persistence/cc-prompt.md | directive10; Arc11 CDC accepted; Operator selected live persistence | Returned at a3633bc/9fdb2cd; replay failed and tie-order diagnostic conflicts; directive11 resolves design for CRC iteration01 |
+| 2026-10-11 | arc12-live-rack-operations/slice01-live-persistence/cc-prompt-iteration01.md | initial prompt/CC return; directive11 resolves configured getter and logical cable order | Active CC implementation correction1/5; all LP rows open; CRC reproduction after return |
+
+## Correction readiness — CRC 2026-10-11
+
+1. **Source-grounded:** inspected clean source a3633bc, planning37d41f6 and the
+   actual initial return. Read the TM base/set/get/consume/publication/test paths;
+   core Cable, exports, patch apply/validation, cached propagation/merge and
+   schedules; facade persistence/tests, shared event mutation and example/fixture.
+   CRC reproduced the failed independent-reference replay and inspected the
+   passing diagnostic's explicit .25→.75 assertion. Offline first event251
+   confirms the pending-event252 oracle. These are author checks, not LP acceptance.
+2. **Design-complete:** directive11 fixes configured getter semantics and the
+   full name/port/optional-ordinal/Entity key in loader, propagation and snapshot.
+   The prompt preserves effective engine/output latency, seeded reconstruction,
+   active membership, typed failures and pending/Scope ownership. No unresolved
+   architecture choice is assigned to CC; future cable API/replacement work stays
+   in Slice03/04.
+3. **Guideline-applied:** loaded engineering guide07/template, testing validation
+   gates and installed Rust2.0 guidance. Verified TD-02/03 SHOULD, API-02 SHOULD,
+   API-23/EH-01 MUST, AP-42/44 AVOID and AP-43 CONSIDER. The prompt maps them to
+   semantic CableOrder, owned facade values, existing typed errors/private
+   observations and concrete synchronous mechanics; these are applied decisions,
+   not merely a request for CC to read skills.
+4. **Executable:** supplied checked symbol/file sequence, illustrative getter,
+   component/bundle and complete sort-key shapes, optional-query wiring and real
+   Update/FixedUpdate installation. Nine exact source paths cover the repairs;
+   existing examples suffice. Rust sketches are uncompiled, not a drop-in claim.
+5. **Falsifiable:** held CV separates configured base from engine and pending
+   outputs; facade events prove base provenance. Ordinals deliberately oppose
+   Entity order while names/ports remain primary. Loaded [.75,.25] ties preserve
+   literal.25 and saved vectors across two reloads, with compact fallback proof.
+   Extend the original snapshot-only preservation test to include save at200/252;
+   compare once-drained event251 and continuation. Independent fixture-derived
+   replay remains unchanged in substance; all initial native gates rerun.
+6. **Coherent/portable:** active prompt/plan/ledger agree, originals preserved;
+   manifest names exact full/section reads and local skill paths, approximately
+   35–50k tokens plus execution/recovery headroom. Existing closing-report/ledger
+   receive concise intake, failed/partial history and final evidence. No new
+   validator/evidence tree or blanket retention of CC attestation. All five rows
+   and subsequent advancement remain gated by independent CRC review.
 
 ## Version history
+
+- v1.2 — 2026-10-11: CRC acknowledged directive11 and issued one guide-authored
+  correction at source a3633bc. Configured getter/logical ordering repairs and
+  original save-preservation proof are specified; no criterion relaxed or accepted.
 
 - v1.1 — 2026-10-11: CC return exposed two CDC design gaps; directive11 authorizes focused adapter/ordering repairs. Initial prompt and CC evidence preserved; CRC owns correction issuance and acceptance.
 

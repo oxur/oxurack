@@ -1,6 +1,6 @@
 # Arc12 — live rack operations
 
-Version1.1 — 2026-10-11. Status: active; Slice01 returned with two design conflicts; directive11 resolves them for CRC correction authoring. Other slices remain planned.
+Version1.2 — 2026-10-11. Status: active; Slice01 iteration01 issued under directive11; all LP rows remain open. Other slices remain planned.
 Depends on accepted Arc10/Arc11; source predecessor72fe6b5. Blocks saved/live
 musical workflow and Arc07 controls. Related: carried-over Arcs02–05; Arc13 catalog.
 Authority: approved successor roadmap and Duncan's explicit “Continue with live
@@ -26,7 +26,9 @@ semantics; loaded cables gain CableOrder from Patch.cables vector position, used
 by propagation and snapshot with the exact fallback policy in the directive.
 No RON schema or standalone engine change. The .25 base and .25 LastWins replay
 oracles remain binding. These repairs are part of Slice01, not additional slices.
-CRC authors iteration01; all LP rows remain open until independent review.
+CRC issued [iteration01](slice01-live-persistence/cc-prompt-iteration01.md) at
+source a3633bc after reproducing the failed replay and inspecting the diagnostic
+tie assertion. All LP rows remain open until independent review after CC's return.
 
 ## Four delivery slices and retained ownership
 
@@ -105,6 +107,10 @@ remaining modules/Chord Arc13, full CLI/REPL/controllers Arc07. ProjectP-01–P-
 remain open. P-07's delivered instrument/workbench stays accepted.
 
 ## Version history
+
+- v1.2 — 2026-10-11: CRC acknowledged directive11 and issued Slice01 correction1/5
+  with source-grounded getter/order recipes and original preservation/replay gates.
+  No arc scope/architecture amendment or child acceptance; later slices held.
 
 - v1.1 — 2026-10-11: Slice01 CC return exposed configured/effective getter conflict and allocator-dependent duplicate-cable order. CDC reproduced both and resolved semantics/source scope in directive11; CRC issues a bounded correction. Initial acceptance goals remain intact.
 
