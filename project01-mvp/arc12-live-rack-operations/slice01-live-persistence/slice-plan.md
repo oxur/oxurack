@@ -1,9 +1,12 @@
 # Arc12 Slice01 — live configuration persistence
 
-Version1.0 — 2026-10-11. Status: open; initial CC assignment issued.
-Current assignment: `arc12-live-rack-operations/slice01-live-persistence/cc-prompt.md`.
+Version1.1 — 2026-10-11. Status: open; initial CC implementation returned, two design conflicts resolved by directive11; CRC correction authoring pending.
+Last issued assignment (returned, not a new execution request): `arc12-live-rack-operations/slice01-live-persistence/cc-prompt.md`.
 CDC author; CC implementation; CRC independent review; Duncan relays.
-Source72fe6b52197b7a138afc3d5d7ac970ddfdf66981 in the existing implementation worktree.
+Initial source72fe6b52197b7a138afc3d5d7ac970ddfdf66981; current CC return
+a3633bc0d0f468e933cc0f1463fb637a623b33d1, planning return9fdb2cd.
+CRC must issue cc-prompt-iteration01.md before renewed CC implementation; that
+file is not yet issued by this CDC directive.
 
 ## Deliverable and contract
 
@@ -22,6 +25,23 @@ REPL, command queues, async I/O, new dependencies, global tempo control and broa
 metadata/cable mutation APIs. Those exclusions retain the arc/backlog owners.
 Snapshot uses active PatchHandle membership, not every entity left by prior loads.
 Saving while running is allowed between calls; it never ticks, drains or resets.
+
+## Binding correction and initial-author readiness amendment
+
+[Directive11](../../cdc-directive11.md) supersedes the initial prompt's effective
+getter assumption and Entity-based tie-preservation recipe. The registered TM
+parameter getter must return write_base; engine/output keep effective probability.
+Core CableOrder records patch-vector ordinal; propagation and snapshot share the
+specified name/port/ordinal/Entity fallback order. Source scope explicitly expands
+to the adapter, core cable/patch/tick paths and their tests/docs. No goal, fixture,
+file schema or seeded engine semantics are weakened.
+
+CDC independently reproduced the failed fresh-replay test and the passing diagnostic
+that asserts a .25→.75 tie reversal. Both remain defects to repair. The historical
+readiness statement below overstated resolution of these two interactions; this
+amendment corrects it rather than presenting the original investigation as complete.
+CRC applies guide07 and records correction readiness at issuance; no acceptance or
+new iteration execution is claimed now. All five rows remain open.
 
 ## Acceptance and evidence
 
@@ -60,9 +80,11 @@ artifacts/. Source, tests, example and README live only in source worktree.
 
 | Date | Prompt | Predecessor / reason | Disposition |
 | --- | --- | --- | --- |
-| 2026-10-11 | arc12-live-rack-operations/slice01-live-persistence/cc-prompt.md | directive10; Arc11 CDC accepted; Operator selected live persistence | Active, not yet implemented |
+| 2026-10-11 | arc12-live-rack-operations/slice01-live-persistence/cc-prompt.md | directive10; Arc11 CDC accepted; Operator selected live persistence | Returned at a3633bc/9fdb2cd; replay failed and tie-order diagnostic conflicts; directive11 resolves design for CRC iteration01 |
 
 ## Version history
+
+- v1.1 — 2026-10-11: CC return exposed two CDC design gaps; directive11 authorizes focused adapter/ordering repairs. Initial prompt and CC evidence preserved; CRC owns correction issuance and acceptance.
 
 - v1.0 — 2026-10-11: CDC opened the first live-rack slice with edit/save/fresh-replay
   outcome and explicit configuration rather than continuation semantics.

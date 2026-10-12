@@ -10,3 +10,13 @@ Binding details and exact oracles: sibling cc-prompt.md and slice-plan.md.
 | LP-03 | Snapshot/save does not consume or reset running-rack state and failures propagate honestly | Before/after time/Scope/pending MIDI plus continuation control, failed path and destination untouched on extraction failure | correctness-grade | Sample/MIDI ownership | open | CC proposed: pending MIDI admission, Scope/time and continuation control pass; sentinel destination, I/O and failed-load identity checks pass; CRC pending | Synchronous between samples |
 | LP-04 | Saved seeded patch replays as its edited configuration in fresh racks | Two fresh saved-file runs versus independently edited reference; original differs; no claim of saved engine continuation | correctness-grade | Arc02 deterministic round trip | open | CC acceptance failed: replay is stable and differs from original, but not the `.25` reference because getter returns LFO-modulated effective value `0.5426204`; see closing report | Configuration restart |
 | LP-05 | Runnable edit/save example and docs expose the feature; affected checks pass | Execute new example then existing trace/workbench runner; default/no-default tests, workspace/lint/docs checks | serious | Playable-first delivery | open | CC proposed: save example reached sample 300; fresh-process runner produced 10,000 Scope rows and 56 MIDI events; lint/Clippy/docs pass; test gates stop at LP-04 | No endpoint gate/new validator |
+
+## CDC conflict disposition — 2026-10-11
+
+[Directive11](../../cdc-directive11.md) independently reproduces the replay failure
+at a3633bc and confirms that the passing tie test currently asserts the wrong
+replay result. LP-02/LP-04 remain unfulfilled; all five statuses stay open pending
+CRC's independent full review. Correct base getter/event readback affects LP-01;
+logical cable order affects LP-02/LP-04; recheck LP-03 preservation and complete
+LP-05 gates after both repairs. Keep prior CC outcomes as attestation. No current
+row is accepted or relaxed; CRC will issue the preserved iteration01 assignment.

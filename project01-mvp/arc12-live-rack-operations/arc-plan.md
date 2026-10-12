@@ -1,6 +1,6 @@
 # Arc12 — live rack operations
 
-Version1.0 — 2026-10-11. Status: active; Slice01 issued, other slices planned.
+Version1.1 — 2026-10-11. Status: active; Slice01 returned with two design conflicts; directive11 resolves them for CRC correction authoring. Other slices remain planned.
 Depends on accepted Arc10/Arc11; source predecessor72fe6b5. Blocks saved/live
 musical workflow and Arc07 controls. Related: carried-over Arcs02–05; Arc13 catalog.
 Authority: approved successor roadmap and Duncan's explicit “Continue with live
@@ -14,6 +14,19 @@ patch, and make subsequent metadata/topology/lifecycle edits coherent with event
 graph views and persistence. Each slice delivers an executable use of the rack.
 Reuse the current synchronous owner and core registries; introduce neither an
 asynchronous service nor a second scheduler as a prerequisite.
+
+## Slice01 design correction — directive11
+
+CC's a3633bc return exposed two assumptions in CDC's initial packet. Was: the
+TM registered getter returned effective probability under the historical Arc10
+contract, while saving expected the configured base; Entity ties were assumed to
+survive reload. Now: [directive11](../cdc-directive11.md) authorizes the registered
+parameter getter to expose existing write_base, retaining effective engine/output
+semantics; loaded cables gain CableOrder from Patch.cables vector position, used
+by propagation and snapshot with the exact fallback policy in the directive.
+No RON schema or standalone engine change. The .25 base and .25 LastWins replay
+oracles remain binding. These repairs are part of Slice01, not additional slices.
+CRC authors iteration01; all LP rows remain open until independent review.
 
 ## Four delivery slices and retained ownership
 
@@ -92,6 +105,8 @@ remaining modules/Chord Arc13, full CLI/REPL/controllers Arc07. ProjectP-01–P-
 remain open. P-07's delivered instrument/workbench stays accepted.
 
 ## Version history
+
+- v1.1 — 2026-10-11: Slice01 CC return exposed configured/effective getter conflict and allocator-dependent duplicate-cable order. CDC reproduced both and resolved semantics/source scope in directive11; CRC issues a bounded correction. Initial acceptance goals remain intact.
 
 - v1.0 — 2026-10-11: Arc11 delivered workbench and Operator selected live persistence.
   Opened existing four-slice successor with configuration/runtime-state distinction,

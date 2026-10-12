@@ -10,7 +10,11 @@
 > Duncan selected live persistence next. [Directive10](../project01-mvp/cdc-directive10.md)
 > opens [Arc12/Slice01](../project01-mvp/arc12-live-rack-operations/slice01-live-persistence/slice-plan.md):
 > public parameter edits, actual current-configuration snapshot/save and fresh replay.
-> Five LP rows open; implementation prompt issued, no implementation claimed yet.
+> CC returned source a3633bc / planning9fdb2cd with implementation and two conflicts.
+> [Directive11](../project01-mvp/cdc-directive11.md) records CDC reproduction and
+> authorizes base-parameter readback plus stable cable order repairs. CRC issues
+> iteration01; five LP rows remain open. Replay currently fails; the passing tie
+> diagnostic currently asserts a reversal and is not acceptance evidence.
 > Exact engine-state checkpoints remain future work. Existing append-only load
 > behavior is explicitly owned by Arc12/Slice04; Slice01 reloads into a fresh rack.
 > Catalog/Chord, full interfaces, hardware timing/coverage/benchmarks/soak retain
