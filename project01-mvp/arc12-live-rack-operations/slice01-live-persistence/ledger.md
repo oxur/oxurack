@@ -6,11 +6,11 @@ the initial cc-prompt.md governs its expressly retained sections.
 
 | ID | Criterion | Verify | Significance | Origin | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| LP-01 | Public parameter read/write operates on the live instance with correct validation and notification provenance | Real LFO edit between samples, previous/new DirectApi once; rejected/no-patch/unknown cases; Command provenance retained | correctness-grade | Live persistence prerequisite | open | CC proposed: facade unit tests pass; direct event, equal set, validation errors, phase/time continuity; CRC pending | Existing setter semantics retained |
-| LP-02 | Snapshot contains current active configuration and complete getter values with correct topology/metadata/header | Actual ECS edits, omitted defaults, active-handle restriction, cable order/tie oracle, missing getter and disabled-cable rejection | correctness-grade | Arc02 World-to-patch | open | CC partial: live getter/labels/metadata/active membership/errors pass; tie snapshot order replays `.25` as `.75` after fresh load; contract correction needed | No cached parameter fallback |
-| LP-03 | Snapshot/save does not consume or reset running-rack state and failures propagate honestly | Before/after time/Scope/pending MIDI plus continuation control, failed path and destination untouched on extraction failure | correctness-grade | Sample/MIDI ownership | open | CC proposed: pending MIDI admission, Scope/time and continuation control pass; sentinel destination, I/O and failed-load identity checks pass; CRC pending | Synchronous between samples |
-| LP-04 | Saved seeded patch replays as its edited configuration in fresh racks | Two fresh saved-file runs versus independently edited reference; original differs; no claim of saved engine continuation | correctness-grade | Arc02 deterministic round trip | open | CC acceptance failed: replay is stable and differs from original, but not the `.25` reference because getter returns LFO-modulated effective value `0.5426204`; see closing report | Configuration restart |
-| LP-05 | Runnable edit/save example and docs expose the feature; affected checks pass | Execute new example then existing trace/workbench runner; default/no-default tests, workspace/lint/docs checks | serious | Playable-first delivery | open | CC proposed: save example reached sample 300; fresh-process runner produced 10,000 Scope rows and 56 MIDI events; lint/Clippy/docs pass; test gates stop at LP-04 | No endpoint gate/new validator |
+| LP-01 | Public parameter read/write operates on the live instance with correct validation and notification provenance | Real LFO edit between samples, previous/new DirectApi once; rejected/no-patch/unknown cases; Command provenance retained | correctness-grade | Live persistence prerequisite | open | CC iteration01 proposed done: TM configured-base getter and facade DirectApi/invalid-write oracles pass; timing, held modulation, and prior error/provenance cases pass; CRC pending | Existing setter semantics retained |
+| LP-02 | Snapshot contains current active configuration and complete getter values with correct topology/metadata/header | Actual ECS edits, omitted defaults, active-handle restriction, cable order/tie oracle, missing getter and disabled-cable rejection | correctness-grade | Arc02 World-to-patch | open | CC iteration01 proposed done: core suite passes; snapshot/save/fresh-load preserves `.75,.25` cable order over two rounds; logical CableOrder and fallback schedule tests pass; CRC pending | No cached parameter fallback |
+| LP-03 | Snapshot/save does not consume or reset running-rack state and failures propagate honestly | Before/after time/Scope/pending MIDI plus continuation control, failed path and destination untouched on extraction failure | correctness-grade | Sample/MIDI ownership | open | CC iteration01 proposed done: snapshot/save at samples 200 and 252 preserves running/sample/Scope/pending MIDI state; one-time drain and continuation match control; failure cases pass; CRC pending | Synchronous between samples |
+| LP-04 | Saved seeded patch replays as its edited configuration in fresh racks | Two fresh saved-file runs versus independently edited reference; original differs; no claim of saved engine continuation | correctness-grade | Arc02 deterministic round trip | open | CC iteration01 proposed done: saved `.25` configuration matches independent reference; duplicate cable order survives two save/reload rounds; fresh-process traces compare as required; CRC pending | Configuration restart |
+| LP-05 | Runnable edit/save example and docs expose the feature; affected checks pass | Execute new example then existing trace/workbench runner; default/no-default tests, workspace/lint/docs checks | serious | Playable-first delivery | open | CC iteration01 proposed done: example and fresh-process recipe pass; default/no-default suites, host `make test`, lint, strict Clippy/docs pass; restricted CoreMIDI failure retained with host retry; CRC pending | No endpoint gate/new validator |
 
 ## CDC conflict disposition — 2026-10-11
 
@@ -33,3 +33,13 @@ tests, and completes the original LP-03 snapshot/save preservation proof at200/2
 All five statuses stay open; initial CC evidence remains attestation and the
 initial failure records remain historical. Native/fresh-process gates must
 complete on the corrected source before CRC reviews. Subsequent slices held.
+
+## CC iteration01 return — 2026-10-11
+
+Source commit `fabfa1cb4beab5fd79f05b88d4bbec34208a1cac` implements the issued
+corrections on the nine authorized source paths. The complete command inventory,
+focused evidence, fresh-process recipe outcomes, and environment-limited `make
+test` first run plus exact successful host retry are preserved in the sibling
+closing report. LP-01–LP-05 are each proposed done by CC, not accepted. All rows
+remain `open` until CRC independently reviews the corrected source and evidence.
+The initial discrepancy report and CRC correction history above remain intact.
