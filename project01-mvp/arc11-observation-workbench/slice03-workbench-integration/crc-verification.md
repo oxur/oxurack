@@ -137,20 +137,20 @@ test; production regions, prior tests, renderer, playback, Scope, fixtures,
 manifests and lockfile are unchanged. README and executable continuation loops
 match by direct review. CRC made no source changes.
 
-Fresh independent commands from S, all exit0:
+Fresh independent commands from S, all exit 0:
 
-| Command | Result at72fe6b5 |
+| Command | Result at `72fe6b5` |
 | --- | --- |
-| `cargo test --locked -p oxurack --example turing-machine-midi` | 26 passed,0 failed,0 ignored |
-| `cargo test --locked -p oxurack --no-default-features --example turing-machine-midi` | 26 passed,0 failed,0 ignored |
+| `cargo test --locked -p oxurack --example turing-machine-midi` | 26 passed, 0 failed, 0 ignored |
+| `cargo test --locked -p oxurack --no-default-features --example turing-machine-midi` | 26 passed, 0 failed, 0 ignored |
 | `make lint` | Clippy and formatting pass on first CRC run |
 | `cargo clippy --locked -p oxurack --all-features --all-targets -- -D warnings` | Pass |
 | `git diff --check`; `git diff 22500fa..72fe6b5 --check` | Both pass |
 
-The new test runs the installed protected patch for200 samples with per-sample
-drain/copy, stops/clears, then executes the README continuation for100 more.
-It proves completed300, cleared-but-enabled capture, signal indices200–299,
-exact Generated251/90 3E 15,101 retained records,zero overwrites,zero Sent,
+The new test runs the installed protected patch for 200 samples with per-sample
+drain/copy, stops/clears, then executes the README continuation for 100 more.
+It proves completed 300, cleared-but-enabled capture, signal indices 200–299,
+exact Generated 251/90 3E 15, 101 retained records, zero overwrites, zero Sent,
 empty output buffer and no latched fault. The preserved renderer test separately
 proves actual phase continuity versus a fresh rack. Runtime errors propagate.
 F-01 is resolved; B-04 is independently done. This is recipe proof against
@@ -158,10 +158,10 @@ unchanged correct production, not a newly fixed production regression.
 
 ### Retention and four-row closure
 
-B-01–B-03 retain independent acceptance at22500fa/2026-10-11. The full source
+B-01–B-03 retain independent acceptance at `22500fa`/2026-10-11. The full source
 delta establishes that no relevant production, dependency or fixture changed.
-Retain the prior independent workspace960 passed/3 RT ignores, Scope6+LFO12+
-MIDI2, no-default Scope6, strict rustdoc and binary/CSV/preflight receipts at
+Retain the prior independent workspace 960 passed/3 RT ignores, Scope 6 + LFO 12 +
+MIDI 2, no-default Scope 6, strict rustdoc and binary/CSV/preflight receipts at
 that original revision/date. Those are not new executions. Both example modes,
 lint, strict all-target Clippy and diff were freshly rerun for this correction.
 Additional current build/focused tests and integrated demonstrations appear in
@@ -170,7 +170,7 @@ CC's first formatting failure/rerun, restricted CoreMIDI failures/host retries
 and existing block0.1.6 advisory remain preserved with their original attribution.
 No suppression, new ignore or endpoint access.
 
-Opening4 rows, final walk4: B-01,B-02,B-03 retained independently done;
+Opening 4 rows, final walk 4: B-01, B-02, B-03 retained independently done;
 B-04 freshly done. No deferral/no-op/silent drop. Both issued prompts preserved;
 iteration01 is the closed assignment. Supporting durable artifacts: none;
 checks/logs in /tmp are convenience outputs, not required artifacts. CC's source

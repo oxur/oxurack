@@ -1,6 +1,6 @@
 # Arc11 — musical observation workbench
 
-Version 1.7 — 2026-10-11. Status: open for CDC composition; all three slices closed,14/14 child rows independently accepted.
+Version 1.8 — 2026-10-11. Status: open for CDC composition; all three slices closed, 14/14 child rows independently accepted; CRC packet ready.
 Depends on Arc10, independently accepted at source `65522f1`.
 Authority: Operator's TM-first/workbench-second selection; directives08/09.
 Three contributors, Expedited Mode. CDC owns arc/first-slice design; CRC reviews
@@ -21,7 +21,7 @@ P-07 remains open until this composition is demonstrated; release gates are late
 | --- | --- | --- |
 | slice01-lfo | Standalone and installed five-waveform LFO; real RON patch modulates TM write probability and plays through the existing runner | Arc10; [closed slice](slice01-lfo/crc-verification.md), five L rows done at c4b517c |
 | slice02-scope-capture | Bounded in-memory scalar/Gate/Raw observation at Observe, with sample indices; actual emitted MIDI captured without competing with the runner's drain; a runnable capture/export | LFO; [accepted capture](slice02-scope-capture/crc-verification.md), five S rows done at `6c56e84` |
-| slice03-workbench-integration | Small usable terminal inspection view tying patch, selected signals and MIDI together; clear capture bounds, reset/new-run and export instructions | Capture; [CRC acceptance](slice03-workbench-integration/crc-verification.md), all four B rows done; B-04 at72fe6b5, retained B-01–B-03 at22500fa |
+| slice03-workbench-integration | Small usable terminal inspection view tying patch, selected signals and MIDI together; clear capture bounds, reset/new-run and export instructions | Capture; [CRC acceptance](slice03-workbench-integration/crc-verification.md), all four B rows done; B-04 at `72fe6b5`, retained B-01–B-03 at `22500fa` |
 
 The first slice's exact API and numerical semantics live in its plan/prompt.
 Slice01 is independently accepted after one correction. Its native gates,
@@ -36,7 +36,7 @@ Slice03 is issued on accepted capture with an immutable post-stop view and
 unchanged CSV/MIDI output. CRC reproduced terminal/CLI/failure behavior at `22500fa` and accepted B-01–B-03.
 Was: B-04 remained open because README batch continuation could latch pending MIDI.
 Now: iteration01 repairs per-sample drain/copy and its executable continuation
-passes independently at72fe6b5; all14 child rows are done. Production contracts
+passes independently at `72fe6b5`; all 14 child rows are done. Production contracts
 are unchanged. CRC assembles the workbench below; CDC independently gates arc closure.
 The workbench is a developer/musician inspection tool; full CLI/REPL/controller
 editing remains Arc07. Do not create an evidence-only composition slice.
@@ -64,7 +64,12 @@ observer for Slice01 is not the public Scope implementation.
 
 ## Composition and proof
 
-[ledger.md](ledger.md) has four arc criteria. CRC assembles three child verdicts;
+[ledger.md](ledger.md) has four arc criteria. CRC assembled three child verdicts
+and freshly reproduced the integrated candidate at `72fe6b5`;
+[closing report](closing-report.md) and [CRC verification](crc-verification.md)
+are ready for Duncan to relay. All four W rows remain open for CDC. Previously
+assembly was held for B-04; that recipe/test correction is now independently closed.
+
 CDC independently runs the integrated workbench and checks meaningful sample/MIDI
 observations. No second endpoint musical witness is mandatory for an LFO-only
 change; Duncan can audition each runnable increment immediately. Arc10's witness
@@ -75,7 +80,9 @@ Arc08/13/12/07 owners. Nothing here closes their historical deferred rows.
 
 ## Version history
 
-- v1.7 — 2026-10-11: Slice03 correction accepted at72fe6b5; all three children/14 rows closed. F-01 repaired in recipe/test only; no structural amendment. Arc composition ready for assembly and independent CDC gate.
+- v1.8 — 2026-10-11: CRC assembled all three accepted children and reproduced the candidate workbench at `72fe6b5`. W-01–W-04 proposed-done/open pending CDC; composition packet ready, no project closure or next-arc issue.
+
+- v1.7 — 2026-10-11: Slice03 correction accepted at `72fe6b5`; all three children/14 rows closed. F-01 repaired in recipe/test only; no structural amendment. Arc composition ready for assembly and independent CDC gate.
 
 - v1.6 — 2026-10-11: Slice03 initial review accepted three B rows at `22500fa`. F-01 leaves B-04 open for a documented continuation loop repair/test; native and terminal commands reproduce. No architecture or sequencing amendment; arc closure held.
 

@@ -70,3 +70,14 @@ Duncan's actual MIDI Bus1 musical witness. This supports P-01/P-02/P-05/P-07;
 it does not close them. All seven project rows remain open. Arc11 now owns the
 LFO/Scope workbench, starting with slice01-lfo under directive09. Other successor
 and release obligations are unchanged.
+
+## Arc11 CRC composition return — 2026-10-11
+
+[Arc11 assembly](arc11-observation-workbench/closing-report.md) and
+[CRC verification](arc11-observation-workbench/crc-verification.md) at `72fe6b5`
+account for three accepted children/14 rows and fresh integrated Clock/LFO/TM/
+MIDI terminal/CSV, determinism, bounds and known-signal proof. All four W rows
+remain open for CDC's independent composition gate. This supplies candidate
+P-07 workbench evidence alongside accepted Arc10 musical witnessing at65522f1;
+P-07 and all seven project rows remain open. Arc12/13/07/08 retain their owners,
+with no implicit physical timing, broad musical, quality or release acceptance.

@@ -3,14 +3,14 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — Arc10 accepted by CDC at 65522f1; Arc11 observation workbench open; Slice01 LFO accepted at c4b517c; Slice02 Scope capture accepted at `6c56e84`; Slice03 terminal accepted at72fe6b5; all14 Arc11 child rows done; CDC composition pending |
+| status | active — Arc10 accepted by CDC at 65522f1; Arc11 observation workbench open; Slice01 LFO accepted at c4b517c; Slice02 Scope capture accepted at `6c56e84`; Slice03 terminal accepted at `72fe6b5`; all 14 Arc11 child rows done; CDC composition pending |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
 | source baseline | `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` on `main`; original migration baseline retained below |
 | planning home | `planning` branch, `.worktrees/planning/project01-mvp` |
 
-## Current direction — v3.29, 2026-10-11
+## Current direction — v3.30, 2026-10-11
 
 Duncan requested a recalibration during Arc10/Slice02 review: this is unreleased
 open-source music software, and excessive defensive infrastructure, proof tooling
@@ -18,7 +18,7 @@ and reporting have delayed usable behavior. [Directive08](cdc-directive08.md)
 remains the playable-first/proportionate-proof policy, applying framework **2.6.0**.
 [Directive09](cdc-directive09.md) now accepts Arc10 and issues Arc11/Slice01 LFO.
 LFO source `c4b517c` is CRC accepted, based on accepted Arc10 `65522f1`;
-main remains `a7ce6e6`. All five L and five S rows are done; Scope source `6c56e84` is independently accepted. [Slice03 terminal workbench](arc11-observation-workbench/slice03-workbench-integration/crc-verification.md) is closed: B-01–B-03 retained at22500fa, B-04 accepted at72fe6b5 after the executable recipe correction. All three children/14 rows are done; Arc11 now proceeds to CRC composition assembly and independent CDC acceptance.
+main remains `a7ce6e6`. All five L and five S rows are done; Scope source `6c56e84` is independently accepted. [Slice03 terminal workbench](arc11-observation-workbench/slice03-workbench-integration/crc-verification.md) is closed: B-01–B-03 retained at `22500fa`, B-04 accepted at `72fe6b5` after the executable recipe correction. All three children/14 rows are done; [Arc11 CRC composition packet](arc11-observation-workbench/closing-report.md) is ready at `72fe6b5` with fresh integrated proof. Four W rows remain open pending CDC acceptance.
 The older sections below are a dated history; their old "current" assignments
 and superseded future design/gates must not be inherited into new prompts.
 
@@ -59,7 +59,8 @@ must use this policy, not mechanically copy the old packets.
 
 | Date | Packet | Predecessor / initiation | Status | Affected authority | Next action |
 | --- | --- | --- | --- | --- | --- |
-| 2026-10-11 | [cdc-directive09.md](cdc-directive09.md) | directive08; Duncan's Arc10 composition handoff | CRC acknowledged; LFO correction independently accepted | T-01–T-05 and all five L rows done | CRC accepted Scope at `6c56e84`; CRC closed terminal Slice03 at72fe6b5; prepare Arc11 composition for Duncan to relay to CDC |
+| 2026-10-11 | [cdc-directive09.md](cdc-directive09.md) | directive08; Duncan's Arc10 composition handoff | CRC acknowledged; LFO correction independently accepted | T-01–T-05 and all five L rows done | CRC accepted Scope at `6c56e84`; CRC closed terminal Slice03 at `72fe6b5` and assembled Arc11 packet; Duncan relays closing-report.md, crc-verification.md, ledger.md to CDC |
+| 2026-10-11 | [Arc11 CRC composition](arc11-observation-workbench/closing-report.md) | directive09; final child closure `3aa15b4`/source `72fe6b5` | CRC assembled; independent CDC pending | All 14 child rows done; W-01–W-04 and P-01–P-07 open | Duncan relays the three arc packet paths; CDC records composition verdict and next-stage instructions |
 | 2026-10-10 | [cdc-directive08.md](cdc-directive08.md) | directive07; Duncan's project recalibration request during Arc10/Slice02; directive relayed by Duncan | CRC acknowledged after live-state check | Unissued Slice03 onward; Arc10 T-01–T-05 and P-07 interpretation, future prompt/proof policy | CRC closed Slice04 at 65522f1 after musical witness; Arc10 assembly ready for CDC |
 
 CRC acknowledgement — 2026-10-11: directive09 and current Arc11/LFO contracts
@@ -82,7 +83,9 @@ claimed by this acknowledgement. CRC will repin the accepted predecessor before
 opening Slice03 and apply directive08's concrete prompt and proportionate-proof
 policy to subsequent work. Three contributors and Expedited Mode remain active.
 
-Version history: **v3.29 — 2026-10-11:** CRC accepted Slice03 iteration01 at72fe6b5; all14 Arc11 child rows done. Recipe defect resolved; prior independent production evidence retained at its original revision/date. Arc11/project rows remain open for the composition gate.
+Version history: **v3.30 — 2026-10-11:** CRC assembled Arc11 composition at `72fe6b5` with fresh known-signal/modulation, trace/view/CSV, bounds/empty and native evidence. Three children/14 rows done; four W and all seven P rows remain open for independent gates. No roadmap amendment; CDC owns next arc.
+
+**v3.29 — 2026-10-11:** CRC accepted Slice03 iteration01 at `72fe6b5`; all 14 Arc11 child rows done. Recipe defect resolved; prior independent production evidence retained at its original revision/date. Arc11/project rows remain open for the composition gate.
 
 **v3.28 — 2026-10-11:** CRC accepted terminal B-01–B-03 at `22500fa` and reproduced native/runnable commands. B-04 remains open for F-01, a README batch/drain recipe defect. Narrow iteration01 issued; arc assembly held, parent rows unchanged.
 

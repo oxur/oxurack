@@ -13,8 +13,10 @@
 > is CRC accepted at `6c56e84`: five S rows done; CSV/native checks and unchanged
 > musical traces reproduce. [Terminal Slice03 review](../project01-mvp/arc11-observation-workbench/slice03-workbench-integration/crc-verification.md)
 > closes all four B rows: B-01–B-03 retained at22500fa, B-04 independently accepted
-> at72fe6b5 after the README/test correction. All three Arc11 children/14 rows done.
-> CRC now assembles the formal Arc11 packet for CDC. Arc/project rows remain open;
+> at `72fe6b5` after the README/test correction. All three Arc11 children/14 rows done.
+> [Arc11 CRC composition packet](../project01-mvp/arc11-observation-workbench/closing-report.md)
+> is ready at `72fe6b5`: fresh integrated traces/view/CSV, known signals, bounds and
+> affected gates pass. All four W and seven P rows remain open for CDC;
 > no endpoint was opened by CRC, no next arc is issued before CDC's verdict.
 > Three contributors, Expedited Mode and directive08 proportionate proof remain.
 > All seven project rows remain open; P-07 needs complete Arc11 composition/CDC acceptance. Async output/live API,

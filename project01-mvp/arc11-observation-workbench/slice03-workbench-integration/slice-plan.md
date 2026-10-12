@@ -80,15 +80,15 @@ checks pass; no unresolved consequential decision.
 | Date | Prompt | Predecessor / reason | Disposition |
 | --- | --- | --- | --- |
 | 2026-10-11 | arc11-observation-workbench/slice03-workbench-integration/cc-prompt.md | accepted Scope6c56e84 / closure `819cecd`; approved terminal increment | Returned at `22500fa`/fcbe6b8; CRC accepted B-01–B-03, B-04 F-01 open |
-| 2026-10-11 | arc11-observation-workbench/slice03-workbench-integration/cc-prompt-iteration01.md | initial prompt/CRC F-01; README batches100 before drain and latches backpressure | Accepted2026-10-11 at72fe6b5; B-04 done, F-01 resolved |
+| 2026-10-11 | arc11-observation-workbench/slice03-workbench-integration/cc-prompt-iteration01.md | initial prompt/CRC F-01; README batches100 before drain and latches backpressure | Accepted 2026-10-11 at `72fe6b5`; B-04 done, F-01 resolved |
 
 ## Corrective author readiness
 
-CRC reproduced the public continuation at `22500fa` after 200 samples: batch 100 completes 52 then latches backpressure. Single-step drain/copy loop was compiled and exercised: completed 300,100 signal records200..299 and one Generated251/90 3E 15, no fault. Guide07 corrective/retention rules and actual facade APIs/Rust EH-01/AP-33 applied. Two-file repair preserves all production and accepted rows; discriminating start200, bounded reading and affected-check/retention policy specified. Six author checks pass; no design amendment.
+CRC reproduced the public continuation at `22500fa` after 200 samples: batch 100 completes 52 then latches backpressure. Single-step drain/copy loop was compiled and exercised: completed 300,100 signal records200..299 and one Generated 251/90 3E 15, no fault. Guide07 corrective/retention rules and actual facade APIs/Rust EH-01/AP-33 applied. Two-file repair preserves all production and accepted rows; discriminating start200, bounded reading and affected-check/retention policy specified. Six author checks pass; no design amendment.
 
 ## Version history
 
-- v1.2 — 2026-10-11: CRC independently accepted iteration01 at72fe6b5, closed B-04/F-01 and Slice03. B-01–B-03 and unaffected evidence retained at22500fa/date; affected gates freshly passed. All three Arc11 children accepted; CDC composition remains pending.
+- v1.2 — 2026-10-11: CRC independently accepted iteration01 at `72fe6b5`, closed B-04/F-01 and Slice03. B-01–B-03 and unaffected evidence retained at `22500fa`/date; affected gates freshly passed. All three Arc11 children accepted; CDC composition remains pending.
 
 - v1.1 — 2026-10-11: CRC accepted B-01–B-03 at `22500fa`, retained binary/native proof; B-04 remains open for F-01. Issued narrow README/per-sample continuation correction with one inline test; Arc11 assembly held.
 
