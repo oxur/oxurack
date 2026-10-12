@@ -57,6 +57,26 @@ pub enum CoreError {
     #[error("no patch loaded")]
     NoPatchLoaded,
 
+    /// A label payload does not match its field or supported target.
+    #[error("invalid value for label {kind:?}: {reason}")]
+    InvalidLabelValue {
+        /// The label field that rejected the payload.
+        kind: crate::LabelKind,
+        /// Why the target or payload is unsupported.
+        reason: String,
+    },
+
+    /// No cable exists at the selected zero-based endpoint occurrence.
+    #[error("unknown cable {source_endpoint:?} -> {target_endpoint:?} occurrence {occurrence}")]
+    UnknownCable {
+        /// Source `(module instance, port)` endpoint.
+        source_endpoint: (String, String),
+        /// Target `(module instance, port)` endpoint.
+        target_endpoint: (String, String),
+        /// Zero-based occurrence requested.
+        occurrence: usize,
+    },
+
     /// The command is recognized but not yet implemented in this crate.
     ///
     /// Returned by [`dispatch_core_command`](crate::dispatch_core_command)

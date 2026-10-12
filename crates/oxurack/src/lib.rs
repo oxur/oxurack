@@ -16,6 +16,7 @@ use bevy_ecs::schedule::ScheduleLabel;
 use bevy_time::TimeUpdateStrategy;
 use bevy_time::prelude::{Fixed, Real, Time, Virtual};
 
+mod labels;
 mod persistence;
 mod scope;
 pub use scope::{MidiDelivery, ScopeCapture, ScopeError, ScopeRecord, ScopeSelector};
@@ -32,8 +33,9 @@ pub use oxurack_graph;
 pub use oxurack_core::OxurackModule as Module;
 
 pub use oxurack_core::{
-    CoreError, CorePlugin, CorePluginFixed, ModuleSpawnContext, PatchHandle, SampleStart,
-    SampleTime, Scale, SimulationRunning, TickError,
+    ChangeSource, CoreError, CorePlugin, CorePluginFixed, LabelKind, LabelTarget, LabelValue,
+    ModuleSpawnContext, PatchHandle, SampleStart, SampleTime, Scale, SimulationRunning, Tag,
+    TagError, TickError,
 };
 
 pub use oxurack_mod_midiout::{MidiOutModule, MidiOutputBuffer, MidiOutputEvent};

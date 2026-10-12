@@ -37,8 +37,9 @@ pub struct MidiInReceived {
 
 /// High-level commands for controlling the rack.
 ///
-/// Sent from the REPL, UI, or scripting layer. Processed by the
-/// command handler system during the next tick.
+/// Sent from the REPL, UI, or scripting layer. Commands are processed only
+/// when an owner explicitly calls [`dispatch_core_command`]; message
+/// registration does not provide a queue consumer.
 #[non_exhaustive]
 #[derive(Message, Debug, Clone)]
 pub enum CoreCommand {
@@ -54,6 +55,15 @@ pub enum CoreCommand {
         param: String,
         /// New value.
         value: crate::ParameterValue,
+    },
+    /// Set one live rack, module, or cable label field.
+    SetLabel {
+        /// Selected metadata target.
+        target: crate::LabelTarget,
+        /// Field to write.
+        kind: crate::LabelKind,
+        /// Accepted payload.
+        value: crate::LabelValue,
     },
     /// Add a cable between two ports.
     AddCable {
@@ -207,7 +217,7 @@ pub struct ParameterChanged {
 pub enum ChangeSource {
     /// Direct user/script command via [`CoreCommand::SetParameter`].
     Command,
-    /// Direct API mutation (future API surfaces).
+    /// Direct facade mutation, such as the parameter and label APIs.
     DirectApi,
     /// Patch-load initialization. One `ParameterChanged` per
     /// parameter set during patch load.
@@ -217,8 +227,8 @@ pub enum ChangeSource {
 /// Emitted when an instance-level label or rack-level metadata changes.
 ///
 /// `entity` is `None` for rack-level changes ([`RackMeta`](crate::RackMeta))
-/// and `Some(e)` for entity-level changes. `previous` is `Some(prev)` when
-/// overwriting an existing label, `None` for first-time set during patch load.
+/// and `Some(e)` for entity-level changes. Entity `previous` is `None` when no
+/// raw component existed; rack `previous` always includes its stored value.
 #[derive(Message, Clone, Debug)]
 pub struct LabelChanged {
     /// Target entity, or `None` for rack-level metadata.
@@ -227,9 +237,9 @@ pub struct LabelChanged {
     pub instance_name: String,
     /// Which label field changed.
     pub kind: LabelKind,
-    /// Previous value, if overwriting.
+    /// Raw value before the write; rack values are always present.
     pub previous: Option<LabelValue>,
-    /// New value.
+    /// Accepted value, including an explicit empty payload used to clear an entity field.
     pub new: LabelValue,
     /// Provenance.
     pub source: ChangeSource,
@@ -322,6 +332,8 @@ pub struct SongPositionChanged {
 ///
 /// - `SetParameter` (on success): [`ParameterChanged`] with
 ///   `source: ChangeSource::Command`.
+/// - `SetLabel` (on success): [`LabelChanged`] with
+///   `source: ChangeSource::Command`.
 ///
 /// # Not yet implemented
 ///
@@ -343,6 +355,11 @@ pub fn dispatch_core_command(
             param,
             value,
         } => dispatch_set_parameter(world, module, param, value),
+        CoreCommand::SetLabel {
+            target,
+            kind,
+            value,
+        } => crate::set_label_value(world, target, kind, value, ChangeSource::Command),
         CoreCommand::LoadPatch(_) => Err(crate::CoreError::NotImplemented("LoadPatch")),
         CoreCommand::SavePatch(_) => Err(crate::CoreError::NotImplemented("SavePatch")),
         CoreCommand::AddCable { .. } => Err(crate::CoreError::NotImplemented("AddCable")),

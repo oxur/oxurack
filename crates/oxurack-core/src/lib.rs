@@ -77,7 +77,8 @@ pub use event::{
 };
 pub use event::{dispatch_core_command, set_module_parameter};
 pub use label::{
-    Description, DisplayName, DisplayNameFormatter, RackMeta, Tag, TagError, Tags, display_name_of,
+    Description, DisplayName, DisplayNameFormatter, LabelTarget, RackMeta, Tag, TagError, Tags,
+    display_name_of, label_value, set_label_value,
 };
 pub use module::{
     ModuleRegistration, ModuleRegistry, ModuleSpawnContext, ModuleSpawner, OxurackModule,

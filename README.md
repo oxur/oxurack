@@ -166,6 +166,41 @@ cargo run --locked -p oxurack --example turing-machine-midi -- \
 The second command runs the saved configuration in a fresh process. Its LFO
 phase begins at zero while its frequency is 1 Hz.
 
+`Oxurack::label` reads the active rack's raw display name, description, tags,
+or rack notes. `set_label` writes those fields on the rack, an active module,
+or a cable selected by exact source and target module/port names. Empty module
+or cable text and empty tag sets clear the stored component; the graph view then
+uses the normal display-name fallback. Rack reads keep the actual empty string,
+empty tag set, or empty note list. Build `Tag` values with `Tag::new`; invalid
+tags return `TagError` before a write begins. Wrong payloads and notes requested
+for a module or cable return `CoreError::InvalidLabelValue`. A missing active
+module returns `UnknownModule`; a missing exact port returns the nested
+`PatchError::UnknownPort`; and a missing cable occurrence returns
+`CoreError::UnknownCable` with both endpoint tuples and the zero-based index.
+
+Cable occurrence order is present `CableOrder` first by ordinal, then absent
+orders, with `Entity` as the deterministic tie-break. Notes are replaced as a
+whole ordered list, preserving duplicates and empty strings. To append notes,
+read the current `LabelValue::Notes`, add the new string, then pass the full list
+to `set_label`. Reads and writes are synchronous between samples. Successful
+writes emit `LabelChanged`; they do not tick the rack or change parameters,
+cables, cable order, or MIDI output. The raw label APIs work with or without the
+default `graph` feature; graph queries additionally show the updated labels
+immediately when that feature is enabled.
+
+Run the metadata example with the same seeded fixture:
+
+```bash
+cargo run --locked -p oxurack --example annotate-live-patch -- \
+  --patch crates/oxurack/examples/patches/turing-machine-lfo.ron \
+  --save /tmp/oxurack-annotated.ron
+```
+
+It annotates the rack, Turing Machine, and clock cable after 200 samples, saves
+the live configuration, then advances and drains another 100 samples. It prints
+the raw values it wrote and `completed_samples=300`. The saved file preserves
+configuration metadata; it does not checkpoint running module engines.
+
 Capture selected scalar ports and the runner's generated MIDI events to a
 bounded CSV file. Capacity counts mixed records; when full, the oldest rows are
 discarded. Signal rows name the selected module and port. MIDI rows distinguish
