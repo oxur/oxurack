@@ -12,11 +12,10 @@
 > [Slice02 bounded Scope capture](../project01-mvp/arc11-observation-workbench/slice02-scope-capture/crc-verification.md)
 > is CRC accepted at `6c56e84`: five S rows done; CSV/native checks and unchanged
 > musical traces reproduce. [Terminal Slice03 review](../project01-mvp/arc11-observation-workbench/slice03-workbench-integration/crc-verification.md)
-> independently accepts B-01–B-03 at `22500fa`; native and terminal/CSV commands pass.
-> B-04 remains open for a README continuation loop that must drain each sample.
-> Duncan relays [iteration01](../project01-mvp/arc11-observation-workbench/slice03-workbench-integration/cc-prompt-iteration01.md)
-> for the narrow README/test repair; arc assembly remains held.
-> No endpoint was opened by CRC; Arc11 composition remains open.
+> closes all four B rows: B-01–B-03 retained at22500fa, B-04 independently accepted
+> at72fe6b5 after the README/test correction. All three Arc11 children/14 rows done.
+> CRC now assembles the formal Arc11 packet for CDC. Arc/project rows remain open;
+> no endpoint was opened by CRC, no next arc is issued before CDC's verdict.
 > Three contributors, Expedited Mode and directive08 proportionate proof remain.
 > All seven project rows remain open; P-07 needs complete Arc11 composition/CDC acceptance. Async output/live API,
 > remaining catalog and release coverage/timing/soak retain their existing owners.

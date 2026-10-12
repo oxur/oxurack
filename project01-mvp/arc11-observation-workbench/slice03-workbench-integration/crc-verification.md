@@ -1,6 +1,10 @@
 # Terminal workbench — CRC verification
 
 2026-10-11, Sofie/CRC, three contributors, Expedited Mode.
+Current verdict: **accepted after iteration01 at `72fe6b5`; B-01–B-04 done; Slice03 closed**. See the dated correction review below. Arc11 remains open for CDC.
+
+## Initial review — preserved history
+
 Initial assignment `cc-prompt.md`; source final
 `22500fae234d5dbba599c7683f8893aabe70f47b` (preceded by
 `f0b045330c8bb74fb3267ba8ef0a515dfaf1012e`), clean; CC planning
@@ -121,3 +125,63 @@ Scope/LFO/MIDI tests, build, rustdoc and pinned fixture outputs are unaffected
 and may retain this independent evidence after CRC checks the actual delta.
 Do not relabel retained results as new executions; rerun if unexpected changes
 undermine applicability. No supporting artifact or extra checker required.
+
+## Iteration01 review — accepted, 2026-10-11
+
+Assignment `arc11-observation-workbench/slice03-workbench-integration/cc-prompt-iteration01.md`.
+Clean source `72fe6b52197b7a138afc3d5d7ac970ddfdf66981`; CC return planning
+`2162fdb82ce48daf0b11793176ded4d835b8c16c`, clean at intake. CRC read the
+complete iteration prompt, CC reading/readback/results and current plan/ledger.
+Full delta from `22500fa` contains exactly README.md and one new inline example
+test; production regions, prior tests, renderer, playback, Scope, fixtures,
+manifests and lockfile are unchanged. README and executable continuation loops
+match by direct review. CRC made no source changes.
+
+Fresh independent commands from S, all exit0:
+
+| Command | Result at72fe6b5 |
+| --- | --- |
+| `cargo test --locked -p oxurack --example turing-machine-midi` | 26 passed,0 failed,0 ignored |
+| `cargo test --locked -p oxurack --no-default-features --example turing-machine-midi` | 26 passed,0 failed,0 ignored |
+| `make lint` | Clippy and formatting pass on first CRC run |
+| `cargo clippy --locked -p oxurack --all-features --all-targets -- -D warnings` | Pass |
+| `git diff --check`; `git diff 22500fa..72fe6b5 --check` | Both pass |
+
+The new test runs the installed protected patch for200 samples with per-sample
+drain/copy, stops/clears, then executes the README continuation for100 more.
+It proves completed300, cleared-but-enabled capture, signal indices200–299,
+exact Generated251/90 3E 15,101 retained records,zero overwrites,zero Sent,
+empty output buffer and no latched fault. The preserved renderer test separately
+proves actual phase continuity versus a fresh rack. Runtime errors propagate.
+F-01 is resolved; B-04 is independently done. This is recipe proof against
+unchanged correct production, not a newly fixed production regression.
+
+### Retention and four-row closure
+
+B-01–B-03 retain independent acceptance at22500fa/2026-10-11. The full source
+delta establishes that no relevant production, dependency or fixture changed.
+Retain the prior independent workspace960 passed/3 RT ignores, Scope6+LFO12+
+MIDI2, no-default Scope6, strict rustdoc and binary/CSV/preflight receipts at
+that original revision/date. Those are not new executions. Both example modes,
+lint, strict all-target Clippy and diff were freshly rerun for this correction.
+Additional current build/focused tests and integrated demonstrations appear in
+[parent CRC assembly](../crc-verification.md), for the arc composition purpose.
+CC's first formatting failure/rerun, restricted CoreMIDI failures/host retries
+and existing block0.1.6 advisory remain preserved with their original attribution.
+No suppression, new ignore or endpoint access.
+
+Opening4 rows, final walk4: B-01,B-02,B-03 retained independently done;
+B-04 freshly done. No deferral/no-op/silent drop. Both issued prompts preserved;
+iteration01 is the closed assignment. Supporting durable artifacts: none;
+checks/logs in /tmp are convenience outputs, not required artifacts. CC's source
+and planning inventories match the assignment. Source/main remain untouched by CRC.
+
+### Bubble-up to Arc11
+
+Slice03 delivers the assigned terminal inspection, combined CSV, honest bounded
+window and executable clear/continue/new-process recipes. The only surprise was
+the documented batch/drain defect, now repaired without changing production or
+arc scope, ownership, scheduler, dependency or sequencing. No structural plan
+amendment is needed. Routine child-status update suffices: all three children
+are accepted,14/14 child rows. Arc11's four composition rows remain open for
+CDC's independent gate; project/release obligations and next-arc authority remain.
