@@ -70,6 +70,13 @@ pub enum CoreError {
 #[non_exhaustive]
 #[derive(Debug, thiserror::Error)]
 pub enum PatchError {
+    /// The live ECS state cannot be represented by a patch configuration.
+    #[error("cannot snapshot current patch: {reason}")]
+    UnsupportedSnapshot {
+        /// Identifies the selected ECS state that could not be represented.
+        reason: String,
+    },
+
     /// The requested module kind is not registered.
     #[error("unknown module kind: '{0}'")]
     UnknownModuleKind(String),

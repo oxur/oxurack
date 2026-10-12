@@ -356,6 +356,21 @@ fn dispatch_set_parameter(
     param: &str,
     value: &crate::ParameterValue,
 ) -> Result<(), crate::CoreError> {
+    set_module_parameter(world, instance_name, param, value, ChangeSource::Command)
+}
+
+/// Sets a live parameter and emits one successful change notification with `source`.
+///
+/// The registered getter supplies the optional previous value, matching the
+/// command-dispatch path. Getter failure does not prevent a valid setter call;
+/// setter failure emits no notification.
+pub fn set_module_parameter(
+    world: &mut bevy_ecs::world::World,
+    instance_name: &str,
+    param: &str,
+    value: &crate::ParameterValue,
+    source: ChangeSource,
+) -> Result<(), crate::CoreError> {
     let entity = world
         .get_resource::<crate::PatchHandle>()
         .ok_or(crate::CoreError::NoPatchLoaded)?
@@ -412,7 +427,7 @@ fn dispatch_set_parameter(
                 param: crate::ParameterName::from(param),
                 previous,
                 new: value.clone(),
-                source: ChangeSource::Command,
+                source,
             });
             Ok(())
         }

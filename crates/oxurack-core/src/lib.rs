@@ -70,12 +70,12 @@ pub use tick::{
 };
 
 // Phase 4
-pub use event::dispatch_core_command;
 pub use event::{
     CableConnected, CableDisconnected, ChangeSource, CoreCommand, LabelChanged, LabelKind,
     LabelValue, MidiInReceived, ModuleAdded, ModuleRemoved, ParameterChanged, PatchLoaded,
     PatchSource, RtWarning, RtWarningCode, SongPositionChanged, TransportChanged, TransportState,
 };
+pub use event::{dispatch_core_command, set_module_parameter};
 pub use label::{
     Description, DisplayName, DisplayNameFormatter, RackMeta, Tag, TagError, Tags, display_name_of,
 };

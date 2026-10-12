@@ -16,6 +16,7 @@ use bevy_ecs::schedule::ScheduleLabel;
 use bevy_time::TimeUpdateStrategy;
 use bevy_time::prelude::{Fixed, Real, Time, Virtual};
 
+mod persistence;
 mod scope;
 pub use scope::{MidiDelivery, ScopeCapture, ScopeError, ScopeRecord, ScopeSelector};
 
@@ -69,6 +70,7 @@ pub struct Oxurack {
     app: App,
     installed_modules: HashMap<oxurack_core::ModuleKind, TypeId>,
     driver: SimulationDriver,
+    loaded_identity: Option<persistence::LoadedIdentity>,
 }
 
 impl Oxurack {
@@ -98,6 +100,7 @@ impl Oxurack {
             app,
             installed_modules: HashMap::new(),
             driver: SimulationDriver::Live,
+            loaded_identity: None,
         }
     }
 
@@ -197,6 +200,7 @@ impl Oxurack {
     /// inserted (or the previous one is left intact).
     pub fn load_patch(&mut self, path: &Path) -> Result<(), oxurack_core::CoreError> {
         let patch = oxurack_core::load_patch_from_file(path)?;
+        let identity = persistence::LoadedIdentity::from_patch(&patch);
 
         // resource_scope temporarily removes ModuleRegistry from the
         // world, giving us an &-ref to pass to apply_patch_to_world
@@ -213,6 +217,8 @@ impl Oxurack {
                 world.insert_resource(handle);
                 Ok::<(), oxurack_core::CoreError>(())
             })?;
+
+        self.loaded_identity = Some(identity);
 
         // Any prior selector bindings refer to the previous patch entities.
         scope::disable(self.app.world_mut());

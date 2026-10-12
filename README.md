@@ -131,6 +131,34 @@ cargo run -p oxurack --example turing-machine-midi -- \
   --patch crates/oxurack/examples/patches/turing-machine-lfo.ron --samples 10000
 ```
 
+`Oxurack::parameter` reads a registered getter from the active module instance;
+`set_parameter` applies its normal validation and emits one `DirectApi`
+`ParameterChanged` message when successful. `snapshot_patch` returns an owned
+configuration made from the active modules' current getters, labels, cables and
+loaded patch identity. `save_patch` snapshots first and then uses the existing
+RON writer. These synchronous calls can run between samples while the rack is
+stopped or running. They do not advance time, consume MIDI, clear Scope, or reset
+module state. Getter and I/O failures are returned to the caller.
+
+A saved patch is a seeded configuration, not an engine checkpoint: it preserves
+the current parameter values and the loaded version, seed and global BPM, but
+does not save LFO phase, Turing Machine registers/RNG position, pending MIDI or
+Scope records. Loading it in a fresh rack starts the seed from its initial phase.
+This example edits the running LFO fixture after 200 samples and saves at that
+point; it then continues to sample 300:
+
+```bash
+cargo run --locked -p oxurack --example save-live-patch -- \
+  --patch crates/oxurack/examples/patches/turing-machine-lfo.ron \
+  --save /tmp/oxurack-edited.ron
+cargo run --locked -p oxurack --example turing-machine-midi -- \
+  --patch /tmp/oxurack-edited.ron --samples 10000 \
+  --scope-view --scope-port lfo_main.bipolar_out
+```
+
+The second command runs the saved configuration in a fresh process. Its LFO
+phase begins at zero while its frequency is 1 Hz.
+
 Capture selected scalar ports and the runner's generated MIDI events to a
 bounded CSV file. Capacity counts mixed records; when full, the oldest rows are
 discarded. Signal rows name the selected module and port. MIDI rows distinguish
