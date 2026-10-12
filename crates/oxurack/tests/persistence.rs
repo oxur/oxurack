@@ -123,6 +123,16 @@ fn live_configuration_saves_and_replays_in_fresh_racks() {
             .get("frequency_hz"),
         Some(&ParameterValue::Float(1.0))
     );
+    assert_eq!(
+        saved_patch
+            .modules
+            .iter()
+            .find(|module| module.instance_name == "tm_main")
+            .unwrap()
+            .parameters
+            .get("write_probability"),
+        Some(&ParameterValue::Float(0.25))
+    );
 
     for path in [source, saved, reference_path] {
         let _ = std::fs::remove_file(path);

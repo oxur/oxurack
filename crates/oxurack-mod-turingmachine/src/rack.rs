@@ -1178,9 +1178,7 @@ fn set_scale_output_root(
 }
 
 fn get_write_probability(world: &World, entity: Entity) -> Result<ParameterValue, CoreError> {
-    Ok(ParameterValue::Float(
-        state_ref(world, entity)?.engine.write_probability(),
-    ))
+    Ok(ParameterValue::Float(state_ref(world, entity)?.write_base))
 }
 fn get_length(world: &World, entity: Entity) -> Result<ParameterValue, CoreError> {
     Ok(ParameterValue::Int(
@@ -2809,6 +2807,11 @@ mod tests {
             for _ in 0..3 {
                 app.update();
                 assert_eq!(
+                    registered_get(app.world(), entity, "write_probability").unwrap(),
+                    ParameterValue::Float(0.5),
+                    "held offset {offset} does not change the configured knob",
+                );
+                assert_eq!(
                     app.world()
                         .get::<TuringMachineState>(entity)
                         .unwrap()
@@ -2858,7 +2861,15 @@ mod tests {
         .unwrap();
         assert_eq!(
             registered_get(app.world(), entity, "write_probability").unwrap(),
-            ParameterValue::Float(0.5)
+            ParameterValue::Float(0.25)
+        );
+        assert_eq!(
+            app.world()
+                .get::<TuringMachineState>(entity)
+                .unwrap()
+                .engine
+                .write_probability(),
+            0.5
         );
         assert_eq!(
             app.world()
@@ -2870,6 +2881,10 @@ mod tests {
         );
         set_input(&mut app, entity, clock, Value::Gate(false));
         app.update();
+        assert_eq!(
+            output_value(&app, entity, "write_probability"),
+            Value::Float(0.75)
+        );
         set_input(&mut app, entity, clock, Value::Gate(true));
         app.update();
         assert_eq!(
@@ -2881,6 +2896,16 @@ mod tests {
                 .unwrap()
                 .write_probability,
             0.5
+        );
+        assert_eq!(
+            output_value(&app, entity, "write_probability"),
+            Value::Float(0.75)
+        );
+        set_input(&mut app, entity, clock, Value::Gate(false));
+        app.update();
+        assert_eq!(
+            output_value(&app, entity, "write_probability"),
+            Value::Float(0.5)
         );
     }
 

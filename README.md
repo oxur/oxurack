@@ -144,6 +144,13 @@ A saved patch is a seeded configuration, not an engine checkpoint: it preserves
 the current parameter values and the loaded version, seed and global BPM, but
 does not save LFO phase, Turing Machine registers/RNG position, pending MIDI or
 Scope records. Loading it in a fresh rack starts the seed from its initial phase.
+For the Turing Machine, registered parameter reads and saved patches retain the
+configured `write_probability` knob; its engine and same-named step output use
+the effective value after CV modulation and clamping. The step output is
+published one sample after the step is computed. Parallel cables with identical
+endpoints retain their loaded patch-vector order through propagation and saving.
+Raw ECS edits to a cable's `CableOrder` must call
+`oxurack_core::mark_propagation_order_dirty` before the next sample.
 This example edits the running LFO fixture after 200 samples and saves at that
 point; it then continues to sample 300:
 

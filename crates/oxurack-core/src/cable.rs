@@ -140,6 +140,13 @@ pub struct Cable {
     pub enabled: bool,
 }
 
+/// Cable position from a loaded patch's cable vector.
+///
+/// This is ordering metadata rather than a persistent cable identity. Raw-world
+/// edits that change it must call `mark_propagation_order_dirty`.
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct CableOrder(pub usize);
+
 /// Index for fast cable lookup by source or target port.
 ///
 /// This resource maintains two hash maps so that cable queries by port

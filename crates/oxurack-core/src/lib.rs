@@ -55,7 +55,7 @@ pub mod bridge;
 // ── Re-exports ──────────────────────────────────────────────────────
 
 // Phase 1
-pub use cable::{Cable, CableIndex, CableTransform};
+pub use cable::{Cable, CableIndex, CableOrder, CableTransform};
 pub use error::{CoreError, PatchError, TickError};
 pub use module::{Module, ModuleId, ModuleKind, spawn_module_entity};
 pub use port::{CurrentValue, MergePolicy, Port, PortDirection, PortName, spawn_port_on_module};

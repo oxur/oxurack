@@ -629,7 +629,7 @@ pub fn apply_patch_to_world(
     let port_map = build_port_map(world, &module_entities);
 
     // 4. Spawn cables, update CableIndex, emit CableConnected.
-    for cable_config in &patch.cables {
+    for (ordinal, cable_config) in patch.cables.iter().enumerate() {
         let source_module = module_entities[&cable_config.source.0];
         let target_module = module_entities[&cable_config.target.0];
 
@@ -658,7 +658,9 @@ pub fn apply_patch_to_world(
             transform: cable_config.transform,
             enabled: true,
         };
-        let cable_entity = world.spawn(cable.clone()).id();
+        let cable_entity = world
+            .spawn((cable.clone(), crate::CableOrder(ordinal)))
+            .id();
 
         // Update CableIndex resource.
         world
@@ -2199,7 +2201,13 @@ mod tests {
     fn test_apply_patch_to_world_spawns_cable() {
         let mut app = test_app();
         let registry = test_registry();
-        let patch = valid_patch();
+        let mut patch = valid_patch();
+        patch.cables.push(CableConfig {
+            source: ("vco_1".to_string(), "out".to_string()),
+            target: ("filter_1".to_string(), "cutoff".to_string()),
+            transform: Some(crate::CableTransform::Bipolarize),
+            ..Default::default()
+        });
 
         let handle = apply_patch_to_world(
             &patch,
@@ -2235,6 +2243,19 @@ mod tests {
         assert_eq!(cable.target_port, target_port);
         assert!(cable.enabled);
         assert!(cable.transform.is_none());
+        assert_eq!(
+            world.get::<crate::CableOrder>(cable_entity),
+            Some(&crate::CableOrder(0))
+        );
+
+        let second_target = find_port_entity(world, filter_entity, "cutoff").unwrap();
+        let second_entity = world
+            .resource::<CableIndex>()
+            .cables_targeting(second_target)[0];
+        assert_eq!(
+            world.get::<crate::CableOrder>(second_entity),
+            Some(&crate::CableOrder(1))
+        );
     }
 
     #[test]

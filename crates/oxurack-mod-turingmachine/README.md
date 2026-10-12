@@ -31,6 +31,12 @@ uses the patch's `ModuleSpawnContext` seed and does not open MIDI endpoints or
 perform real-time I/O; the existing `midi-io` feature remains a separate
 standalone wrapper.
 
+The registered `write_probability` parameter is the configured knob value. The
+engine and the same-named step output report the effective value after held CV
+modulation and clamping. Step outputs are published during the following
+sample's Produce phase, so parameter readback and output readback can differ
+while a step is pending.
+
 ## Signal chain
 
 The diagram below shows the hardware signal path and its Rust equivalent.
@@ -269,7 +275,7 @@ each field with its type and the hardware jack it models.
 | `noise_cc`         | `u8`             | NOISE OUT (2N3904 transistor + TL074)      | Random CC value (0--127) each step. |
 | `register_bits`    | `u16`            | LED display                                | Raw shift register state. Bit 15 = oldest, bit 0 = newest. |
 | `length`           | `usize`          | LENGTH rotary readback                     | Active loop length at this step. |
-| `write_probability`| `f32`            | WRITE knob readback                        | Active write probability at this step. |
+| `write_probability`| `f32`            | Effective WRITE value                      | Effective probability after held CV and clamping, published one sample after the step is computed. |
 
 ## Hardware-to-MIDI mapping
 

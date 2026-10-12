@@ -193,9 +193,8 @@ pub struct TickNow {
 
 /// Cached ordering of cable entities for deterministic propagation.
 ///
-/// Cables are ordered by target instance name/port and then source instance
-/// name/port. A final entity tie-break handles invalid raw worlds with
-/// duplicate names without changing valid patch ordering.
+/// Cables are ordered by endpoint names/ports, loaded patch ordinal, then
+/// within-world Entity fallback for equal or absent ordinals.
 #[derive(Resource, Default, Debug)]
 pub struct PropagationOrder {
     /// Ordered list of cable entities to process during propagation.
@@ -206,7 +205,7 @@ pub struct PropagationOrder {
 ///
 /// When `true`, the propagation order will be rebuilt at the start of
 /// the next [`TickPhase::Propagate`] phase. Set this to `true` after
-/// adding or removing cables.
+/// adding/removing cables or changing their [`crate::CableOrder`].
 #[derive(Resource, Debug)]
 pub struct PropagationOrderDirty(pub bool);
 
@@ -219,23 +218,22 @@ impl Default for PropagationOrderDirty {
 /// Sets the [`PropagationOrderDirty`] flag so that the propagation
 /// order is rebuilt on the next tick.
 ///
-/// Call this after adding or removing cables from the world.
+/// Call this after adding/removing cables or changing their [`crate::CableOrder`].
 pub fn mark_propagation_order_dirty(world: &mut bevy_ecs::world::World) {
     world.resource_mut::<PropagationOrderDirty>().0 = true;
 }
 
 /// Rebuilds the propagation order from the current cable graph.
 ///
-/// Orders cables by (target_module_id, target_port_name,
-/// source_module_id, source_port_name) for cross-run determinism.
+/// Orders cables by endpoint names/ports, loaded ordinal, and Entity fallback.
 fn rebuild_propagation_order(
-    cable_q: &Query<(Entity, &crate::Cable)>,
+    cable_q: &Query<(Entity, &crate::Cable, Option<&crate::CableOrder>)>,
     port_q: &Query<(&crate::Port, &bevy_ecs::hierarchy::ChildOf)>,
     module_q: &Query<&crate::Module>,
 ) -> Vec<Entity> {
-    let mut entries: Vec<(Entity, String, String, String, String)> = cable_q
+    let mut entries: Vec<(String, String, String, String, bool, usize, Entity)> = cable_q
         .iter()
-        .filter_map(|(cable_entity, cable)| {
+        .filter_map(|(cable_entity, cable, order)| {
             let (target_port, target_child_of) = port_q.get(cable.target_port).ok()?;
             let target_module = module_q.get(target_child_of.0).ok()?;
             let target_port_name = target_port.name.as_ref().to_string();
@@ -244,25 +242,24 @@ fn rebuild_propagation_order(
             let source_module = module_q.get(source_child_of.0).ok()?;
             let source_port_name = source_port.name.as_ref().to_string();
 
+            let (absent_order, ordinal) = match order {
+                Some(order) => (false, order.0),
+                None => (true, 0),
+            };
+
             Some((
-                cable_entity,
                 target_module.instance_name.clone(),
                 target_port_name,
                 source_module.instance_name.clone(),
                 source_port_name,
+                absent_order,
+                ordinal,
+                cable_entity,
             ))
         })
         .collect();
-
-    entries.sort_by(|a, b| {
-        a.1.cmp(&b.1)
-            .then_with(|| a.2.cmp(&b.2))
-            .then_with(|| a.3.cmp(&b.3))
-            .then_with(|| a.4.cmp(&b.4))
-            .then_with(|| a.0.cmp(&b.0))
-    });
-
-    entries.into_iter().map(|(e, ..)| e).collect()
+    entries.sort();
+    entries.into_iter().map(|entry| entry.6).collect()
 }
 
 // ── rebuild_propagation_order_system ──────────────────────────────
@@ -274,7 +271,7 @@ fn rebuild_propagation_order(
 /// when [`PropagationOrderDirty`] is `true`; otherwise this system is
 /// a no-op.
 pub(crate) fn rebuild_propagation_order_system(
-    cable_q: Query<(Entity, &crate::Cable)>,
+    cable_q: Query<(Entity, &crate::Cable, Option<&crate::CableOrder>)>,
     port_q: Query<(&crate::Port, &bevy_ecs::hierarchy::ChildOf)>,
     module_q: Query<&crate::Module>,
     mut order: ResMut<PropagationOrder>,
@@ -1293,7 +1290,7 @@ mod tests {
     // ── Integration tests (using App with CorePlugin) ─────────────
 
     use crate::{CableIndex, CableTransform, CorePlugin};
-    use bevy_app::App;
+    use bevy_app::{App, FixedUpdate};
 
     /// Helper: set up a minimal App with CorePlugin and return it.
     fn test_app() -> App {
@@ -1559,6 +1556,126 @@ mod tests {
             2,
             "order should now have 2 cables"
         );
+    }
+
+    #[test]
+    fn cable_order_precedes_entity_and_fallback_is_shared_by_real_schedules() {
+        for fixed in [false, true] {
+            let mut app = App::new();
+            if fixed {
+                app.add_plugins(crate::CorePlugin::fixed());
+            } else {
+                app.add_plugins(crate::CorePlugin);
+            }
+            let (created_first, created_second, unrelated_entity, a_input, z_input) = {
+                let world = app.world_mut();
+                let source = spawn_test_module(world, "gen", "source");
+                let a_sink = spawn_test_module(world, "gen", "a_sink");
+                let z_sink = spawn_test_module(world, "gen", "z_sink");
+                let output = spawn_test_port(world, source, "out", PortDirection::Output);
+                let a_input = spawn_test_port(world, a_sink, "in", PortDirection::Input);
+                let z_input = spawn_test_port(world, z_sink, "in", PortDirection::Input);
+                world.get_mut::<CurrentValue>(output).unwrap().0 = Value::Float(1.0);
+
+                let spawn_cable = |world: &mut World, target: Entity, order: usize, offset: f32| {
+                    let cable = Cable {
+                        source_port: output,
+                        target_port: target,
+                        transform: Some(CableTransform::Affine {
+                            factor: 0.0,
+                            offset,
+                        }),
+                        enabled: true,
+                    };
+                    let entity = world.spawn((cable.clone(), crate::CableOrder(order))).id();
+                    world.resource_mut::<CableIndex>().add_cable(entity, &cable);
+                    entity
+                };
+                let first_entity = spawn_cable(world, z_input, 1, 0.25);
+                let second_entity = spawn_cable(world, z_input, 0, 0.75);
+                let unrelated_entity = spawn_cable(world, a_input, 99, 0.5);
+                (
+                    first_entity,
+                    second_entity,
+                    unrelated_entity,
+                    a_input,
+                    z_input,
+                )
+            };
+            let (entity_first, entity_second) = if created_first < created_second {
+                (created_first, created_second)
+            } else {
+                (created_second, created_first)
+            };
+            for (entity, order, offset) in [(entity_first, 1, 0.25), (entity_second, 0, 0.75)] {
+                {
+                    app.world_mut().get_mut::<Cable>(entity).unwrap().transform =
+                        Some(CableTransform::Affine {
+                            factor: 0.0,
+                            offset,
+                        });
+                }
+                app.world_mut()
+                    .entity_mut(entity)
+                    .insert(crate::CableOrder(order));
+            }
+
+            let run_tick = |app: &mut App| {
+                if fixed {
+                    app.world_mut().run_schedule(FixedUpdate);
+                } else {
+                    app.update();
+                }
+            };
+            let value = |app: &App, port: Entity| app.world().get::<CurrentValue>(port).unwrap().0;
+
+            run_tick(&mut app);
+            assert_eq!(
+                app.world().resource::<PropagationOrder>().cables,
+                [unrelated_entity, entity_second, entity_first]
+            );
+            assert_eq!(value(&app, a_input), Value::Float(0.5));
+            assert_eq!(value(&app, z_input), Value::Float(0.25));
+
+            app.world_mut()
+                .entity_mut(entity_first)
+                .insert(crate::CableOrder(7));
+            app.world_mut()
+                .entity_mut(entity_second)
+                .insert(crate::CableOrder(7));
+            crate::mark_propagation_order_dirty(app.world_mut());
+            run_tick(&mut app);
+            assert_eq!(
+                app.world().resource::<PropagationOrder>().cables,
+                [unrelated_entity, entity_first, entity_second]
+            );
+            assert_eq!(value(&app, z_input), Value::Float(0.75));
+
+            app.world_mut()
+                .entity_mut(entity_first)
+                .remove::<crate::CableOrder>();
+            app.world_mut()
+                .entity_mut(entity_second)
+                .remove::<crate::CableOrder>();
+            crate::mark_propagation_order_dirty(app.world_mut());
+            run_tick(&mut app);
+            assert_eq!(
+                app.world().resource::<PropagationOrder>().cables,
+                [unrelated_entity, entity_first, entity_second]
+            );
+            assert_eq!(value(&app, z_input), Value::Float(0.75));
+
+            app.world_mut()
+                .entity_mut(entity_second)
+                .insert(crate::CableOrder(0));
+            crate::mark_propagation_order_dirty(app.world_mut());
+            run_tick(&mut app);
+            assert_eq!(
+                app.world().resource::<PropagationOrder>().cables,
+                [unrelated_entity, entity_second, entity_first]
+            );
+            assert_eq!(value(&app, z_input), Value::Float(0.25));
+        }
     }
 
     #[test]

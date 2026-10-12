@@ -6,8 +6,8 @@ use std::path::Path;
 use bevy_ecs::hierarchy::ChildOf;
 use bevy_ecs::prelude::Entity;
 use oxurack_core::{
-    Cable, CableConfig, CoreError, Description, DisplayName, Module, ModuleConfig, ParameterValue,
-    Patch, PatchError, PatchHandle, RackConfig, RackMeta, Tags,
+    Cable, CableConfig, CableOrder, CoreError, Description, DisplayName, Module, ModuleConfig,
+    ParameterValue, Patch, PatchError, PatchHandle, RackConfig, RackMeta, Tags,
 };
 
 pub(super) struct LoadedIdentity {
@@ -175,8 +175,8 @@ impl super::Oxurack {
         }
 
         let mut cables = Vec::new();
-        let mut cables_query = world.query::<(Entity, &Cable)>();
-        for (cable_entity, cable) in cables_query.iter(world) {
+        let mut cables_query = world.query::<(Entity, &Cable, Option<&CableOrder>)>();
+        for (cable_entity, cable, order) in cables_query.iter(world) {
             let source = port_owners.get(&cable.source_port).ok_or_else(|| {
                 unsupported(format!(
                     "cable {:?} has a missing source port",
@@ -199,12 +199,18 @@ impl super::Oxurack {
                     }
                     let source = (source_name.clone(), source.2.clone());
                     let target = (target_name.clone(), target.2.clone());
+                    let (absent_order, ordinal) = match order {
+                        Some(order) => (false, order.0),
+                        None => (true, 0),
+                    };
                     cables.push((
                         (
                             target.0.clone(),
                             target.1.clone(),
                             source.0.clone(),
                             source.1.clone(),
+                            absent_order,
+                            ordinal,
                             cable_entity,
                         ),
                         CableConfig {
@@ -513,6 +519,115 @@ mod tests {
     }
 
     #[test]
+    fn configured_tm_readback_and_direct_event_ignore_held_cv() {
+        let mut rack = loaded_rack();
+        let handle = rack.world().resource::<PatchHandle>().clone();
+        let lfo = handle.modules["lfo_main"];
+        let tm = handle.modules["tm_main"];
+        let (source_port, target_port) = {
+            let world = rack.world_mut();
+            let mut ports = world.query::<(Entity, &oxurack_core::Port, &ChildOf)>();
+            let mut source = None;
+            let mut target = None;
+            for (entity, port, parent) in ports.iter(world) {
+                if parent.0 == lfo && port.name.as_ref() == "bipolar_out" {
+                    source = Some(entity);
+                }
+                if parent.0 == tm && port.name.as_ref() == "write_modulation" {
+                    target = Some(entity);
+                }
+            }
+            (source.unwrap(), target.unwrap())
+        };
+        let cable_entity = {
+            let world = rack.world_mut();
+            let mut cables = world.query::<(Entity, &Cable)>();
+            cables
+                .iter(world)
+                .find_map(|(entity, cable)| {
+                    (cable.source_port == source_port && cable.target_port == target_port)
+                        .then_some(entity)
+                })
+                .unwrap()
+        };
+        rack.world_mut()
+            .get_mut::<Cable>(cable_entity)
+            .unwrap()
+            .transform = Some(CableTransform::Affine {
+            factor: 0.0,
+            offset: 0.25,
+        });
+
+        rack.start();
+        for _ in 0..200 {
+            rack.advance_samples(1).unwrap();
+            let _ = rack.drain_midi().count();
+        }
+        rack.world_mut()
+            .resource_mut::<Messages<ParameterChanged>>()
+            .clear();
+        assert_eq!(
+            rack.parameter("tm_main", "write_probability").unwrap(),
+            ParameterValue::Float(0.5)
+        );
+        rack.set_parameter("tm_main", "write_probability", ParameterValue::Float(0.25))
+            .unwrap();
+        assert_eq!(
+            rack.parameter("tm_main", "write_probability").unwrap(),
+            ParameterValue::Float(0.25)
+        );
+        let direct: Vec<_> = rack
+            .world()
+            .resource::<Messages<ParameterChanged>>()
+            .iter_current_update_messages()
+            .filter(|event| event.source == ChangeSource::DirectApi)
+            .collect();
+        assert_eq!(direct.len(), 1);
+        assert_eq!(direct[0].previous, Some(ParameterValue::Float(0.5)));
+        assert_eq!(direct[0].new, ParameterValue::Float(0.25));
+
+        for invalid in [ParameterValue::Int(1), ParameterValue::Float(f32::NAN)] {
+            assert!(matches!(
+                rack.set_parameter("tm_main", "write_probability", invalid),
+                Err(CoreError::InvalidParameterValue { .. })
+            ));
+        }
+        let direct_after_rejections: Vec<_> = rack
+            .world()
+            .resource::<Messages<ParameterChanged>>()
+            .iter_current_update_messages()
+            .filter(|event| event.source == ChangeSource::DirectApi)
+            .collect();
+        assert_eq!(direct_after_rejections.len(), 1);
+        assert_eq!(
+            rack.parameter("tm_main", "write_probability").unwrap(),
+            ParameterValue::Float(0.25)
+        );
+        assert_eq!(rack.sample_time().completed_samples(), 200);
+        assert!(rack.world().resource::<SimulationRunning>().0);
+
+        let mut events = Vec::new();
+        for _ in 200..252 {
+            rack.advance_samples(1).unwrap();
+            events.extend(rack.drain_midi());
+        }
+        assert!(events.iter().any(|event| event.sample == 251));
+        let effective_output = {
+            let world = rack.world_mut();
+            let mut ports = world.query::<(&oxurack_core::Port, &ChildOf, &CurrentValue)>();
+            ports
+                .iter(world)
+                .find_map(|(port, parent, current)| {
+                    (parent.0 == tm && port.name.as_ref() == "write_probability")
+                        .then_some(current.0)
+                })
+                .unwrap()
+        };
+        assert_eq!(effective_output, Value::Float(0.5));
+        assert_eq!(rack.sample_time().completed_samples(), 252);
+    }
+
+    #[test]
     fn live_lfo_edit_changes_next_sample_without_resetting_phase_or_time() {
         let mut rack = loaded_rack();
         rack.start();
@@ -651,7 +766,52 @@ mod tests {
         subject.configure_scope(&selectors, 1000).unwrap();
         subject.start();
         control.start();
-        for _ in 0..1000 {
+        for _ in 0..200 {
+            subject.advance_samples(1).unwrap();
+            control.advance_samples(1).unwrap();
+            let _ = subject.drain_midi().count();
+            let _ = control.drain_midi().count();
+        }
+        assert_eq!(subject.sample_time().completed_samples(), 200);
+        assert_eq!(
+            subject.sample_time().completed_samples(),
+            control.sample_time().completed_samples()
+        );
+        let initial_scope_records = subject.scope().unwrap().records().count();
+        let initial_overwrites = subject.scope().unwrap().overwritten();
+        let sample_200 = subject.sample_time();
+        let driver_200 = subject.driver;
+        assert!(subject.world().resource::<SimulationRunning>().0);
+        let save_path =
+            std::env::temp_dir().join(format!("oxurack-preservation-{}.ron", std::process::id()));
+        let _ = std::fs::remove_file(&save_path);
+        assert!(
+            subject
+                .world()
+                .resource::<super::super::MidiOutputBuffer>()
+                .check_admission()
+                .is_ok()
+        );
+        let snapshot_200 = subject.snapshot_patch().unwrap();
+        subject.save_patch(&save_path).unwrap();
+        assert_eq!(snapshot_200, subject.snapshot_patch().unwrap());
+        assert_eq!(subject.sample_time(), sample_200);
+        assert_eq!(subject.driver, driver_200);
+        assert!(subject.world().resource::<SimulationRunning>().0);
+        assert_eq!(
+            subject.scope().unwrap().records().count(),
+            initial_scope_records
+        );
+        assert_eq!(subject.scope().unwrap().overwritten(), initial_overwrites);
+        assert!(
+            subject
+                .world()
+                .resource::<super::super::MidiOutputBuffer>()
+                .check_admission()
+                .is_ok()
+        );
+
+        for _ in 200..1000 {
             subject.advance_samples(1).unwrap();
             control.advance_samples(1).unwrap();
             if subject
@@ -665,11 +825,6 @@ mod tests {
             let _ = subject.drain_midi().count();
             let _ = control.drain_midi().count();
         }
-        assert!(subject.sample_time().completed_samples() > 0);
-        assert_eq!(
-            subject.sample_time().completed_samples(),
-            control.sample_time().completed_samples()
-        );
         let pending_before = subject
             .world()
             .resource::<super::super::MidiOutputBuffer>()
@@ -683,12 +838,17 @@ mod tests {
             }
         ));
         let pending_sample = subject.sample_time().completed_samples();
+        let pending_driver = subject.driver;
+        assert!(subject.world().resource::<SimulationRunning>().0);
         let scope_before = subject.scope().unwrap().records().count();
         let overwrites_before = subject.scope().unwrap().overwritten();
 
         let snapshot = subject.snapshot_patch().unwrap();
+        subject.save_patch(&save_path).unwrap();
         assert_eq!(snapshot.modules.len(), 4);
         assert_eq!(subject.sample_time().completed_samples(), pending_sample);
+        assert_eq!(subject.driver, pending_driver);
+        assert!(subject.world().resource::<SimulationRunning>().0);
         assert_eq!(subject.scope().unwrap().records().count(), scope_before);
         assert_eq!(subject.scope().unwrap().overwritten(), overwrites_before);
         assert!(matches!(
@@ -701,10 +861,12 @@ mod tests {
                 ..
             })
         ));
+        assert_eq!(snapshot, subject.snapshot_patch().unwrap());
 
         let subject_event: Vec<_> = subject.drain_midi().collect();
         let control_event: Vec<_> = control.drain_midi().collect();
         assert_eq!(subject_event, control_event);
+        assert!(subject_event.iter().any(|event| event.sample == 251));
         for _ in pending_sample..1000 {
             subject.advance_samples(1).unwrap();
             control.advance_samples(1).unwrap();
@@ -713,6 +875,7 @@ mod tests {
             assert_eq!(left, right);
         }
         assert_eq!(subject.sample_time(), control.sample_time());
+        let _ = std::fs::remove_file(save_path);
     }
 
     #[test]
@@ -998,22 +1161,6 @@ mod tests {
         }
 
         let mut rack = prepare();
-        let mut cable_entities = {
-            let world = rack.world_mut();
-            let mut query = world.query::<(Entity, &Cable)>();
-            query
-                .iter(world)
-                .map(|(entity, _)| entity)
-                .collect::<Vec<_>>()
-        };
-        cable_entities.sort();
-        for (entity, offset) in cable_entities.into_iter().zip([0.75, 0.25]) {
-            rack.world_mut().get_mut::<Cable>(entity).unwrap().transform =
-                Some(CableTransform::Affine {
-                    factor: 0.0,
-                    offset,
-                });
-        }
         let snapshot = rack.snapshot_patch().unwrap();
         let offsets: Vec<_> = snapshot
             .cables
@@ -1028,15 +1175,208 @@ mod tests {
         let snapshot_path =
             std::env::temp_dir().join(format!("oxurack-tie-snapshot-{}.ron", std::process::id()));
         oxurack_core::save_patch_to_file(&snapshot, &snapshot_path).unwrap();
+        let saved_once = oxurack_core::load_patch_from_file(&snapshot_path).unwrap();
+        assert_eq!(
+            saved_once
+                .cables
+                .iter()
+                .map(|cable| match cable.transform.unwrap() {
+                    CableTransform::Affine { offset, .. } => offset,
+                    _ => unreachable!(),
+                })
+                .collect::<Vec<_>>(),
+            [0.75, 0.25]
+        );
         let first = set_source_and_read_sink(&mut rack);
         let mut replay = installed();
         replay.load_patch(&snapshot_path).unwrap();
         replay.set_driver_mode(super::super::SimulationDriver::Manual);
         let second = set_source_and_read_sink(&mut replay);
         assert!((first - 0.25).abs() < f32::EPSILON);
-        // Bevy allocates the replay cable entities in the opposite tie order;
-        // this records the current runtime behavior for the CRC contract review.
-        assert!((second - 0.75).abs() < f32::EPSILON);
+        assert!((second - 0.25).abs() < f32::EPSILON);
+        let replay_snapshot = replay.snapshot_patch().unwrap();
+        let replay_offsets: Vec<_> = replay_snapshot
+            .cables
+            .iter()
+            .map(|cable| match cable.transform.unwrap() {
+                CableTransform::Affine { offset, .. } => offset,
+                _ => unreachable!(),
+            })
+            .collect();
+        assert_eq!(replay_offsets, [0.75, 0.25]);
+        let second_path = std::env::temp_dir().join(format!(
+            "oxurack-tie-snapshot-second-{}.ron",
+            std::process::id()
+        ));
+        replay.save_patch(&second_path).unwrap();
+        let saved_twice = oxurack_core::load_patch_from_file(&second_path).unwrap();
+        assert_eq!(
+            saved_twice
+                .cables
+                .iter()
+                .map(|cable| match cable.transform.unwrap() {
+                    CableTransform::Affine { offset, .. } => offset,
+                    _ => unreachable!(),
+                })
+                .collect::<Vec<_>>(),
+            [0.75, 0.25]
+        );
+        let mut second_replay = installed();
+        second_replay.load_patch(&second_path).unwrap();
+        second_replay.set_driver_mode(super::super::SimulationDriver::Manual);
+        assert!((set_source_and_read_sink(&mut second_replay) - 0.25).abs() < f32::EPSILON);
+        let second_snapshot = second_replay.snapshot_patch().unwrap();
+        let second_offsets: Vec<_> = second_snapshot
+            .cables
+            .iter()
+            .map(|cable| match cable.transform.unwrap() {
+                CableTransform::Affine { offset, .. } => offset,
+                _ => unreachable!(),
+            })
+            .collect();
+        assert_eq!(second_offsets, [0.75, 0.25]);
         let _ = std::fs::remove_file(snapshot_path);
+        let _ = std::fs::remove_file(second_path);
+    }
+
+    #[test]
+    fn parallel_cable_entity_fallback_is_saved_as_reload_order() {
+        let mut rack = {
+            let mut rack = super::super::Oxurack::new();
+            rack.try_install::<TieSource>().unwrap();
+            rack.try_install::<TieSink>().unwrap();
+            let path = std::env::temp_dir()
+                .join(format!("oxurack-tie-fallback-{}.ron", std::process::id()));
+            let patch = Patch {
+                version: "fallback".to_owned(),
+                master_seed: 6,
+                bpm: 120.0,
+                modules: vec![
+                    ModuleConfig {
+                        kind: TieSource::KIND.to_owned(),
+                        instance_name: "source".to_owned(),
+                        ..ModuleConfig::default()
+                    },
+                    ModuleConfig {
+                        kind: TieSink::KIND.to_owned(),
+                        instance_name: "sink".to_owned(),
+                        ..ModuleConfig::default()
+                    },
+                ],
+                cables: vec![
+                    CableConfig {
+                        source: ("source".to_owned(), "out".to_owned()),
+                        target: ("sink".to_owned(), "input".to_owned()),
+                        transform: Some(CableTransform::Affine {
+                            factor: 0.0,
+                            offset: 0.75,
+                        }),
+                        ..CableConfig::default()
+                    },
+                    CableConfig {
+                        source: ("source".to_owned(), "out".to_owned()),
+                        target: ("sink".to_owned(), "input".to_owned()),
+                        transform: Some(CableTransform::Affine {
+                            factor: 0.0,
+                            offset: 0.25,
+                        }),
+                        ..CableConfig::default()
+                    },
+                ],
+                rack: None,
+            };
+            oxurack_core::save_patch_to_file(&patch, &path).unwrap();
+            rack.load_patch(&path).unwrap();
+            let _ = std::fs::remove_file(path);
+            rack.set_driver_mode(super::super::SimulationDriver::Manual);
+            rack
+        };
+        let cable_entities = {
+            let world = rack.world_mut();
+            let mut cables = world.query::<(Entity, &Cable)>();
+            let mut entities = cables
+                .iter(world)
+                .map(|(entity, _)| entity)
+                .collect::<Vec<_>>();
+            entities.sort();
+            entities
+        };
+        let mut ordered_offsets = Vec::new();
+        for entity in cable_entities {
+            let cable = rack.world().get::<Cable>(entity).unwrap();
+            let CableTransform::Affine { offset, .. } = cable.transform.unwrap() else {
+                unreachable!()
+            };
+            ordered_offsets.push(offset);
+            rack.world_mut().entity_mut(entity).remove::<CableOrder>();
+        }
+        oxurack_core::mark_propagation_order_dirty(rack.world_mut());
+        let snapshot = rack.snapshot_patch().unwrap();
+        let snapshot_offsets: Vec<_> = snapshot
+            .cables
+            .iter()
+            .map(|cable| match cable.transform.unwrap() {
+                CableTransform::Affine { offset, .. } => offset,
+                _ => unreachable!(),
+            })
+            .collect();
+        assert_eq!(snapshot_offsets, ordered_offsets);
+        let expected = *ordered_offsets.last().unwrap();
+
+        let path = std::env::temp_dir().join(format!(
+            "oxurack-tie-fallback-snapshot-{}.ron",
+            std::process::id()
+        ));
+        fn set_source_and_read_sink(rack: &mut super::super::Oxurack) -> f32 {
+            let handle = rack.world().resource::<PatchHandle>().clone();
+            let source = handle.modules["source"];
+            let sink = handle.modules["sink"];
+            {
+                let world = rack.world_mut();
+                let mut query =
+                    world.query::<(Entity, &oxurack_core::Port, &ChildOf, &mut CurrentValue)>();
+                for (_, port, parent, mut current) in query.iter_mut(world) {
+                    if parent.0 == source && port.name.as_ref() == "out" {
+                        current.0 = Value::Bipolar(1.0);
+                    }
+                }
+            }
+            rack.start();
+            rack.advance_samples(1).unwrap();
+            let world = rack.world_mut();
+            let mut query = world.query::<(&oxurack_core::Port, &ChildOf, &CurrentValue)>();
+            query
+                .iter(world)
+                .find_map(|(port, parent, current)| {
+                    (parent.0 == sink && port.name.as_ref() == "input").then_some(current.0)
+                })
+                .and_then(|value| match value {
+                    Value::Bipolar(number) => Some(number),
+                    _ => None,
+                })
+                .unwrap()
+        }
+        rack.save_patch(&path).unwrap();
+        let mut replay = super::super::Oxurack::new();
+        replay.try_install::<TieSource>().unwrap();
+        replay.try_install::<TieSink>().unwrap();
+        replay.load_patch(&path).unwrap();
+        replay.set_driver_mode(super::super::SimulationDriver::Manual);
+        assert!((set_source_and_read_sink(&mut rack) - expected).abs() < f32::EPSILON);
+        assert!((set_source_and_read_sink(&mut replay) - expected).abs() < f32::EPSILON);
+        assert_eq!(
+            replay
+                .snapshot_patch()
+                .unwrap()
+                .cables
+                .iter()
+                .map(|cable| match cable.transform.unwrap() {
+                    CableTransform::Affine { offset, .. } => offset,
+                    _ => unreachable!(),
+                })
+                .collect::<Vec<_>>(),
+            ordered_offsets
+        );
+        let _ = std::fs::remove_file(path);
     }
 }
