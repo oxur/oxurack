@@ -845,4 +845,70 @@ mod tests {
         assert!(view.contains("recent MIDI"));
         let _ = std::fs::remove_file(fixture);
     }
+
+    #[test]
+    fn clear_and_continue_recipe_drains_each_sample_and_preserves_phase()
+    -> Result<(), Box<dyn Error>> {
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("examples/patches/turing-machine-lfo.ron");
+        let mut rack = prepare_rack(&fixture)?;
+        rack.configure_scope(&[ScopeSelector::new("lfo_main", "bipolar_out")], 1000)?;
+        rack.start();
+        for _ in 0..200 {
+            assert_eq!(rack.advance_samples(1)?, 1);
+            let events: Vec<_> = rack.drain_midi().collect();
+            for event in events {
+                rack.record_scope_midi(event, oxurack::MidiDelivery::Generated);
+            }
+        }
+        rack.stop();
+        assert_eq!(rack.sample_time().completed_samples(), 200);
+
+        rack.clear_scope();
+        assert!(rack.scope().is_some());
+        assert_eq!(rack.scope().unwrap().records().count(), 0);
+        assert_eq!(rack.scope().unwrap().overwritten(), 0);
+
+        rack.start();
+        for _ in 0..100 {
+            if rack.advance_samples(1)? == 0 {
+                break;
+            }
+            let events: Vec<_> = rack.drain_midi().collect();
+            for event in events {
+                rack.record_scope_midi(event, oxurack::MidiDelivery::Generated);
+            }
+        }
+        rack.stop();
+
+        assert_eq!(rack.sample_time().completed_samples(), 300);
+        assert!(rack.midi_output_error().is_none());
+        assert_eq!(rack.drain_midi().count(), 0);
+        let capture = rack.scope().unwrap();
+        assert_eq!(capture.overwritten(), 0);
+        let records: Vec<_> = capture.records().copied().collect();
+        assert_eq!(records.len(), 101);
+
+        let mut signal_samples = Vec::new();
+        let mut generated_events = Vec::new();
+        let mut sent_events = 0;
+        for record in records {
+            match record {
+                oxurack::ScopeRecord::Signal { sample, .. } => signal_samples.push(sample),
+                oxurack::ScopeRecord::Midi {
+                    event,
+                    delivery: oxurack::MidiDelivery::Generated,
+                } => generated_events.push((event.sample, event.message.to_bytes())),
+                oxurack::ScopeRecord::Midi {
+                    delivery: oxurack::MidiDelivery::Sent,
+                    ..
+                } => sent_events += 1,
+                _ => panic!("unexpected future Scope record or delivery variant"),
+            }
+        }
+        assert_eq!(signal_samples, (200..300).collect::<Vec<_>>());
+        assert_eq!(generated_events, [(251, [0x90, 0x3e, 0x15])]);
+        assert_eq!(sent_events, 0);
+        Ok(())
+    }
 }

@@ -219,9 +219,21 @@ an already configured rack:
 rack.stop();
 rack.clear_scope();
 rack.start();
-rack.advance_samples(100)?;
-// Drain and record generated MIDI as usual, then stop and inspect/export Scope.
+for _ in 0..100 {
+    if rack.advance_samples(1)? == 0 {
+        break;
+    }
+    let events: Vec<_> = rack.drain_midi().collect();
+    for event in events {
+        rack.record_scope_midi(event, oxurack::MidiDelivery::Generated);
+    }
+}
+rack.stop();
+// Inspect/export the retained continuation. A fresh rack/process reseeds.
 ```
+
+This records generated events in Scope after each per-sample drain; live sending
+uses the existing runner, which owns its drain and records successful sends.
 
 Scope options are validated before playback: `--scope-port` and
 `--scope-capacity` require either `--scope-csv` or `--scope-view`, while
