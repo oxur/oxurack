@@ -1,6 +1,6 @@
 # Arc12 — live rack operations
 
-Version1.3 — 2026-10-12. Status: active; Slice01 CRC accepted at fabfa1cb; Slice02 metadata/events issued. Slice03/04 remain planned.
+Version1.4 — 2026-10-12. Status: active; Slice01 accepted at fabfa1cb and Slice02 accepted at20c60ef. Slice03 graph composition issued; Slice04 remains planned.
 Depends on accepted Arc10/Arc11; source predecessor72fe6b5. Blocks saved/live
 musical workflow and Arc07 controls. Related: carried-over Arcs02–05; Arc13 catalog.
 Authority: approved successor roadmap and Duncan's explicit “Continue with live
@@ -41,8 +41,10 @@ independent evidence. Directive11 is fulfilled, with no additional design change
 | slice03-graph-composition | Runtime cable edits with validation, event emission, immediate graph freshness and save/reload consistency | Slice02; Arc04 A-04-01/02 and all six child S rows; cable part of Arc05 |
 | slice04-runtime-api | Coherent unload/replacement/reset/transport and ergonomic instance operations, composing edit/save with lifecycle; address retained command-routing/API gaps | Prior slices; Arc05 A-05-01/02 and original lifecycle/handle/queued-operation requirements |
 
-Was: only Slice01's open set authored. Now: Slice01 closed and
-[Slice02's open set](slice02-events-and-metadata/slice-plan.md) issued by CRC.
+Was: Slice02's open set issued. Now: Slice01 and Slice02 independently closed;
+[Slice02 verification](slice02-events-and-metadata/crc-verification.md) retains
+actual source/native/replay evidence. CRC issued
+[Slice03 graph composition](slice03-graph-composition/slice-plan.md).
 The original successor IDs remain intact.
 Graph composition is a product increment (actual cable operations plus their graph
 behavior), not a test-only arc inside the arc. CRC supplies concrete contracts and
@@ -111,6 +113,11 @@ remaining modules/Chord Arc13, full CLI/REPL/controllers Arc07. ProjectP-01–P-
 remain open. P-07's delivered instrument/workbench stays accepted.
 
 ## Version history
+
+- v1.4 — 2026-10-12: CRC accepted all five metadata rows at20c60ef, with host retry
+  and unchanged fresh annotated musical replay. No architecture/scope amendment.
+  Issued detailed runtime cable composition with provenance/order/atomic validation
+  and runnable rewire/replay; inherited rows and final composition stay open.
 
 - v1.3 — 2026-10-12: Slice01 correction independently accepted; no structural
   bubble-up. Detailed approved Slice02 with shared synchronous metadata helpers,

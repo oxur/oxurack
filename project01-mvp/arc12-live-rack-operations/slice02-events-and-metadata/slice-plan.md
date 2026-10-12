@@ -1,6 +1,6 @@
 # Arc12 Slice02 — live events and metadata
 
-Version1.0 — 2026-10-12. Status: open; initial CC implementation issued.
+Version1.1 — 2026-10-12. Status: closed; M-01–M-05 CRC accepted at20c60ef.
 Current assignment: `arc12-live-rack-operations/slice02-events-and-metadata/cc-prompt.md`.
 Author/reviewer CRC Sofie; CC implements; Duncan relays. Three contributors,
 Expedited Mode. Depends on accepted Slice01 at
@@ -78,9 +78,16 @@ prompt; scoped source and separate planning commits only. No merge/push/release.
 
 | Date | Prompt | Predecessor / reason | Disposition |
 | --- | --- | --- | --- |
-| 2026-10-12 | arc12-live-rack-operations/slice02-events-and-metadata/cc-prompt.md | Slice01 accepted fabfa1cb; next approved Arc12 product increment | Active initial CC implementation; M-01–M-05 open; return to CRC |
+| 2026-10-12 | arc12-live-rack-operations/slice02-events-and-metadata/cc-prompt.md | Slice01 accepted fabfa1cb; next approved Arc12 product increment | CC returned20c60ef/ae2c188/d8761d0; CRC accepted all five at20c60ef; original assignment preserved |
 
 ## Version history
 
 - v1.0 — 2026-10-12: CRC detailed/issued the approved metadata/events successor
   after independent persistence closure; no new arc/scope/acceptance amendment.
+
+## Closure and version1.1 — 2026-10-12
+
+Independent source/native/replay acceptance in crc-verification.md. Initial CC
+report is preserved. No substantive bubble-up; adjacent event rustdoc clarification
+is owned by next Slice03. Arc12 composition and inherited legacy acceptance remain
+open. CRC details the approved runtime cable/graph increment next.

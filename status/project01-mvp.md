@@ -14,8 +14,13 @@
 > Now: CDC11 correction fabfa1cb is independently accepted by CRC; all five LP
 > rows done. Focused/default/no-default/native host gates and fresh-process replay
 > pass; saved1/saved2/reference traces are identical71 rows, original fixtures unchanged.
-> [Slice02 metadata/events prompt](../project01-mvp/arc12-live-rack-operations/slice02-events-and-metadata/cc-prompt.md)
-> is issued at fabfa1cb with M-01–M-05 open. Arc12 composition remains open.
+> [Slice02 metadata/events](../project01-mvp/arc12-live-rack-operations/slice02-events-and-metadata/crc-verification.md)
+> independently accepted at20c60ef: five M rows done; core/both feature modes/native
+> host and300-sample annotation/fresh70-row replay pass, originals unchanged.
+> [Slice03 graph composition prompt](../project01-mvp/arc12-live-rack-operations/slice03-graph-composition/cc-prompt.md)
+> issued at20c60ef; G-01–G-05 open. Runtime patch/unpatch, atomic validation,
+> actual event provenance, immediate graph and saved musical rewire/replay next.
+> Arc12 composition remains open.
 > Exact engine-state checkpoints remain future work. Existing append-only load
 > behavior is explicitly owned by Arc12/Slice04; Slice01 reloads into a fresh rack.
 > Catalog/Chord, full interfaces, hardware timing/coverage/benchmarks/soak retain
