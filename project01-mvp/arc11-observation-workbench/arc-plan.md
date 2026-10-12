@@ -1,6 +1,6 @@
 # Arc11 — musical observation workbench
 
-Version 1.5 — 2026-10-11. Status: open; Slice01 LFO and Slice02 Scope closed; Slice03 terminal issued at `6c56e84`.
+Version 1.6 — 2026-10-11. Status: open; LFO/Scope closed; Slice03 B-01–B-03 accepted at `22500fa`, B-04 correction issued.
 Depends on Arc10, independently accepted at source `65522f1`.
 Authority: Operator's TM-first/workbench-second selection; directives08/09.
 Three contributors, Expedited Mode. CDC owns arc/first-slice design; CRC reviews
@@ -21,7 +21,7 @@ P-07 remains open until this composition is demonstrated; release gates are late
 | --- | --- | --- |
 | slice01-lfo | Standalone and installed five-waveform LFO; real RON patch modulates TM write probability and plays through the existing runner | Arc10; [closed slice](slice01-lfo/crc-verification.md), five L rows done at c4b517c |
 | slice02-scope-capture | Bounded in-memory scalar/Gate/Raw observation at Observe, with sample indices; actual emitted MIDI captured without competing with the runner's drain; a runnable capture/export | LFO; [accepted capture](slice02-scope-capture/crc-verification.md), five S rows done at `6c56e84` |
-| slice03-workbench-integration | Small usable terminal inspection view tying patch, selected signals and MIDI together; clear capture bounds, reset/new-run and export instructions | Capture; [issued terminal packet](slice03-workbench-integration/cc-prompt.md), four B rows open at `6c56e84` |
+| slice03-workbench-integration | Small usable terminal inspection view tying patch, selected signals and MIDI together; clear capture bounds, reset/new-run and export instructions | Capture; [iteration01](slice03-workbench-integration/cc-prompt-iteration01.md), B-01–B-03 done at `22500fa`; B-04 README repair open |
 
 The first slice's exact API and numerical semantics live in its plan/prompt.
 Slice01 is independently accepted after one correction. Its native gates,
@@ -33,8 +33,10 @@ CSV flags in the existing runner. These detail the approved capture design;
 Slice02 is independently accepted at `6c56e84`, including capture/trace
 equivalence and affected native gates. No structural amendment is needed;
 Slice03 is issued on accepted capture with an immutable post-stop view and
-unchanged CSV/MIDI output. Its four B rows remain open; arc composition still
-requires CDC.
+unchanged CSV/MIDI output. CRC reproduced terminal/CLI/failure behavior at `22500fa` and accepted B-01–B-03.
+B-04 remains open: README batch continuation can latch pending MIDI. The narrow
+iteration01 repairs the recipe and proves per-sample drain/copy; no production
+contract changes. Arc assembly is held until repair, then still requires CDC.
 The workbench is a developer/musician inspection tool; full CLI/REPL/controller
 editing remains Arc07. Do not create an evidence-only composition slice.
 
@@ -71,6 +73,8 @@ remaining catalog/Chord, live persistence and broader interfaces retain their
 Arc08/13/12/07 owners. Nothing here closes their historical deferred rows.
 
 ## Version history
+
+- v1.6 — 2026-10-11: Slice03 initial review accepted three B rows at `22500fa`. F-01 leaves B-04 open for a documented continuation loop repair/test; native and terminal commands reproduce. No architecture or sequencing amendment; arc closure held.
 
 - v1.5 — 2026-10-11: Issued terminal Slice03 at `6c56e84` after Scope acceptance. Private example renderer, explicit view/CSV CLI and post-stop failure handling detail the approved third increment; no architecture/parent acceptance change.
 

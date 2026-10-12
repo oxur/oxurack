@@ -11,9 +11,11 @@
 > Actual modulation traces, supplied schedules and affected native gates reproduce.
 > [Slice02 bounded Scope capture](../project01-mvp/arc11-observation-workbench/slice02-scope-capture/crc-verification.md)
 > is CRC accepted at `6c56e84`: five S rows done; CSV/native checks and unchanged
-> musical traces reproduce. [Terminal Slice03](../project01-mvp/arc11-observation-workbench/slice03-workbench-integration/cc-prompt.md)
-> is issued at `6c56e84` under directive09, four B rows open. Duncan relays to CC;
-> private post-stop inspection, CSV integration and reset/new-run recipes.
+> musical traces reproduce. [Terminal Slice03 review](../project01-mvp/arc11-observation-workbench/slice03-workbench-integration/crc-verification.md)
+> independently accepts B-01–B-03 at `22500fa`; native and terminal/CSV commands pass.
+> B-04 remains open for a README continuation loop that must drain each sample.
+> Duncan relays [iteration01](../project01-mvp/arc11-observation-workbench/slice03-workbench-integration/cc-prompt-iteration01.md)
+> for the narrow README/test repair; arc assembly remains held.
 > No endpoint was opened by CRC; Arc11 composition remains open.
 > Three contributors, Expedited Mode and directive08 proportionate proof remain.
 > All seven project rows remain open; P-07 needs complete Arc11 composition/CDC acceptance. Async output/live API,
