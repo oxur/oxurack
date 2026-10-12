@@ -1,5 +1,61 @@
 # CC intake and proposed-done report — terminal Scope workbench
 
+## Iteration01 intake — executable clear/continue recipe
+
+2026-10-11. Active assignment: `arc11-observation-workbench/slice03-workbench-integration/cc-prompt-iteration01.md`, returning to CRC through Duncan. S is `/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation`, branch `codex/oxurack-module-behavior-installation`, clean at `22500fae234d5dbba599c7683f8893aabe70f47b`. P is `/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning`, branch `planning`, clean at `0981ab5d5b9bb0fab718cd9ebd19e24718f5b05e`. Main remains clean at `a7ce6e6`. Assignment paths and source/planning heads match the prompt; no material drift.
+
+### Required-reading coverage
+
+| Prompt order | Loaded extent and consequence |
+| --- | --- |
+| 1 | Iteration prompt, sibling `slice-plan.md`, `ledger.md`, and `crc-verification.md`: complete. B-01–B-03 are accepted; B-04/F-01 alone remains. Only README plus a new inline test in the parent example are authorized. |
+| 2 | P `cdc-directive09.md` and `arc11-observation-workbench/arc-plan.md`: complete. Slice03 is the approved third increment; no composition/CDC acceptance or structural change is authorized. |
+| 3 | P `cdc-directive08.md`, “Checks and correction policy from Slice03 onward”: complete. Run the affected example modes, lint, strict affected Clippy and diff check; retain applicable unaffected CRC evidence and distinguish old receipts from new runs. |
+| 4 | S `CLAUDE.md` and `crates/oxurack/Cargo.toml`: complete. Keep S/P separate; available example dependencies need no manifest change. |
+| 5 | S `README.md`, Scope commands and lifecycle/clear/continue section (lines 117–247): complete. Replace the batched advance and explain generated-event recording versus live runner sending. |
+| 6 | S `crates/oxurack/src/lib.rs`, `start`, `stop`, `sample_time`, Scope methods, `drain_midi`, and full `advance_samples` docs/body (lines 266–455): complete. Per-sample admission is conservative; a drain borrow ends before mutable rack recording; errors latch and stop the rack. |
+| 7 | S parent example `prepare_rack` and full existing inline test module (lines 175–188, 300–848): complete. Fixture paths are `Path`; prepare returns a Manual, stopped rack. Keep all production portions unchanged. |
+| 8 | S LFO fixture, complete; `oxurack-mod-midiout/src/lib.rs` event/buffer/fault APIs (lines 92–163), complete, plus `oxurack-midi/src/wire.rs` `MidiWire` definition and byte serializer (lines 16–140). `MidiOutputEvent` carries sample and message; `to_bytes()` returns the three-byte observation asserted by the test. Public buffer APIs expose drain, fault, and admission behavior. |
+| 9 | Installed `rust-guidelines/SKILL.md` and `testing/SKILL.md`, complete. Use behavior-oriented assertions and repository-native validation. |
+| 10 | Installed `rust-guidelines/guides/03-error-handling.md` EH-01 and `guides/11-anti-patterns.md` AP-33, required sections complete. Propagate real errors with `?`; do not ignore backpressure or let an error count as success. |
+
+No conditional dependency was encountered. An initial combined source read was truncated; each required extent was recovered in bounded ranges. The fixture and type/API sections are complete; the MIDI wire definition and serializer were loaded from the newly encountered message-type dependency before finalizing the evidence record.
+
+### Contract readback before source edits
+
+The 100-sample batch is unsafe because each next sample checks pending MIDI admission. In the discriminating continuation from sample 200, sample 251 generates `90 3E 15`; after 52 more samples, the batch reaches sample 252 with that one event pending, returns `OutputBackpressure(completed_samples: 52)`, and latches the fault. The repaired recipe advances one sample at a time. It must collect the `drain_midi()` iterator into owned events so its exclusive rack borrow has ended before calling `record_scope_midi`; every event is copied as `Generated`, then the next sample is requested. The checked `advance_samples(1)?` must preserve all runtime errors.
+
+`stop`/`start` preserve time and module phase. `clear_scope` removes retained records and overwrite count while capture stays enabled, so this is a continuation at absolute samples 200–299, not a reseed. Only a new rack/process loading the fixture begins from the seeded initial phase. Production admission, fixture, playback, Scope APIs and CLI remain protected. The focused executable test will assert 300 completed samples, clean fault/buffer, 100 signals at 200–299, exactly one Generated event at 251 with bytes `90 3E 15`, 101 records total, and no overwrite/Sent records. The README loop and test loop must match by direct review.
+
+### Iteration01 repair, checks, and handoff
+
+Source S commit `72fe6b52197b7a138afc3d5d7ac970ddfdf66981` changes only `README.md` and the test region at the end of `crates/oxurack/examples/turing-machine-midi.rs`. The README replaces the unsafe batched advance with the per-sample advance/drain/collect/copy sequence, stops afterward, and explains that it records Generated events while live sending stays with the existing runner. The inline test runs the accepted fixture to sample 200 with normal drain/copy, stops and clears, then exercises the same continuation loop. It observes 300 completed samples, capture still enabled, no output fault or pending MIDI, exactly 100 signal records at samples 200–299, one Generated MIDI event at sample 251 with bytes `90 3E 15`, 101 total records, no Sent record, and zero overwrites. Direct diff review confirms the README and test continuation loops match. No production code, fixture, manifest, lockfile, Scope/playback code, or prior tests changed.
+
+| Check from S | Result |
+| --- | --- |
+| `cargo test --locked -p oxurack --example turing-machine-midi` | 26 passed, 0 failed, 0 ignored; includes the continuation oracle. |
+| `cargo test --locked -p oxurack --no-default-features --example turing-machine-midi` | 26 passed, 0 failed, 0 ignored; includes the continuation oracle. |
+| `make lint` | First run: Clippy passed, format check failed on the new test signature. Applied `rustfmt --edition 2024` to the authorized example file; rerun passed Clippy and format. |
+| `cargo clippy --locked -p oxurack --all-features --all-targets -- -D warnings` | Passed. |
+| `git diff --check` | Passed on the exact two-file source delta before commit. |
+
+Cargo emitted the existing `block v0.1.6` future-incompatibility advisory during tests/lint/Clippy; no warning was suppressed and no dependency changed. `make test`, documentation generation, example build, and binary fixture demonstrations were not rerun: this iteration's checks do not require them and the source delta has no production, fixture, or public API effect. CRC's `22500fa`/2026-10-11 workspace, Scope/LFO/MIDI, build, rustdoc and fixture-output receipts are proposed for retention with that original revision/date; they are not new executions. The restricted CoreMIDI failure and unchanged host retry remain at their original receipts. No supporting artifact was needed or created.
+
+#### Four-row walk
+
+| Row | CC result at `72fe6b5` | Gate |
+| --- | --- | --- |
+| B-01 | Done, CRC independently accepted at `22500fa`; no relevant implementation changed. | Retain prior CRC evidence. |
+| B-02 | Done, CRC independently accepted at `22500fa`; no relevant implementation changed. | Retain prior CRC evidence. |
+| B-03 | Done, CRC independently accepted at `22500fa`; production/finalizer/runner code unchanged. | Retain prior CRC evidence. |
+| B-04 | CC proposed-done: README continuation now drains each sample and the executable recipe test passes both feature modes; lint, strict Clippy and diff check pass. | Remains open pending CRC review; do not treat CC attestation as acceptance. |
+
+#### Inventories and Bubble-up
+
+- S inventory: clean at `72fe6b52197b7a138afc3d5d7ac970ddfdf66981`, branch `codex/oxurack-module-behavior-installation`; only `README.md` and `crates/oxurack/examples/turing-machine-midi.rs` in the source commit.
+- P inventory before the return commit: branch `planning` at `0981ab5d5b9bb0fab718cd9ebd19e24718f5b05e`; only this `closing-report.md` and sibling `ledger.md` are authorized planning changes. Main remains clean at `a7ce6e6`.
+- Bubble-up: no architecture, scheduler, ownership, drain, fixture, or parent-plan change. Slice03 and Arc11 remain open; B-04 awaits CRC, then the existing formal composition/CDC gate. No arc closure, merge, push, release, or live endpoint witness is claimed. No new artifacts are required.
+
 2026-10-11. Assignment: `cc-prompt.md`, initial pass. Status: CC proposed-done;
 all four B rows remain open for CRC. This report is in P and records the intake
 that preceded dependent source edits. S and P remain separate.
