@@ -7,7 +7,7 @@ CRC assembles composition; CDC independently accepts. No child completion inferr
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | R-01 | Current live configuration survives save and fresh reload with seeded musical behavior | Run edit/save/reload on real Clock/LFO/TM/MIDI; compare fresh equivalent configuration and unchanged saving-rack continuation | correctness-grade | Arc02 live snapshot; Operator selection | open | Slice01 CRC accepted at fabfa1cb; slice01-live-persistence/crc-verification.md | Child evidence only; full arc assembly/CDC gate pending |
 | R-02 | Runtime metadata/topology changes compose with events, graph freshness and persistence | Execute live edits and rejected edits; assert notifications, immediate graph queries and reloaded patch | correctness-grade | Arcs03/04 | open | Slice02 five M rows CRC accepted at20c60ef; Slice03 five G rows CRC accepted atdeafdd228; respective crc-verification.md records | Reconcile all inherited child rows |
-| R-03 | Public lifecycle and runtime operations preserve ownership through replacement/unload/reset | Actual running rack and MIDI owner checks; old entities retired and explicit failures; retained API/command obligations dispositioned | correctness-grade | Arc05; discovered append-only loading | open | — | No implicit async platform prerequisite |
+| R-03 | Public lifecycle and runtime operations preserve ownership through replacement/unload/reset | Actual running rack and MIDI owner checks; old entities retired and explicit failures; retained API/command obligations dispositioned | correctness-grade | Arc05; discovered append-only loading | open | Slice04 six LF rows CRC accepted at ec85ebe; slice04-runtime-api/crc-verification.md; Slice05 six IC rows open | No implicit async platform prerequisite; final composition/CDC review pending |
 | R-04 | Children, legacy obligations and native checks reconcile without scope loss | Five child walks, inherited successor table, fresh composed demonstration and retained/fresh checks | serious | Framework composition | open | — | Full project/release gates remain separate |
 
 ## Child advancement — 2026-10-12
@@ -63,3 +63,10 @@ fresh native gates and exact host retry pass; LF-01/LF-02 accepted, LF-05/LF-06
 retained, LF-03/LF-04 open. Collected iteration03 test/evidence repair issued;
 two corrections executed, third issued. R-01–R-04 remain open, Slice05 held;
 no parent/legacy acceptance or structural amendment. See child CRC review.
+
+CRC Slice04 closure / Slice05 issuance — 2026-10-13: source ec85ebe, CC planning
+972e3b7. Six LF rows done after3/5 corrections; fresh affected gates/host retry pass,
+restricted failures and historical musical/docs evidence preserved. Final approved
+child slice05-instance-commands opens six IC rows for removal/handles/commands/BPM
+and actual session. R-01–R-04 remain open; CDC12 design unchanged. No inherited,
+project/release acceptance or source/main changes by CRC.

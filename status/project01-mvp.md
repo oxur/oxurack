@@ -1,6 +1,6 @@
 # project01-mvp — status
 
-> Current (2026-10-12): Arc10 and [Arc11](../project01-mvp/arc11-observation-workbench/cdc-verification.md)
+> Current (2026-10-13): Arc10 and [Arc11](../project01-mvp/arc11-observation-workbench/cdc-verification.md)
 > are CDC accepted. Arc11 source72fe6b5 delivers five-waveform LFO modulation,
 > bounded Scope capture and terminal/CSV inspection; 14 child and four arc rows done.
 > CDC reproduced46 focused tests and actual repeated10000-sample trace/view/CSV,
@@ -29,22 +29,21 @@
 > CRC acknowledged planning67e9150 at clean sourcedeafdd228 and issued
 > [Slice04 lifecycle prompt](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/cc-prompt.md):
 > isolated replacement/unload, reset/restart/cleanup and executable --lifecycle session.
-> Was: initial f6fdeb5 return required iteration01; CRC1242a60 accepted LF-05/06.
-> Now: CRC independently reviews03825e5/18abe11; fresh native/host gates pass.
-> LF-01 isolation/structure and LF-02 ordered multi-App behavior are accepted;
-> LF-05/LF-06 retain native/musical72-row receipts at1242a60, retired300/new0.
-> [CRC review](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/crc-verification.md)
-> keeps LF-03/LF-04 open for pre-first-reset state/fault comparison, an uninterrupted
-> reset control, restored save/unload/reload regression and immediate snapshot-error
-> observations. Active [iteration03](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration03.md)
-> repairs these in two test paths. Two corrections executed/third issued.
-> No lifecycle product defect/design amendment claimed. Instance/handle/queued-command05
-> remains unopened until04 acceptance; five-child Arc12 composition stays open.
-> Source03825e5 and protected main a7ce6e6 unchanged by CRC, planning updates only. Separate
-> MIDI transport and catalog-specific typed forms retain Arc07/13 re-entry owners.
+> Was: initial f6fdeb5 required three corrections. Now: CRC2026-10-13 accepts
+> iteration03 ec85ebe/972e3b7, all six LF rows done, Slice04 closed. Fresh native/host
+> gates pass; restricted CoreMIDI failures and dated earlier musical/docs/example
+> evidence remain recorded in the [CRC review](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/crc-verification.md).
+> Reset first-state/fault, uninterrupted control, saved replay and snapshot-error
+> proof now satisfy the contract. No product defect or structural design change.
+> [Final Slice05](../project01-mvp/arc12-live-rack-operations/slice05-instance-commands/cc-prompt.md)
+> is issued with six open IC rows: in-place removal, stale-safe handles/refs,
+> synchronous and bounded queued commands/results/reset cancellation, global BPM
+> and a runnable saved/fresh session. Arc12's five-child composition/CDC review stays
+> open; MVP/release is not accepted. Source ec85ebe and main a7ce6e6 unchanged by CRC.
+> Separate transport remains Arc07; catalog-specific typed forms remain Arc13.
 > Exact engine-state checkpoints remain future work. The historical append-only
-> load defect has a proposed isolated-candidate repair atf6fdeb5, pending complete
-> Slice04 review; Slice01's earlier recipe deliberately reloaded into a fresh rack.
+> load defect is repaired by independently accepted Slice04; Slice01's earlier
+> recipe deliberately reloaded into a fresh rack.
 > Catalog/Chord, full interfaces, hardware timing/coverage/benchmarks/soak retain
 > Arc13/07/08 owners. Three contributors, Expedited Mode and directive08 policy apply.
 > Earlier snapshots below are history.

@@ -1,6 +1,9 @@
 # Arc12 — live rack operations
 
-Version1.11 — 2026-10-12. Status: active; Slice01–03 CRC accepted atdeafdd228 or their named predecessors. Slice04 iteration02 reviewed at03825e5: LF-01/LF-02/LF-05/LF-06 done, LF-03/LF-04 open; [iteration03](slice04-runtime-api/cc-prompt-iteration03.md) repairs remaining original reset/control and preservation proof. Slice05 stays unopened until04 acceptance. Four arc rows remain open.
+Version1.12 — 2026-10-13. Status: active; Slice01–04 CRC accepted. Slice04
+iteration03 at ec85ebe closes all six LF rows after three corrections. Final child
+[Slice05 instance/commands](slice05-instance-commands/cc-prompt.md) is issued with
+six IC rows open. Four arc rows remain open for five-child composition and CDC review.
 Depends on accepted Arc10/Arc11; source predecessor72fe6b5. Blocks saved/live
 musical workflow and Arc07 controls. Related: carried-over Arcs02–05; Arc13 catalog.
 Authority: approved successor roadmap and Duncan's explicit “Continue with live
@@ -187,7 +190,29 @@ specified regression/error-boundary preservation. Iteration03 is active with two
 test-only source paths. Two corrections executed/third issued. No product defect,
 architecture or structural scope amendment. Slice05/R-01–R-04 remain held/open.
 
+## Slice04 closure / Slice05 advancement — 2026-10-13
+
+CRC independently accepts ec85ebe/972e3b7, all six LF rows done. First-reset owned
+state/fault, uninterrupted reset control, restored distinct saved replay and
+immediate failure boundaries reproduce; required native gates and exact host retry
+pass, restricted CoreMIDI failures preserved. Unaffected musical/docs/example
+receipts retain their original revisions/dates. No product defect or structural
+amendment; this completes CDC12's fourth child.
+
+[Slice05 open set](slice05-instance-commands/slice-plan.md) now details approved
+D3/D4 instance retirement/hooks, private lifetime/instance handle identity, all
+synchronous commands, bounded64-slot FIFO/cancelled results and independent global
+BPM, with actual rack-session/fresh replay. Six IC rows open. Existing source hooks/
+ownership/index/graph/MIDI seams were inspected at ec85ebe; concrete recipes and
+six author-readiness checks are in the prompt/plan. No source/main edits by CRC.
+R-01–R-04 stay open; after05, CRC assembles the full inherited/composition walk
+for independent CDC acceptance, without claiming Arc05 or MVP closure.
+
 ## Version history
+
+- v1.12 — 2026-10-13: routine Slice04 acceptance at ec85ebe and authorized final
+  Slice05 open set; no CDC12 design/structure amendment. Source/main unchanged by CRC.
+
 
 - v1.11 — 2026-10-12: routine Slice04 iteration02 status at03825e5; four LF rows
   accepted, two open and iteration03 issued. CDC12 five-child design unchanged.

@@ -1,10 +1,11 @@
 # Slice04 — independent CRC review
 
-2026-10-12. Sofie/CRC. Three contributors, Expedited Mode.
+2026-10-13. Sofie/CRC. Three contributors, Expedited Mode.
 
-Current: iteration02 reviewed at03825e5; LF-01/LF-02/LF-05/LF-06 done,
-LF-03/LF-04 open. See the appended Iteration02 independent review.
-Active correction: iteration03; two corrections executed, third issued.
+**Current verdict: Slice04 accepted and closed at ec85ebe. Six LF rows done.**
+Iteration03 is accepted; three corrective passes executed. Earlier reviews below
+are preserved history. Slice05 may open under CDC directive12; Arc12/project
+composition and independent CDC gates remain open.
 
 ## Initial candidate, authority and disposition
 
@@ -455,3 +456,128 @@ Planning-only checks: the initial transient row-count assertion also counted
 the historical CC proposal table and failed. Restricting it to the current
 acceptance table passed: six rows, four done/two open. The preserved iteration02
 prompt SHA256 matches the reviewed assignment; planning git diff --check passes.
+
+## Iteration03 independent review and slice closure — 2026-10-13
+
+Reviewed source `ec85ebe99c09b8a2ea64d55da0346af4ae317a67`, parent
+`03825e5077b7cd621185ae70b47020da321706c4`; CC planning return
+`972e3b7220f0e660875dcdc887763765ebd64d48`. Assignment
+`cc-prompt-iteration03.md`, SHA256
+`e6b00776e4c29b0926fd740d734bff87e4119d9c761f1262e2e0c533a6609e2c`,
+matches the slice current assignment. Both worktrees clean at intake; main stays
+`a7ce6e61536ca96b6aeb2227ee06e430ed8df162`.
+
+**LF-03/LF-04 accepted; four previously accepted rows retained. Slice04 closed.**
+No production defect was reproduced. Three corrections executed, converged3/5.
+All original and numbered prompts remain in place and unchanged.
+
+### Source, intake and observations
+
+The complete delta changes exactly the two authorized test paths, facade lib.rs
+and tests/lifecycle.rs. The production prefix is byte-identical to03825e5.
+A direct function comparison confirms the entire accepted saved-lifetime replay
+function, including its test attribute, is restored verbatim from1242a60.
+No example, fixture, engine, dependency, lockfile or main change. CC records all
+17 manifest items, loaded extents/reuse and a coherent source-based readback;
+these are attestation, not independent proof of understanding. CRC checks the
+readback against the actual first-reset/control/error/replay boundaries and code.
+
+- LF-03: existing owned RetainedState is now captured before stopped first reset
+  and compared immediately after, allowing only pending1→4. The running reset
+  likewise permits only0→3 at sample2; clocks, driver/running, Scope configuration/
+  overwrite/full records, snapshot, installation order and typed messages match.
+  The actual stored backpressure fault is saved before first reset and preserved;
+  returned completed1 versus stored completed0 remains explicit. Literal event
+  order, repeated reset and sample1 retrigger pass. Existing maximal128,129th
+  append failure and dirty-channel behavior pass in the fresh affected suites.
+- LF-04: only the subject resets at300. Prefix includes NoteOn62/21 at251; cleanup
+  is exactly NoteOff62/CC123/CC120 at300 and separate from continuation. Control
+  is uninterrupted. Its unique NoteOff62 at376 is removed once from the owned
+  expected vector; all remaining MIDI and all four scalar selections compare
+  through1300. CC74/75 at376, shared NoteOn64/44 at626, all later releases, zero
+  overwrites and a future pulse edge are observed. This no longer masks common
+  phase/RNG rewinds by resetting both arms.
+- Immediate disabled-cable restart error now compares the old owner before and
+  after the exact UnsupportedSnapshot result, including Fixed/Virtual clocks,
+  driver/running/fault, Scope/full records, module/handle/cable/installation and
+  typed lifecycle messages. No unsupported snapshot is taken inside the helper.
+  Successful current-snapshot restart explicitly stays stopped0/Manual/no-fault/
+  ScopeNone before reconfiguration. The distinct save200→continue100→unload→drain→
+  reload regression runs alongside restart and compares72 MIDI/20000 scalars/copied
+  MIDI with a fresh10000-sample replay, zero overwrites.
+
+### Fresh independent gates
+
+All run sequentially in the assigned source worktree at ec85ebe:
+
+| Command | Independent result |
+| --- | --- |
+| cargo test --locked -p oxurack-mod-midiout | exit0;9 unit,0 doc passed |
+| cargo test --locked -p oxurack --all-targets | exit0;56 facade unit,11 lifecycle integration; all other integration/examples,4 save-runner and26 MIDI-runner tests passed |
+| cargo test --locked -p oxurack --no-default-features --all-targets | exit0;54 facade unit,11 lifecycle integration and corresponding remaining targets passed |
+| make test, restricted | exit2; RT146 passed,4 known CoreMIDI initialization failures,3 existing ignores |
+| unchanged make test, host access | exit0; RT150 passed,0 failed,3 existing ignores; workspace and doctests passed |
+| make lint | exit0; workspace Clippy and formatting |
+| cargo clippy --locked -p oxurack-core -p oxurack-mod-midiout -p oxurack --all-features --all-targets -- -D warnings | exit0 |
+| git diff --check | exit0 |
+
+Restricted failures are midi_io::tests::{test_list_input_ports,test_list_output_ports,
+test_open_input_nonexistent_returns_error,test_open_nonexistent_port_returns_error},
+all MIDI support could not be initialized. Host success does not erase them.
+Existing block0.1.6 future-incompatibility and no-default cables.rs unused_mut remain
+unsuppressed. Transient logs: tmpdir oxurack-crc-slice04-iteration03-i83qqryk,
+01–07.log/results.jsonl; /tmp/oxurack-crc-ec85ebe-host-make-test.log. These are
+local conveniences, not durable acceptance dependencies. CC's initial helper
+compile failure and grouping repair remain recorded in its report.
+
+### Six-row close walk and evidence retention
+
+| Row | Final | Evidence |
+| --- | --- | --- |
+| LF-01 | done | CRC2026-10-12 at03825e5 isolation/normalized structure/actual continuation; unchanged tests pass again at ec85ebe |
+| LF-02 | done | CRC2026-10-12 at03825e5 ordered per-App hooks/actual both-instance execution/idempotence; unchanged tests pass again |
+| LF-03 | done | Newly reproduced first-reset state/fault and literal MIDI behavior at ec85ebe; unaffected peak/channel proofs rerun |
+| LF-04 | done | Newly reproduced uninterrupted reset control, distinct saved replay, current restart and complete immediate error boundary at ec85ebe; admission/fault/Live proofs retained and rerun |
+| LF-05 | done | CRC2026-10-12 at1242a60 typed notification/error/unsupported-core-command contract; implementation and assertions unchanged |
+| LF-06 | done | CRC2026-10-12 at1242a60 actual default/no-graph/fresh72-row example, ordinary save and six CLI failure receipts; current runner tests rerun |
+
+Six opening rows, six done, zero open/deferred/no-op. Retain original dates and
+revisions: strict docs/original MIDI13 and LFO70 fixture hashes atf6fdeb5; actual
+72-row lifecycle/example/core/error receipts at1242a60; isolation/hook receipts
+at03825e5. Only the assigned test regions changed, so their production/docs/
+fixtures/runner inputs remain identical. No finding defeats those receipts.
+Restored replay is freshly exercised, rather than relabelled historical coverage.
+No hardware or broader release acceptance follows. Durable supporting artifacts:
+none, checked against source/planning delta; first-class reports/prompts stay in
+slice root. CRC does not rewrite CC's proposed evidence as independent evidence.
+
+### Bubble-up to Arc12 / silent-drop check
+
+The slice delivers its assigned isolated owner replacement/unload, narrow MIDI
+silence/reset, stopped seeded current-snapshot restart, installation replay,
+fault recovery and runnable edit/save/unload/reload session. All six criteria and
+three correction assignments are accounted for. Scope-as-delivered matches CDC12
+D1/D2/D4; low-level loader validation/nontransactionality and per-App hook panic/
+external-effect exclusions remain explicit. No architectural or structural plan
+amendment is needed. Routine child status updates precede Slice05 opening.
+
+Remaining instance removal/handles/command/global-BPM work is explicitly Slice05,
+not silently omitted04 scope. Arc05 A-05-01 remains deferred through this increment,
+Slice05 and Arc07 separate-transport/Arc13 typed-vocabulary re-entry; A-05-02 still
+requires final inherited reconciliation. Arc12 R-01–R-04 remain open until five
+children compose and CDC independently accepts. ProjectP-01–P-06 and release
+hardware timing/coverage/benchmarks/soak obligations remain open. CRC may now author
+Slice05 under unchanged CDC12; no new arc, merge, push or endpoint authority.
+
+What worked: owned before/after observations, a truly uninterrupted control and
+preserved distinct operation paths supplied concrete proof with existing tests;
+no extra verifier or product workaround was needed.
+
+Current-table closure check: six LF rows done; six successor IC rows open. The
+first transient planning-update helper mistakenly parsed a historical four-column
+CC proposal as the current eight-column acceptance table and raised IndexError;
+it wrote only the intended CRC review before stopping. The corrected helper
+restricted itself to the current table and completed the ledger/plan update.
+Final scoped check passed: exactly ten planning paths, no pre-staged files and
+all four issued Slice04 prompt hashes unchanged. No source or acceptance criterion
+changed to accommodate the helper. Planning git diff --check passes.

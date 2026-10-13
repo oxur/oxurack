@@ -1,19 +1,18 @@
 # Explicit rack lifetimes — acceptance ledger
 
-Opened2026-10-12 before implementation. Six rows. Current CRC2026-10-12 review
-at03825e5 accepts LF-01/LF-02 and retains LF-05/LF-06; LF-03/LF-04 remain open.
-Active assignment is iteration03, correction3/5 after two executed passes.
-See crc-verification.md for fresh checks and separately retained evidence.
-No slice, ancestor or historical acceptance is inferred.
+Opened2026-10-12 before implementation. Six rows. CRC2026-10-13 accepts
+iteration03 at ec85ebe: all six LF rows done; Slice04 closed. Prior accepted
+provenance is preserved per row. Three corrections executed3/5. Slice05 may
+advance under CDC12; arc/project acceptance is not inferred.
 
 | ID | Criterion | Verify | Significance | Origin | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | LF-01 | Isolated replacement retires exact old membership/reservations and preserves the entire old owner on recoverable candidate failure | Same-channel repeats, valid[1,0], rejected[1,1], late valid spawner writes then Err; World/index/graph/messages/Scope/control comparison | correctness-grade | directive12 D1/D4; reproduced replacement leak | done | reproduced: CRC2026-10-12 at03825e5, crc-verification.md Iteration02 independent review | Immediate resource/scalar/normalized membership interactions pass; row accepted. |
 | LF-02 | Installed types replay deterministically once per App, with current-lifetime idempotence and collision preflight | Ordered hook/resources and actual system runs; failed-candidate hooks separately; setter/getter/schedule availability after unload/reload | correctness-grade | directive12 D1 installation amendment | done | reproduced: CRC2026-10-12 at03825e5, crc-verification.md Iteration02 independent review | Ordered every-App replay and both-instance execution/state pass; row accepted. |
-| LF-03 | Narrow reset preserves unread events, engine/time/Scope/running/first fault and atomically appends bounded exact silence once | Literal note0→cleanup1, channel order, CC-only/released/unused,16 sinks80+48=128, prepare/room failure unchanged, repeat/no-allocation checks | correctness-grade | directive12 D2 | open | `oxurack-mod-midiout` tests: `silence_is_channel_ordered_fixed_capacity_and_idempotent`, `failed_silence_room_check_preserves_pending_and_dirty_state_for_retry`, `sixteen_sinks_fit_eighty_normal_plus_forty_eight_cleanup_events`; facade reset/restart test; fault preservation unit test | CRC open: F-03 first-reset preserved-state and pre-reset first-fault comparisons; iteration03. |
-| LF-04 | Admission, unload, current-snapshot restart and fault recovery enforce explicit lifetime semantics | Running-first/no-I/O, pending count, failed snapshot/candidate, empty unload, stopped fresh0, fault recovery, phase/Scope and controlled Live no burst | correctness-grade | directive12 D1/D2 matrix | open | `tests/lifecycle.rs`: lifecycle precedence, pending rejection, live snapshot restart with Manual driver retained, unload/reload, late failure; `persistence.rs` getterless restart failure; `lifecycle.rs` fault retention/recovery | CRC open: F-04 uninterrupted reset control, restored save/unload/reload coverage and complete failed-snapshot boundary; iteration03. |
-| LF-05 | Public/documented failure and notification boundaries are honest and preserve compatibility | Typed lifecycle errors, Core Panic/SetBpm NotImplemented, candidate messages/PatchLoaded, loader production unchanged, hook/lifetime/event docs | correctness-grade | directive12 D3 honesty exception/D4 | done | reproduced: CRC2026-10-12 at1242a60, `crc-verification.md` Iteration01 independent review | CRC accepted this row; see the row-specific checks in the review. Whole slice/parent gates remain open. |
-| LF-06 | Real edit/save/unload/reload/Scope musical session and affected native gates pass with inherited scope accounted for | Existing --lifecycle example both modes, saved fresh reference/Scope/trace, original hashes, core/MIDI/facade/workspace/lint/Clippy/docs/build; row walk | serious | playable-first directive08; directive12 D4; Arc05 carryover | done | reproduced: CRC2026-10-12 at1242a60, `crc-verification.md` Iteration01 independent review | CRC accepted this row; see the row-specific checks in the review. Whole slice/parent gates remain open. |
+| LF-03 | Narrow reset preserves unread events, engine/time/Scope/running/first fault and atomically appends bounded exact silence once | Literal note0→cleanup1, channel order, CC-only/released/unused,16 sinks80+48=128, prepare/room failure unchanged, repeat/no-allocation checks | correctness-grade | directive12 D2 | done | reproduced: CRC2026-10-13 at ec85ebe, crc-verification.md Iteration03 independent review | First-reset state/fault and literal cleanup proofs pass; row accepted. |
+| LF-04 | Admission, unload, current-snapshot restart and fault recovery enforce explicit lifetime semantics | Running-first/no-I/O, pending count, failed snapshot/candidate, empty unload, stopped fresh0, fault recovery, phase/Scope and controlled Live no burst | correctness-grade | directive12 D1/D2 matrix | done | reproduced: CRC2026-10-13 at ec85ebe, crc-verification.md Iteration03 independent review | Uninterrupted control, restored replay and immediate snapshot-error proofs pass; row accepted. |
+| LF-05 | Public/documented failure and notification boundaries are honest and preserve compatibility | Typed lifecycle errors, Core Panic/SetBpm NotImplemented, candidate messages/PatchLoaded, loader production unchanged, hook/lifetime/event docs | correctness-grade | directive12 D3 honesty exception/D4 | done | reproduced: CRC2026-10-12 at1242a60, `crc-verification.md` Iteration01 independent review | CRC accepted this row; see the row-specific checks in the review. Slice04 closed; parent gates remain open. |
+| LF-06 | Real edit/save/unload/reload/Scope musical session and affected native gates pass with inherited scope accounted for | Existing --lifecycle example both modes, saved fresh reference/Scope/trace, original hashes, core/MIDI/facade/workspace/lint/Clippy/docs/build; row walk | serious | playable-first directive08; directive12 D4; Arc05 carryover | done | reproduced: CRC2026-10-12 at1242a60, `crc-verification.md` Iteration01 independent review | CRC accepted this row; see the row-specific checks in the review. Slice04 closed; parent gates remain open. |
 
 ## Iteration01 CC evidence note
 
@@ -97,3 +96,12 @@ done; LF-05/LF-06 retained at1242a60; LF-03/LF-04 open for the specific invalid/
 missing proof in CRC review. The CC iteration02 proposal above remains historical.
 Six rows:4 done,2 open. Two corrections executed, iteration03 issued; Slice05 and
 all higher-scale gates remain held/open. No product defect or scope amendment.
+
+## CRC iteration03 final disposition — 2026-10-13
+
+Reviewed ec85ebe/972e3b7 against preserved iteration03. LF-03/LF-04 independently
+done; LF-01/02 retained at03825e5 and LF-05/06 at1242a60 with dated rationale.
+All mandatory affected checks and exact host retry pass; restricted failure
+retained. Six rows done, Slice04 closed; three corrections executed3/5.
+Slice05 may open. Arc12 R-01–R-04 and inherited/project/release gates remain open.
+Historical CC proposals and earlier CRC dispositions above are preserved history.

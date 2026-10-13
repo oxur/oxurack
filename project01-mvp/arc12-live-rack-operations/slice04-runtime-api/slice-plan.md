@@ -1,14 +1,13 @@
 # Arc12 Slice04 — explicit rack lifetimes
 
-Version1.3 — 2026-10-12. Status: open, CRC correction review.
-Current assignment: `arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration03.md`.
-Three contributors, Expedited Mode. CDC directive12 planning67e9150 unchanged.
-Current source baseline:03825e5077b7cd621185ae70b47020da321706c4.
-Depends on CRC-accepted Slice01–03. Main a7ce6e6 protected. Six LF rows:
-LF-01/LF-02 independently done at03825e5; LF-05/LF-06 retained at1242a60;
-LF-03/LF-04 open. Two corrections executed; correction3/5 issued for invalid/
-missing first-reset/control proof and preservation, without product changes. No Slice04 closure or
-Slice05 opening until all applicable rows pass; CDC retains Arc12 acceptance.
+Version1.4 — 2026-10-13. Status: closed, CRC accepted at
+`ec85ebe99c09b8a2ea64d55da0346af4ae317a67`.
+Current assignment: none; accepted closing assignment is
+`arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration03.md`.
+Three contributors, Expedited Mode; CDC12 unchanged. Six LF rows done.
+Three corrective passes executed3/5. Prior evidence retains original revisions
+and dates; see crc-verification.md. Source/main unchanged by CRC. Slice05 may
+open; CDC retains arc acceptance and parent/project gates remain open.
 
 ## Delivered capability
 
@@ -139,7 +138,7 @@ plus narrow example factoring/diagnostic repair, without a new proof platform.
 | 2026-10-12 | arc12-live-rack-operations/slice04-runtime-api/cc-prompt.md | Slice03 CRC accepted deafdd228; CDC directive12 planning67e9150; Duncan relay | Returned f6fdeb5/622e9948; independently reproduced native/musical checks, incomplete interaction proof; superseded by iteration01, no acceptance |
 | 2026-10-12 | arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration01.md | CRC review f6fdeb5; F-01–F-06; original assignment preserved | Returned1242a60/9081268; CRC accepts LF-05/LF-06, four rows remain open; superseded by iteration02, no slice acceptance |
 | 2026-10-12 | arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration02.md | CRC review1242a60; remaining F-01–F-04; preserved prior assignments | Returned03825e5/18abe11; CRC accepts LF-01/LF-02, retains LF-05/LF-06; two rows open; superseded by iteration03 |
-| 2026-10-12 | arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration03.md | CRC review03825e5; remaining F-03/F-04; preserved prior assignments | Active CC test/evidence correction3/5; two source test paths; four rows accepted; Slice05 held |
+| 2026-10-12 | arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration03.md | CRC review03825e5; remaining F-03/F-04; preserved prior assignments | Returned ec85ebe/972e3b7; CRC2026-10-13 accepts LF-03/LF-04, retains four rows; Slice04 closed, Slice05 may open |
 
 ## Iteration01 review / iteration02 readiness — 2026-10-12
 
@@ -199,7 +198,19 @@ Guide07 readiness for iteration03:
    unaffected independent evidence stays dated/pinned, four accepted rows preserved.
    No new proof tooling, source/main edits by CRC, endpoint or permission gate.
 
+## Final review and bubble-up — 2026-10-13
+
+Iteration03 meets the remaining original observations. All six rows done; assigned
+capability delivered, no silent drops or new structural/design amendment. Retain
+native/musical evidence at original dates/revisions; fresh affected gates and host
+retry pass. Artifacts none. Removal/handles/commands/global BPM remain Slice05;
+transport/typed forms remain Arc07/13, with inherited/arc gates open. Full row walk
+and bubble-up are in crc-verification.md; CC evidence stays separately attributed.
+
 ## Version history
+
+- v1.4 — 2026-10-13: iteration03 accepted at ec85ebe; six LF rows done, Slice04
+  closed after three corrections. Routine advancement to authorized Slice05.
 
 - v1.3 — 2026-10-12: iteration02 independently reviewed at03825e5; LF-01/LF-02
   accepted, LF-05/LF-06 retained; LF-03/LF-04 open. Iteration03 issued for the
