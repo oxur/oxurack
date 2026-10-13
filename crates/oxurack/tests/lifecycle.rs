@@ -157,7 +157,12 @@ fn reset_appends_channel_silence_and_restart_uses_live_snapshot() {
         for _event in rack.drain_midi() {}
     }
     let before = rack.sample_time();
+    let scope_before: Vec<_> = rack.scope().unwrap().records().copied().collect();
     rack.reset().unwrap();
+    assert_eq!(
+        rack.scope().unwrap().records().copied().collect::<Vec<_>>(),
+        scope_before
+    );
     let cleanup: Vec<_> = rack.drain_midi().collect();
     assert!(
         cleanup
@@ -184,6 +189,13 @@ fn reset_appends_channel_silence_and_restart_uses_live_snapshot() {
     );
     for _event in rack.drain_midi() {}
     rack.stop();
+    let restart_input = std::env::temp_dir().join(format!(
+        "oxurack-live-snapshot-input-{}.ron",
+        std::process::id()
+    ));
+    std::fs::copy(MIDI_PATCH, &restart_input).unwrap();
+    rack.load_patch(&restart_input).unwrap();
+    std::fs::remove_file(&restart_input).unwrap();
     rack.set_parameter(
         "tm_main",
         "write_probability",
@@ -218,6 +230,65 @@ fn stopped_pending_output_blocks_replacement_without_clearing_events() {
     let pending: Vec<_> = rack.drain_midi().collect();
     assert!(!pending.is_empty());
     assert_eq!(rack.snapshot_patch().unwrap().master_seed, 42);
+}
+
+#[test]
+fn stopped_pending_cleanup_precedes_load_restart_and_unload_and_preserves_old_owner() {
+    for operation in ["load", "restart", "unload"] {
+        let mut rack = rack();
+        rack.load_patch(std::path::Path::new(MIDI_PATCH)).unwrap();
+        rack.configure_scope(&[ScopeSelector::new("tm_main", "note")], 512)
+            .unwrap();
+        rack.start();
+        for running_result in [
+            rack.load_patch(std::path::Path::new("/missing-running-first")),
+            rack.restart(),
+            rack.unload_patch(),
+        ] {
+            assert!(matches!(
+                running_result,
+                Err(CoreError::LifecycleRequiresStopped)
+            ));
+            assert_eq!(rack.sample_time().completed_samples(), 0);
+        }
+        for _ in 0..300 {
+            rack.advance_samples(1).unwrap();
+            for _event in rack.drain_midi() {}
+        }
+        rack.reset().unwrap();
+        rack.stop();
+        let snapshot = rack.snapshot_patch().unwrap();
+        let sample = rack.sample_time();
+        let scope: Vec<_> = rack.scope().unwrap().records().copied().collect();
+        let pending = match operation {
+            "load" => rack.load_patch(std::path::Path::new("/missing-after-pending")),
+            "restart" => rack.restart(),
+            "unload" => rack.unload_patch(),
+            _ => unreachable!(),
+        };
+        let expected_count = match pending {
+            Err(CoreError::PendingMidi { count }) => count,
+            result => {
+                panic!("{operation} must reject unread cleanup before other work: {result:?}")
+            }
+        };
+        assert!(expected_count > 0);
+        assert_eq!(rack.snapshot_patch().unwrap(), snapshot);
+        assert_eq!(rack.sample_time(), sample);
+        assert_eq!(
+            rack.scope().unwrap().records().copied().collect::<Vec<_>>(),
+            scope
+        );
+        assert_eq!(rack.drain_midi().count(), expected_count);
+        match operation {
+            "load" => rack.load_patch(std::path::Path::new(MIDI_PATCH)).unwrap(),
+            "restart" => rack.restart().unwrap(),
+            "unload" => rack.unload_patch().unwrap(),
+            _ => unreachable!(),
+        }
+        assert_eq!(rack.sample_time().completed_samples(), 0);
+        assert!(rack.scope().is_none());
+    }
 }
 
 #[test]
@@ -316,6 +387,15 @@ fn late_spawner_failure_isolated_and_old_engine_continues() {
     let records = subject.scope().unwrap().records().count();
     let mut candidate: Patch =
         oxurack_core::deserialize_patch(&std::fs::read_to_string(LFO_PATCH).unwrap()).unwrap();
+    let mut failed_sink = oxurack::ModuleConfig {
+        kind: MidiOutModule::KIND.to_owned(),
+        instance_name: "candidate_midi".to_owned(),
+        ..Default::default()
+    };
+    failed_sink
+        .parameters
+        .insert("channel".into(), ParameterValue::Int(1));
+    candidate.modules.push(failed_sink);
     candidate.modules.push(oxurack::ModuleConfig {
         kind: LateFailure::KIND.to_owned(),
         instance_name: "late_failure_instance".to_owned(),
@@ -337,23 +417,43 @@ fn late_spawner_failure_isolated_and_old_engine_continues() {
     let a = trace(&mut subject, 1000);
     let b = trace(&mut control, 1000);
     assert_eq!(a, b);
+
+    let mut recovered: Patch =
+        oxurack_core::deserialize_patch(&std::fs::read_to_string(LFO_PATCH).unwrap()).unwrap();
+    let mut recovered_sink = oxurack::ModuleConfig {
+        kind: MidiOutModule::KIND.to_owned(),
+        instance_name: "candidate_midi".to_owned(),
+        ..Default::default()
+    };
+    recovered_sink
+        .parameters
+        .insert("channel".into(), ParameterValue::Int(1));
+    recovered.modules.push(recovered_sink);
+    let recovered_path =
+        std::env::temp_dir().join(format!("oxurack-late-recovery-{}.ron", std::process::id()));
+    oxurack_core::save_patch_to_file(&recovered, &recovered_path).unwrap();
+    subject.load_patch(&recovered_path).unwrap();
+    assert_eq!(LATE_HOOK_CALLS.load(Ordering::SeqCst), 4);
+    let recovered_snapshot = subject.snapshot_patch().unwrap();
+    assert_eq!(recovered_snapshot.modules.len(), 5);
+    assert_eq!(
+        recovered_snapshot
+            .modules
+            .iter()
+            .find(|module| module.instance_name == "candidate_midi")
+            .unwrap()
+            .parameters
+            .get("channel"),
+        Some(&ParameterValue::Int(1))
+    );
+    let _ = std::fs::remove_file(recovered_path);
     let subject_app = subject.into_app();
-    let control_app = control.into_app();
+    let _control_app = control.into_app();
     assert!(
         subject_app
             .world()
             .get_resource::<CandidateMarker>()
             .is_none()
-    );
-    assert_eq!(
-        subject_app
-            .world()
-            .resource::<bevy_ecs::message::Messages<oxurack_core::ModuleAdded>>()
-            .len(),
-        control_app
-            .world()
-            .resource::<bevy_ecs::message::Messages<oxurack_core::ModuleAdded>>()
-            .len()
     );
 }
 
@@ -379,48 +479,282 @@ fn install_recipes_keep_order_reinstall_and_collision_contract() {
 
 #[test]
 fn repeated_real_patch_replacement_matches_fresh_structure_and_graph() {
-    fn structure(rack: Oxurack) -> (usize, usize, usize, usize, Vec<String>, usize, usize, usize) {
+    type PortIndexProjection = Vec<(String, String)>;
+    type ModuleIndexProjection = Vec<(String, String, PortIndexProjection)>;
+
+    #[derive(Debug, PartialEq)]
+    struct StructureProjection {
+        modules: Vec<(String, String, u64)>,
+        ports: Vec<(String, String, String)>,
+        cables: Vec<(
+            String,
+            String,
+            String,
+            String,
+            Option<CableTransform>,
+            usize,
+        )>,
+        handles: Vec<(String, String)>,
+        index_from: ModuleIndexProjection,
+        index_to: ModuleIndexProjection,
+        #[cfg(feature = "graph")]
+        graph_modules: Vec<(String, String)>,
+        #[cfg(feature = "graph")]
+        graph_cables: Vec<(String, String, String, String)>,
+        #[cfg(feature = "graph")]
+        graph_membership: (Vec<bool>, Vec<bool>),
+    }
+
+    fn structure(rack: Oxurack) -> StructureProjection {
         let mut app = rack.into_app();
         let world = app.world_mut();
-        let modules = world.query::<&oxurack_core::Module>().iter(world).count();
-        let ports = world.query::<&oxurack_core::Port>().iter(world).count();
-        let cables = world.query::<&oxurack_core::Cable>().iter(world).count();
-        let children = world
-            .query::<&bevy_ecs::hierarchy::ChildOf>()
-            .iter(world)
-            .count();
-        let mut names = world
+        let mut modules: Vec<_> = {
+            let mut query = world.query::<(bevy_ecs::entity::Entity, &oxurack_core::Module)>();
+            query
+                .iter(world)
+                .map(|(entity, module)| {
+                    (
+                        module.instance_name.clone(),
+                        module.kind.to_string(),
+                        entity.to_bits(),
+                    )
+                })
+                .collect()
+        };
+        let port_entities: Vec<_> = {
+            let mut query = world.query::<(
+                bevy_ecs::entity::Entity,
+                &oxurack_core::Port,
+                &bevy_ecs::hierarchy::ChildOf,
+            )>();
+            query
+                .iter(world)
+                .map(|(entity, port, parent)| {
+                    let module = world.get::<oxurack_core::Module>(parent.parent()).unwrap();
+                    (
+                        entity,
+                        module.instance_name.clone(),
+                        port.name.as_ref().to_owned(),
+                        format!("{:?}:{:?}", port.direction, port.value_kind),
+                    )
+                })
+                .collect()
+        };
+        let mut ports: Vec<_> = port_entities
+            .iter()
+            .map(|(_, module, port, kind)| (module.clone(), port.clone(), kind.clone()))
+            .collect();
+        let cable_entities: Vec<_> = {
+            let mut query = world.query::<(&oxurack_core::Cable, &oxurack_core::CableOrder)>();
+            query
+                .iter(world)
+                .map(|(cable, order)| {
+                    let source = world.get::<oxurack_core::Port>(cable.source_port).unwrap();
+                    let source_module = world
+                        .get::<oxurack_core::Module>(
+                            world
+                                .get::<bevy_ecs::hierarchy::ChildOf>(cable.source_port)
+                                .unwrap()
+                                .parent(),
+                        )
+                        .unwrap();
+                    let target = world.get::<oxurack_core::Port>(cable.target_port).unwrap();
+                    let target_module = world
+                        .get::<oxurack_core::Module>(
+                            world
+                                .get::<bevy_ecs::hierarchy::ChildOf>(cable.target_port)
+                                .unwrap()
+                                .parent(),
+                        )
+                        .unwrap();
+                    (
+                        source_module.instance_name.clone(),
+                        source.name.as_ref().to_owned(),
+                        target_module.instance_name.clone(),
+                        target.name.as_ref().to_owned(),
+                        cable.transform,
+                        order.0,
+                    )
+                })
+                .collect()
+        };
+        let mut cables = cable_entities;
+        let mut handles: Vec<_> = world
             .resource::<oxurack_core::PatchHandle>()
             .modules
-            .keys()
-            .cloned()
-            .collect::<Vec<_>>();
-        names.sort();
-        let index_ports = world
-            .resource::<oxurack_core::CableIndex>()
-            .target_ports()
-            .count();
-        let graph_counts = {
-            #[cfg(feature = "graph")]
-            {
-                let graph = world.resource::<oxurack_graph::RackGraph>();
-                (graph.module_count(), graph.cable_count())
-            }
-            #[cfg(not(feature = "graph"))]
-            {
-                (0, 0)
-            }
+            .iter()
+            .map(|(name, entity)| {
+                (
+                    name.clone(),
+                    world
+                        .get::<oxurack_core::Module>(*entity)
+                        .unwrap()
+                        .kind
+                        .to_string(),
+                )
+            })
+            .collect();
+        let index = world.resource::<oxurack_core::CableIndex>();
+        let mut index_from: Vec<_> = port_entities
+            .iter()
+            .map(|(entity, module, port, _)| {
+                let endpoints = index
+                    .cables_from(*entity)
+                    .iter()
+                    .map(|cable_entity| {
+                        let cable = world.get::<oxurack_core::Cable>(*cable_entity).unwrap();
+                        let target = world.get::<oxurack_core::Port>(cable.target_port).unwrap();
+                        let target_module = world
+                            .get::<oxurack_core::Module>(
+                                world
+                                    .get::<bevy_ecs::hierarchy::ChildOf>(cable.target_port)
+                                    .unwrap()
+                                    .parent(),
+                            )
+                            .unwrap();
+                        (
+                            target_module.instance_name.clone(),
+                            target.name.as_ref().to_owned(),
+                        )
+                    })
+                    .collect();
+                (module.clone(), port.clone(), endpoints)
+            })
+            .collect();
+        let mut index_to: Vec<_> = port_entities
+            .iter()
+            .map(|(entity, module, port, _)| {
+                let endpoints = index
+                    .cables_targeting(*entity)
+                    .iter()
+                    .map(|cable_entity| {
+                        let cable = world.get::<oxurack_core::Cable>(*cable_entity).unwrap();
+                        let source = world.get::<oxurack_core::Port>(cable.source_port).unwrap();
+                        let source_module = world
+                            .get::<oxurack_core::Module>(
+                                world
+                                    .get::<bevy_ecs::hierarchy::ChildOf>(cable.source_port)
+                                    .unwrap()
+                                    .parent(),
+                            )
+                            .unwrap();
+                        (
+                            source_module.instance_name.clone(),
+                            source.name.as_ref().to_owned(),
+                        )
+                    })
+                    .collect();
+                (module.clone(), port.clone(), endpoints)
+            })
+            .collect();
+        #[cfg(feature = "graph")]
+        let cable_entity_ids: Vec<_> = {
+            let mut query = world.query::<(bevy_ecs::entity::Entity, &oxurack_core::Cable)>();
+            query.iter(world).map(|(entity, _)| entity).collect()
         };
-        (
+        #[cfg(feature = "graph")]
+        let (graph_modules, graph_cables, graph_membership) = {
+            let view = oxurack_graph::GraphView::new(world);
+            let graph_modules = view
+                .modules()
+                .into_iter()
+                .map(|module| (module.instance_name, module.kind))
+                .collect();
+            let graph_cables = view
+                .cables()
+                .into_iter()
+                .map(|cable| {
+                    (
+                        cable.source_module_instance,
+                        cable.source_port_name,
+                        cable.target_module_instance,
+                        cable.target_port_name,
+                    )
+                })
+                .collect();
+            let graph_membership = (
+                world
+                    .resource::<oxurack_core::PatchHandle>()
+                    .modules
+                    .values()
+                    .map(|entity| view.contains_module(*entity))
+                    .collect(),
+                cable_entity_ids
+                    .iter()
+                    .map(|entity| view.contains_cable(*entity))
+                    .collect(),
+            );
+            for (instance_name, entity) in &world.resource::<oxurack_core::PatchHandle>().modules {
+                let port_set = view.ports_of(*entity);
+                let actual_inputs: Vec<_> = port_set
+                    .inputs
+                    .iter()
+                    .map(|port| (port.name.clone(), port.value_kind.clone()))
+                    .collect();
+                let actual_outputs: Vec<_> = port_set
+                    .outputs
+                    .iter()
+                    .map(|port| (port.name.clone(), port.value_kind.clone()))
+                    .collect();
+                let mut expected_inputs: Vec<_> = port_entities
+                    .iter()
+                    .filter(|(_, module, _, kind)| {
+                        module == instance_name && kind.starts_with("Input:")
+                    })
+                    .map(|(_, _, port, kind)| {
+                        (port.clone(), kind.trim_start_matches("Input:").to_owned())
+                    })
+                    .collect();
+                let mut expected_outputs: Vec<_> = port_entities
+                    .iter()
+                    .filter(|(_, module, _, kind)| {
+                        module == instance_name && kind.starts_with("Output:")
+                    })
+                    .map(|(_, _, port, kind)| {
+                        (port.clone(), kind.trim_start_matches("Output:").to_owned())
+                    })
+                    .collect();
+                expected_inputs.sort();
+                expected_outputs.sort();
+                assert_eq!(
+                    actual_inputs, expected_inputs,
+                    "GraphView input ports for {instance_name}"
+                );
+                assert_eq!(
+                    actual_outputs, expected_outputs,
+                    "GraphView output ports for {instance_name}"
+                );
+            }
+            (graph_modules, graph_cables, graph_membership)
+        };
+        modules.sort();
+        ports.sort();
+        cables.sort_by_key(|cable| {
+            (
+                cable.0.clone(),
+                cable.1.clone(),
+                cable.2.clone(),
+                cable.3.clone(),
+                cable.5,
+            )
+        });
+        handles.sort();
+        index_from.sort_by_key(|entry| (entry.0.clone(), entry.1.clone()));
+        index_to.sort_by_key(|entry| (entry.0.clone(), entry.1.clone()));
+        StructureProjection {
             modules,
             ports,
             cables,
-            children,
-            names,
-            index_ports,
-            graph_counts.0,
-            graph_counts.1,
-        )
+            handles,
+            index_from,
+            index_to,
+            #[cfg(feature = "graph")]
+            graph_modules,
+            #[cfg(feature = "graph")]
+            graph_cables,
+            #[cfg(feature = "graph")]
+            graph_membership,
+        }
     }
 
     let mut replacement = rack();
@@ -528,26 +862,51 @@ fn edited_saved_lifetime_replay_matches_fresh_trace_and_scope() {
         ScopeSelector::new("tm_main", "write_probability"),
     ];
     replay.configure_scope(&selectors, 21_000).unwrap();
-    let (trace, signals, overwritten) = capture_replay(&mut replay);
+    let (trace, signals, copied_midi, overwritten) = capture_replay(&mut replay);
     assert_eq!(signals.len(), 20_000);
     assert_eq!(overwritten, 0);
-    assert!(signals.iter().any(|(sample, selection, value)| {
-        *sample > 100 && *selection == 1 && *value == Value::Float(0.5)
-    }));
+    assert_eq!(
+        signals.iter().take(4).copied().collect::<Vec<_>>(),
+        vec![
+            (0, 0, Value::Bipolar(0.0)),
+            (0, 1, Value::Float(0.0)),
+            (1, 0, signals[2].2),
+            (1, 1, Value::Float(0.5)),
+        ]
+    );
+    for sample in 0..10_000 {
+        assert_eq!(signals[sample as usize * 2].0, sample);
+        assert_eq!(signals[sample as usize * 2].1, 0);
+        assert_eq!(
+            signals[sample as usize * 2 + 1],
+            (sample, 1, Value::Float(if sample == 0 { 0.0 } else { 0.5 }),)
+        );
+    }
+    assert_eq!(copied_midi.len(), trace.len());
+    assert_eq!(
+        copied_midi,
+        trace
+            .iter()
+            .map(|(sample, bytes)| (*sample, *bytes, MidiDelivery::Generated))
+            .collect::<Vec<_>>()
+    );
 
     let mut fresh = rack();
     fresh.load_patch(&saved).unwrap();
     fresh.configure_scope(&selectors, 21_000).unwrap();
-    let (fresh_trace, fresh_signals, fresh_overwritten) = capture_replay(&mut fresh);
+    let (fresh_trace, fresh_signals, fresh_midi, fresh_overwritten) = capture_replay(&mut fresh);
     assert_eq!(trace, fresh_trace);
     assert_eq!(signals, fresh_signals);
     assert_eq!(fresh_overwritten, 0);
+    assert_eq!(trace.len(), 72);
+    assert_eq!(copied_midi, fresh_midi);
     let _ = std::fs::remove_file(saved);
 }
 
 type MidiTrace = Vec<(u64, [u8; 3])>;
 type SignalTrace = Vec<(u64, usize, Value)>;
-type ReplayCapture = (MidiTrace, SignalTrace, u64);
+type ScopeMidiTrace = Vec<(u64, [u8; 3], MidiDelivery)>;
+type ReplayCapture = (MidiTrace, SignalTrace, ScopeMidiTrace, u64);
 
 fn capture_replay(rack: &mut Oxurack) -> ReplayCapture {
     rack.start();
@@ -576,7 +935,17 @@ fn capture_replay(rack: &mut Oxurack) -> ReplayCapture {
             _ => None,
         })
         .collect();
-    (trace, signals, capture.overwritten())
+    let copied_midi = capture
+        .records()
+        .filter_map(|record| match record {
+            ScopeRecord::Midi { event, delivery } => {
+                Some((event.sample, event.message.to_bytes(), *delivery))
+            }
+            ScopeRecord::Signal { .. } => None,
+            _ => None,
+        })
+        .collect();
+    (trace, signals, copied_midi, capture.overwritten())
 }
 
 fn trace(rack: &mut Oxurack, count: u64) -> Vec<(u64, [u8; 3])> {

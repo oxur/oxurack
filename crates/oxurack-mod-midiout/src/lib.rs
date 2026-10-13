@@ -991,6 +991,95 @@ mod tests {
     }
 
     #[test]
+    fn silence_invariant_failure_keeps_events_voice_state_and_fault_unchanged() {
+        let (mut app, entities) = app_with_sinks(&[("sink", &[])]);
+        let sink = entities[0];
+        let pending = MidiOutputEvent {
+            sample: 0,
+            message: MidiWire::cc(0, 7, 9),
+        };
+        app.world_mut()
+            .resource_mut::<MidiOutputBuffer>()
+            .push(pending)
+            .unwrap();
+        app.world_mut()
+            .get_mut::<MidiOutState>(sink)
+            .unwrap()
+            .active_note = Some(60);
+        let before = app.world().resource::<MidiOutputBuffer>().events.clone();
+        let fault = app.world().resource::<MidiOutputBuffer>().fault().cloned();
+        assert!(silence_outputs(app.world_mut()).is_err());
+        assert_eq!(app.world().resource::<MidiOutputBuffer>().events, before);
+        assert_eq!(
+            app.world()
+                .resource::<MidiOutputBuffer>()
+                .fault()
+                .map(|error| format!("{error:?}")),
+            fault.as_ref().map(|error| format!("{error:?}"))
+        );
+        let state = app.world().get::<MidiOutState>(sink).unwrap();
+        assert_eq!(state.active_note, Some(60));
+        assert!(!state.dirty);
+        app.world_mut().get_mut::<MidiOutState>(sink).unwrap().dirty = true;
+        silence_outputs(app.world_mut()).unwrap();
+        let emitted = bytes(&mut app);
+        assert_eq!(
+            emitted,
+            vec![[0xB0, 7, 9], [0x80, 60, 0], [0xB0, 123, 0], [0xB0, 120, 0]]
+        );
+    }
+
+    #[test]
+    fn generated_cc_only_and_released_note_both_receive_cleanup() {
+        let config = [
+            ("channel", ParameterValue::Int(0)),
+            ("noise_cc", ParameterValue::Int(74)),
+        ];
+        let (mut app, entities) = app_with_sinks(&[("sink", &config)]);
+        let sink = entities[0];
+        set_step(
+            app.world_mut(),
+            sink,
+            &[
+                ("step", Value::Gate(true)),
+                ("note_valid", Value::Gate(false)),
+                ("velocity_valid", Value::Gate(false)),
+                ("gate", Value::Gate(false)),
+                ("noise_cc", Value::Raw(23)),
+            ],
+        );
+        run(&mut app);
+        assert_eq!(bytes(&mut app), vec![[0xB0, 74, 23]]);
+        let state = app.world().get::<MidiOutState>(sink).unwrap();
+        assert_eq!(state.active_note, None);
+        assert!(state.dirty);
+        silence_outputs(app.world_mut()).unwrap();
+        assert_eq!(bytes(&mut app), vec![[0xB0, 123, 0], [0xB0, 120, 0]]);
+
+        set_step(
+            app.world_mut(),
+            sink,
+            &[
+                ("note_valid", Value::Gate(true)),
+                ("velocity_valid", Value::Gate(true)),
+                ("gate", Value::Gate(true)),
+                ("note", Value::Raw(60)),
+                ("velocity", Value::Raw(100)),
+            ],
+        );
+        run(&mut app);
+        assert_eq!(bytes(&mut app), vec![[0x90, 60, 100], [0xB0, 74, 23]]);
+        set_input(app.world_mut(), sink, "gate", Value::Gate(false));
+        run(&mut app);
+        assert_eq!(bytes(&mut app), vec![[0x80, 60, 0], [0xB0, 74, 23]]);
+        let state = app.world().get::<MidiOutState>(sink).unwrap();
+        assert_eq!(state.active_note, None);
+        assert!(state.dirty);
+        silence_outputs(app.world_mut()).unwrap();
+        assert_eq!(bytes(&mut app), vec![[0xB0, 123, 0], [0xB0, 120, 0]]);
+    }
+
+    #[test]
     fn sixteen_sinks_fit_eighty_normal_plus_forty_eight_cleanup_events() {
         let parameters = (0..16)
             .map(|channel| {
@@ -1024,39 +1113,131 @@ mod tests {
             );
         }
         run(&mut app);
-        assert_eq!(bytes(&mut app).len(), 16 * 4);
+        let first: Vec<_> = app
+            .world_mut()
+            .resource_mut::<MidiOutputBuffer>()
+            .drain()
+            .collect();
+        let expected_first: Vec<_> = (0..16)
+            .flat_map(|channel| {
+                let ch = channel as u8;
+                let note = 60 + channel as u8;
+                vec![
+                    MidiOutputEvent {
+                        sample: 0,
+                        message: MidiWire::note_on(ch, note, 100),
+                    },
+                    MidiOutputEvent {
+                        sample: 0,
+                        message: MidiWire::cc(ch, 74, 23),
+                    },
+                    MidiOutputEvent {
+                        sample: 0,
+                        message: MidiWire::cc(ch, 75, note),
+                    },
+                    MidiOutputEvent {
+                        sample: 0,
+                        message: MidiWire::cc(ch, 76, 100),
+                    },
+                ]
+            })
+            .collect();
+        assert_eq!(first, expected_first);
         let capacity = app.world().resource::<MidiOutputBuffer>().events.capacity();
         run(&mut app);
+        let expected_ordinary: Vec<_> = (0..16)
+            .flat_map(|channel| {
+                let ch = channel as u8;
+                let note = 60 + channel as u8;
+                vec![
+                    MidiOutputEvent {
+                        sample: 1,
+                        message: MidiWire::note_off(ch, note, 0),
+                    },
+                    MidiOutputEvent {
+                        sample: 1,
+                        message: MidiWire::note_on(ch, note, 100),
+                    },
+                    MidiOutputEvent {
+                        sample: 1,
+                        message: MidiWire::cc(ch, 74, 23),
+                    },
+                    MidiOutputEvent {
+                        sample: 1,
+                        message: MidiWire::cc(ch, 75, note),
+                    },
+                    MidiOutputEvent {
+                        sample: 1,
+                        message: MidiWire::cc(ch, 76, 100),
+                    },
+                ]
+            })
+            .collect();
         assert_eq!(
             app.world().resource::<MidiOutputBuffer>().pending_count(),
             80
         );
-        let batch = prepare_silence(app.world()).unwrap();
-        assert_eq!(batch.len, CLEANUP_EVENTS);
-        app.world_mut()
-            .resource_mut::<MidiOutputBuffer>()
-            .append_silence(&batch)
-            .unwrap();
-        let buffer = app.world().resource::<MidiOutputBuffer>();
-        assert_eq!(buffer.pending_count(), TOTAL_EVENTS);
-        assert_eq!(buffer.logical_capacity, 80);
-        assert_eq!(buffer.events.capacity(), capacity);
-        assert!(buffer.check_admission().is_err());
-        assert!(
-            app.world_mut()
-                .resource_mut::<MidiOutputBuffer>()
-                .append_silence(&batch)
-                .is_err()
+        assert_eq!(
+            app.world().resource::<MidiOutputBuffer>().events.as_slice(),
+            expected_ordinary.as_slice()
         );
+        silence_outputs(app.world_mut()).unwrap();
         assert_eq!(
             app.world().resource::<MidiOutputBuffer>().pending_count(),
             TOTAL_EVENTS
         );
         assert!(
-            sinks
-                .iter()
-                .all(|sink| app.world().get::<MidiOutState>(*sink).unwrap().dirty)
+            app.world()
+                .resource::<MidiOutputBuffer>()
+                .check_admission()
+                .is_err()
         );
+        silence_outputs(app.world_mut()).unwrap();
+        assert_eq!(
+            app.world().resource::<MidiOutputBuffer>().pending_count(),
+            TOTAL_EVENTS
+        );
+        let all: Vec<_> = app
+            .world_mut()
+            .resource_mut::<MidiOutputBuffer>()
+            .drain()
+            .collect();
+        let expected_cleanup: Vec<_> = (0..16)
+            .flat_map(|channel| {
+                let ch = channel as u8;
+                let note = 60 + channel as u8;
+                vec![
+                    MidiOutputEvent {
+                        sample: 2,
+                        message: MidiWire::note_off(ch, note, 0),
+                    },
+                    MidiOutputEvent {
+                        sample: 2,
+                        message: MidiWire::cc(ch, 123, 0),
+                    },
+                    MidiOutputEvent {
+                        sample: 2,
+                        message: MidiWire::cc(ch, 120, 0),
+                    },
+                ]
+            })
+            .collect();
+        let expected = [expected_ordinary, expected_cleanup].concat();
+        assert_eq!(all.len(), expected.len());
+        for (index, (actual, wanted)) in all.iter().zip(&expected).enumerate() {
+            assert_eq!(actual, wanted, "event {index}");
+        }
+        let buffer = app.world().resource::<MidiOutputBuffer>();
+        assert_eq!(buffer.pending_count(), 0);
+        assert_eq!(buffer.logical_capacity, 80);
+        assert_eq!(buffer.events.capacity(), capacity);
+        assert!(buffer.check_admission().is_ok());
+        assert!(sinks.iter().all(|sink| {
+            let state = app.world().get::<MidiOutState>(*sink).unwrap();
+            !state.dirty && state.active_note.is_none()
+        }));
+        silence_outputs(app.world_mut()).unwrap();
+        assert!(bytes(&mut app).is_empty());
     }
 
     #[test]

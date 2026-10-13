@@ -25,9 +25,13 @@ struct Args {
     lifecycle: bool,
 }
 
-fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
+fn run_with_output(
+    args: Args,
+    output: &mut impl Write,
+    status: &mut impl Write,
+) -> Result<(), Box<dyn std::error::Error>> {
     if args.lifecycle {
-        return run_lifecycle(args);
+        return run_lifecycle(args, output, status);
     }
     let mut rack = Oxurack::new();
     let result = (|| {
@@ -48,14 +52,19 @@ fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
     })();
     rack.stop();
     let (previous, completed_samples) = result?;
-    println!(
+    writeln!(
+        output,
         "lfo_main.frequency_hz: {previous:?} -> 1.0\nsaved={}\ncompleted_samples={completed_samples}",
         args.save.display()
-    );
+    )?;
     Ok(())
 }
 
-fn run_lifecycle(args: Args) -> Result<(), Box<dyn std::error::Error>> {
+fn run_lifecycle(
+    args: Args,
+    output: &mut impl Write,
+    status: &mut impl Write,
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut rack = Oxurack::new();
     rack.try_install::<ClockModule>()?;
     rack.try_install::<LfoModule>()?;
@@ -120,13 +129,18 @@ fn run_lifecycle(args: Args) -> Result<(), Box<dyn std::error::Error>> {
     }
     advance_and_drain(&mut rack, 100)?;
     rack.stop();
+    let retired_sample = rack.sample_time().completed_samples();
     rack.unload_patch()?;
     let cleanup: Vec<_> = rack.drain_midi().collect();
-    eprintln!(
+    writeln!(
+        status,
         "lifecycle: retired at sample {}; cleanup events={}",
-        rack.sample_time().completed_samples(),
+        retired_sample,
         cleanup.len()
-    );
+    )?;
+    if retired_sample != 300 {
+        return Err(format!("retired lifetime ended at unexpected sample {retired_sample}").into());
+    }
     if rack.sample_time().completed_samples() != 0
         || rack.scope().is_some()
         || rack.snapshot_patch().is_ok()
@@ -137,6 +151,11 @@ fn run_lifecycle(args: Args) -> Result<(), Box<dyn std::error::Error>> {
     if rack.sample_time().completed_samples() != 0 {
         return Err("reload did not start at sample zero".into());
     }
+    writeln!(
+        status,
+        "lifecycle: new lifetime sample={}",
+        rack.sample_time().completed_samples()
+    )?;
     rack.configure_scope(
         &[
             ScopeSelector::new("lfo_main", "bipolar_out"),
@@ -145,9 +164,8 @@ fn run_lifecycle(args: Args) -> Result<(), Box<dyn std::error::Error>> {
         21_000,
     )?;
     rack.start();
-    let stdout = std::io::stdout();
-    let mut output = stdout.lock();
     let mut drained = Vec::with_capacity(128);
+    let mut printed_trace = Vec::new();
     for _ in 0..10_000 {
         rack.advance_samples(1)?;
         drained.clear();
@@ -159,10 +177,10 @@ fn run_lifecycle(args: Args) -> Result<(), Box<dyn std::error::Error>> {
                 "{}|{status:02X} {data1:02X} {data2:02X}",
                 event.sample
             )?;
+            printed_trace.push((event.sample, status, data1, data2));
             rack.record_scope_midi(event, MidiDelivery::Generated);
         }
     }
-    drop(output);
     rack.stop();
     let capture = rack.scope().ok_or("Scope disappeared during replay")?;
     let values: Vec<_> = capture
@@ -184,19 +202,64 @@ fn run_lifecycle(args: Args) -> Result<(), Box<dyn std::error::Error>> {
         )
         .into());
     }
-    if !values
+    let (records, remainder) = values.as_chunks::<2>();
+    if !remainder.is_empty() {
+        return Err("Scope capture ended with an incomplete signal pair".into());
+    }
+    for (sample, record) in records.iter().enumerate() {
+        if record[0].0 != sample as u64
+            || record[0].1 != 0
+            || record[1].0 != sample as u64
+            || record[1].1 != 1
+        {
+            return Err(format!("Scope signal order/sample mismatch at sample {sample}").into());
+        }
+        let expected_probability = if sample == 0 { 0.0 } else { 0.5 };
+        if record[1].2 != Value::Float(expected_probability) {
+            return Err(format!("Scope probability mismatch at sample {sample}").into());
+        }
+    }
+    let midi_records: Vec<_> = capture
+        .records()
+        .filter_map(|record| match record {
+            ScopeRecord::Midi { event, delivery } => Some((*event, *delivery)),
+            _ => None,
+        })
+        .collect();
+    if capture.records().count() != 20_072 {
+        return Err(format!(
+            "Scope mixed capture incomplete: records={}",
+            capture.records().count()
+        )
+        .into());
+    }
+    let trace_records = midi_records
         .iter()
-        .any(|(_, selection, value)| *selection == 1 && *value == Value::Float(0.5))
+        .map(|(event, _)| {
+            let [status, data1, data2] = event.message.to_bytes();
+            (event.sample, status, data1, data2)
+        })
+        .collect::<Vec<_>>();
+    if midi_records.len() != 72
+        || midi_records
+            .iter()
+            .any(|(_, delivery)| *delivery != MidiDelivery::Generated)
+        || trace_records != printed_trace
     {
-        return Err("Scope did not observe effective write probability 0.5".into());
+        return Err(format!(
+            "Scope MIDI capture mismatch: records={}",
+            midi_records.len()
+        )
+        .into());
     }
     rack.reset()?;
     let final_silence: Vec<_> = rack.drain_midi().collect();
-    eprintln!(
+    writeln!(
+        status,
         "lifecycle: replay samples=10000; scope signals={}; final silence events={}",
         values.len(),
         final_silence.len()
-    );
+    )?;
     Ok(())
 }
 
@@ -209,11 +272,158 @@ fn advance_and_drain(rack: &mut Oxurack, samples: u64) -> Result<(), oxurack::Co
 }
 
 fn main() -> ExitCode {
-    match run(Args::parse()) {
+    match run_with_output(
+        Args::parse(),
+        &mut std::io::stdout().lock(),
+        &mut std::io::stderr().lock(),
+    ) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("save-live-patch: {error}");
             ExitCode::FAILURE
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
+
+    fn path(label: &str, extension: &str) -> PathBuf {
+        let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
+        std::env::temp_dir().join(format!(
+            "oxurack-save-live-{label}-{}-{id}.{extension}",
+            std::process::id()
+        ))
+    }
+
+    fn args(patch: PathBuf, save: PathBuf, lifecycle: bool) -> Args {
+        let mut argv = vec![
+            std::ffi::OsString::from("save-live-patch"),
+            std::ffi::OsString::from("--patch"),
+            patch.into_os_string(),
+            std::ffi::OsString::from("--save"),
+            save.into_os_string(),
+        ];
+        if lifecycle {
+            argv.push("--lifecycle".into());
+        }
+        Args::try_parse_from(argv).unwrap()
+    }
+
+    #[test]
+    fn parsed_default_dispatch_preserves_summary_and_reports_writer_failure() {
+        let patch = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("examples/patches/turing-machine-lfo.ron");
+        let save = path("default", "ron");
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+        run_with_output(args(patch, save.clone(), false), &mut stdout, &mut stderr).unwrap();
+        let stdout = String::from_utf8(stdout).unwrap();
+        assert!(stdout.contains("lfo_main.frequency_hz:"));
+        assert!(stdout.contains("completed_samples=300"));
+        assert!(stderr.is_empty());
+        assert!(save.exists());
+        let _ = std::fs::remove_file(save);
+
+        struct RejectWriter;
+        impl Write for RejectWriter {
+            fn write(&mut self, _bytes: &[u8]) -> std::io::Result<usize> {
+                Err(std::io::Error::other("controlled writer failure"))
+            }
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
+        let save = path("writer-error", "ron");
+        let error = run_with_output(
+            args(
+                PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                    .join("examples/patches/turing-machine-lfo.ron"),
+                save.clone(),
+                false,
+            ),
+            &mut RejectWriter,
+            &mut Vec::new(),
+        )
+        .unwrap_err();
+        assert!(error.to_string().contains("controlled writer failure"));
+        let _ = std::fs::remove_file(save);
+    }
+
+    #[test]
+    fn parsed_lifecycle_dispatch_captures_complete_trace_and_retired_boundary() {
+        let patch = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("examples/patches/turing-machine-lfo.ron");
+        let save = path("lifecycle", "ron");
+        let mut stdout = Vec::new();
+        let mut stderr = Vec::new();
+        run_with_output(args(patch, save.clone(), true), &mut stdout, &mut stderr).unwrap();
+        let stdout = String::from_utf8(stdout).unwrap();
+        let stderr = String::from_utf8(stderr).unwrap();
+        assert_eq!(stdout.lines().count(), 72);
+        assert!(!stdout.contains("completed_samples=300"));
+        assert!(stderr.contains("retired at sample 300; cleanup events=3"));
+        assert!(stderr.contains("new lifetime sample=0"));
+        assert!(stderr.contains("scope signals=20000"));
+        assert!(save.exists());
+        let _ = std::fs::remove_file(save);
+    }
+
+    #[test]
+    fn clap_rejects_missing_arguments_and_unknown_flags() {
+        assert!(Args::try_parse_from(["save-live-patch", "--patch", "x"]).is_err());
+        assert!(
+            Args::try_parse_from(["save-live-patch", "--patch", "x", "--save", "y", "--wat"])
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn actual_dispatch_reports_missing_malformed_and_unwritable_inputs_in_both_modes() {
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("examples/patches/turing-machine-lfo.ron");
+        for lifecycle in [false, true] {
+            let missing = path("missing-patch", "ron");
+            let error = run_with_output(
+                args(missing, path("missing-save", "ron"), lifecycle),
+                &mut Vec::new(),
+                &mut Vec::new(),
+            )
+            .unwrap_err();
+            assert!(
+                error.to_string().contains("No such file")
+                    || error.to_string().contains("cannot find")
+            );
+
+            let malformed = path("malformed-patch", "ron");
+            std::fs::write(&malformed, "(not valid RON").unwrap();
+            let error = run_with_output(
+                args(malformed.clone(), path("malformed-save", "ron"), lifecycle),
+                &mut Vec::new(),
+                &mut Vec::new(),
+            )
+            .unwrap_err();
+            assert!(
+                error.to_string().to_lowercase().contains("ron")
+                    || error.to_string().to_lowercase().contains("parse")
+            );
+            let _ = std::fs::remove_file(malformed);
+
+            let missing_parent = path("unwritable-parent", "dir").join("save.ron");
+            let error = run_with_output(
+                args(fixture.clone(), missing_parent, lifecycle),
+                &mut Vec::new(),
+                &mut Vec::new(),
+            )
+            .unwrap_err();
+            assert!(
+                error.to_string().contains("No such file")
+                    || error.to_string().contains("cannot find")
+            );
         }
     }
 }

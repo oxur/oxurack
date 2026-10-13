@@ -672,6 +672,7 @@ mod tests {
     struct LiveSystemRuns(usize);
 
     struct LiveBehaviorCounter;
+    struct ConflictingLiveBehaviorCounter;
 
     fn live_invalid_parameter(reason: &str) -> CoreError {
         CoreError::InvalidParameterValue {
@@ -772,6 +773,25 @@ mod tests {
         }
     }
 
+    impl OxurackModule for ConflictingLiveBehaviorCounter {
+        const KIND: &'static str = "behavior_counter";
+        const DISPLAY_NAME: &'static str = "Conflicting Counter";
+
+        fn port_schema() -> &'static [PortSchema] {
+            &[]
+        }
+        fn parameter_schema() -> &'static [ParameterSchema] {
+            &[]
+        }
+        fn spawn(
+            _world: &mut bevy_ecs::world::World,
+            _instance_name: &str,
+            _parameters: &HashMap<String, ParameterValue>,
+        ) -> Result<Entity, CoreError> {
+            Err(CoreError::NotImplemented("collision spawner must not run"))
+        }
+    }
+
     fn live_state(rack: &Oxurack, handle: &PatchHandle, name: &str) -> LiveStepState {
         rack.world()
             .entity(handle.modules[name])
@@ -851,6 +871,123 @@ mod tests {
         assert_eq!(live_state(&rack, &handle, "beta").total, 9);
         assert_eq!(rack.world().resource::<LiveHookCalls>().0, 1);
         assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 3);
+    }
+
+    #[test]
+    fn installation_recipe_replays_once_across_restart_unload_and_reload() {
+        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/behavior-installation.ron");
+        let mut rack = Oxurack::new();
+        rack.try_install::<LiveBehaviorCounter>().unwrap();
+        rack.set_driver_mode(SimulationDriver::Manual);
+        rack.load_patch(&fixture).unwrap();
+        let original_handle = rack.world().resource::<PatchHandle>().clone();
+        let alpha = original_handle.modules["alpha"];
+        rack.set_parameter("alpha", "increment", ParameterValue::Int(5))
+            .unwrap();
+        assert_eq!(live_parameter(&mut rack, alpha), ParameterValue::Int(5));
+        assert_eq!(rack.world().resource::<LiveHookCalls>().0, 1);
+        assert!(matches!(
+            rack.try_install::<ConflictingLiveBehaviorCounter>(),
+            Err(CoreError::ModuleKindConflict { .. })
+        ));
+        assert_eq!(rack.world().resource::<LiveHookCalls>().0, 1);
+
+        rack.start();
+        rack.world_mut().run_schedule(FixedUpdate);
+        rack.stop();
+        assert_eq!(live_state(&rack, &original_handle, "alpha").total, 5);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 1);
+        rack.restart().unwrap();
+        assert_eq!(rack.sample_time().completed_samples(), 0);
+        assert_eq!(rack.world().resource::<LiveHookCalls>().0, 1);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 0);
+        let restarted = rack.world().resource::<PatchHandle>().clone();
+        let alpha = restarted.modules["alpha"];
+        assert_eq!(live_parameter(&mut rack, alpha), ParameterValue::Int(5));
+        rack.start();
+        assert_eq!(rack.advance_samples(1).unwrap(), 1);
+        assert_eq!(live_state(&rack, &restarted, "alpha").total, 5);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 1);
+
+        rack.stop();
+        rack.unload_patch().unwrap();
+        assert!(rack.world().get_resource::<PatchHandle>().is_none());
+        assert_eq!(rack.sample_time().completed_samples(), 0);
+        assert_eq!(rack.world().resource::<LiveHookCalls>().0, 1);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 0);
+        rack.load_patch(&fixture).unwrap();
+        let reloaded = rack.world().resource::<PatchHandle>().clone();
+        let alpha = reloaded.modules["alpha"];
+        assert_eq!(rack.world().resource::<LiveHookCalls>().0, 1);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 0);
+        assert_eq!(live_parameter(&mut rack, alpha), ParameterValue::Int(2));
+        rack.start();
+        assert_eq!(rack.advance_samples(1).unwrap(), 1);
+        assert_eq!(live_state(&rack, &reloaded, "alpha").total, 2);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 1);
+    }
+
+    #[test]
+    fn live_driver_replacement_rebases_time_without_catch_up() {
+        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/behavior-installation.ron");
+        let mut rack = Oxurack::new();
+        rack.try_install::<LiveBehaviorCounter>().unwrap();
+        rack.set_driver_mode(SimulationDriver::Live);
+        rack.load_patch(&fixture).unwrap();
+        rack.world_mut()
+            .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::ZERO));
+        rack.start();
+        rack.step();
+        assert_eq!(rack.sample_time().completed_samples(), 0);
+        rack.world_mut()
+            .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_millis(1)));
+        rack.step();
+        assert_eq!(rack.sample_time().completed_samples(), 1);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 1);
+
+        rack.stop();
+        rack.restart().unwrap();
+        assert_eq!(rack.driver_mode(), SimulationDriver::Live);
+        rack.world_mut()
+            .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_millis(
+                500,
+            )));
+        rack.step();
+        assert_eq!(rack.sample_time().completed_samples(), 0);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 0);
+        rack.start();
+        rack.world_mut()
+            .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::ZERO));
+        rack.step();
+        assert_eq!(rack.sample_time().completed_samples(), 0);
+        rack.world_mut()
+            .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_millis(1)));
+        rack.step();
+        assert_eq!(rack.sample_time().completed_samples(), 1);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 1);
+
+        rack.stop();
+        rack.unload_patch().unwrap();
+        rack.world_mut()
+            .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_millis(
+                500,
+            )));
+        rack.step();
+        assert_eq!(rack.sample_time().completed_samples(), 0);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 0);
+        rack.load_patch(&fixture).unwrap();
+        rack.world_mut()
+            .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::ZERO));
+        rack.start();
+        rack.step();
+        assert_eq!(rack.sample_time().completed_samples(), 0);
+        rack.world_mut()
+            .insert_resource(TimeUpdateStrategy::ManualDuration(Duration::from_millis(1)));
+        rack.step();
+        assert_eq!(rack.sample_time().completed_samples(), 1);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 1);
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -1885,16 +2022,35 @@ mod tests {
             rack.world().resource::<Time<Virtual>>().elapsed(),
             Duration::from_millis(1)
         );
-        assert_eq!(
-            rack.drain_midi()
-                .map(|event| event.message.to_bytes())
-                .collect::<Vec<_>>(),
-            vec![[0x90, 60, 100]]
-        );
         assert!(matches!(
             rack.midi_output_error(),
-            Some(TickError::OutputBackpressure { .. })
+            Some(TickError::OutputBackpressure {
+                pending_messages: 1,
+                completed_samples: 0
+            })
         ));
+        rack.reset().unwrap();
+        let reset_events: Vec<_> = rack.drain_midi().collect();
+        assert_eq!(
+            reset_events
+                .iter()
+                .map(|event| (event.sample, event.message.to_bytes()))
+                .collect::<Vec<_>>(),
+            vec![
+                (0, [0x90, 60, 100]),
+                (1, [0x80, 60, 0]),
+                (1, [0xB0, 123, 0]),
+                (1, [0xB0, 120, 0]),
+            ]
+        );
+        let retained_fault = rack.midi_output_error().map(|error| format!("{error:?}"));
+        rack.reset().unwrap();
+        assert!(rack.drain_midi().next().is_none());
+        assert_eq!(
+            rack.midi_output_error().map(|error| format!("{error:?}")),
+            retained_fault
+        );
+        assert_eq!(rack.sample_time().completed_samples(), 1);
         assert_eq!(
             rack.advance_samples(1).unwrap(),
             0,
@@ -1972,6 +2128,116 @@ mod tests {
         assert_eq!(rack.sample_time().completed_samples(), 1);
         assert!(!rack.world().resource::<SimulationRunning>().0);
         assert!(rack.drain_midi().next().is_none());
+    }
+
+    #[test]
+    fn real_backpressure_fault_recovers_through_load_restart_and_unload() {
+        for operation in ["load", "restart", "unload"] {
+            let patch = Patch {
+                version: "1.0".into(),
+                master_seed: 42,
+                bpm: 120.0,
+                modules: vec![ModuleConfig {
+                    kind: MidiOutModule::KIND.into(),
+                    instance_name: "midi_main".into(),
+                    parameters: HashMap::new(),
+                    ..Default::default()
+                }],
+                cables: Vec::new(),
+                rack: None,
+            };
+            let path = std::env::temp_dir().join(format!(
+                "oxurack-real-fault-{operation}-{}.ron",
+                std::process::id()
+            ));
+            oxurack_core::save_patch_to_file(&patch, &path).unwrap();
+            let mut rack = Oxurack::new();
+            rack.try_install::<MidiOutModule>().unwrap();
+            rack.set_driver_mode(SimulationDriver::Manual);
+            rack.load_patch(&path).unwrap();
+            rack.configure_scope(&[ScopeSelector::new("midi_main", "note")], 512)
+                .unwrap();
+            let sink = rack.world().resource::<PatchHandle>().modules["midi_main"];
+            for (port, value) in [
+                ("step", Value::Gate(true)),
+                ("note_valid", Value::Gate(true)),
+                ("velocity_valid", Value::Gate(true)),
+                ("gate", Value::Gate(true)),
+                ("note", Value::Raw(60)),
+                ("velocity", Value::Raw(100)),
+            ] {
+                set_port_value(&mut rack, sink, port, value);
+            }
+            rack.start();
+            for _ in 0..251 {
+                assert_eq!(rack.advance_samples(1).unwrap(), 1);
+                for _event in rack.drain_midi() {}
+            }
+            assert_eq!(rack.sample_time().completed_samples(), 251);
+            let error = rack.advance_samples(2).unwrap_err();
+            assert!(matches!(
+                error,
+                CoreError::Tick(TickError::OutputBackpressure {
+                    pending_messages: 2,
+                    completed_samples: 1
+                })
+            ));
+            assert_eq!(rack.sample_time().completed_samples(), 252);
+            assert!(!rack.world().resource::<SimulationRunning>().0);
+            let original_fault = format!("{:?}", rack.midi_output_error().unwrap());
+            let before_snapshot = rack.snapshot_patch().unwrap();
+            let before_scope: Vec<_> = rack.scope().unwrap().records().copied().collect();
+            let rejected = match operation {
+                "load" => rack.load_patch(Path::new("/missing-real-fault-candidate")),
+                "restart" => rack.restart(),
+                "unload" => rack.unload_patch(),
+                _ => unreachable!(),
+            };
+            assert!(matches!(rejected, Err(CoreError::PendingMidi { count: 2 })));
+            assert_eq!(rack.snapshot_patch().unwrap(), before_snapshot);
+            assert_eq!(rack.sample_time().completed_samples(), 252);
+            assert_eq!(
+                rack.scope().unwrap().records().copied().collect::<Vec<_>>(),
+                before_scope
+            );
+            assert_eq!(
+                format!("{:?}", rack.midi_output_error().unwrap()),
+                original_fault
+            );
+            let ordinary = rack.drain_midi().collect::<Vec<_>>();
+            assert_eq!(
+                ordinary
+                    .iter()
+                    .map(|event| (event.sample, event.message.to_bytes()))
+                    .collect::<Vec<_>>(),
+                vec![(251, [0x80, 60, 0]), (251, [0x90, 60, 100])]
+            );
+            assert_eq!(
+                format!("{:?}", rack.midi_output_error().unwrap()),
+                original_fault
+            );
+            match operation {
+                "load" => rack.load_patch(&path).unwrap(),
+                "restart" => rack.restart().unwrap(),
+                "unload" => rack.unload_patch().unwrap(),
+                _ => unreachable!(),
+            }
+            assert_eq!(rack.sample_time().completed_samples(), 0);
+            assert_eq!(rack.driver_mode(), SimulationDriver::Manual);
+            assert!(rack.scope().is_none());
+            assert!(rack.midi_output_error().is_none());
+            assert_eq!(
+                rack.drain_midi()
+                    .map(|event| (event.sample, event.message.to_bytes()))
+                    .collect::<Vec<_>>(),
+                vec![
+                    (252, [0x80, 60, 0]),
+                    (252, [0xB0, 123, 0]),
+                    (252, [0xB0, 120, 0]),
+                ]
+            );
+            let _ = std::fs::remove_file(path);
+        }
     }
 
     // ── Graph tests (feature-gated) ───────────────────────────────

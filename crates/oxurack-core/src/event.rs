@@ -680,6 +680,72 @@ mod tests {
     }
 
     #[test]
+    fn panic_and_set_bpm_errors_emit_no_mutation_notifications() {
+        let mut app = bevy_app::App::new();
+        app.add_plugins(crate::CorePlugin);
+        let world = app.world_mut();
+        #[derive(bevy_ecs::prelude::Resource, Debug, PartialEq, Eq)]
+        struct ProbeResource(u32);
+        #[derive(bevy_ecs::prelude::Component)]
+        struct ProbeComponent;
+        world.insert_resource(ProbeResource(19));
+        world.insert_resource(crate::SampleTime::default());
+        world.insert_resource(crate::SimulationRunning(true));
+        let entity = world.spawn(ProbeComponent).id();
+        let before_sample_time = *world.resource::<crate::SampleTime>();
+        for command in [CoreCommand::Panic, CoreCommand::SetBpm(140.0)] {
+            let result = dispatch_core_command(world, &command);
+            let expected = match command {
+                CoreCommand::Panic => "Panic",
+                CoreCommand::SetBpm(_) => "SetBpm",
+                _ => unreachable!(),
+            };
+            assert!(
+                matches!(result, Err(crate::CoreError::NotImplemented(name)) if name == expected)
+            );
+            assert!(
+                world
+                    .resource::<bevy_ecs::message::Messages<ModuleAdded>>()
+                    .is_empty()
+            );
+            assert!(
+                world
+                    .resource::<bevy_ecs::message::Messages<ModuleRemoved>>()
+                    .is_empty()
+            );
+            assert!(
+                world
+                    .resource::<bevy_ecs::message::Messages<CableConnected>>()
+                    .is_empty()
+            );
+            assert!(
+                world
+                    .resource::<bevy_ecs::message::Messages<CableDisconnected>>()
+                    .is_empty()
+            );
+            assert!(
+                world
+                    .resource::<bevy_ecs::message::Messages<ParameterChanged>>()
+                    .is_empty()
+            );
+            assert!(
+                world
+                    .resource::<bevy_ecs::message::Messages<LabelChanged>>()
+                    .is_empty()
+            );
+            assert!(
+                world
+                    .resource::<bevy_ecs::message::Messages<PatchLoaded>>()
+                    .is_empty()
+            );
+            assert_eq!(world.resource::<ProbeResource>(), &ProbeResource(19));
+            assert_eq!(*world.resource::<crate::SampleTime>(), before_sample_time);
+            assert!(world.resource::<crate::SimulationRunning>().0);
+            assert!(world.get::<ProbeComponent>(entity).is_some());
+        }
+    }
+
+    #[test]
     fn test_dispatch_load_patch_returns_not_implemented() {
         let mut world = bevy_ecs::world::World::new();
         let result = dispatch_core_command(
