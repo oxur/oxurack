@@ -160,3 +160,148 @@ planning worktree. Protected main remains
 `a7ce6e61536ca96b6aeb2227ee06e430ed8df162`. Arc05 A-05-01/A-05-02, Arc12
 R-01–R-04, Slice04's six CRC dispositions, parent gates, and release gates
 remain open; Slice05 remains held.
+
+## Iteration02 itemized intake and contract readback
+
+CRC issued `cc-prompt-iteration02.md`, SHA-256
+`9ce58e39fb0fc04df4279ac6131585ec5d38cab2c48d286f82bdf5f4797b5e23`, for
+corrective iteration 2 of 5. At intake, source S was clean at
+`1242a60fa3a997f95b29195de3b28f7e9a2864ff` on
+`codex/oxurack-module-behavior-installation`; planning W was clean at
+`abaced3ec260ff0acc6c020a216cb1c953d9f8ac`; protected main R remained
+`a7ce6e61536ca96b6aeb2227ee06e430ed8df162`. The only source paths authorized
+are `crates/oxurack/src/lib.rs` (`cfg(test)`),
+`crates/oxurack/src/lifecycle.rs` (`cfg(test)`),
+`crates/oxurack/tests/lifecycle.rs`, and
+`crates/oxurack-mod-midiout/src/lib.rs` (`cfg(test)`). Planning edits are
+limited to this report and `ledger.md`. No implementation or example change is
+authorized.
+
+| Required read or contract | Exact extent and result |
+| --- | --- |
+| Iteration02 prompt | Entire 316-line prompt, read in two contiguous bounded chunks; requirements and exact allowlist read back above. |
+| Project and Rust operating guidance | W `AGENTS.md`, S `CLAUDE.md`, project management README/guides 02, 03, and 07, work-verification guide05, testing skill/guides01 and03, Rust-guidelines skill 2.0.0 and `guides/11-anti-patterns.md` (all 2,188 lines in bounded chunks). No policy or signature change was needed. |
+| Current planning contract and history | Slice plan, current ledger, complete CRC verification, prior closing report, iteration01 prompt sections identified by iteration02, current directive12 required sections, directive08 cited sections, project-plan status, Arc12 plan and ledger, Arc05 ledger. Read in full where required, otherwise to the exact named spans; iteration01 and prior CRC evidence remain historical. |
+| Lifecycle and facade test homes | `lifecycle.rs` all 995 lines; `lib.rs` test module spans 522–990 and facade helpers/tests 1,900–2,292, plus production lifecycle facade entry points. The initial broad `lib.rs` output truncated; all required spans were recovered in smaller bounded reads before edits. Existing failed-candidate, hook replay, raw MIDI facade, and actual backpressure test helpers were inspected. |
+| Public lifecycle integration home | `tests/lifecycle.rs` all 963 lines, in four contiguous bounded reads. Existing late spawner, graph projection, Scope, restart/replay, and fresh-rack comparison helpers inspected. |
+| MIDI output test home | `crates/oxurack-mod-midiout/src/lib.rs` tests 828–1,244 and test landmarks through line 1,643. Fixed-capacity, actual generation, silence, room-check, invariant, and 16-sink tests inspected. |
+| Snapshot failure and graph component APIs | `persistence.rs` exact snapshot/failure tests 881–1,018; `cable.rs` Cable/CableIndex 132–211; `port.rs` Port/ChildOf spawning 104–170; `cables.rs` index projection and graph mutation test span 220–280. No new API assumptions introduced. |
+| Scope capture, fixtures, and commands | `scope.rs` public capture contract 1–220; behavior-installation and LFO patch fixtures in full; Makefile in full. Only test code will change, so existing trace/docs and example receipts remain eligible for retention. |
+| Dataset/query evidence | None used or required. No structured dataset query was run. |
+
+Contract readback: LF-01 needs the old owner checked at the candidate's exact
+late error boundary, and cross-World comparisons must use names and complete
+graph projections instead of comparing newly allocated Entity bits. LF-02's
+ordered registration evidence must be replayed in every replacement App while
+real behavior systems prove one execution per admitted sample; restart,
+nonempty unload, and reload remain distinct lifecycle paths. LF-03 must attempt
+all three lifecycle calls while output is pending and while running, then
+assert the complete retained state and exact cleanup bytes before and after
+drain; the MIDI peak oracle must inspect all 128 actual events while pending.
+LF-04 must distinguish restart from unload/reload, compare failed restart and
+empty rack no-op paths at the immediate boundary, reject an actual late
+candidate while a real first fault is retained, and resume a fresh sample-zero
+note after each successful recovery. Stop/start and reset continuation probes
+must compare actual Clock/LFO/Turing Machine/Scope signals and generated MIDI
+against a matched control without filtering release events. Any new failing
+oracle is preserved and reported through Duncan before an out-of-scope product
+repair is considered.
+
+API note: Bevy `Time<Virtual>` in the locked dependency exposes elapsed time and
+delta but has no overstep accessor. The interaction snapshot therefore records
+Virtual elapsed/delta/pause state and Fixed elapsed/overstep, without adding or
+changing a production API. The live-snapshot expected value is built from the
+original fixture and independently edited fields, then ordered according to
+the snapshot contract; getter-backed schema defaults are included explicitly.
+
+Planned test-only edits follow those contracts in the four allowed files. The
+required gates will be run exactly as listed in iteration02, retaining any
+restricted-host failure and recording an authorized host retry separately.
+LF-05 and LF-06 stay done; LF-01–LF-04 remain open with CC's proposed status
+only after all gates pass. Arc05 A-05-01/A-05-02 and Arc12 R-01–R-04 stay open;
+Slice05 remains held. No cross-feature or public API work is in scope.
+
+## Iteration02 evidence and proposed disposition
+
+Source S was committed as `03825e5077b7cd621185ae70b47020da321706c4` on
+`codex/oxurack-module-behavior-installation`, parent
+`1242a60fa3a997f95b29195de3b28f7e9a2864ff`. It contains only the four
+iteration02 allowlisted source paths. `lib.rs` and `lifecycle.rs` changes are
+inside `cfg(test)` modules; the public lifecycle integration and MIDI module
+changes are test-only. No production function, example, fixture, public API,
+documentation, or core event behavior changed. Protected main remains
+`a7ce6e61536ca96b6aeb2227ee06e430ed8df162`.
+
+| LF row | Iteration02 interaction evidence | CC disposition |
+| --- | --- | --- |
+| LF-01 | Inline `CandidateLateFailure` now writes a candidate-only Resource marker before its entity/message/error effects; the retained World is checked immediately after the exact `Err`, before ticks or success. The public late-failure test compares full scalar Scope records/configuration/overwrite count against its matched control before and after 1,000 per-sample drained observations, then retains same-subject channel1 recovery. Cross-World structure projections use module/port names, merge policies, complete ChildOf child rosters/counts, Cable enabled/order, all source/target index endpoints, complete `target_ports`, and named graph membership; raw identities are used only in same-owner checks. | CC proposed-done; CRC disposition open. |
+| LF-02 | The inline live-counter fixture runs ordered hook probes and two real behavior instances across load → restart → nonempty unload → original reload. It asserts exact `[1,2]` hook order in each App, totals `2/3`, edited `6/6`, restarted `4/3`, and reloaded `2/3`; per-sample behavior/hook counts, getter state, idempotent reinstall, collision rejection, empty unload, and fresh stopped/time state are checked at each replacement boundary. | CC proposed-done; CRC disposition open. |
+| LF-03 | The raw-port facade test checks load/restart/unload precedence while running with one unread event and while stopped with `PendingMidi{count:1}`. It snapshots patch, driver, sample/time resources, Scope selectors/capacity/overwrites/all records, installation order, messages, fault and pending count; reset appends literal cleanup at sample1, a second reset preserves count4 and full typed state, drain matches the exact four-event vector, stop/start alone emits nothing, and retrigger is a lone sample1 NoteOn. Reset is also exercised while running and on an unloaded rack with unread output. The 16-sink test inspects all 128 pending generated+cleanup events at SampleTime2, unchanged storage capacity/no fault/cleared voice state, rejects a private 129th append without mutation, repeats actual silence, and then drains the full timestamped vector. | CC proposed-done; CRC disposition open. |
+| LF-04 | Restart now loads a unique LFO patch copy, runs 300 samples, edits parameters/cable/description, independently constructs the full expected snapshot (including getter-backed schema defaults and snapshot ordering), deletes the input file, then restarts and matches a fresh rack over 10,000 scalar/MIDI samples with zero Scope overwrites. Additional checks cover disabled-cable snapshot rejection, getterless failure retention, running/stopped unloaded restart precedence, unread-output initial-load precedence, empty loaded-patch retirement and already-empty reset/unload no-ops with a retained marker/first fault, and nonempty unload cleanup blocking a second unload until drain. A real sample252 backpressure fault is combined with an actual late-spawner candidate failure and immediate old snapshot/owner/Scope/time/driver/message/fault comparisons; each successful load/restart/unload path carries cleanup at 252 and produces a fresh literal sample0 NoteOn without stale NoteOff or fault. Paired Clock/LFO/Turing Machine/Scope controls compare stop/start and reset continuation at sample300 through later MIDI retrigger/CC and a future clock edge, with no release filtering. | CC proposed-done; CRC disposition open. |
+| LF-05 | No implementation or event-contract changes were made; prior independently accepted evidence remains unchanged. | CRC accepted; done retained. |
+| LF-06 | No example/runner/fixture changes were made; prior independently accepted evidence remains unchanged. | CRC accepted; done retained. |
+
+### Final iteration02 gates
+
+All commands below were run fresh from S after the final source edit. Focused
+and required suite results:
+
+- `cargo test --locked -p oxurack-mod-midiout`: pass, 9 unit tests and 0
+  doctests.
+- `cargo test --locked -p oxurack --all-targets`: pass, 56 library unit tests,
+  all 12 integration suites, and all example targets including 4 save-runner
+  and 26 MIDI example tests. The lifecycle integration suite passes all 10
+  tests.
+- `cargo test --locked -p oxurack --no-default-features --all-targets`: pass,
+  54 library unit tests, all integration suites and example targets; lifecycle
+  passes all 10 tests. The existing unrelated
+  `crates/oxurack/src/cables.rs:231 unused_mut` warning remains unsuppressed.
+- Restricted `make test`: fails only the 4 `oxurack-rt` CoreMIDI initialization
+  tests (`MIDI support could not be initialized`); 146 passed and 3 existing
+  tests were ignored. The unchanged authorized host retry passes: RT 150
+  passed, 0 failed, 3 ignored; the complete workspace and doctests pass.
+- `make lint`: pass (workspace Clippy and format check).
+- `cargo clippy --locked -p oxurack-core -p oxurack-mod-midiout -p oxurack --all-features --all-targets -- -D warnings`: pass.
+- `git diff --check`: pass.
+
+### Iteration02 command attempts retained
+
+- Initial `cargo fmt --all -- --check` exited 1 with formatting suggestions in
+  the four edited files; `cargo fmt --all` applied those suggestions. Final
+  `make lint` format check passes.
+- The first default all-target compile exited 101 on test-harness API/typing
+  mistakes: `Time<Virtual>` has no overstep method, `MidiOutputBuffer.events`
+  is private outside its crate, `Messages` uses `iter_current_update_messages`,
+  and inline tests cannot call integration-only helpers. The test code was
+  corrected without product edits.
+- The first default test run exposed three test-oracle mistakes: a Debug-string
+  snapshot comparison depended on HashMap order, live MIDI configuration has
+  no setter, and expected restart/GraphView projections omitted getter-backed
+  defaults or confused merge policy with graph value kind. Expected state is
+  now typed and independently built; configuration is supplied at patch load;
+  projection fields are normalized by names. Final default/no-graph all-target
+  suites and both lifecycle suites pass.
+- Initial strict Clippy exited 101 on three `type_complexity` findings in the
+  graph projection. Local aliases fixed those; final strict Clippy passes.
+- The first restricted and final restricted `make test` attempts both exited
+  2 with the same four RT CoreMIDI initialization failures. Both unchanged
+  authorized host retries pass; no ignore or warning suppression was added.
+- The first no-default run reported two graph-only aliases as unused. They are
+  now feature-gated; final no-default all-target output retains only the
+  pre-existing `cables.rs:231 unused_mut` warning.
+
+Retained evidence remains applicable because this iteration changed only the
+allowlisted tests and preserved accepted assertions: CRC's docs and original
+fixture evidence at `f6fdeb513331a8d8962876bdf4766cedfce63f59`; CRC iteration01's
+candidate/error/message and actual example receipts at
+`1242a60fa3a997f95b29195de3b28f7e9a2864ff`; the default/no-graph/fresh 72-row
+trace SHA-256 `20d86b836d7540a2ac6bf725f5045dfe6304fa7a027d703f22e1fe93f27613ba`,
+ordinary save300 behavior, six negative CLI cases, example builds, original
+MIDI13/LFO70 trace hashes, and all previous CRC dispositions. No new dataset
+query or supporting artifact was created.
+
+All six rows are accounted for: LF-05/LF-06 remain independently accepted and
+done; LF-01–LF-04 remain **open** with CC's proposed-done evidence pending CRC.
+Arc05 A-05-01/A-05-02, Arc12 R-01–R-04, project/release gates, and Slice04
+acceptance remain open. Slice05 stays held. No acceptance or advancement is
+claimed by this return.

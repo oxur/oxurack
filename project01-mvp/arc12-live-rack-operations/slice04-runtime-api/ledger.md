@@ -28,6 +28,33 @@ CC proposes all six rows done; **every row remains open for CRC disposition**.
 Slice05 remains held. No inherited Arc05 row, Arc12 parent row, or release gate
 is closed by this note.
 
+## CC iteration02 proposal — 2026-10-12
+
+Source test-only commit `03825e5077b7cd621185ae70b47020da321706c4` adds the
+four remaining lifecycle interaction observations and the 128-event pending
+buffer oracle. It changes only the authorized test regions in
+`crates/oxurack/src/lib.rs`, `crates/oxurack/src/lifecycle.rs`,
+`crates/oxurack/tests/lifecycle.rs`, and
+`crates/oxurack-mod-midiout/src/lib.rs`. No product defect was reproduced and
+no production behavior changed. Exact row evidence and final commands are in
+`closing-report.md` under “Iteration02 evidence and proposed disposition”.
+
+| LF row | CC proposal | CRC status |
+| --- | --- | --- |
+| LF-01 | done | open pending independent disposition |
+| LF-02 | done | open pending independent disposition |
+| LF-03 | done | open pending independent disposition |
+| LF-04 | done | open pending independent disposition |
+| LF-05 | retain independently accepted done | accepted at1242a60 |
+| LF-06 | retain independently accepted done | accepted at1242a60 |
+
+All prescribed iteration02 gates pass. Restricted `make test` retains four
+CoreMIDI initialization failures (146 pass, 3 existing ignored); its unchanged
+authorized host retry passes (RT 150 pass, 0 fail, 3 ignored; full workspace
+and doctests pass). LF-01–LF-04 remain **open** for CRC. Arc05 A-05-01/A-05-02,
+Arc12 R-01–R-04, project/release gates and Slice04 acceptance remain open;
+Slice05 stays held. This CC proposal is not CRC acceptance.
+
 ## CRC iteration01 disposition — 2026-10-12
 
 Six rows accounted for:2 independently done,4 open. CC iteration01 note above is
