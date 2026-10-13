@@ -1082,6 +1082,85 @@ mod tests {
         cable
     }
 
+    #[test]
+    fn dispatched_core_cable_commands_refresh_explicit_graph_owner() {
+        let mut app = graph_test_app();
+        let source = spawn_module(
+            &mut app,
+            "source",
+            "gen",
+            &[("out", oxurack_core::PortDirection::Output)],
+        );
+        let target = spawn_module(
+            &mut app,
+            "target",
+            "sink",
+            &[("in", oxurack_core::PortDirection::Input)],
+        );
+        let source_port = find_port(&mut app, source, "out");
+        let target_port = find_port(&mut app, target, "in");
+        app.world_mut().insert_resource(oxurack_core::PatchHandle {
+            modules: [("source".to_owned(), source), ("target".to_owned(), target)].into(),
+        });
+        app.update();
+        let add = oxurack_core::CoreCommand::AddCable {
+            source: ("source".to_owned(), "out".to_owned()),
+            target: ("target".to_owned(), "in".to_owned()),
+            transform: None,
+        };
+        oxurack_core::dispatch_core_command(app.world_mut(), &add).unwrap();
+        let connected = app
+            .world()
+            .resource::<Messages<CableConnected>>()
+            .iter_current_update_messages()
+            .collect::<Vec<_>>();
+        assert_eq!(connected.len(), 1);
+        let added = connected[0].cable_entity;
+        assert_eq!(connected[0].source, oxurack_core::ChangeSource::Command);
+        assert_eq!(
+            (connected[0].source_port, connected[0].target_port),
+            (source_port, target_port)
+        );
+        assert!(!app.world().resource::<RackGraph>().contains_cable(added));
+        app.world_mut().run_schedule(GraphMaintenance);
+        assert!(app.world().resource::<RackGraph>().contains_cable(added));
+        assert_eq!(app.world().resource::<RackGraph>().cable_count(), 1);
+
+        let remove = oxurack_core::CoreCommand::RemoveCable {
+            source: ("source".to_owned(), "out".to_owned()),
+            target: ("target".to_owned(), "in".to_owned()),
+        };
+        oxurack_core::dispatch_core_command(app.world_mut(), &remove).unwrap();
+        let disconnected = app
+            .world()
+            .resource::<Messages<CableDisconnected>>()
+            .iter_current_update_messages()
+            .collect::<Vec<_>>();
+        assert_eq!(disconnected.len(), 1);
+        assert_eq!(disconnected[0].cable_entity, added);
+        assert_eq!(disconnected[0].source, oxurack_core::ChangeSource::Command);
+        assert_eq!(
+            (disconnected[0].source_port, disconnected[0].target_port),
+            (source_port, target_port)
+        );
+        app.world_mut().run_schedule(GraphMaintenance);
+        assert!(!app.world().resource::<RackGraph>().contains_cable(added));
+        assert_eq!(app.world().resource::<RackGraph>().cable_count(), 0);
+
+        oxurack_core::dispatch_core_command(app.world_mut(), &add).unwrap();
+        let readded = app
+            .world()
+            .resource::<Messages<CableConnected>>()
+            .iter_current_update_messages()
+            .last()
+            .unwrap()
+            .cable_entity;
+        assert_ne!(readded, added);
+        app.world_mut().run_schedule(GraphMaintenance);
+        assert!(!app.world().resource::<RackGraph>().contains_cable(added));
+        assert!(app.world().resource::<RackGraph>().contains_cable(readded));
+    }
+
     /// Find a port entity on a module by name.
     fn find_port(app: &mut App, module_entity: Entity, name: &str) -> Entity {
         let world = app.world_mut();
@@ -1807,21 +1886,39 @@ mod tests {
         let absent = connect_cable(&mut app, source_out, target_in);
         app.update();
 
-        let view = GraphView::new(app.world());
-        assert_eq!(view.raw().inner.edge_count(), 5);
         let bits = |cables: Vec<CableInfo>| {
             cables
                 .into_iter()
                 .map(|cable| cable.entity_bits)
                 .collect::<Vec<_>>()
         };
+        let (entity_first, entity_second) = if first < second {
+            (first, second)
+        } else {
+            (second, first)
+        };
+        // The smaller entity gets the later ordinal, proving ordinal
+        // precedence over entity order; equal ordinals exercise Entity fallback.
+        app.world_mut()
+            .entity_mut(entity_first)
+            .insert(CableOrder(10));
+        app.world_mut()
+            .entity_mut(entity_second)
+            .insert(CableOrder(0));
+        let (equal_ten_first, equal_ten_second) = if entity_first < third {
+            (entity_first, third)
+        } else {
+            (third, entity_first)
+        };
         let expected = vec![
             prefix.to_bits(),
-            second.to_bits(),
-            third.to_bits(),
-            first.to_bits(),
+            entity_second.to_bits(),
+            equal_ten_first.to_bits(),
+            equal_ten_second.to_bits(),
             absent.to_bits(),
         ];
+        let view = GraphView::new(app.world());
+        assert_eq!(view.raw().inner.edge_count(), 5);
         assert_eq!(bits(view.cables()), expected);
         assert_eq!(bits(view.incoming_cables(target)), expected);
         assert_eq!(bits(view.outgoing_cables(source)), expected[1..]);
@@ -2166,8 +2263,10 @@ mod tests {
         let names: Vec<&str> = order.iter().map(|m| m.instance_name.as_str()).collect();
         let a_pos = names.iter().position(|&n| n == "a").unwrap();
         let d_pos = names.iter().position(|&n| n == "d").unwrap();
-        assert_eq!(a_pos, 0, "a must be first");
-        assert_eq!(d_pos, 3, "d must be last");
+        let b_pos = names.iter().position(|&n| n == "b").unwrap();
+        let c_pos = names.iter().position(|&n| n == "c").unwrap();
+        assert!(a_pos < b_pos && a_pos < c_pos, "a precedes both branches");
+        assert!(b_pos < d_pos && c_pos < d_pos, "both branches precede d");
     }
 
     #[test]
@@ -2729,14 +2828,13 @@ mod tests {
         );
         app.update();
 
-        // Connect lfo first (alphabetically later source) to verify sort
+        // Connect the lexically later source first to prove endpoint sorting.
         let lfo_out = find_port(&mut app, lfo, "out");
         let vca_cv = find_port(&mut app, vca, "cv");
-        connect_cable(&mut app, lfo_out, vca_cv);
-
         let vco_out = find_port(&mut app, vco, "out");
         let filter_in = find_port(&mut app, filter, "in");
-        connect_cable(&mut app, vco_out, filter_in);
+        let vco_cable = connect_cable(&mut app, vco_out, filter_in);
+        let lfo_cable = connect_cable(&mut app, lfo_out, vca_cv);
         app.update();
 
         let view = GraphView::new(app.world());
@@ -2744,6 +2842,8 @@ mod tests {
         assert_eq!(cables.len(), 2);
         assert_eq!(cables[0].source_module_instance, "lfo_1");
         assert_eq!(cables[1].source_module_instance, "vco_1");
+        assert_eq!(cables[0].entity_bits, lfo_cable.to_bits());
+        assert_eq!(cables[1].entity_bits, vco_cable.to_bits());
     }
 
     // ── CycleError Display (#16b) ─────────────────────────────────

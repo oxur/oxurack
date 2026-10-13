@@ -652,9 +652,269 @@ mod tests {
     }
 
     #[test]
+    fn public_connect_errors_preserve_rebuilt_topology_and_emit_nothing() {
+        #[derive(Debug, PartialEq)]
+        struct CableObservation {
+            entity: Entity,
+            source: Entity,
+            target: Entity,
+            transform: Option<CableTransform>,
+            enabled: bool,
+            order: Option<usize>,
+        }
+        #[derive(Debug, PartialEq)]
+        struct Observation {
+            cables: Vec<CableObservation>,
+            from: Vec<Entity>,
+            to: Vec<Entity>,
+            dirty: bool,
+            order: Vec<Entity>,
+            values: Vec<crate::Value>,
+            contributions: Vec<Vec<crate::Value>>,
+            connected: usize,
+            disconnected: usize,
+        }
+        fn observe(world: &mut World, ports: &[Entity]) -> Observation {
+            let mut query = world.query::<(Entity, &Cable, Option<&CableOrder>)>();
+            let mut cables = query
+                .iter(world)
+                .map(|(entity, cable, order)| CableObservation {
+                    entity,
+                    source: cable.source_port,
+                    target: cable.target_port,
+                    transform: cable.transform,
+                    enabled: cable.enabled,
+                    order: order.map(|value| value.0),
+                })
+                .collect::<Vec<_>>();
+            cables.sort_by_key(|item| item.entity);
+            let index = world.resource::<CableIndex>();
+            let mut from = ports
+                .iter()
+                .flat_map(|port| index.cables_from(*port).iter().copied())
+                .collect::<Vec<_>>();
+            let mut to = ports
+                .iter()
+                .flat_map(|port| index.cables_targeting(*port).iter().copied())
+                .collect::<Vec<_>>();
+            from.sort();
+            to.sort();
+            let dirty = world.resource::<crate::PropagationOrderDirty>().0;
+            let order = world.resource::<crate::PropagationOrder>().cables.clone();
+            let values = ports
+                .iter()
+                .map(|port| world.get::<crate::CurrentValue>(*port).unwrap().0)
+                .collect();
+            let contributions = ports
+                .iter()
+                .map(|port| {
+                    world
+                        .resource::<crate::MergeBuffers>()
+                        .contributions(*port)
+                        .to_vec()
+                })
+                .collect();
+            let connected = world
+                .resource::<Messages<CableConnected>>()
+                .iter_current_update_messages()
+                .count();
+            let disconnected = world
+                .resource::<Messages<CableDisconnected>>()
+                .iter_current_update_messages()
+                .count();
+            Observation {
+                cables,
+                from,
+                to,
+                order,
+                dirty,
+                values,
+                contributions,
+                connected,
+                disconnected,
+            }
+        }
+
+        let mut test = setup();
+        let world = test.app.world_mut();
+        crate::connect_cable(
+            world,
+            ("a", "out"),
+            ("b", "in"),
+            None,
+            ChangeSource::DirectApi,
+        )
+        .unwrap();
+        world.run_schedule(Update);
+        assert!(!world.resource::<crate::PropagationOrderDirty>().0);
+        world.resource_mut::<Messages<CableConnected>>().clear();
+        world.resource_mut::<Messages<CableDisconnected>>().clear();
+        let ports = [
+            test.a_out,
+            test.a_in,
+            test.b_in,
+            test.gate_out,
+            test.gate_in,
+            test.bipolar_out,
+            test.bipolar_in,
+            test.reject_in,
+        ];
+        macro_rules! unchanged_error {
+            ($call:expr, $pattern:pat $(if $guard:expr)?) => {{
+                let before = observe(world, &ports);
+                let result = $call;
+                let description = format!("{result:?}");
+                assert!(matches!(result, $pattern $(if $guard)?), "unexpected result: {description}");
+                assert_eq!(observe(world, &ports), before);
+            }};
+        }
+        unchanged_error!(crate::connect_cable(world, ("missing", "out"), ("b", "in"), None, ChangeSource::DirectApi), Err(CoreError::UnknownModule(name)) if name == "missing");
+        unchanged_error!(
+            crate::connect_cable(
+                world,
+                ("a", "missing"),
+                ("b", "in"),
+                None,
+                ChangeSource::DirectApi
+            ),
+            Err(CoreError::Patch(PatchError::UnknownPort { .. }))
+        );
+        unchanged_error!(
+            crate::connect_cable(
+                world,
+                ("a", "in"),
+                ("b", "in"),
+                None,
+                ChangeSource::DirectApi
+            ),
+            Err(CoreError::InvalidCableDirection {
+                expected: PortDirection::Output,
+                actual: PortDirection::Input,
+                ..
+            })
+        );
+        unchanged_error!(
+            crate::connect_cable(
+                world,
+                ("a", "out"),
+                ("b", "out"),
+                None,
+                ChangeSource::DirectApi
+            ),
+            Err(CoreError::InvalidCableDirection {
+                expected: PortDirection::Input,
+                actual: PortDirection::Output,
+                ..
+            })
+        );
+        unchanged_error!(
+            crate::connect_cable(
+                world,
+                ("a", "gate_out"),
+                ("b", "bipolar_in"),
+                None,
+                ChangeSource::DirectApi
+            ),
+            Err(CoreError::Patch(PatchError::KindMismatch {
+                source_kind: ValueKind::Gate,
+                target_kind: ValueKind::Bipolar
+            }))
+        );
+        unchanged_error!(
+            crate::connect_cable(
+                world,
+                ("a", "out"),
+                ("b", "in"),
+                Some(CableTransform::Affine {
+                    factor: f32::NAN,
+                    offset: 0.0
+                }),
+                ChangeSource::DirectApi
+            ),
+            Err(CoreError::InvalidCableTransform { .. })
+        );
+        unchanged_error!(
+            crate::connect_cable(
+                world,
+                ("a", "out"),
+                ("b", "in"),
+                Some(CableTransform::Clamp { min: 2.0, max: 1.0 }),
+                ChangeSource::DirectApi
+            ),
+            Err(CoreError::InvalidCableTransform { .. })
+        );
+        unchanged_error!(
+            crate::connect_cable(
+                world,
+                ("a", "gate_out"),
+                ("b", "gate_in"),
+                Some(CableTransform::Affine {
+                    factor: 1.0,
+                    offset: 0.0
+                }),
+                ChangeSource::DirectApi
+            ),
+            Err(CoreError::InvalidCableTransform { .. })
+        );
+        unchanged_error!(
+            crate::connect_cable(
+                world,
+                ("a", "out"),
+                ("b", "in"),
+                Some(CableTransform::Threshold { threshold: 0.5 }),
+                ChangeSource::DirectApi
+            ),
+            Err(CoreError::InvalidCableTransform {
+                source_kind: ValueKind::Float,
+                target_kind: ValueKind::Float,
+                reason,
+                ..
+            }) if reason == "transform result kind must match target port kind"
+        );
+        unchanged_error!(
+            crate::connect_cable(
+                world,
+                ("a", "gate_out"),
+                ("b", "gate_in"),
+                None,
+                ChangeSource::DirectApi
+            ),
+            Err(CoreError::Patch(PatchError::IllegalMerge { .. }))
+        );
+        unchanged_error!(
+            crate::connect_cable(
+                world,
+                ("b", "out"),
+                ("a", "in"),
+                None,
+                ChangeSource::DirectApi
+            ),
+            Err(CoreError::Patch(PatchError::FeedbackCycle(_)))
+        );
+        let stale_entity = world.spawn_empty().id();
+        world.despawn(stale_entity);
+        world
+            .resource_mut::<PatchHandle>()
+            .modules
+            .insert("stale".to_owned(), stale_entity);
+        unchanged_error!(
+            crate::connect_cable(
+                world,
+                ("stale", "out"),
+                ("b", "in"),
+                None,
+                ChangeSource::DirectApi
+            ),
+            Err(CoreError::UnknownModule(name)) if name == "stale"
+        );
+    }
+
+    #[test]
     fn command_edits_have_provenance_and_remove_only_occurrence_zero() {
         let mut test = setup();
         let world = test.app.world_mut();
+        world.resource_mut::<Messages<CableConnected>>().clear();
+        world.resource_mut::<Messages<CableDisconnected>>().clear();
         let cmd = crate::CoreCommand::AddCable {
             source: ("a".into(), "out".into()),
             target: ("b".into(), "in".into()),
@@ -679,6 +939,14 @@ mod tests {
                 offset: 0.75
             })
         );
+        let first_entity = added[0].cable_entity;
+        assert!(world.get::<Cable>(first_entity).is_some());
+        assert!(
+            world
+                .resource::<CableIndex>()
+                .cables_from(test.a_out)
+                .contains(&first_entity)
+        );
         crate::dispatch_core_command(world, &cmd).unwrap();
         assert_eq!(
             world
@@ -698,6 +966,27 @@ mod tests {
             .collect();
         assert_eq!(removed.len(), 1);
         assert_eq!(removed[0].source, ChangeSource::Command);
+        assert_eq!(removed[0].cable_entity, first_entity);
+        assert_eq!(
+            (removed[0].source_port, removed[0].target_port),
+            (test.a_out, test.b_in)
+        );
+        assert!(world.get_entity(first_entity).is_err());
+        let failed = crate::CoreCommand::AddCable {
+            source: ("missing".into(), "out".into()),
+            target: ("b".into(), "in".into()),
+            transform: None,
+        };
+        assert!(
+            matches!(crate::dispatch_core_command(world, &failed), Err(CoreError::UnknownModule(name)) if name == "missing")
+        );
+        assert_eq!(
+            world
+                .resource::<Messages<CableConnected>>()
+                .iter_current_update_messages()
+                .count(),
+            2
+        );
         assert_eq!(
             world
                 .resource::<CableIndex>()
@@ -971,17 +1260,81 @@ mod tests {
         world
             .resource_mut::<CableIndex>()
             .add_cable(absent_id, &first);
-        let mut expected = [
-            (false, 7, first_id),
-            (false, 7, second_id),
-            (true, 0, absent_id),
-        ];
-        expected.sort_unstable();
+        let (entity_first, entity_second) = if first_id < second_id {
+            (first_id, second_id)
+        } else {
+            (second_id, first_id)
+        };
+        world.entity_mut(entity_first).insert(CableOrder(10));
+        world.entity_mut(entity_second).insert(CableOrder(0));
+        let expected = [entity_second, entity_first, absent_id];
+        let endpoint_label = |occurrence| crate::LabelTarget::Cable {
+            source: ("a".to_owned(), "out".to_owned()),
+            target: ("a".to_owned(), "in".to_owned()),
+            occurrence,
+        };
+        for (occurrence, name) in [(0, "ordinal-zero"), (1, "ordinal-ten")] {
+            crate::set_label_value(
+                world,
+                &endpoint_label(occurrence),
+                &crate::LabelKind::Description,
+                &crate::LabelValue::Text(name.to_owned()),
+                ChangeSource::DirectApi,
+            )
+            .unwrap();
+        }
+        assert_eq!(
+            crate::label_value(world, &endpoint_label(0), &crate::LabelKind::Description).unwrap(),
+            Some(crate::LabelValue::Text("ordinal-zero".to_owned()))
+        );
         crate::disconnect_cable(world, ("a", "out"), ("a", "in"), 1, ChangeSource::DirectApi)
             .unwrap();
-        assert!(world.get_entity(expected[1].2).is_err());
-        assert!(world.get_entity(expected[0].2).is_ok());
-        assert!(world.get_entity(expected[2].2).is_ok());
+        assert!(world.get_entity(expected[0]).is_ok());
+        assert!(world.get_entity(expected[1]).is_err());
+        assert!(world.get_entity(expected[2]).is_ok());
+        assert_eq!(
+            crate::label_value(world, &endpoint_label(0), &crate::LabelKind::Description).unwrap(),
+            Some(crate::LabelValue::Text("ordinal-zero".to_owned()))
+        );
+        let appended = crate::connect_cable(
+            world,
+            ("a", "out"),
+            ("a", "in"),
+            None,
+            ChangeSource::DirectApi,
+        )
+        .unwrap();
+        assert_eq!(appended, 1, "unordered legacy cable is not an occurrence");
+        let new_entity = world
+            .resource::<CableIndex>()
+            .cables_from(test.a_out)
+            .iter()
+            .copied()
+            .find(|entity| {
+                *entity != expected[0]
+                    && world
+                        .get::<Cable>(*entity)
+                        .is_some_and(|cable| cable.target_port == test.a_in)
+            })
+            .unwrap();
+        crate::set_label_value(
+            world,
+            &endpoint_label(appended),
+            &crate::LabelKind::Description,
+            &crate::LabelValue::Text("new-cable".to_owned()),
+            ChangeSource::DirectApi,
+        )
+        .unwrap();
+        assert!(world.get_entity(new_entity).is_ok());
+        assert_eq!(
+            crate::label_value(
+                world,
+                &endpoint_label(appended),
+                &crate::LabelKind::Description
+            )
+            .unwrap(),
+            Some(crate::LabelValue::Text("new-cable".to_owned()))
+        );
     }
 
     #[test]

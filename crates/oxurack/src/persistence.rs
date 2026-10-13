@@ -1237,6 +1237,119 @@ mod tests {
         assert_eq!(second_offsets, [0.75, 0.25]);
         let _ = std::fs::remove_file(snapshot_path);
         let _ = std::fs::remove_file(second_path);
+
+        let mut live = prepare();
+        for (occurrence, description) in [(0, "first"), (1, "second")] {
+            oxurack_core::set_label_value(
+                live.world_mut(),
+                &oxurack_core::LabelTarget::Cable {
+                    source: ("source".into(), "out".into()),
+                    target: ("sink".into(), "input".into()),
+                    occurrence,
+                },
+                &oxurack_core::LabelKind::Description,
+                &oxurack_core::LabelValue::Text(description.into()),
+                oxurack_core::ChangeSource::DirectApi,
+            )
+            .unwrap();
+        }
+        assert_eq!(set_source_and_read_sink(&mut live), 0.25);
+        let add_path =
+            std::env::temp_dir().join(format!("oxurack-live-tie-add-{}.ron", std::process::id()));
+        let remove_path = std::env::temp_dir().join(format!(
+            "oxurack-live-tie-remove-{}.ron",
+            std::process::id()
+        ));
+        let live_time = live.sample_time();
+        assert_eq!(
+            live.patch(
+                ("source", "out"),
+                ("sink", "input"),
+                Some(CableTransform::Affine {
+                    factor: 0.0,
+                    offset: 0.5
+                })
+            )
+            .unwrap(),
+            2
+        );
+        assert_eq!(live.sample_time(), live_time, "patch does not tick");
+        assert_eq!(set_source_and_read_sink(&mut live), 0.5);
+        let added_snapshot = live.snapshot_patch().unwrap();
+        assert_eq!(
+            added_snapshot
+                .cables
+                .iter()
+                .map(|cable| match cable.transform.unwrap() {
+                    CableTransform::Affine { offset, .. } => offset,
+                    _ => unreachable!(),
+                })
+                .collect::<Vec<_>>(),
+            [0.75, 0.25, 0.5]
+        );
+        live.save_patch(&add_path).unwrap();
+        let saved_add = oxurack_core::load_patch_from_file(&add_path).unwrap();
+        assert_eq!(
+            saved_add
+                .cables
+                .iter()
+                .map(|cable| match cable.transform.unwrap() {
+                    CableTransform::Affine { offset, .. } => offset,
+                    _ => unreachable!(),
+                })
+                .collect::<Vec<_>>(),
+            [0.75, 0.25, 0.5]
+        );
+        assert_eq!(saved_add.cables[0].description, "first");
+        assert_eq!(saved_add.cables[1].description, "second");
+        let mut added_replay = installed();
+        added_replay.load_patch(&add_path).unwrap();
+        added_replay.set_driver_mode(super::super::SimulationDriver::Manual);
+        assert_eq!(set_source_and_read_sink(&mut added_replay), 0.5);
+
+        let before_remove = live.sample_time();
+        live.unpatch(("source", "out"), ("sink", "input"), 2)
+            .unwrap();
+        assert_eq!(live.sample_time(), before_remove, "unpatch does not tick");
+        assert_eq!(set_source_and_read_sink(&mut live), 0.25);
+        let removed_snapshot = live.snapshot_patch().unwrap();
+        assert_eq!(
+            removed_snapshot
+                .cables
+                .iter()
+                .map(|cable| match cable.transform.unwrap() {
+                    CableTransform::Affine { offset, .. } => offset,
+                    _ => unreachable!(),
+                })
+                .collect::<Vec<_>>(),
+            [0.75, 0.25]
+        );
+        assert_eq!(removed_snapshot.cables[0].description, "first");
+        assert_eq!(removed_snapshot.cables[1].description, "second");
+        live.save_patch(&remove_path).unwrap();
+        let mut removed_replay = installed();
+        removed_replay.load_patch(&remove_path).unwrap();
+        removed_replay.set_driver_mode(super::super::SimulationDriver::Manual);
+        assert_eq!(set_source_and_read_sink(&mut removed_replay), 0.25);
+        assert_eq!(
+            removed_replay
+                .patch(
+                    ("source", "out"),
+                    ("sink", "input"),
+                    Some(CableTransform::Affine {
+                        factor: 0.0,
+                        offset: 0.5
+                    })
+                )
+                .unwrap(),
+            2
+        );
+        removed_replay
+            .unpatch(("source", "out"), ("sink", "input"), 2)
+            .unwrap();
+        assert_eq!(set_source_and_read_sink(&mut removed_replay), 0.25);
+        let _ = std::fs::remove_file(add_path);
+        let _ = std::fs::remove_file(remove_path);
     }
 
     #[test]

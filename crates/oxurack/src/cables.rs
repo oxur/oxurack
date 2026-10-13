@@ -276,6 +276,105 @@ mod tests {
     }
 
     #[test]
+    fn changed_live_transform_preserves_lfo_and_changes_only_target_signal() {
+        let mut subject = loaded();
+        let mut control = loaded();
+        let selectors = [
+            crate::ScopeSelector::new("lfo_main", "bipolar_out"),
+            crate::ScopeSelector::new("tm_main", "write_modulation"),
+        ];
+        subject.configure_scope(&selectors, 4_000).unwrap();
+        control.configure_scope(&selectors, 4_000).unwrap();
+        subject.start();
+        control.start();
+        for _ in 0..200 {
+            advance_and_drain(&mut subject);
+            advance_and_drain(&mut control);
+        }
+        let before = records(&subject);
+        let time = subject.sample_time();
+        let driver = subject.driver_mode();
+        let running = subject.app.world().resource::<crate::SimulationRunning>().0;
+        subject
+            .unpatch(
+                ("lfo_main", "bipolar_out"),
+                ("tm_main", "write_modulation"),
+                0,
+            )
+            .unwrap();
+        assert_eq!(
+            subject
+                .patch(
+                    ("lfo_main", "bipolar_out"),
+                    ("tm_main", "write_modulation"),
+                    Some(CableTransform::Affine {
+                        factor: 0.0,
+                        offset: 0.25
+                    }),
+                )
+                .unwrap(),
+            0
+        );
+        assert_eq!(subject.sample_time(), time);
+        assert_eq!(subject.driver_mode(), driver);
+        assert_eq!(
+            subject.app.world().resource::<crate::SimulationRunning>().0,
+            running
+        );
+        assert_eq!(records(&subject), before);
+
+        advance_and_drain(&mut subject);
+        advance_and_drain(&mut control);
+        assert_eq!(subject.sample_time().completed_samples(), 201);
+        let first_target = records(&subject)
+            .into_iter()
+            .rev()
+            .find_map(|record| match record {
+                crate::ScopeRecord::Signal {
+                    selection: 1,
+                    value,
+                    ..
+                } => Some(value),
+                _ => None,
+            });
+        assert_eq!(first_target, Some(oxurack_core::Value::Bipolar(0.25)));
+        while subject.sample_time().completed_samples() < 1_000 {
+            advance_and_drain(&mut subject);
+            advance_and_drain(&mut control);
+        }
+        let signal_records = |rack: &Oxurack, selection| {
+            records(rack)
+                .into_iter()
+                .filter(|record| matches!(record, crate::ScopeRecord::Signal { selection: actual, .. } if *actual == selection))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(signal_records(&subject, 0), signal_records(&control, 0));
+        let subject_target = signal_records(&subject, 1);
+        let rewired_target = subject_target
+            .iter()
+            .filter(|record| {
+                matches!(record,
+                    crate::ScopeRecord::Signal { sample, .. } if *sample >= 200
+                )
+            })
+            .collect::<Vec<_>>();
+        assert!(!rewired_target.is_empty());
+        assert!(rewired_target.iter().all(|record| matches!(
+            record,
+            crate::ScopeRecord::Signal {
+                value: oxurack_core::Value::Bipolar(0.25),
+                ..
+            }
+        )));
+        let control_target = signal_records(&control, 1);
+        assert!(control_target.iter().any(|record| matches!(record,
+            crate::ScopeRecord::Signal { sample, value, .. } if *sample >= 200 && *value != oxurack_core::Value::Bipolar(0.25)
+        )));
+        subject.stop();
+        control.stop();
+    }
+
+    #[test]
     fn configured_parameter_is_visible_through_facade_without_a_tick() {
         let mut rack = loaded();
         let before = rack.sample_time();
