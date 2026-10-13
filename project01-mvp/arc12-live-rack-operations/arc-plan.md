@@ -1,6 +1,6 @@
 # Arc12 — live rack operations
 
-Version1.5 — 2026-10-12. Status: active; Slice01 accepted at fabfa1cb and Slice02 accepted at20c60ef. Slice03 initial return reviewed; iteration01 test/evidence correction issued; Slice04 remains planned.
+Version1.6 — 2026-10-12. Status: active; Slice01/02 accepted; Slice03 iteration01 accepted atdeafdd228, all five G rows done. Slice04 remains planned, pending CDC lifecycle decisions in project-root crc-escalation12.md.
 Depends on accepted Arc10/Arc11; source predecessor72fe6b5. Blocks saved/live
 musical workflow and Arc07 controls. Related: carried-over Arcs02–05; Arc13 catalog.
 Authority: approved successor roadmap and Duncan's explicit “Continue with live
@@ -45,11 +45,15 @@ Was: Slice02's open set issued. Now: Slice01 and Slice02 independently closed;
 [Slice02 verification](slice02-events-and-metadata/crc-verification.md) retains
 actual source/native/replay evidence. CRC issued
 [Slice03 graph composition](slice03-graph-composition/slice-plan.md).
-Its981964b return passes CRC native and runnable replay checks, but required
-runtime ordering/atomic-message/changed-modulation continuity and concrete
-historical reconciliation proof remain open. CRC issued one collected
-[iteration01](slice03-graph-composition/cc-prompt-iteration01.md), correction1/5.
-No arc capability, sequence or architecture amendment; Slice04 stays held.
+Was: its981964b return passed native/runnable checks but left required interaction
+proof open. Now: CRC accepted [iteration01](slice03-graph-composition/crc-verification.md)
+atdeafdd228 after fresh affected checks and bounded inherited reconciliation;
+five G rows done, correction1/5 completed. No Slice03 scope amendment. Next-slice
+investigation reproduced MIDI channel reservation and partial-candidate leaks and
+found historical/current transport conflicts. [Escalation12](../crc-escalation12.md)
+asks CDC to resolve lifecycle/output/command/handle/loader semantics before CRC
+issues Slice04. The four-slice capability and all inherited requirements remain;
+no proposed architecture or scope change has been authorized.
 The original successor IDs remain intact.
 Graph composition is a product increment (actual cable operations plus their graph
 behavior), not a test-only arc inside the arc. CRC supplies concrete contracts and
@@ -117,7 +121,21 @@ hardware timing, 95%/coverage provenance, benchmarks and soak remain Arc08;
 remaining modules/Chord Arc13, full CLI/REPL/controllers Arc07. ProjectP-01–P-06
 remain open. P-07's delivered instrument/workbench stays accepted.
 
+## Design handoff — 2026-10-12
+
+Project-root [crc-escalation12.md](../crc-escalation12.md), after Slice03 acceptance
+atdeafdd228: awaiting CDC via Duncan. R-03/R-04 and Slice04 affected; Slice03
+acceptance proceeds, Slice04 implementation authoring held. CDC resolves D1–D4
+and returns cdc-directive12.md; CRC then acknowledges/detailed authoring. No CC
+assignment is active and no deferred requirement is silently discharged.
+
 ## Version history
+
+- v1.6 — 2026-10-12: Slice03 correction independently accepted atdeafdd228,
+  five G rows done; test-only evidence repaired, prior independent musical/docs
+  proof retained at981964b. Slice04 source investigation makes the already-owned
+  replacement failure concrete; consequential lifecycle choices escalated to CDC.
+  No approved structural amendment or parent acceptance.
 
 - v1.5 — 2026-10-12: Slice03 native/demo checks reproduced at981964b;
   four required-proof gaps kept five G rows open. Test/evidence iteration01

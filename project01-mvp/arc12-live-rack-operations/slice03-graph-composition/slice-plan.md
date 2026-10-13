@@ -1,7 +1,7 @@
 # Arc12 Slice03 — graph composition and live rewiring
 
-Version1.1 — 2026-10-12. Status: open; initial return reviewed, correction1/5 issued.
-Current assignment: arc12-live-rack-operations/slice03-graph-composition/cc-prompt-iteration01.md.
+Version1.2 — 2026-10-12. Status: closed; iteration01 independently accepted atdeafdd228.
+Final reviewed assignment: arc12-live-rack-operations/slice03-graph-composition/cc-prompt-iteration01.md. No active CC assignment.
 Three contributors, Expedited Mode. Depends on Slice02 CRC accepted at20c60ef;
 Arc12 approves runtime cables/validation/events/fresh graph/save/reload. Maina7ce6e6
 protected. No ancestor acceptance inferred.
@@ -63,7 +63,7 @@ planning commits; preserve prompt. No merge/push/release.
 | Date | Prompt | Predecessor / reason | Disposition |
 | --- | --- | --- | --- |
 | 2026-10-12 | arc12-live-rack-operations/slice03-graph-composition/cc-prompt.md | Slice02 accepted20c60ef; approved Arc12 cable increment | Returned981964b/544b89d; CRC native/demo checks pass, missing required interaction/reconciliation proof; preserved |
-| 2026-10-12 | arc12-live-rack-operations/slice03-graph-composition/cc-prompt-iteration01.md | CRC F-01–F-04 at981964b | Active correction1/5; five G rows open; test-and-evidence execution then return to CRC |
+| 2026-10-12 | arc12-live-rack-operations/slice03-graph-composition/cc-prompt-iteration01.md | CRC F-01–F-04 at981964b | Returned09a15f8/deafdd228/9b156a4; CRC accepted all five G rows2026-10-12; correction1/5 completed |
 
 ## Iteration01 author readiness — CRC 2026-10-12
 
@@ -81,11 +81,18 @@ rough45–60k reading/source budget plus implementation/recovery; native affecte
 tests fresh, independently reproduced unaffected docs/build/demo at981964b proposed
 for retention with original provenance. No new proof tool or permission gate.
 
-CRC record: crc-verification.md. No source repair or row acceptance by CRC; current
-return needs runtime order, atomic/event boundary, changed-topology phase and
-concrete inherited-query reconciliation. Slice04 held until all G criteria pass.
+Was: initial CRC review required runtime order, atomic/event boundary, changed
+phase and concrete inherited reconciliation. Now: all five G rows independently
+done; crc-verification.md preserves both attempts. No source repair by CRC.
+Slice04 design handoff is held at project-root crc-escalation12.md; Arc12 and
+historical acceptance remain separate.
 
 ## Version history
+
+- v1.2 — 2026-10-12: CRC reproduced correction atdeafdd228 and accepted all five
+  rows; unchanged docs/build/demo evidence retained at981964b with original date
+  and rationale. No Slice03 scope change. Slice04 contract conflicts escalated
+  to CDC through Duncan before implementation authoring.
 
 - v1.1 — 2026-10-12: CRC independently reproduced native checks and musical
   example/replay at981964b, preserved restricted MIDI failure/host retry and

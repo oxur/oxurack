@@ -1,5 +1,11 @@
 # CRC review — live graph composition
 
+**Current verdict, 2026-10-12:** iteration01 independently accepted at
+`deafdd228fb44720878c700f8ff62b2a59ddbad6`; G-01–G-05 done, Slice03 closed.
+The initial failed review below is preserved. Slice04 authoring encountered the
+separate lifecycle decisions in project-root `crc-escalation12.md`; no Slice04
+implementation assignment or ancestor acceptance is implied.
+
 2026-10-12, Sofie/CRC, three contributors, Expedited Mode. **Initial return is
 not accepted; Slice03 stays open and iteration01 is issued.** This review found
 missing required behavioral evidence, not a reproduced production defect. No
@@ -135,3 +141,113 @@ remain preserved. Current assignment is `cc-prompt-iteration01.md`; Slice04 and
 Arc12 composition stay held. Future review may retain the independently reproduced
 unchanged production/docs/build/demo claims above at this revision/date after
 inspecting the test-only delta and inputs; affected tests must execute fresh.
+
+
+## Iteration01 independent review — 2026-10-12
+
+Sofie/CRC, three contributors, Expedited Mode. **Accepted, five of five rows.**
+Assignment `cc-prompt-iteration01.md`, independently hashed SHA-256
+`add4ddbc9aa421bd58329430af16b440b355a1a2a82ff865ece53315752f2408`.
+Candidate `deafdd228fb44720878c700f8ff62b2a59ddbad6`, comprising
+`09a15f8927e7340c9be9ae9f4c3ba222f5ff7ce2` and `deafdd228` after981964b;
+planning intake `9b156a416d85b5ce8f6517cccbae0e4337b675c2`, both clean.
+Main remains clean at `a7ce6e61536ca96b6aeb2227ee06e430ed8df162`.
+
+Inspected the complete four-path diff: core topology.rs, graph lib.rs, facade
+cables.rs and persistence.rs. Compared production prefixes before `#[cfg(test)]`
+against981964b: all four byte-identical. No integration-test, example, fixture,
+manifest, dependency or lockfile change. No source repair by CRC. Checked CC's
+manifest/readback and new report against actual tests rather than treating its
+attestation as verification. Framework2.6.0, Rust2.0 and the existing guide07
+contracts remain applicable; private test observations add no public API.
+
+### Fresh execution at deafdd2
+
+Commands ran in the assigned implementation worktree. Transient receipts:
+`/var/folders/dt/kc8ndn6d3kx8c1jnxr05drsh0000gn/T/oxurack-crc-deafdd2-9aa57kcj`.
+`results.tsv` records the restricted sequence; `workspace-host.log` is the
+separate successful retry. These are diagnostic logs, not durable artifacts.
+
+| Command | CRC result |
+| --- | --- |
+| `cargo test --locked -p oxurack-core` | exit0; 424 unit, 5 integration, 9 seeded integration, 2 doctests passed |
+| `cargo test --locked -p oxurack-graph` | exit0; 67 unit, 1 integration passed |
+| `cargo test --locked -p oxurack --lib --test cables --test labels --test persistence --test scope --test lfo --test midi_output --example rewire-live-patch --example annotate-live-patch --example save-live-patch --example turing-machine-midi` | exit0; 47 library, 3 cables, 4 labels, 2 persistence, 6 Scope, 12 LFO, 2 MIDI, 26 runner tests; remaining example harnesses0 tests |
+| Same facade command with `--no-default-features` | exit0; 45 library, same integration/runner counts; graph absent |
+| `make test`, restricted | exit2; RT146 passed, four CoreMIDI initialization failures, three existing ignores |
+| Unchanged `make test`, host-access retry | exit0; full workspace and doctests passed, RT150 passed/3 existing ignores; feature-unified core448 passed |
+| `make lint` | exit0 |
+| `cargo clippy --locked -p oxurack-core -p oxurack-graph -p oxurack --all-features --all-targets -- -D warnings` | exit0 |
+| `git diff --check` | exit0 |
+
+The four restricted failures are the same input/output listing and nonexistent
+input/output initialization tests named in the initial review. No failure was
+removed; no test ignore or warning suppression was added. The existing block0.1.6
+future-incompatibility advisory remains. No hardware or MIDI endpoint was opened.
+
+### Retained independent evidence
+
+Retain the initial CRC's strict docs, default/no-default example builds,
+300-sample actual example, saved RON, repeated82-row replay/Scope and original
+fixture hashes, plus CLI error checks, **at981964b, executed2026-10-12**. They were
+not rerun or relabelled fresh. This decision follows the correction-review rule:
+all production code, fixtures, examples, docs, dependencies and acceptance inputs
+are unchanged; the inspected delta only strengthens native tests. No new finding
+undermines those claims. The new lifecycle witness below concerns already-owned
+Slice04 behavior and does not negate single-load/fresh-rack replay. The current
+assignment explicitly permits this retention. Affected native checks ran fresh.
+
+### Findings resolved and final row walk
+
+| Row | Status and independent evidence |
+| --- | --- |
+| G-01 | done/reproduced. Public occurrence tests plus opposed ordinal/Entity and absent-order selector tests pass. The actual LastWins schedule yields .25→.5→.25 through add/remove2; literal saved vectors and installed fresh replays preserve that sequence and existing metadata. |
+| G-02 | done/reproduced. Public core failures now compare rebuilt propagation cache, cable identities/components, both index directions, values/contributions and messages. Facade pending252 failures additionally compare graph, clock, driver/running, Scope and admission; existing disabled fan-in, self-loop and order-exhaustion cases pass. Inspection confirms preflight precedes owned mutation. |
+| G-03 | done/reproduced. Real core command add/remove/re-add checks actual IDs, endpoints and Command provenance; explicit GraphMaintenance removes the old edge and admits only the new one. Direct facade return-boundary graph checks and failed-call silence pass. Patch-load provenance remains unchanged and natively tested. |
+| G-04 | done/reproduced. Actual subject changes Affine to constant+.25 at sample200; next target signal is .25 while its entire LFO Scope sequence through1000 matches an untouched control whose target remains dynamic. Existing pending251 single-drain/original continuation, literal Update/FixedUpdate and new runtime save/reload order tests pass. |
+| G-05 | done/reproduced plus retained independent evidence. Checked the18-query mapping against actual native assertions, all current graph/facade gates passed, and retained musical/docs/build evidence has the boundary above. The ten inherited rows are individually accounted for below; no historical row is promoted by child acceptance. |
+
+F-01–F-04 are resolved. Five opening rows, five CC proposed rows and five final
+done rows; zero drops, deferrals or no-ops. The accepted close does not claim
+all native observations are exhaustive or new lifecycle behavior exists.
+
+### Historical delivered subset and remaining owner
+
+The report's generic historical remainder language is sharpened here by actual
+locked decisions and native witnesses. This is bounded reconciliation, not a
+reissue of historical prompts or retrospective acceptance of those ledgers.
+
+| Inherited row | Concrete current witness | Remaining disposition / owner |
+| --- | --- | --- |
+| A-04-01 | Separate optional graph crate, all18 query witnesses in CC's map, current getters/labels and synchronous cable freshness; default/no-default runs above | Unload/replacement freshness and stale map retirement: Slice04, then Arc12 assembly/CDC. Undifferentiated edges are the explicitly locked v0 design, not a missing prerequisite. |
+| A-04-02 | All six historical child rows individually walked below | Final inherited composition verdict remains Arc12 CRC assembly/CDC; child acceptance does not change historical deferred rows. |
+| Foundation S-01 | L1–L10: crate/features; StableDiGraph/Entity maps; push message maintenance; fresh ECS reads; synchronous GraphMaintenance; native add/remove and serde round trips for ModuleInfo/CableInfo/PortInfo | Actual incoming/outgoing map retirement and same-name replacement event order need Slice04 witnesses. Existing module-removal test covers an outgoing edge only. |
+| Foundation S-02 | L6 undifferentiated CableKind deferral D-25.7 retained; ModuleId is not substituted for process-local Entity; no new wire identity/schema | CableKind stays the existing catalog/design backlog item; stale-map cleanup is Slice04. These are explicit owners, not new Slice03 work. |
+| Navigation S-01 | Locked GraphView borrowing, feature-gated facade accessor, fresh display-name/description/tags/parameter builders, port/neighborhood/list and unknown/empty behavior in native tests; query map records assertions | Lifecycle removal of modules, names and edges requires Slice04. No independent historical ledger disposition until Arc12 CDC composition. |
+| Navigation S-02 | Locked dedicated maintenance and endpoint ordering retained; corrected ordinal/fallback list test identifies exact IDs | Same-name replacement must not erase the new name mapping when old removal is delivered; Slice04 event order/maintenance contract. No separate navigation redesign identified. |
+| Diagnostics S-01 | Native empty/dangling, chain/diamond/cycle-error, SCC/self-loop/disjoint cycles, self-inclusive closures, unknown-empty and direct ValueKind compatibility tests; deterministic cable list; getter follow-up present | No new diagnostic implementation gap identified within v0; final historical reconciliation remains Arc12 assembly/CDC. Compatibility discovery is not connection admission. |
+| Diagnostics S-02 | CableKind combined-edge interpretation retained; historical missing-getter deferral is now represented by parameters_of current/missing-getter tests | CableKind backlog stays deferred; coverage/performance/release claims remain Arc08, outside this query proof. |
+| A-05-01 | Actual patch/unpatch occurrence, metadata, pending MIDI/Scope continuation, save/fresh replay | Unload/replacement/reset/transport, ergonomic handles and queued-operation disposition: Slice04 under CDC decisions in escalation12. |
+| A-05-02 | Delivered Slice01/02/03 API subsets and explicit unresolved lifecycle requirements | Final Arc05 API accounting is Arc12 assembly/CDC after Slice04. No transfer or waiver is enacted here. |
+
+### Bubble-up, preservation and next action
+
+Delivered the approved runtime cable/graph increment, including required ordering,
+atomic errors, notification/graph identity, changed live phase continuity and
+bounded inherited reconciliation. No production defect was exposed by iteration01;
+no Slice03 acceptance amendment or roadmap restructuring is needed. Preserve both
+issued prompts and CC's full closing report. Artifact inventory: none beyond the
+first-class close/planning documents; validated against source/planning diff.
+
+What worked: actual opposing order and literal LastWins values discriminate the
+ordering bug; private before/after ownership records make negative cases useful;
+an unchanged live LFO control distinguishes phase continuity from fresh replay.
+
+Next-slice investigation reproduced the known replacement gap concretely: same
+MIDI channel cannot reload; a later failing candidate leaves an orphan sink and
+reserved channel while the old handle survives. Source/docs also disagree about
+transport/reset semantics. These belong to Slice04 and need CDC's consequential
+contract decisions, not source repairs or a second Slice03 correction. See
+project-root crc-escalation12.md. Routine close/status changes are recorded now;
+Slice04 implementation is held at that design handoff. Arc12 four rows, historical
+ledgers and projectP-01–P-06 remain open/deferred at their existing gates.

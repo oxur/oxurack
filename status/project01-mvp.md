@@ -17,13 +17,15 @@
 > [Slice02 metadata/events](../project01-mvp/arc12-live-rack-operations/slice02-events-and-metadata/crc-verification.md)
 > independently accepted at20c60ef: five M rows done; core/both feature modes/native
 > host and300-sample annotation/fresh70-row replay pass, originals unchanged.
-> [Slice03 graph composition prompt](../project01-mvp/arc12-live-rack-operations/slice03-graph-composition/cc-prompt.md)
-> returned981964b/544b89d; CRC native/host and300-sample rewire/fresh82-row replay
-> reproduce. G-01–G-05 stay open for required ordering, atomic/event identity,
-> changed-modulation continuity and concrete inherited reconciliation proof.
-> Current [iteration01](../project01-mvp/arc12-live-rack-operations/slice03-graph-composition/cc-prompt-iteration01.md)
-> is one test/evidence correction1/5. Slice04 held; approved product plan unchanged.
-> Arc12 composition remains open.
+> [Slice03 graph composition](../project01-mvp/arc12-live-rack-operations/slice03-graph-composition/crc-verification.md)
+> iteration01 independently accepted atdeafdd228: five G rows done. Corrected
+> native/core/graph/default/no-default and host workspace checks pass; unchanged
+> independent300-sample/82-row demo/docs/build evidence retained at981964b.
+> No active CC assignment. Next-slice investigation reproduced MIDI replacement
+> and failed-candidate reservation leaks, plus historical/current transport conflicts.
+> [Escalation12](../project01-mvp/crc-escalation12.md) awaits CDC through Duncan;
+> Slice04 implementation held pending lifecycle/MIDI/command/handle/loader choices.
+> Full planned scope retained; no architectural amendment approved. Arc12 open.
 > Exact engine-state checkpoints remain future work. Existing append-only load
 > behavior is explicitly owned by Arc12/Slice04; Slice01 reloads into a fresh rack.
 > Catalog/Chord, full interfaces, hardware timing/coverage/benchmarks/soak retain
