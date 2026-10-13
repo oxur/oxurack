@@ -1,12 +1,13 @@
 # Arc12 Slice04 — explicit rack lifetimes
 
-Version1.2 — 2026-10-12. Status: open, CRC correction review.
-Current assignment: `arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration02.md`.
+Version1.3 — 2026-10-12. Status: open, CRC correction review.
+Current assignment: `arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration03.md`.
 Three contributors, Expedited Mode. CDC directive12 planning67e9150 unchanged.
-Current source baseline:1242a60fa3a997f95b29195de3b28f7e9a2864ff.
+Current source baseline:03825e5077b7cd621185ae70b47020da321706c4.
 Depends on CRC-accepted Slice01–03. Main a7ce6e6 protected. Six LF rows:
-LF-05/LF-06 independently done, LF-01–LF-04 open; correction1/5 executed and
-returned for missing interactions, correction2/5 issued. No Slice04 closure or
+LF-01/LF-02 independently done at03825e5; LF-05/LF-06 retained at1242a60;
+LF-03/LF-04 open. Two corrections executed; correction3/5 issued for invalid/
+missing first-reset/control proof and preservation, without product changes. No Slice04 closure or
 Slice05 opening until all applicable rows pass; CDC retains Arc12 acceptance.
 
 ## Delivered capability
@@ -137,7 +138,8 @@ plus narrow example factoring/diagnostic repair, without a new proof platform.
 | --- | --- | --- | --- |
 | 2026-10-12 | arc12-live-rack-operations/slice04-runtime-api/cc-prompt.md | Slice03 CRC accepted deafdd228; CDC directive12 planning67e9150; Duncan relay | Returned f6fdeb5/622e9948; independently reproduced native/musical checks, incomplete interaction proof; superseded by iteration01, no acceptance |
 | 2026-10-12 | arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration01.md | CRC review f6fdeb5; F-01–F-06; original assignment preserved | Returned1242a60/9081268; CRC accepts LF-05/LF-06, four rows remain open; superseded by iteration02, no slice acceptance |
-| 2026-10-12 | arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration02.md | CRC review1242a60; remaining F-01–F-04; preserved prior assignments | Active CC test/evidence correction2/5; four rows open, accepted assertions/receipts retained; Slice05 held |
+| 2026-10-12 | arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration02.md | CRC review1242a60; remaining F-01–F-04; preserved prior assignments | Returned03825e5/18abe11; CRC accepts LF-01/LF-02, retains LF-05/LF-06; two rows open; superseded by iteration03 |
+| 2026-10-12 | arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration03.md | CRC review03825e5; remaining F-03/F-04; preserved prior assignments | Active CC test/evidence correction3/5; two source test paths; four rows accepted; Slice05 held |
 
 ## Iteration01 review / iteration02 readiness — 2026-10-12
 
@@ -159,7 +161,50 @@ real fault/current restart/phase controls; coherent portable ordered bounded
 manifest with itemized intake/readback,55–75k packet allowance and preserved
 prompts. No new proof machinery or endpoint gate; no source changes by CRC.
 
+## Iteration02 review / iteration03 readiness — 2026-10-12
+
+CRC independently reviews03825e5/18abe11. All required native checks and exact
+host retry pass; restricted CoreMIDI failures retained. LF-01 isolation/structure
+and LF-02 ordered actual multi-App behavior accepted; LF-05/LF-06 retained with
+historical provenance. LF-03 first-reset state/fault comparison and LF-04 reset
+versus uninterrupted control remain unproved. The accepted saved-lifetime replay
+function was replaced rather than preserved; its restoration and the remaining
+immediate snapshot-error observations are assigned in iteration03. No implementation
+failure or structural amendment; two remaining rows open,04/05 and parents held.
+
+Guide07 readiness for iteration03:
+
+1. Source-grounded: inspected actual four-path03825e5 delta, nested RetainedState,
+   first-fault timing, both-reset control, removed1242a60 function, current reset/
+   restart/snapshot/consume paths. All gates reproduced; actual unreset CC74/75
+   control run1300 grounds note62 at251, release376 and NoteOn64 at626.
+2. Design-complete: CDC12 unchanged. Only first-reset preserved state, uninterrupted
+   control with one literal release exception, original replay preservation and
+   complete snapshot failure boundary; two test paths only, no product/API repair.
+3. Guideline-applied: full guide07/template, testing01/03, verification03/04/05,
+   iteration02/03 workflow and Rust2.0 entrypoint/full anti-patterns read. Actual
+   AP-12/18 intentional owned snapshots/short borrows, AP-09/42 useful test errors,
+   AP-44 private access and AP-35 explained fixture boundaries inform the recipes.
+4. Executable: existing inline helper before/after reset, same two musical racks,
+   exact saved function from1242a60 plus current capture helpers; disabled-cable
+   observation avoids unsupported snapshot unwrap. No consumed owner reused or
+   nonexistent Virtual overstep. Sketches labelled uncompiled, control run actual.
+5. Falsifiable: expected pending1→4/0→3 with all other fields equal; saved first
+   fault before mutation; only subject reset; exact cleanup300, only control
+   release376 exception, all events after shared626 equal including later releases;
+   complete error boundary and both restart and unload/reload remain exercised.
+6. Coherent/portable: bounded ordered manifest with full active prompt/plan/ledger,
+   scoped current review/design/source and original function, existing intake home,
+   approximately35–50k packet/recovery allowance. Seven fresh gates retained;
+   unaffected independent evidence stays dated/pinned, four accepted rows preserved.
+   No new proof tooling, source/main edits by CRC, endpoint or permission gate.
+
 ## Version history
+
+- v1.3 — 2026-10-12: iteration02 independently reviewed at03825e5; LF-01/LF-02
+  accepted, LF-05/LF-06 retained; LF-03/LF-04 open. Iteration03 issued for the
+  collected remaining original observations/preservation in two test paths.
+
 
 - v1.2 — 2026-10-12: iteration01 independently reproduces native/musical gates;
   LF-05/LF-06 done, four rows retain specifically unproved interactions.

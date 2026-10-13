@@ -1,6 +1,6 @@
 # Arc12 — live rack operations
 
-Version1.10 — 2026-10-12. Status: active; Slice01–03 CRC accepted atdeafdd228 or their named predecessors. Slice04 iteration01 reviewed at1242a60: LF-05/LF-06 done, four rows open; [iteration02](slice04-runtime-api/cc-prompt-iteration02.md) completes remaining interaction proof. Slice05 stays unopened until04 acceptance. Four arc rows remain open.
+Version1.11 — 2026-10-12. Status: active; Slice01–03 CRC accepted atdeafdd228 or their named predecessors. Slice04 iteration02 reviewed at03825e5: LF-01/LF-02/LF-05/LF-06 done, LF-03/LF-04 open; [iteration03](slice04-runtime-api/cc-prompt-iteration03.md) repairs remaining original reset/control and preservation proof. Slice05 stays unopened until04 acceptance. Four arc rows remain open.
 Depends on accepted Arc10/Arc11; source predecessor72fe6b5. Blocks saved/live
 musical workflow and Arc07 controls. Related: carried-over Arcs02–05; Arc13 catalog.
 Authority: approved successor roadmap and Duncan's explicit “Continue with live
@@ -178,7 +178,20 @@ four lifecycle interaction rows remain open under collected iteration02. No
 source failure or design/structural amendment claimed. Accepted child01–03 and
 four arc rows unchanged;05 remains held. Original prompts/review attempts retained.
 
+## Slice04 iteration02 review — 2026-10-12
+
+CRC independently reproduces all required native gates and exact host retry at
+03825e5; restricted failure preserved. LF-01/LF-02 now done; LF-05/LF-06 retained;
+LF-03/LF-04 stay open for first-reset preservation, uninterrupted control and
+specified regression/error-boundary preservation. Iteration03 is active with two
+test-only source paths. Two corrections executed/third issued. No product defect,
+architecture or structural scope amendment. Slice05/R-01–R-04 remain held/open.
+
 ## Version history
+
+- v1.11 — 2026-10-12: routine Slice04 iteration02 status at03825e5; four LF rows
+  accepted, two open and iteration03 issued. CDC12 five-child design unchanged.
+
 
 - v1.10 — 2026-10-12: Slice04 iteration01 independently reviewed at1242a60;
   two LF rows done, four open and iteration02 active. Routine status only;

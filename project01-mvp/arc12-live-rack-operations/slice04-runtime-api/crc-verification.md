@@ -2,8 +2,9 @@
 
 2026-10-12. Sofie/CRC. Three contributors, Expedited Mode.
 
-Current: iteration01 reviewed at1242a60; LF-05/LF-06 done, LF-01–LF-04 open.
-See the appended Iteration01 independent review. Active correction: iteration02.
+Current: iteration02 reviewed at03825e5; LF-01/LF-02/LF-05/LF-06 done,
+LF-03/LF-04 open. See the appended Iteration02 independent review.
+Active correction: iteration03; two corrections executed, third issued.
 
 ## Initial candidate, authority and disposition
 
@@ -320,3 +321,137 @@ candidate and phase-control oracles discriminate the missing properties;
 (6) bounded ordered read manifest and itemized intake, accepted versus unresolved
 rows/retained native/example receipts,55–75k packet/recovery allowance and no new
 proof tooling. Original prompts preserved; next assignment is iteration02.
+
+
+## Iteration02 independent review — 2026-10-12
+
+Sofie/CRC reviewed source `03825e5077b7cd621185ae70b47020da321706c4`, parent
+`1242a60fa3a997f95b29195de3b28f7e9a2864ff`, and CC planning return
+`18abe111ce065979259cfdcece3c5557d6e16fbe`. Reviewed assignment:
+`cc-prompt-iteration02.md`, SHA256
+`9ce58e39fb0fc04df4279ac6131585ec5d38cab2c48d286f82bdf5f4797b5e23`.
+Clean source/planning intake and protected main
+`a7ce6e61536ca96b6aeb2227ee06e430ed8df162` confirmed.
+
+**Accept LF-01 and LF-02. Retain accepted LF-05/LF-06. LF-03/LF-04 remain open.**
+Two corrective passes executed; issue collected iteration03, correction3/5.
+No production defect reproduced. Slice04 remains open and Slice05 unopened.
+
+### Delta, intake and independent checks
+
+All four changed files are authorized. Production prefixes before cfg(test) in
+facade lib, lifecycle and MIDI-out are byte-identical to1242a60; the fourth file
+is integration tests. No production, example, fixture, dependency, lockfile or
+main edits. CRC inspected changed tests and helpers, current reset/restart/commit,
+snapshot and MIDI consumption paths, plus the preserved1242a60 replay test.
+CC intake is itemized and records truncation recovery, source/skill reading and
+contract readback. Its Time<Virtual> adaptation is correct: Virtual exposes
+elapsed/delta/pause, not overstep; Fixed elapsed/overstep remain observable.
+Its completion claim nevertheless exceeds the actual reset-control/state and
+preservation checks below. Receipts do not independently prove comprehension.
+
+Fresh sequential commands from the assigned source worktree:
+
+| Command | Result |
+| --- | --- |
+| cargo test --locked -p oxurack-mod-midiout | exit0;9 unit,0 doc passed |
+| cargo test --locked -p oxurack --all-targets | exit0;56 facade unit,10 lifecycle integration, all remaining integration/example targets;4 save-runner and26 MIDI-runner tests passed |
+| cargo test --locked -p oxurack --no-default-features --all-targets | exit0;54 facade unit,10 lifecycle integration, corresponding other targets passed |
+| make test, restricted | exit2; RT146 passed,4 known CoreMIDI initialization failures,3 existing ignores |
+| unchanged make test, host access | exit0; RT150 passed,0 failed,3 existing ignores; full workspace and doctests passed |
+| make lint | exit0; Clippy and formatting |
+| cargo clippy --locked -p oxurack-core -p oxurack-mod-midiout -p oxurack --all-features --all-targets -- -D warnings | exit0 |
+| git diff --check | exit0 |
+
+Restricted failures remain midi_io::tests::{test_list_input_ports,
+test_list_output_ports,test_open_input_nonexistent_returns_error,
+test_open_nonexistent_port_returns_error}, with MIDI support could not be
+initialized. Host success does not erase them. Existing cables.rs:231 no-default
+unused_mut and block0.1.6 future-incompatibility advisory remain unsuppressed.
+Transient receipts: tmpdir `oxurack-crc-slice04-iteration02-pefnop_5`,01–07 logs
+and results.jsonl; `/tmp/oxurack-crc-03825e5-host-make-test.log`. These are local
+conveniences, not durable dependencies; canonical results are recorded here.
+
+CRC also ran the existing offline turing-machine-midi example with a temporary
+copy of the LFO fixture, changing only note_cc74/velocity_cc75, samples1300:
+`cargo run --locked -p oxurack --example turing-machine-midi -- --patch <temporary-lfo-cc.ron> --samples 1300`, exit0.
+This independently grounds the unreset control: note62/velocity21 at251;
+NoteOff62 at376; next NoteOn64/velocity44 at626. CC74/75 events remain present.
+At300 the active old note is62; contract cleanup is exactly NoteOff62,CC123,CC120
+at300. Source consumption shows why only the control's old NoteOff at376 differs
+before both sink states converge; all CC and later release events must compare.
+No endpoint opened or mutable source probe created.
+
+### Remaining findings — existing obligations, not new hardening
+
+Anchors qualify03825e5; preserved iteration02 sections3–4 govern.
+
+- **F-03 / LF-03 — compare across the first reset, not only the repeat.**
+  lib.rs:2617 calls reset, checks count4, captures RetainedState at2622, then
+  compares only the second reset at2628. A first reset changing clocks, Scope,
+  configuration or messages can pass. Capture the existing typed state immediately
+  before first reset and compare after, allowing only pending count1→4. Retain
+  current full-state second reset and literal four-event/retrigger assertions.
+  The real-fault test at2392 checks the stored first fault before reset but
+  captures retained_fault only after the first reset at2446. Thus first-reset
+  fault clearing could pass its second-reset comparison. Capture the actual
+  fault before first reset and compare after it; keep returned completed1 versus
+  stored completed0 distinction and exact unread+cleanup vector. This is the
+  already specified first-fault guarantee, not a new failure scenario.
+- **F-04 / LF-04 — the reset control is reset too.**
+  tests/lifecycle.rs:1198–1199 reset both subject and control. Equal subsequent
+  scalars/MIDI can hide equal phase/RNG rewinding, contrary to iteration02 §4's
+  uninterrupted control and bounded old-note release exception. Reset only the
+  subject. Literal cleanup300 is separate; only control's `(376,[0x80,62,0])`
+  is absent from subject continuation. All scalar values and NoteOn/CC compare;
+  full event equality from the shared626 retrigger through1300, including later
+  NoteOffs. Preserve stop/start comparison and future clock-edge observation.
+- **F-04 preservation and failed-snapshot boundary.** The diff replaces
+  `edited_saved_lifetime_replay_matches_fresh_trace_and_scope` at1242a60 with
+  `edited_live_snapshot_restart_matches_independent_expected_trace_and_scope`.
+  The new restart proof is useful and passes, but iteration02 explicitly required
+  it without removing the accepted save/unload/reload test. Restore that test
+  alongside restart; adapt private helper reuse only without changing its path.
+  LF-06's unchanged actual example still passes; its row is not reopened.
+  Also lib.rs:1135 disabled-cable restart checks module IDs/sample/driver/records,
+  but omits the assigned Fixed/Virtual clock, Scope configuration/overwrite,
+  first-fault and typed-message preservation at the immediate Err boundary.
+  Add these to the existing inline test, without calling snapshot_patch while
+  the cable is disabled or changing production. Existing candidate/admission
+  checks and real fault recovery remain valid; no exhaustive matrix is requested.
+
+### Six-row walk and retention
+
+| Row | CRC disposition | Independent evidence / remaining bound |
+| --- | --- | --- |
+| LF-01 | done | Immediate CandidateMarker absence before retirement; exact same-owner membership/index/graph/messages/Scope retained; late actual sink failure and1000-sample scalar/MIDI control with matching overwrite; channel1 recovery; normalized module/port/ChildOf/merge/enabled/order/complete target roster and graph projections match fresh rack |
+| LF-02 | done | Ordered hooks[1,2] in load/restart/nonempty unload/reload; both actual instances totals2/3→6/6, fresh4/3 and original2/3; current-lifetime reinstall/collision, getters and exact per-sample counters; empty unload no-op and controlled Live no catch-up |
+| LF-03 | open | Literal unread note/reset4/repeat/retrigger, real dirty channels and128-event vector/129th append error all pass; F-03 first-reset state and first-fault comparison still absent |
+| LF-04 | open | Current edited seeded restart after deleting original and10000-sample fresh scalar/MIDI reference, admission/empty lifetime, actual fault→failed candidate→fresh note0 recovery pass; reset-control proof invalid and preservation omissions above remain |
+| LF-05 | done retained | CRC1242a60 typed candidate/error/notification and core unsupported-command checks remain independently accepted; relevant source/assertions unchanged |
+| LF-06 | done retained | CRC1242a60 actual default/no-graph/fresh72-row example, ordinary300/six negative CLI cases and parsed runner tests remain accepted; current all-target tests rerun; historical strict docs/original fixtures retained atf6fdeb5 |
+
+Six opening rows accounted for:4 done,2 open; no deferral/no-op or criterion
+amendment. The initial and iteration01 reviews remain history. Retention preserves
+original dates/revisions: byte-identical library production, unchanged runner/
+examples/fixtures/docs/dependencies support the earlier strict docs, original
+MIDI13/LFO70 hashes and actual72-row lifecycle receipts. No new finding defeats
+those runnable receipts. The removed replay regression cannot be called retained
+executable coverage; restoration is assigned separately. CC's report is preserved
+unchanged by CRC. No durable supporting artifact was produced or new validator added.
+
+### Bubble-up and next assignment
+
+No architectural contradiction or structural arc amendment. The04 musical
+capability is reproduced; complete original interaction proof is still open.
+Routine status updates record LF-01/LF-02 acceptance and two remaining rows.
+Arc12 R-01–R-04, historical Arc05 A-05-01/A-05-02 and project/release gates remain
+open with CDC12's05 and Arc07/13 successors unchanged. Slice05 stays unopened.
+Iteration03 repairs only the two existing facade test paths, preserves accepted
+observations, and reruns affected native checks. Its readiness is recorded in
+slice-plan.md. No source implementation changes by CRC.
+
+Planning-only checks: the initial transient row-count assertion also counted
+the historical CC proposal table and failed. Restricting it to the current
+acceptance table passed: six rows, four done/two open. The preserved iteration02
+prompt SHA256 matches the reviewed assignment; planning git diff --check passes.

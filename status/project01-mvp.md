@@ -29,16 +29,18 @@
 > CRC acknowledged planning67e9150 at clean sourcedeafdd228 and issued
 > [Slice04 lifecycle prompt](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/cc-prompt.md):
 > isolated replacement/unload, reset/restart/cleanup and executable --lifecycle session.
-> Was: initial f6fdeb5 return required iteration01. Now: CRC independently
-> reviews1242a60/9081268; native gates/exact host retry and default/no-graph/fresh72
-> musical trace pass, ordinary300 and six CLI failures reproduce. Diagnostic is
-> retired300/new0. [CRC review](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/crc-verification.md)
-> accepts LF-05/LF-06; LF-01–LF-04 retain missing original lifecycle interactions.
-> Active [iteration02](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration02.md)
-> collects these in four existing test paths, retaining accepted evidence.
-> No lifecycle implementation defect/design amendment claimed. Instance/handle/
-> queued-command05 remains unopened until04 acceptance. Five-child Arc12
-> composition stays open; source1242a60 and protected main a7ce6e6, CRC planning only. Separate
+> Was: initial f6fdeb5 return required iteration01; CRC1242a60 accepted LF-05/06.
+> Now: CRC independently reviews03825e5/18abe11; fresh native/host gates pass.
+> LF-01 isolation/structure and LF-02 ordered multi-App behavior are accepted;
+> LF-05/LF-06 retain native/musical72-row receipts at1242a60, retired300/new0.
+> [CRC review](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/crc-verification.md)
+> keeps LF-03/LF-04 open for pre-first-reset state/fault comparison, an uninterrupted
+> reset control, restored save/unload/reload regression and immediate snapshot-error
+> observations. Active [iteration03](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration03.md)
+> repairs these in two test paths. Two corrections executed/third issued.
+> No lifecycle product defect/design amendment claimed. Instance/handle/queued-command05
+> remains unopened until04 acceptance; five-child Arc12 composition stays open.
+> Source03825e5 and protected main a7ce6e6 unchanged by CRC, planning updates only. Separate
 > MIDI transport and catalog-specific typed forms retain Arc07/13 re-entry owners.
 > Exact engine-state checkpoints remain future work. The historical append-only
 > load defect has a proposed isolated-candidate repair atf6fdeb5, pending complete
