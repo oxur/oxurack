@@ -77,6 +77,38 @@ pub enum CoreError {
         occurrence: usize,
     },
 
+    /// A cable endpoint has the wrong signal direction.
+    #[error("invalid cable direction for {module}.{port}: expected {expected:?}, got {actual:?}")]
+    InvalidCableDirection {
+        /// Module instance name.
+        module: String,
+        /// Port name.
+        port: String,
+        /// Required direction.
+        expected: crate::PortDirection,
+        /// Actual port direction.
+        actual: crate::PortDirection,
+    },
+
+    /// The transform is invalid for the source and target signal kinds.
+    #[error(
+        "invalid cable transform {transform:?} for {source_kind:?} -> {target_kind:?}: {reason}"
+    )]
+    InvalidCableTransform {
+        /// Source port kind.
+        source_kind: ValueKind,
+        /// Target port kind.
+        target_kind: ValueKind,
+        /// Requested cable transform.
+        transform: crate::CableTransform,
+        /// Explanation of the rejected parameter or kind combination.
+        reason: String,
+    },
+
+    /// No next cable ordinal can be represented without wrapping.
+    #[error("cable order is exhausted")]
+    CableOrderExhausted,
+
     /// The command is recognized but not yet implemented in this crate.
     ///
     /// Returned by [`dispatch_core_command`](crate::dispatch_core_command)

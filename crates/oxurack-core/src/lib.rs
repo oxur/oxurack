@@ -45,6 +45,7 @@ pub mod port;
 pub mod rng;
 pub mod scale;
 pub mod tick;
+pub mod topology;
 pub mod value;
 
 pub mod patch;
@@ -68,6 +69,7 @@ pub use tick::{
     SimulationRunning, TickNow, TickOrder, TickPhase, compute_tick_order,
     mark_propagation_order_dirty,
 };
+pub use topology::{connect_cable, disconnect_cable};
 
 // Phase 4
 pub use event::{

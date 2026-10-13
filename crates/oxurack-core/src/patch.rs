@@ -286,7 +286,7 @@ fn find_port_schema<'a>(
 /// Uses Kahn's algorithm (topological sort) with a proper queue on
 /// module instance names. When a cycle is detected, runs Tarjan's SCC
 /// to report only the modules actually participating in cycles.
-fn check_patch_cycles(patch: &Patch) -> Result<(), crate::PatchError> {
+pub(crate) fn check_patch_cycles(patch: &Patch) -> Result<(), crate::PatchError> {
     use std::collections::{HashSet, VecDeque};
 
     let mut in_degree: HashMap<&str, usize> = patch
@@ -672,6 +672,7 @@ pub fn apply_patch_to_world(
             source_port,
             target_port,
             transform: cable_config.transform,
+            source: crate::ChangeSource::PatchLoad,
         });
 
         // Insert label components and emit LabelChanged per non-empty cable label.
@@ -2568,6 +2569,7 @@ mod tests {
         let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
         assert_eq!(collected.len(), 1, "expected exactly one CableConnected");
         assert!(collected[0].transform.is_none());
+        assert_eq!(collected[0].source, crate::ChangeSource::PatchLoad);
     }
 
     #[test]

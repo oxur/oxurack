@@ -74,7 +74,7 @@ pub enum CoreCommand {
         /// Optional inline cable transform.
         transform: Option<crate::CableTransform>,
     },
-    /// Remove a cable between two ports.
+    /// Remove occurrence zero in effective order between two ports.
     RemoveCable {
         /// `(module_instance_name, port_name)` of the source.
         source: (String, String),
@@ -151,9 +151,8 @@ pub struct ModuleRemoved {
 
 /// Emitted when a cable entity is added to the rack.
 ///
-/// Producers: [`apply_patch_to_world`](crate::apply_patch_to_world)
-/// (during patch load); future `dispatch_add_cable` (currently
-/// `NotImplemented`).
+/// Producers: [`apply_patch_to_world`](crate::apply_patch_to_world) and
+/// [`connect_cable`](crate::connect_cable).
 #[derive(Message, Clone, Debug)]
 pub struct CableConnected {
     /// The ECS entity for the new cable.
@@ -164,12 +163,13 @@ pub struct CableConnected {
     pub target_port: Entity,
     /// Optional inline signal transform.
     pub transform: Option<crate::CableTransform>,
+    /// Why this structural change was made.
+    pub source: ChangeSource,
 }
 
 /// Emitted when a cable entity is removed from the rack.
 ///
-/// Producers: future `dispatch_remove_cable` (currently
-/// `NotImplemented`).
+/// Producers: [`disconnect_cable`](crate::disconnect_cable).
 #[derive(Message, Clone, Debug)]
 pub struct CableDisconnected {
     /// The ECS entity that was removed.
@@ -178,6 +178,8 @@ pub struct CableDisconnected {
     pub source_port: Entity,
     /// The input port entity this cable was writing to.
     pub target_port: Entity,
+    /// Why this structural change was made.
+    pub source: ChangeSource,
 }
 
 /// Emitted after a parameter is successfully written.
@@ -215,7 +217,7 @@ pub struct ParameterChanged {
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq)]
 pub enum ChangeSource {
-    /// Direct user/script command via [`CoreCommand::SetParameter`].
+    /// Direct user/script command dispatched through [`dispatch_core_command`].
     Command,
     /// Direct facade mutation, such as the parameter and label APIs.
     DirectApi,
@@ -229,6 +231,7 @@ pub enum ChangeSource {
 /// `entity` is `None` for rack-level changes ([`RackMeta`](crate::RackMeta))
 /// and `Some(e)` for entity-level changes. Entity `previous` is `None` when no
 /// raw component existed; rack `previous` always includes its stored value.
+/// Rack `previous` is `None` for PatchLoad initialization.
 #[derive(Message, Clone, Debug)]
 pub struct LabelChanged {
     /// Target entity, or `None` for rack-level metadata.
@@ -327,6 +330,9 @@ pub struct SongPositionChanged {
 /// - [`CoreCommand::SetBpm`] -- returns `Ok(())` (tempo propagation
 ///   will be wired when the RT bridge is integrated into the umbrella
 ///   crate).
+/// - [`CoreCommand::AddCable`] -- validates and adds one active cable.
+/// - [`CoreCommand::RemoveCable`] -- removes occurrence zero in effective
+///   cable order for the exact endpoint pair.
 ///
 /// # Emits
 ///
@@ -334,16 +340,16 @@ pub struct SongPositionChanged {
 ///   `source: ChangeSource::Command`.
 /// - `SetLabel` (on success): [`LabelChanged`] with
 ///   `source: ChangeSource::Command`.
+/// - `AddCable` / `RemoveCable` (on success): one topology message with
+///   `source: ChangeSource::Command`.
 ///
 /// # Not yet implemented
 ///
-/// The following commands return
-/// [`Err(NotImplemented(..))`](crate::CoreError::NotImplemented)
-/// because they require infrastructure provided by the umbrella crate:
+/// The following commands still require infrastructure provided by the
+/// umbrella crate:
 ///
 /// - [`CoreCommand::LoadPatch`]
 /// - [`CoreCommand::SavePatch`]
-/// - [`CoreCommand::AddCable`] / [`CoreCommand::RemoveCable`]
 pub fn dispatch_core_command(
     world: &mut bevy_ecs::world::World,
     command: &CoreCommand,
@@ -362,8 +368,25 @@ pub fn dispatch_core_command(
         } => crate::set_label_value(world, target, kind, value, ChangeSource::Command),
         CoreCommand::LoadPatch(_) => Err(crate::CoreError::NotImplemented("LoadPatch")),
         CoreCommand::SavePatch(_) => Err(crate::CoreError::NotImplemented("SavePatch")),
-        CoreCommand::AddCable { .. } => Err(crate::CoreError::NotImplemented("AddCable")),
-        CoreCommand::RemoveCable { .. } => Err(crate::CoreError::NotImplemented("RemoveCable")),
+        CoreCommand::AddCable {
+            source,
+            target,
+            transform,
+        } => crate::connect_cable(
+            world,
+            (&source.0, &source.1),
+            (&target.0, &target.1),
+            *transform,
+            ChangeSource::Command,
+        )
+        .map(|_| ()),
+        CoreCommand::RemoveCable { source, target } => crate::disconnect_cable(
+            world,
+            (&source.0, &source.1),
+            (&target.0, &target.1),
+            0,
+            ChangeSource::Command,
+        ),
     }
 }
 
@@ -915,7 +938,7 @@ mod tests {
     }
 
     #[test]
-    fn test_dispatch_add_cable_returns_not_implemented() {
+    fn test_dispatch_add_cable_requires_active_patch() {
         let mut world = bevy_ecs::world::World::new();
         let result = dispatch_core_command(
             &mut world,
@@ -926,13 +949,13 @@ mod tests {
             },
         );
         assert!(
-            matches!(result, Err(crate::CoreError::NotImplemented("AddCable"))),
-            "AddCable should return NotImplemented: {result:?}"
+            matches!(result, Err(crate::CoreError::NoPatchLoaded)),
+            "AddCable should require an active patch: {result:?}"
         );
     }
 
     #[test]
-    fn test_dispatch_remove_cable_returns_not_implemented() {
+    fn test_dispatch_remove_cable_requires_active_patch() {
         let mut world = bevy_ecs::world::World::new();
         let result = dispatch_core_command(
             &mut world,
@@ -942,8 +965,8 @@ mod tests {
             },
         );
         assert!(
-            matches!(result, Err(crate::CoreError::NotImplemented("RemoveCable"))),
-            "RemoveCable should return NotImplemented: {result:?}"
+            matches!(result, Err(crate::CoreError::NoPatchLoaded)),
+            "RemoveCable should require an active patch: {result:?}"
         );
     }
 

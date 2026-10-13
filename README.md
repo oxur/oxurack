@@ -201,6 +201,30 @@ the live configuration, then advances and drains another 100 samples. It prints
 the raw values it wrote and `completed_samples=300`. The saved file preserves
 configuration metadata; it does not checkpoint running module engines.
 
+Live cable edits use `Oxurack::patch` and `Oxurack::unpatch` between samples.
+They validate exact active module/port names and signal compatibility before
+changing topology. Successful edits refresh the optional graph before returning
+and take effect in propagation on the next sample. A disconnected input with no
+contributors holds its previous value until another cable contributes. Saving
+after a rewire stores cable configuration and labels; loading it in a fresh rack
+restarts engine state.
+
+This example replaces LFO modulation with a constant `+0.25` cable after 200
+samples, saves the edited configuration, then advances to sample 300:
+
+```bash
+cargo run --locked -p oxurack --example rewire-live-patch -- \
+  --patch crates/oxurack/examples/patches/turing-machine-lfo.ron \
+  --save /tmp/oxurack-rewired.ron
+cargo run --locked -p oxurack --example turing-machine-midi -- \
+  --patch /tmp/oxurack-rewired.ron --samples 10000 \
+  --scope-view --scope-port tm_main.write_modulation
+```
+
+The second command replays the saved configuration in a fresh process. It
+restarts the LFO and Turing Machine engines while retaining the edited cable,
+order, and description.
+
 Capture selected scalar ports and the runner's generated MIDI events to a
 bounded CSV file. Capacity counts mixed records; when full, the oldest rows are
 discarded. Signal rows name the selected module and port. MIDI rows distinguish

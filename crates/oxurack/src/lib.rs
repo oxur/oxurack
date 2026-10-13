@@ -16,6 +16,7 @@ use bevy_ecs::schedule::ScheduleLabel;
 use bevy_time::TimeUpdateStrategy;
 use bevy_time::prelude::{Fixed, Real, Time, Virtual};
 
+mod cables;
 mod labels;
 mod persistence;
 mod scope;

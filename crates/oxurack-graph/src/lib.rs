@@ -24,13 +24,13 @@ use bevy_app::prelude::*;
 use bevy_ecs::prelude::*;
 use bevy_ecs::schedule::ScheduleLabel;
 use petgraph::stable_graph::{EdgeIndex, NodeIndex, StableDiGraph};
-use petgraph::visit::{Dfs, EdgeRef, Reversed, Walker};
+use petgraph::visit::{Dfs, EdgeRef, IntoEdgeReferences, Reversed, Walker};
 use serde::{Deserialize, Serialize};
 
 use std::collections::HashSet;
 
 use oxurack_core::{
-    CableConnected, CableDisconnected, CableTransform, Description, DisplayName,
+    CableConnected, CableDisconnected, CableOrder, CableTransform, Description, DisplayName,
     DisplayNameFormatter, ModuleAdded, ModuleKind, ModuleRemoved, Port, Tags, display_name_of,
 };
 
@@ -304,6 +304,41 @@ fn build_cable_info(world: &World, edge: &RackEdge) -> CableInfo {
     }
 }
 
+fn cable_sort_key(
+    graph: &RackGraph,
+    world: &World,
+    edge: &RackEdge,
+    source_node: NodeIndex,
+    target_node: NodeIndex,
+) -> (String, String, String, String, bool, usize, Entity) {
+    let order = world
+        .get::<CableOrder>(edge.cable_entity)
+        .map(|order| order.0);
+    let source_module = graph
+        .inner
+        .node_weight(source_node)
+        .expect("edge source node");
+    let target_module = graph
+        .inner
+        .node_weight(target_node)
+        .expect("edge target node");
+    let source_port = world
+        .get::<Port>(edge.source_port)
+        .expect("cable source port");
+    let target_port = world
+        .get::<Port>(edge.target_port)
+        .expect("cable target port");
+    (
+        source_module.instance_name.clone(),
+        source_port.name.as_ref().to_owned(),
+        target_module.instance_name.clone(),
+        target_port.name.as_ref().to_owned(),
+        order.is_none(),
+        order.unwrap_or(0),
+        edge.cable_entity,
+    )
+}
+
 // ── GraphView ──────────────────────────────────────────────────────────
 
 /// Read-only view over the rack graph with label-resolving queries.
@@ -372,31 +407,27 @@ impl<'w> GraphView<'w> {
 
     /// All cables in the graph, with labels resolved.
     ///
-    /// Sorted by `(source_module_instance, source_port_name,
-    /// target_module_instance, target_port_name)` for deterministic
-    /// output. `O(m log m)`.
+    /// Sorted by endpoint names, then present cable ordinal and Entity
+    /// fallback for cables with identical endpoints. `O(m log m)`.
     pub fn cables(&self) -> Vec<CableInfo> {
         let graph = self.raw();
-        let mut cables: Vec<CableInfo> = graph
+        let mut cables: Vec<_> = graph
             .inner
-            .edge_weights()
-            .map(|edge| build_cable_info(self.world, edge))
+            .edge_references()
+            .map(|edge| {
+                let key = cable_sort_key(
+                    graph,
+                    self.world,
+                    edge.weight(),
+                    edge.source(),
+                    edge.target(),
+                );
+                let info = build_cable_info(self.world, edge.weight());
+                (key, info)
+            })
             .collect();
-        cables.sort_by(|a, b| {
-            (
-                &a.source_module_instance,
-                &a.source_port_name,
-                &a.target_module_instance,
-                &a.target_port_name,
-            )
-                .cmp(&(
-                    &b.source_module_instance,
-                    &b.source_port_name,
-                    &b.target_module_instance,
-                    &b.target_port_name,
-                ))
-        });
-        cables
+        cables.sort_by(|a, b| a.0.cmp(&b.0));
+        cables.into_iter().map(|(_, info)| info).collect()
     }
 
     /// Histogram of module kinds present in the graph. `O(n)`.
@@ -521,7 +552,7 @@ impl<'w> GraphView<'w> {
         result
     }
 
-    /// Cables coming into the given module. `O(deg)`.
+    /// Cables coming into the given module, sorted by endpoint and cable order.
     ///
     /// Expects a **module entity**.
     pub fn incoming_cables(&self, module_entity: Entity) -> Vec<CableInfo> {
@@ -529,14 +560,26 @@ impl<'w> GraphView<'w> {
         let Some(&idx) = graph.node_by_entity.get(&module_entity) else {
             return Vec::new();
         };
-        graph
+        let mut cables: Vec<_> = graph
             .inner
             .edges_directed(idx, petgraph::Direction::Incoming)
-            .map(|e| build_cable_info(self.world, e.weight()))
-            .collect()
+            .map(|edge| {
+                let key = cable_sort_key(
+                    graph,
+                    self.world,
+                    edge.weight(),
+                    edge.source(),
+                    edge.target(),
+                );
+                let info = build_cable_info(self.world, edge.weight());
+                (key, info)
+            })
+            .collect();
+        cables.sort_by(|a, b| a.0.cmp(&b.0));
+        cables.into_iter().map(|(_, info)| info).collect()
     }
 
-    /// Cables going out from the given module. `O(deg)`.
+    /// Cables going out from the given module, sorted by endpoint and cable order.
     ///
     /// Expects a **module entity**.
     pub fn outgoing_cables(&self, module_entity: Entity) -> Vec<CableInfo> {
@@ -544,11 +587,23 @@ impl<'w> GraphView<'w> {
         let Some(&idx) = graph.node_by_entity.get(&module_entity) else {
             return Vec::new();
         };
-        graph
+        let mut cables: Vec<_> = graph
             .inner
             .edges_directed(idx, petgraph::Direction::Outgoing)
-            .map(|e| build_cable_info(self.world, e.weight()))
-            .collect()
+            .map(|edge| {
+                let key = cable_sort_key(
+                    graph,
+                    self.world,
+                    edge.weight(),
+                    edge.source(),
+                    edge.target(),
+                );
+                let info = build_cable_info(self.world, edge.weight());
+                (key, info)
+            })
+            .collect();
+        cables.sort_by(|a, b| a.0.cmp(&b.0));
+        cables.into_iter().map(|(_, info)| info).collect()
     }
 
     // ── Diagnostics ────────────────────────────────────────────────
@@ -1022,6 +1077,7 @@ mod tests {
             source_port,
             target_port,
             transform: None,
+            source: oxurack_core::ChangeSource::DirectApi,
         });
         cable
     }
@@ -1125,6 +1181,7 @@ mod tests {
             source_port: port_out,
             target_port: port_in,
             transform: None,
+            source: oxurack_core::ChangeSource::DirectApi,
         });
         app.update();
 
@@ -1188,6 +1245,7 @@ mod tests {
             source_port: port_out,
             target_port: port_in,
             transform: None,
+            source: oxurack_core::ChangeSource::DirectApi,
         });
         app.update();
 
@@ -1195,6 +1253,7 @@ mod tests {
             cable_entity: cable,
             source_port: port_out,
             target_port: port_in,
+            source: oxurack_core::ChangeSource::DirectApi,
         });
         app.update();
 
@@ -1233,6 +1292,7 @@ mod tests {
             source_port: port_out,
             target_port: port_in,
             transform: None,
+            source: oxurack_core::ChangeSource::DirectApi,
         });
         app.update();
 
@@ -1708,6 +1768,63 @@ mod tests {
 
         let view = GraphView::new(app.world());
         assert_eq!(view.incoming_cables(sink).len(), 2);
+    }
+
+    #[test]
+    fn cable_lists_sort_endpoint_prefix_then_ordinals_and_entity_fallback() {
+        let mut app = graph_test_app();
+        app.update();
+        let earlier_source = spawn_module(
+            &mut app,
+            "aaa_source",
+            "gen",
+            &[("out", oxurack_core::PortDirection::Output)],
+        );
+        let source = spawn_module(
+            &mut app,
+            "source",
+            "gen",
+            &[("out", oxurack_core::PortDirection::Output)],
+        );
+        let target = spawn_module(
+            &mut app,
+            "target",
+            "sink",
+            &[("in", oxurack_core::PortDirection::Input)],
+        );
+        app.update();
+        let earlier_out = find_port(&mut app, earlier_source, "out");
+        let source_out = find_port(&mut app, source, "out");
+        let target_in = find_port(&mut app, target, "in");
+        let prefix = connect_cable(&mut app, earlier_out, target_in);
+        let first = connect_cable(&mut app, source_out, target_in);
+        let second = connect_cable(&mut app, source_out, target_in);
+        let third = connect_cable(&mut app, source_out, target_in);
+        app.world_mut().entity_mut(prefix).insert(CableOrder(99));
+        app.world_mut().entity_mut(first).insert(CableOrder(10));
+        app.world_mut().entity_mut(second).insert(CableOrder(0));
+        app.world_mut().entity_mut(third).insert(CableOrder(10));
+        let absent = connect_cable(&mut app, source_out, target_in);
+        app.update();
+
+        let view = GraphView::new(app.world());
+        assert_eq!(view.raw().inner.edge_count(), 5);
+        let bits = |cables: Vec<CableInfo>| {
+            cables
+                .into_iter()
+                .map(|cable| cable.entity_bits)
+                .collect::<Vec<_>>()
+        };
+        let expected = vec![
+            prefix.to_bits(),
+            second.to_bits(),
+            third.to_bits(),
+            first.to_bits(),
+            absent.to_bits(),
+        ];
+        assert_eq!(bits(view.cables()), expected);
+        assert_eq!(bits(view.incoming_cables(target)), expected);
+        assert_eq!(bits(view.outgoing_cables(source)), expected[1..]);
     }
 
     #[test]
