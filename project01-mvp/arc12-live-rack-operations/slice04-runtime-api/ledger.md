@@ -13,3 +13,16 @@ CC assignment is cc-prompt-iteration01.md. No ancestor or historical acceptance.
 | LF-04 | Admission, unload, current-snapshot restart and fault recovery enforce explicit lifetime semantics | Running-first/no-I/O, pending count, failed snapshot/candidate, empty unload, stopped fresh0, fault recovery, phase/Scope and controlled Live no burst | correctness-grade | directive12 D1/D2 matrix | open | `tests/lifecycle.rs`: lifecycle precedence, pending rejection, live snapshot restart with Manual driver retained, unload/reload, late failure; `persistence.rs` getterless restart failure; `lifecycle.rs` fault retention/recovery | CC proposed-done; start/stop semantics preserved; carried cleanup keeps old boundary timestamp; CRC open: F-04, see `crc-verification.md` and iteration01 |
 | LF-05 | Public/documented failure and notification boundaries are honest and preserve compatibility | Typed lifecycle errors, Core Panic/SetBpm NotImplemented, candidate messages/PatchLoaded, loader production unchanged, hook/lifetime/event docs | correctness-grade | directive12 D3 honesty exception/D4 | open | `error.rs`, `event.rs` unit tests, `patch.rs` docs-only change, `module.rs` hook contract, candidate message count comparison in `tests/lifecycle.rs`; core loader body unchanged | CC proposed-done; commands/removal/handles05; MIDI transport07; typed catalog forms13; CRC open: F-05, see `crc-verification.md` and iteration01 |
 | LF-06 | Real edit/save/unload/reload/Scope musical session and affected native gates pass with inherited scope accounted for | Existing --lifecycle example both modes, saved fresh reference/Scope/trace, original hashes, core/MIDI/facade/workspace/lint/Clippy/docs/build; row walk | serious | playable-first directive08; directive12 D4; Arc05 carryover | open | `tests/lifecycle.rs::edited_saved_lifetime_replay_matches_fresh_trace_and_scope`; CLI default/no-graph/fresh-reference traces cmp equal,72 rows; Scope20,000 signals,0 overwrites; original fixture hashes match; final gate receipts in closing report | CC proposed-done; restricted CoreMIDI failures preserved with unchanged host retry; no endpoint/arc acceptance; CRC open: F-06, see `crc-verification.md` and iteration01 |
+
+## Iteration01 CC evidence note
+
+The corrective source commit is `1242a60fa3a997f95b29195de3b28f7e9a2864ff`.
+It adds the missing lifecycle boundary interactions, exact candidate notification
+payload and rejection checks, real MIDI reset/capacity cases, unsupported core
+command non-mutation coverage, and example-dispatch/capture tests. The lifecycle
+diagnostic now reports the saved retired boundary (300) and then the new
+lifetime boundary (0). Final gates and reproducible trace receipts are recorded
+in `closing-report.md` under “Iteration01 evidence and proposed disposition”.
+CC proposes all six rows done; **every row remains open for CRC disposition**.
+Slice05 remains held. No inherited Arc05 row, Arc12 parent row, or release gate
+is closed by this note.
