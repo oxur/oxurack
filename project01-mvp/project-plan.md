@@ -3,14 +3,14 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — Arc10 and Arc11 accepted; P-07 instrument/workbench milestone done; Arc12/Slice01–03 CRC accepted; CDC directive12 resolves lifecycle; CRC authors Slice04 then Slice05; Arc12 composition remains open |
+| status | active — Arc10 and Arc11 accepted; P-07 instrument/workbench milestone done; Arc12/Slice01–03 CRC accepted; CDC directive12 acknowledged; Slice04 lifecycle prompt issued, six LF rows open; Slice05 held; Arc12 composition remains open |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
 | source baseline | `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` on `main`; original migration baseline retained below |
 | planning home | `planning` branch, `.worktrees/planning/project01-mvp` |
 
-## Current direction — v3.38, 2026-10-12
+## Current direction — v3.39, 2026-10-12
 
 Duncan requested a recalibration during Arc10/Slice02 review: this is unreleased
 open-source music software, and excessive defensive infrastructure, proof tooling
@@ -29,12 +29,12 @@ at fabfa1cb, including native host and fresh-process replay;
 is accepted at20c60ef; [Slice03 live graph composition](arc12-live-rack-operations/slice03-graph-composition/cc-prompt.md)
 was returned981964b with missing interaction/reconciliation proof. Now CRC accepted
 [Slice03 iteration01](arc12-live-rack-operations/slice03-graph-composition/crc-verification.md)
-atdeafdd228; five G rows done. No active CC assignment. Slice04 authoring exposed
+atdeafdd228; five G rows done. Slice04 authoring exposed
 transport/reset contract conflicts and reproduced MIDI replacement/failure leaks;
 [crc-escalation12.md](crc-escalation12.md) is resolved by
 [cdc-directive12.md](cdc-directive12.md): isolated patch candidates, explicit
-lifetime/cleanup contracts and preserved start/stop. CRC may author lifecycle
-Slice04, then instance/handle/queued-command Slice05 after04 acceptance. Separate
+lifetime/cleanup contracts and preserved start/stop. CRC acknowledged CDC67e9150 and issued [lifecycle Slice04](arc12-live-rack-operations/slice04-runtime-api/cc-prompt.md)
+with six open LF rows. Instance/handle/queued-command Slice05 remains held until04 acceptance. Separate
 MIDI transport remains Arc07 and catalog-specific typed vocabulary Arc13 with
 explicit re-entry; no original requirement is silently removed. The earlier Slice01
 CDC-authoring gaps were resolved without weakening the base-value or stable-replay oracles.
@@ -63,7 +63,7 @@ backlog/release envelope, not a prerequisite to testing this first instrument.
 | --- | --- | --- |
 | Arc10 | Playable seeded Clock/TM/MIDI rack, four children/22 rows; T-01–T-05 CDC accepted at65522f1 | Actual software endpoint witness; release timing remains open |
 | [Arc11](arc11-observation-workbench/arc-plan.md) | LFO modulation, bounded Scope and terminal/CSV workbench | CDC accepted at72fe6b5; 14 child/four composition rows done |
-| [Arc12](arc12-live-rack-operations/arc-plan.md) | Live persistence, metadata/events, cable/graph operations, coherent runtime lifecycle | Slice01–03 accepted; directive12 splits remaining work into lifecycle04 and instance-command05; five-child composition open |
+| [Arc12](arc12-live-rack-operations/arc-plan.md) | Live persistence, metadata/events, cable/graph operations, coherent runtime lifecycle | Slice01–03 accepted; lifecycle04 issued with six open LF rows, instance-command05 held; five-child composition open |
 | Arc13 and Arc07 | Remaining catalog and CLI/REPL/controllers | Preserve inventory, Chord and module-state checkpoint candidate |
 | Arc08 / release | Coverage provenance/95%, hardware jitter, benchmarks, soak, broader musical acceptance | Retained obligations, not M1/M2 entry gates |
 
@@ -92,7 +92,7 @@ must use this policy, not mechanically copy the old packets.
 
 | Date | Packet | Predecessor / initiation | Status | Affected authority | Next action |
 | --- | --- | --- | --- | --- | --- |
-| 2026-10-12 | [cdc-directive12.md](cdc-directive12.md) | Duncan relayed escalation12; source deafdd228/planning cd5add4 | Issued for relay; CRC acknowledgment pending | D1–D4 resolved; lifecycle04/instance-command05; historical transport/catalog forms explicitly routed | CRC authors04, reviews, advances05; CDC retains arc acceptance |
+| 2026-10-12 | [cdc-directive12.md](cdc-directive12.md) | Duncan relayed design return; source deafdd228/planning67e9150 | CRC acknowledged; [Slice04 prompt](arc12-live-rack-operations/slice04-runtime-api/cc-prompt.md) issued | D1–D4 binding; six LF rows open; lifecycle04/instance-command05; transport/catalog routes retained | Duncan relays04 to CC; CRC independently reviews before05; CDC retains arc acceptance |
 | 2026-10-12 | [crc-escalation12.md](crc-escalation12.md) | Slice03 accepteddeafdd228/CC9b156a4; next-slice source investigation | Resolved by directive12 | No Slice03 reopening; four arc rows open | Preserve report; CRC implements the design handoff |
 | 2026-10-12 | [Arc12/Slice03 iteration01](arc12-live-rack-operations/slice03-graph-composition/cc-prompt-iteration01.md) | CC981964b/544b89d; CRC F-01–F-04 | CRC accepted2026-10-12 atdeafdd228; correction1/5 complete | Five G rows done; Slice04 decisions held | Initial failed review retained; CDC escalation12 next |
 | 2026-10-12 | [Arc12/Slice03](arc12-live-rack-operations/slice03-graph-composition/cc-prompt.md) | Slice02 CRC acceptance20c60ef/d8761d0; approved Arc12 successor | Returned; native/demo pass but required proof incomplete | G-01–G-05 open | Preserved; iteration01 current |
@@ -104,7 +104,16 @@ must use this policy, not mechanically copy the old packets.
 | 2026-10-11 | [Arc11 CRC composition](arc11-observation-workbench/closing-report.md) | directive09; final child closure `3aa15b4`/source `72fe6b5` | CDC accepted via directive10 | All 14 child/W-01–W-04 rows done; P-07 done, P-01–P-06 open | Arc12/Slice01 issued |
 | 2026-10-10 | [cdc-directive08.md](cdc-directive08.md) | directive07; Duncan's project recalibration request during Arc10/Slice02; directive relayed by Duncan | CRC acknowledged after live-state check | Unissued Slice03 onward; Arc10 T-01–T-05 and P-07 interpretation, future prompt/proof policy | CRC closed Slice04 at 65522f1 after musical witness; Arc10 assembly ready for CDC |
 
-CRC advancement — 2026-10-12: accepted Slice03 iteration01 atdeafdd228 after
+CRC acknowledgement / issuance — 2026-10-12: directive12 and amended projectv3.38/
+Arc12v1.7 read at clean planning67e9150/source deafdd228. CRC opens the approved
+lifecycle Slice04 with ordered per-App installation, isolated candidate commit,
+fallible reset cleanup, exact admission/recovery/Scope/clock behavior, fourteen
+source paths and six open LF rows. Existing save example gains --lifecycle for
+edit/save/unload/reload/Scope/fresh MIDI. Guide07 readiness and Rust2.0 applications
+are in the open set; affected native/demo checks are assigned fresh. No source
+implementation, new architecture amendment or acceptance; Slice05 held until04 review.
+
+CRC advancement — prior state, 2026-10-12: accepted Slice03 iteration01 atdeafdd228 after
 complete test-only delta review, fresh native/default/no-default/host gates and
 explicit retention of unchanged independent981964b demo/docs evidence. All five
 G rows done, historical and ancestor gates unchanged. Next-slice investigation
@@ -155,7 +164,9 @@ claimed by this acknowledgement. CRC will repin the accepted predecessor before
 opening Slice03 and apply directive08's concrete prompt and proportionate-proof
 policy to subsequent work. Three contributors and Expedited Mode remain active.
 
-Version history: **v3.38 — 2026-10-12:** CDC independently reproduced the replacement leak and resolved escalation12. Approved isolated lifetimes, ordered cleanup, explicit recovery/reset/restart and five-child Arc12 delivery. Original separate transport and catalog-specific API forms retain Arc07/13 owners; no acceptance added.
+Version history: **v3.39 — 2026-10-12:** CRC acknowledges directive12 and issues the approved lifecycle Slice04 open set. Six LF rows open,14 source paths, worked candidate/cleanup/hook examples and actual musical session; native evidence assigned fresh. Source/main unchanged, Slice05 and all parent gates held.
+
+**v3.38 — 2026-10-12:** CDC independently reproduced the replacement leak and resolved escalation12. Approved isolated lifetimes, ordered cleanup, explicit recovery/reset/restart and five-child Arc12 delivery. Original separate transport and catalog-specific API forms retain Arc07/13 owners; no acceptance added.
 
 **v3.37 — 2026-10-12:** CRC accepted Slice03 correction atdeafdd228, five G rows done; unchanged independent evidence retained with provenance. Source-backed lifecycle conflicts are escalated12 to CDC before Slice04. No parent acceptance, scope reduction or approved architectural change.
 

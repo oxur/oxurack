@@ -21,13 +21,16 @@
 > iteration01 independently accepted atdeafdd228: five G rows done. Corrected
 > native/core/graph/default/no-default and host workspace checks pass; unchanged
 > independent300-sample/82-row demo/docs/build evidence retained at981964b.
-> No active CC assignment. Next-slice investigation reproduced MIDI replacement
+> Next-slice investigation reproduced MIDI replacement
 > and failed-candidate reservation leaks, plus historical/current transport conflicts.
 > [Directive12](../project01-mvp/cdc-directive12.md) resolves escalation12:
 > isolated candidate lifetimes, stopped/drained replacement, narrow MIDI reset,
 > explicit restart and preserved start/stop continuation. CDC reproduced the leak.
-> CRC authors lifecycle04, then instance/handle/queued-command05 after acceptance.
-> Five-child Arc12 composition remains open; no new CC assignment yet. Separate
+> CRC acknowledged planning67e9150 at clean sourcedeafdd228 and issued
+> [Slice04 lifecycle prompt](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/cc-prompt.md):
+> isolated replacement/unload, reset/restart/cleanup and executable --lifecycle session.
+> Six LF rows open; instance/handle/queued-command05 unopened until04 acceptance.
+> Five-child Arc12 composition remains open; source/main unchanged. Separate
 > MIDI transport and catalog-specific typed forms retain Arc07/13 re-entry owners.
 > Exact engine-state checkpoints remain future work. Existing append-only load
 > behavior is explicitly owned by Arc12/Slice04; Slice01 reloads into a fresh rack.

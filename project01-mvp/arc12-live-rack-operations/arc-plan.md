@@ -1,6 +1,6 @@
 # Arc12 — live rack operations
 
-Version1.7 — 2026-10-12. Status: active; Slice01–03 CRC accepted atdeafdd228 or their named predecessors. CDC resolved escalation12 in [directive12](../cdc-directive12.md); CRC may author Slice04 lifecycle repair, then Slice05 instance commands. No new CC prompt issued by this amendment; four arc rows remain open.
+Version1.8 — 2026-10-12. Status: active; Slice01–03 CRC accepted atdeafdd228 or their named predecessors. CRC acknowledges CDC directive12 at67e9150 and issues [Slice04 lifecycle](slice04-runtime-api/cc-prompt.md). Six LF rows open; Slice05 stays unopened until04 acceptance. Four arc rows remain open.
 Depends on accepted Arc10/Arc11; source predecessor72fe6b5. Blocks saved/live
 musical workflow and Arc07 controls. Related: carried-over Arcs02–05; Arc13 catalog.
 Authority: approved successor roadmap and Duncan's explicit “Continue with live
@@ -134,9 +134,12 @@ remain open. P-07's delivered instrument/workbench stays accepted.
 resolved by [directive12](../cdc-directive12.md), issued for Duncan's relay to CRC.
 D1–D4 approved with explicit historical transport/typed-form deferrals; R-03/R-04
 and the unissued Slice04 split are affected. Authority: Duncan's replanning and
-continue-live-persistence instructions. CRC next acknowledges the disk packet,
-authors Slice04 with guide07 readiness and implementation examples, then advances
-Slice05 after independent acceptance. No new CC assignment yet; arc gates remain.
+continue-live-persistence instructions. CRC acknowledged the disk packet at67e9150 and inspected clean sourcedeafdd228.
+[Slice04 open set](slice04-runtime-api/slice-plan.md) now issues the approved lifetime
+repair with worked installation/candidate/cleanup shapes, six LF rows, exact source
+allowlist, guide07 readiness and Rust2.0 guidance. It delivers the existing save
+example’s --lifecycle edit/save/unload/reload/Scope musical session. Slice05 remains
+unopened until04 independent acceptance; arc gates remain.
 
 ### Current lifetime and compatibility contract
 
@@ -159,6 +162,8 @@ Arc13. See directive12 for exact semantics and re-entry; historical documents an
 successor register03 remain provenance, with this amendment governing current routing.
 
 ## Version history
+
+- v1.8 — 2026-10-12: CRC acknowledges directive12 and opens approved Slice04 with six rows, concrete lifecycle/cleanup/hook recipes, bounded intake and fresh native/runnable gates. No new design amendment or acceptance; source/main unchanged and Slice05 held.
 
 - v1.7 — 2026-10-12: CDC directive12 resolves lifecycle/output ownership; independently reproduces replacement leak. Split unissued04 into lifecycle04 and instance-command05 with full inherited scope accounted for. Preserve start/stop; explicit transport/catalog deferrals. CRC authors04 next; no acceptance added.
 

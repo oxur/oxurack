@@ -40,3 +40,12 @@ composes lifecycle04 and instance-command05; R-04 walks five children and explic
 Arc07 separate-transport / Arc13 typed-vocabulary dispositions. CRC authors04;
 source remains deafdd228. See ../cdc-directive12.md for design and proof. Historical
 Arc05 A-05-01/02 remain deferred, not discharged by this routing amendment.
+
+
+CRC directive12 acknowledgement / Slice04 issuance — 2026-10-12: clean source
+deafdd228 and CDC planning67e9150 inspected. Approved Slice04 open set issued in
+slice04-runtime-api with six LF rows, all open, plus exact source/read/test scope.
+Failure-preserving lifetimes and bounded single-owner MIDI cleanup are assigned
+implementation, not delivered/accepted. R-01–R-04 remain open; Slice05 stays
+unopened pending04 acceptance. Historical deferred rows and Arc07/13 routes retain
+the directive's re-entry obligations. No source or structural design change by CRC.
