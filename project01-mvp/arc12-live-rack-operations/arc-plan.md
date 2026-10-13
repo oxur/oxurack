@@ -1,6 +1,6 @@
 # Arc12 — live rack operations
 
-Version1.4 — 2026-10-12. Status: active; Slice01 accepted at fabfa1cb and Slice02 accepted at20c60ef. Slice03 graph composition issued; Slice04 remains planned.
+Version1.5 — 2026-10-12. Status: active; Slice01 accepted at fabfa1cb and Slice02 accepted at20c60ef. Slice03 initial return reviewed; iteration01 test/evidence correction issued; Slice04 remains planned.
 Depends on accepted Arc10/Arc11; source predecessor72fe6b5. Blocks saved/live
 musical workflow and Arc07 controls. Related: carried-over Arcs02–05; Arc13 catalog.
 Authority: approved successor roadmap and Duncan's explicit “Continue with live
@@ -45,6 +45,11 @@ Was: Slice02's open set issued. Now: Slice01 and Slice02 independently closed;
 [Slice02 verification](slice02-events-and-metadata/crc-verification.md) retains
 actual source/native/replay evidence. CRC issued
 [Slice03 graph composition](slice03-graph-composition/slice-plan.md).
+Its981964b return passes CRC native and runnable replay checks, but required
+runtime ordering/atomic-message/changed-modulation continuity and concrete
+historical reconciliation proof remain open. CRC issued one collected
+[iteration01](slice03-graph-composition/cc-prompt-iteration01.md), correction1/5.
+No arc capability, sequence or architecture amendment; Slice04 stays held.
 The original successor IDs remain intact.
 Graph composition is a product increment (actual cable operations plus their graph
 behavior), not a test-only arc inside the arc. CRC supplies concrete contracts and
@@ -113,6 +118,10 @@ remaining modules/Chord Arc13, full CLI/REPL/controllers Arc07. ProjectP-01–P-
 remain open. P-07's delivered instrument/workbench stays accepted.
 
 ## Version history
+
+- v1.5 — 2026-10-12: Slice03 native/demo checks reproduced at981964b;
+  four required-proof gaps kept five G rows open. Test/evidence iteration01
+  issued without changing the four-slice roadmap; parent gates remain open.
 
 - v1.4 — 2026-10-12: CRC accepted all five metadata rows at20c60ef, with host retry
   and unchanged fresh annotated musical replay. No architecture/scope amendment.

@@ -21,3 +21,8 @@ R-02; no arc/legacy acceptance is inferred. Runtime topology and Slice04 remain.
 
 Slice03 runtime cable/graph prompt issued on accepted20c60ef with five G rows
 open. It supplies topology composition; Slice04/final CDC assembly remain held.
+
+Slice03 return981964b/544b89d independently checked2026-10-12: native tests,
+host retry and actual300-sample/82-row fresh replay pass. All five G rows stay open
+for F-01–F-04 required interaction/reconciliation proof in iteration01. No parent
+acceptance, scope change or Slice04 opening; see Slice03 crc-verification.md.

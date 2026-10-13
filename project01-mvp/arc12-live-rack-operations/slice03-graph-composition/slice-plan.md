@@ -1,7 +1,7 @@
 # Arc12 Slice03 — graph composition and live rewiring
 
-Version1.0 — 2026-10-12. Status: open; initial implementation issued by CRC Sofie.
-Current assignment: arc12-live-rack-operations/slice03-graph-composition/cc-prompt.md.
+Version1.1 — 2026-10-12. Status: open; initial return reviewed, correction1/5 issued.
+Current assignment: arc12-live-rack-operations/slice03-graph-composition/cc-prompt-iteration01.md.
 Three contributors, Expedited Mode. Depends on Slice02 CRC accepted at20c60ef;
 Arc12 approves runtime cables/validation/events/fresh graph/save/reload. Maina7ce6e6
 protected. No ancestor acceptance inferred.
@@ -62,9 +62,35 @@ planning commits; preserve prompt. No merge/push/release.
 
 | Date | Prompt | Predecessor / reason | Disposition |
 | --- | --- | --- | --- |
-| 2026-10-12 | cc-prompt.md | Slice02 accepted20c60ef; approved Arc12 cable increment | Initial CC implementation issued; G-01–G-05 open; return to CRC |
+| 2026-10-12 | arc12-live-rack-operations/slice03-graph-composition/cc-prompt.md | Slice02 accepted20c60ef; approved Arc12 cable increment | Returned981964b/544b89d; CRC native/demo checks pass, missing required interaction/reconciliation proof; preserved |
+| 2026-10-12 | arc12-live-rack-operations/slice03-graph-composition/cc-prompt-iteration01.md | CRC F-01–F-04 at981964b | Active correction1/5; five G rows open; test-and-evidence execution then return to CRC |
+
+## Iteration01 author readiness — CRC 2026-10-12
+
+Source-grounded: inspected actual new tests, duplicated selectors, persistence
+TieSource/TieSink/LastWins witnesses, Scope/MIDI ownership and graph native tests.
+Design-complete: four findings are missing existing acceptance evidence, not new
+behavior; no architecture or slice amendment. Executable: five concrete test-only
+paths, existing fixtures/helpers, real mutator/command/maintenance and continuation
+recipes; owner access stays inline. Falsifiable: runtime .25→.5→.25 plus fresh
+vectors; opposing ordinal/Entity/fallback; exact event IDs and complete failed-call
+observations; changed target+.25 versus untouched LFO control. Guideline-applied:
+guide07/template, API-02/23, EH-01, TD-03 and AP-42/43/44, with domain decisions in
+the prompt. Coherent/portable: bounded manifest/readback in existing report,
+rough45–60k reading/source budget plus implementation/recovery; native affected
+tests fresh, independently reproduced unaffected docs/build/demo at981964b proposed
+for retention with original provenance. No new proof tool or permission gate.
+
+CRC record: crc-verification.md. No source repair or row acceptance by CRC; current
+return needs runtime order, atomic/event boundary, changed-topology phase and
+concrete inherited-query reconciliation. Slice04 held until all G criteria pass.
 
 ## Version history
+
+- v1.1 — 2026-10-12: CRC independently reproduced native checks and musical
+  example/replay at981964b, preserved restricted MIDI failure/host retry and
+  issued one collected test/evidence correction for F-01–F-04. Five rows open;
+  approved product plan unchanged, initial prompt/CC report preserved.
 
 - v1.0 — 2026-10-12: CRC detailed next approved product increment after metadata
   acceptance. Necessary event provenance extension and bounded runtime validation
