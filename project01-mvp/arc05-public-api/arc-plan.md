@@ -96,3 +96,26 @@ Re-entry: Installation now; playback lifecycle before M1; remaining handles/cabl
 - v3.0 — 2026-09-17: CRC escalation03 and child carryover reviews completed the
   administrative evidence; CDC closed this work as carried over and assigned
   successors without accepting its unproved capability or weakening its criteria.
+
+
+## Successor amendment — v3.1, 2026-10-12
+
+[CDC directive12](../cdc-directive12.md) supersedes the runtime-api successor's
+single-slice allocation: Arc12/Slice04 supplies whole-patch lifecycle; new planned
+Arc12/Slice05 supplies instance removal, bound handles, string references,
+synchronous commands and bounded queued load/save/results. Historical register03
+is preserved; this is its current routing amendment. Both original ledger rows
+remain deferred pending actual successor evidence and composition.
+
+Historical start/stop resetting position is superseded for the existing facade:
+accepted start/stop preserve time/state, reset silences, explicit restart rebuilds
+current configuration at0. Separate power/MIDI transport and wire START/STOP/
+CONTINUE remain Arc07 before advertising an external transport UI/controller.
+Module-specific Port/Knob/value enums, Handle<Lfo> conveniences and remaining
+historical construction styles remain Arc13 catalog/API reconciliation before
+claiming the full typed vocabulary. These are explicit retained obligations,
+not delivered features or reasons to hold the useful lifecycle repair.
+
+Version history: v3.1 records this CDC-authorized successor split and precise
+transport/typed-form dispositions. Original memo and accepted source evidence
+remain unchanged.

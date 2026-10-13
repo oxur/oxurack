@@ -41,3 +41,16 @@ See the [dependency map](../arc08-validation-and-release/slice01-restart-baselin
 
 - v1.1 — 2026-09-17: Operator's TM-first/workbench-second decision sets interface
   sequencing; arc08 planning exposed the need to decouple display from capture.
+
+
+## Transport re-entry — v1.2, 2026-10-12
+
+[CDC directive12](../cdc-directive12.md) retains Arc05's distinct power versus
+MIDI transport, START/STOP/CONTINUE wire behavior and relevant pause/resume aliases
+here. Re-enter before a transport UI or external master/slave controller is
+advertised; compose the actual RT bridge and endpoint owner. Arc12 facade
+start/stop preserve execution state; do not change them to match the historical
+memo. Arc12 restart is seeded reconstruction, not MIDI START. Arc12/Slice05 owns
+bounded queued load/save and synchronous command results, so that feature is not
+deferred here. Original Arc05 rows remain deferred until their full successor
+walk is supported. This routing is design, not acceptance of transport behavior.
