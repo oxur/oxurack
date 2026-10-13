@@ -305,3 +305,160 @@ done; LF-01–LF-04 remain **open** with CC's proposed-done evidence pending CRC
 Arc05 A-05-01/A-05-02, Arc12 R-01–R-04, project/release gates, and Slice04
 acceptance remain open. Slice05 stays held. No acceptance or advancement is
 claimed by this return.
+
+## Iteration03 intake and contract readback — 2026-10-13
+
+Prompt identity: `arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration03.md`,
+SHA-256 `e6b00776e4c29b0926fd740d734bff87e4119d9c761f1262e2e0c533a6609e2c`.
+Source S was clean on `codex/oxurack-module-behavior-installation` at
+`03825e5077b7cd621185ae70b47020da321706c4`; planning W was clean on `planning`
+at `abd98d7055bb0b72f94509846dd2362e5cedfbba`; protected main R remained
+`a7ce6e61536ca96b6aeb2227ee06e430ed8df162`. S is the only source-edit home;
+planning changes are limited to this report and the slice ledger.
+
+### Itemized intake and loaded extent
+
+| Order | Input | Loaded extent and use |
+| --- | --- | --- |
+| 1 | `W/AGENTS.md`; `S/CLAUDE.md` | Both complete. Confirmed planning/source roles, worktree separation, and Rust/testing routing. |
+| 2 | Iteration03 prompt; `D/slice-plan.md`; `D/ledger.md` | All complete. Confirmed two test paths, precise reset/control/replay/error oracles, seven fresh gates, split commits, and four accepted/two open row baseline. |
+| 3 | `D/crc-verification.md` | Full Iteration02 independent review, Iteration01 Delta/intake/retained evidence, and Fresh independent checks loaded. Findings match the assigned missing first-reset comparisons, reset control, saved replay restoration, and immediate disabled-cable error state. |
+| 4 | `P/cdc-directive12.md` | D1 lifecycle semantics, complete D2, and D4 source boundary/discriminating proof/guidance loaded. Reset preserves first fault and clock/Scope/configuration while appending silence; successor05 remains excluded. |
+| 5 | `P/cdc-directive08.md` | Complete Prompt quality and Checks/correction policy sections loaded. Applied bounded test repair, actual behavior gates, honest failure retention, and no new proof machinery. |
+| 6 | Project and arc plans/ledger | Project top deliverable table and Current direction; arc Capability, Five delivery slices, Current lifetime contract, and full arc ledger loaded. Parent and successor gates remain unchanged. |
+| 7–11 | Collaboration-framework and project-management/testing/Rust skills and named guides | Required full skill/guides and named sections were read in the immediately preceding Slice04 iteration turn and reused: collaboration-framework 2.6, project-management README and guides 02/03/07, work-verification guide05, testing skill and guides01/03, Rust-guidelines 2.0 and anti-pattern guide11. AP-12/18, AP-09/42, AP-44 and AP-35 are applied as named by this prompt. |
+| 12 | `S/crates/oxurack/src/lib.rs` | Imports/cfg(test) imports; full `set_port_value`; complete `midi_facade_denies_unread_next_sample_before_either_clock_advances`, `pending_output_rejects_lifecycle_and_reset_preserves_then_cleans_exact_state` including `RetainedState`, and `failed_restart_snapshot_and_unloaded_restart_preserve_admission_boundaries` loaded. Existing state representation and exact first-fault/reset boundaries inspected. |
+| 13 | `S/crates/oxurack/tests/lifecycle.rs` | Imports/constants/rack; complete current restart and stop/start/reset control tests, capture/replay helpers and aliases loaded. |
+| 14 | Source at `1242a60` | Complete `edited_saved_lifetime_replay_matches_fresh_trace_and_scope`, including its test attribute, loaded from that exact predecessor. |
+| 15 | Source lifecycle/MIDI-out | Reset/restart/admission/cleanup, `prepare_silence`, `silence_outputs`, `consume_midi_outputs`, `Inputs`, and supporting buffer state loaded. This confirms reset is an enqueue-and-clear operation, not an engine tick. |
+| 16 | LFO RON fixture and `S/Makefile` | Both complete. The fixture provides Clock/Turing Machine/LFO/MIDI wiring; native make targets and scope are confirmed. |
+| 17 | `D/closing-report.md` | Complete Iteration02 intake/evidence/gates/attempts section loaded; this report is append-only for the new iteration. |
+
+No truncation affected the active prompt, original regression function, or test
+contracts; the relevant code was loaded in bounded contiguous sections. No
+conditional unfamiliar Bevy API is needed. No dataset query, new artifact, or
+new intake file is applicable.
+
+### Contract readback
+
+The first reset must be compared with an owned snapshot taken immediately before
+that reset. A baseline captured only after reset cannot detect a first-reset
+change because it treats the already-mutated state as expected. Likewise,
+resetting both musical arms makes a phase or RNG rewind common to both and
+therefore invisible; the control must continue uninterrupted, with only the
+single fixture-derived release of the note silenced at sample 300 removed from
+its expected MIDI continuation. Reset cleanup stays a separate exact vector.
+The current restart test proves reconstruction from the live snapshot at sample
+zero, but it does not execute save → continue → unload → drain → reload; those
+operations are a distinct accepted regression and both paths must remain.
+
+The disabled-cable restart error comparison must happen immediately after the
+exact `UnsupportedSnapshot` result, before reenabling the cable or calling
+another operation. It will compare the old owner’s fixed/virtual clocks,
+running/driver state, fault, Scope configuration and records, module/cable
+identity, installation order, and typed lifecycle messages without taking an
+unsupported snapshot in the disabled state. Source changes will remain test-only
+and confined to the two paths named by the prompt.
+
+## Iteration03 evidence and proposed disposition — 2026-10-13
+
+Source commit `ec85ebe99c09b8a2ea64d55da0346af4ae317a67`, parent
+`03825e5077b7cd621185ae70b47020da321706c4`.
+The exact changed paths are `crates/oxurack/src/lib.rs` and
+`crates/oxurack/tests/lifecycle.rs`; all changed code is inside named `cfg(test)`
+tests/helpers or integration tests. No product implementation, API, fixture,
+example, manifest, dependency, lockfile, or protected-main change. Planning
+return is recorded separately below.
+
+### Corrected observations
+
+- LF-03 now owns the complete existing `RetainedState` immediately before its
+  first stopped reset and compares all state immediately afterward, changing
+  only pending events `1→4`. The existing second reset still compares the full
+  retained state and drains the literal note0/reset4 vector. The running reset
+  after the sample-1 retrigger likewise compares its complete pre-reset state,
+  allowing only `0→3`, then asserts cleanup at sample2. The actual stored
+  backpressure fault is copied before first reset and compared immediately
+  after it; the returned error still reports completed1 while the stored fault
+  reports completed0. No tick/drain occurs between each pre/post comparison.
+- LF-04 keeps the stop/start control unchanged and resets only the subject at
+  sample300. The measured prefix includes `(251,[0x90,62,21])`; cleanup is the
+  exact separate vector `(300,[0x80,62,0])`, `(300,[0xB0,123,0])`,
+  `(300,[0xB0,120,0])`. The control continues to sample1300. Its unique
+  `(376,[0x80,62,0])` is removed once from an owned expected vector; all other
+  events, including both CC74/75 values at376, compare exactly. Both arms
+  contain `(626,[0x90,64,44])` and compare completely from626 onward, including
+  a later NoteOff. All Scope records compare, selector/capacity configuration
+  matches, overwrites remain zero, and a future clock edge is observed.
+- Restored verbatim with its test attribute from `1242a60` is
+  `edited_saved_lifetime_replay_matches_fresh_trace_and_scope`, alongside the
+  distinct current-snapshot restart proof. It saves at200, continues100 samples,
+  unloads/drains/reloads the file, then compares the 10,000-sample MIDI/scalar/
+  copied-MIDI replay with a fresh rack (72 MIDI events, 20,000 scalar records,
+  zero Scope overwrites). The restart success test explicitly checks stopped
+  behavior (`advance_samples(1)==0`), sample0, Manual driver, no fault, and
+  Scope disabled before configuring Scope.
+- The disabled-cable restart test captures old-owner state after disabling the
+  selected cable and before calling restart. At the immediate exact
+  `UnsupportedSnapshot` error it compares fixed and virtual elapsed/delta/pause,
+  driver/running/sample, fault, Scope selectors/capacity/overwrite/all records,
+  module identities/handle, selected cable identity/endpoints/enabled/order,
+  install order, and typed `ModuleAdded`/`PatchLoaded` payloads. Only after that
+  equality does the test reenable the cable and perform the existing snapshot
+  equality check; no disabled-state snapshot is attempted.
+
+### Iteration03 commands and attempts
+
+Fresh commands from S after the final source edits:
+
+| Command | Result |
+| --- | --- |
+| Focused `cargo test --locked -p oxurack --lib failed_restart_snapshot_and_unloaded_restart_preserve_admission_boundaries` | pass; 1 test |
+| Focused pending-output/reset-state and unread-fault facade unit tests | pass; 1 test each |
+| Focused sample300 control, restored save/unload/reload, and current restart integration tests | pass; 1 test each |
+| `cargo test --locked -p oxurack-mod-midiout` | exit0; 9 unit, 0 doc passed |
+| `cargo test --locked -p oxurack --all-targets` | exit0; 56 facade unit tests, 11 lifecycle integration tests, all other integration/example targets passed (save runner4, MIDI example26) |
+| `cargo test --locked -p oxurack --no-default-features --all-targets` | exit0; 54 facade unit tests, 11 lifecycle integration tests, all other integration/example targets passed; existing `cables.rs:231 unused_mut` warning retained |
+| Restricted `make test` | exit2; 146 passed, four known `oxurack-rt` CoreMIDI initialization failures, three existing ignored |
+| Unchanged authorized host-access `make test` retry | exit0; RT150 passed/0 failed/3 ignored; full workspace and doctests passed |
+| `make lint` | exit0; workspace Clippy and format check passed |
+| `cargo clippy --locked -p oxurack-core -p oxurack-mod-midiout -p oxurack --all-features --all-targets -- -D warnings` | exit0 |
+| `git diff --check` | exit0 |
+
+The restricted failures were exactly `test_list_input_ports`,
+`test_list_output_ports`, `test_open_input_nonexistent_returns_error`, and
+`test_open_nonexistent_port_returns_error`, all reporting `MIDI support could
+not be initialized`. The unchanged retry does not erase the restricted result.
+The initial focused compile (exit101) exposed a Rust assertion limitation because the
+owner observation was one tuple wider than the supported trait arity; grouping
+it into typed clock/Scope/owner/message projections fixed the test helper. The
+first compile also revealed an obsolete local Scope binding, which was removed.
+No product defect was observed. The existing block0.1.6 advisory remains
+unsuppressed.
+
+### Six-row disposition and inherited-owner walk
+
+| LF row | CC proposal after iteration03 | CRC status / evidence boundary |
+| --- | --- | --- |
+| LF-01 | retain done | independently done by CRC at03825e5; no changed assertion area |
+| LF-02 | retain done | independently done by CRC at03825e5; no changed assertion area |
+| LF-03 | done | open for CRC reproduction of first stopped/running reset and actual first-fault preservation observations above |
+| LF-04 | done | open for CRC reproduction of uninterrupted control, restored replay regression and immediate failed-snapshot preservation above |
+| LF-05 | retain done | CRC accepted at1242a60; implementation/notification surface unchanged |
+| LF-06 | retain done | CRC accepted at1242a60; fixture/example/docs/runner unchanged; affected all-target suites rerun |
+
+The current CC proposal therefore has six rows accounted for: four CRC-accepted
+rows retained and LF-03/LF-04 proposed done pending independent review. This
+does not close Slice04. Arc05 A-05-01 still carries its later removal/handles/
+commands/BPM work, A-05-02 remains subject to final reconciliation, Arc12
+R-01–R-04 remain open, project P-01–P-06 and release gates remain open, and
+Slice05 remains held.
+
+Retention proposal: preserve CRC strict-docs and original MIDI13/LFO70 fixture
+evidence at `f6fdeb5`; preserve CRC accepted LF-05/LF-06, actual example and
+core/error receipts at `1242a60`; preserve CRC LF-01/LF-02 and unrelated lifecycle
+observations at `03825e5`. These revisions, dates and unaffected claims are
+unchanged because this correction touches only test code in the two named paths;
+the historical original replay test itself is restored at its exact accepted
+source. Fresh mandatory checks above cover both facade modes. No new artifact,
+dataset query, checker, or external MIDI witness was needed.

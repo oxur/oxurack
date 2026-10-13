@@ -48,6 +48,32 @@ no production behavior changed. Exact row evidence and final commands are in
 | LF-05 | retain independently accepted done | accepted at1242a60 |
 | LF-06 | retain independently accepted done | accepted at1242a60 |
 
+## CC iteration03 proposal — 2026-10-13
+
+Source test-only commit `ec85ebe` restores the accepted save/unload/reload replay
+alongside current-snapshot restart coverage and completes the first-reset,
+uninterrupted-control, and immediate failed-snapshot comparisons. Exact
+observations, source path fence, commands and failed/retried environment receipts
+are in `closing-report.md` under Iteration03 evidence and proposed disposition.
+No implementation defect was reproduced; production code is unchanged.
+
+| LF row | CC proposal | CRC status |
+| --- | --- | --- |
+| LF-01 | retain done | accepted at03825e5 |
+| LF-02 | retain done | accepted at03825e5 |
+| LF-03 | done | open pending independent CRC disposition |
+| LF-04 | done | open pending independent CRC disposition |
+| LF-05 | retain done | accepted at1242a60 |
+| LF-06 | retain done | accepted at1242a60 |
+
+All iteration03 native gates pass except the preserved restricted `make test`
+attempt, which has four known CoreMIDI initialization failures (146 pass, 3
+ignored); the unchanged authorized host retry passes (RT150 pass, 0 fail, 3
+ignored; full workspace and doctests pass). LF-03/LF-04 remain **open** until CRC
+reviews this proposal. Arc05 A-05-01/A-05-02, Arc12 R-01–R-04, project/release
+gates and Slice04 acceptance remain open; Slice05 stays held. This is not CRC
+acceptance or an arc/slice closure.
+
 All prescribed iteration02 gates pass. Restricted `make test` retains four
 CoreMIDI initialization failures (146 pass, 3 existing ignored); its unchanged
 authorized host retry passes (RT 150 pass, 0 fail, 3 ignored; full workspace
