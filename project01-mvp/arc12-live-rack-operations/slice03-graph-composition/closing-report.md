@@ -200,3 +200,187 @@ All five Slice03 rows **G-01–G-05 remain open**. CC proposes done based on the
 evidence recorded here; CRC must independently reproduce/review and record its
 disposition. Slice03 does not close Arc12, Arc04 or Arc05 and does not advance
 Slice04. No checks are claimed beyond the commands and executable cases above.
+
+## Iteration01 — CRC evidence correction (2026-10-12)
+
+### Assignment identity, intake and readback
+
+This is correction1/5 under `cc-prompt-iteration01.md`, SHA-256
+`add4ddbc9aa421bd58329430af16b440b355a1a2a82ff865ece53315752f2408`.
+At intake S was clean on `codex/oxurack-module-behavior-installation` at
+`981964bc5ebc034b42e81dd8d3222f1213c1a9bb`; W was on `planning` at
+`36a0bd92f666b2b6faa625bcdacc2a347ae6d8dd`. Protected main remained
+`a7ce6e6`. The source return is `deafdd228fb44720878c700f8ff62b2a59ddbad6`,
+following `09a15f8` and `deafdd2` path-scoped commits. Planning return is recorded
+below. The source worktree is clean at return.
+
+Required reading was completed before dependent edits. The numbered manifest
+was read at these extents; truncations were recovered with bounded contiguous
+reads, and no required-data gaps remain:
+
+| Manifest order | Readback |
+|---|---|
+| 1–3 | Full: source `CLAUDE.md`, planning `AGENTS.md`, iteration prompt, Slice03 plan/ledger/CRC record, Slice03 initial prompt binding sections, closing report, Arc12 plan/ledger. Initial report and ledger history were preserved. |
+| 4–5 | Current-direction-through-CRC-advancement section of `project-plan.md`; directive08 Assessment/decisions, Prompt quality, Checks/correction; directive11 Decision2 ordering proof and fallback. |
+| 6–8 | Full collaboration-framework, Rust-guidelines, testing skill entrypoints and PM guides README; named sections in PM guides 02/03 and engineering-methods guide07; full row-closure and testing-discipline/validation-gates guides; independent-verification evidence section. |
+| 9 | Rust AP-42/43/44, API-02/23, EH-01 and TD-03 rationale/examples; test observations remain private and concrete, public failure calls exercise the mutator, and no generic harness/API was added. |
+| 10 | Required source sections in core topology, label, cable, tick and port: all topology/tests; active/stale label resolution and occurrences; cable/order/index; propagation ordering/rebuild/merge/schedule; port values/policies. |
+| 11 | Required sections in facade cables/persistence/lib/scope, cable integration tests and MIDI output: all cable facade tests, TieSource/TieSink and parallel tests, owner/lifecycle APIs, Scope records and selectors, MIDI admission/drain. |
+| 12 | Graph production/query and relevant native tests, plus event dispatch/message provenance and patch load/cycle implementation/tests. |
+| 13–14 | Full Arc04 plan/ledger and foundation/navigation/diagnostics ledgers; required reconciliation/design memo and each child-plan decision recap; Arc05 plan/ledger and required re-entry/cable-surface design sections. These historical artifacts were used for reconciliation, not to reactivate their old gates. |
+| 15 | Full `turing-machine-lfo.ron` fixture and required Makefile validation targets. |
+
+No CLI/async/unsafe/new trait/API/dependency/performance work occurred, so the
+conditional domain loads were not applicable. No fixture or supporting artifact
+was added. The exact edit fence was the four test regions listed under Source
+delivery below; `crates/oxurack/tests/cables.rs` was authorized but unchanged.
+
+The ordering key explains why Entity allocation is not the primary order: active
+endpoint names/ports come first, then ordered cables sort ahead of absent-order
+cables, then the explicit ordinal, and Entity breaks equal-order ties. Thus a
+later-allocated cable with ordinal zero is selected before an earlier-allocated
+ordinal-ten cable; an un-ordered legacy cable is not counted in the returned
+append occurrence. The LFO same-transform pending-sample test proves a no-op
+topology replacement preserves current state, while fresh-load tests rebuild
+engines and restart phase; neither proves changed live phase preservation. The
+new subject/control Scope comparison instead changes only the subject's live
+transform and compares LFO records through sample 1000, while the target records
+provide the changed-output oracle.
+
+Atomicity observations now exercise the public core mutator and facade calls.
+They snapshot actual cable identities/components/order, both index directions,
+propagation order and dirty state after a real rebuild, source/target values and
+merge contributions, event counts, graph edge IDs, running/driver/sample state,
+Scope records/overwrite count, and MIDI admission. Successful direct and command
+paths assert actual cable identity, endpoint IDs, transform and provenance;
+graph tests explicitly run `GraphMaintenance` after real `dispatch_core_command`
+calls. This establishes the raw-core owner boundary separately from the
+facade's synchronous graph owner.
+
+### Iteration01 source evidence
+
+Only these four paths changed, all additions within `#[cfg(test)]` regions:
+
+- `crates/oxurack-core/src/topology.rs`: real public connect failure matrix
+  against missing/stale names/ports, directions, no-transform kind mismatch,
+  non-finite/reversed transforms, unsupported transform source, wrong result
+  kind, illegal first merge and multi-module cycle; unchanged owner snapshots
+  with a rebuilt clean propagation cache and no messages. Command tests identify
+  actual added/removed IDs and failed-command silence. Equal-ordinal cables now
+  receive opposed Entity/ordinal assignments; cable descriptions prove which
+  label occurrence is removed, then insertion before an unordered cable returns
+  only the present-ordered count and labels the new identity. The MAX-order
+  superseded-topology case remains intact.
+- `crates/oxurack-graph/src/lib.rs`: a real core command add/remove/re-add test
+  proves message IDs and command provenance, explicit graph maintenance, and
+  retirement of the removed edge ID. Endpoint sorting now connects the lexical
+  later source first and checks cable IDs. Ordinal/entity fallback derives the
+  entity ordering inside the run while forcing ordinal order to oppose it; all
+  cable/incoming/outgoing list oracles remain. Diamond topological assertions
+  prove predecessor constraints rather than a unique total order.
+- `crates/oxurack/src/cables.rs`: the pending-sample failures compare cable
+  components/labels, both CableIndex directions, PropagationOrder and dirty,
+  held values/contributions, topology messages, graph edge IDs, driver/running,
+  clock, Scope and output admission after each invalid call. The changed-live
+  transform test proves the next target signal is exactly Bipolar(0.25), keeps
+  LFO Scope records equal to the untouched rack to 1000, and shows the control
+  target remains dynamic; it does not compare intentionally changed MIDI.
+- `crates/oxurack/src/persistence.rs`: the existing parallel-cable test retains
+  its earlier literal snapshot/fresh-load oracle and now also exercises
+  runtime `[0.75, 0.25] -> add 0.5 -> [0.75, 0.25, 0.5] -> remove occurrence 2`.
+  It checks no-tick calls, actual samples `.25 -> .5 -> .25`, literal saved
+  vectors, fresh installed replays, retained descriptions/transforms, and a
+  second add/remove on a fresh replay.
+
+Production-region audit: `git diff --unified=0` showed hunks only below the test
+module boundaries in the three inline-test files and below `#[cfg(test)] mod
+tests` in persistence. The integration test file, production APIs, fixtures,
+dependencies and examples are unchanged. No production defect was exposed.
+
+### Native validation at `deafdd228`
+
+| Command | Result |
+|---|---|
+| `cargo test --locked -p oxurack-core` | Pass: 424 unit tests, 5 integration-cycle tests, 9 seeded-context tests and 2 doctests. |
+| `cargo test --locked -p oxurack-graph` | Pass: 67 unit tests, 1 graph-population integration test; 0 doctests. |
+| Facade default command from the initial prompt | Pass: 47 library, 3 cables, 4 labels, 12 LFO, 2 MIDI-output, 2 persistence, 6 Scope, and 26 Turing-machine example tests; all selected example harnesses pass. |
+| Same facade command with `--no-default-features` | Pass: 45 library and the same selected integration/test counts above; graph remains absent. |
+| `make test`, restricted run | Preserved failure: CoreMIDI initialization only in `test_open_input_nonexistent_returns_error`, `test_list_output_ports`, `test_open_nonexistent_port_returns_error`, and `test_list_input_ports`; RT had 146 pass, 4 fail, 3 existing ignored. |
+| Unchanged `make test`, host-access retry | Pass: all workspace tests and doctests; `oxurack-rt` 150 passed, 0 failed, 3 existing timing/priority ignores. The restricted failure remains recorded rather than replaced. |
+| `make lint` | Pass: Clippy and format checks. |
+| `cargo clippy --locked -p oxurack-core -p oxurack-graph -p oxurack --all-features --all-targets -- -D warnings` | Pass. |
+| `git diff --check` | Pass. |
+
+The existing `block 0.1.6` future-incompatibility advisory remains; no warning
+suppression or new ignored test was added. The late assertion tightening was
+rerun in both touched focused tests and strict Clippy; the complete default and
+no-default facade command and full core suite were then rerun at the final source
+revision. Graph source was unchanged after its 67+1 passing package run.
+
+### F-04 — v0 query-to-test reconciliation
+
+This table maps the eighteen query names to native test symbols and the concrete
+observation each makes. It records current witness and limits, not blanket
+historical acceptance.
+
+| Query | Native witness and assertion | Limit |
+|---|---|---|
+| `module_kinds` | `test_module_kinds_histogram`: literal VCO/filter counts. | Histogram fixture only. |
+| `modules` | `test_modules_returns_all`, `test_modules_empty_for_empty_graph`, `test_modules_sorted_by_instance_name`: membership, empty set and name ordering. | Current graph contents only. |
+| `ports_of` | `test_ports_of_returns_inputs_and_outputs`, `test_ports_of_returns_empty_for_unknown_module`: both directions/names/kinds and unknown empty result. | Does not exercise runtime port editing. |
+| `parameters_of` | `test_parameters_of_returns_schema`, `test_parameters_of_includes_current_value`, `test_parameters_of_current_none_when_getter_missing`, empty-unknown and sorted-by-name cases: schema, current `.42`, missing getter `None`, and deterministic ordering. | Does not add a getter or cover every parameter type. |
+| `upstream_of` | `test_upstream_of_returns_source_modules` and empty-neighborhood coverage: exact source ancestry and no-source result. | One chain fixture. |
+| `downstream_of` | `test_downstream_of_returns_target_modules` and empty-neighborhood coverage: exact target descendants and no-target result. | One chain fixture. |
+| `incoming_cables` | `test_incoming_cables` checks two incoming edges; `cable_lists_sort_endpoint_prefix_then_ordinals_and_entity_fallback` checks ordered entity IDs. | Count fixture plus shared ordering fixture. |
+| `outgoing_cables` | `test_outgoing_cables` checks two outgoing edges; shared list test checks exact IDs. | Count fixture plus shared ordering fixture. |
+| `cables` | `test_cables_returns_all` checks membership/count; `test_cables_sorted_by_endpoints` checks exact endpoint-key order and cable identities. | Does not add Signal/Modulation edge kind. |
+| `dangling_modules` | Empty-graph, all-connected and isolated-module tests; isolated fixture returns `lonely_1`. | Three structural fixtures. |
+| `dangling_ports` | Empty, all-wired, unwired-output and unwired-input tests identify each result class. | Minimal fixtures only. |
+| `topological_order` | Linear chain asserts exact order; diamond asserts `a` before both branches and both before `d`; empty graph; cycle error names `a,b`. | `CycleError` carries no partial ordering; diamond branch tie is intentionally unspecified. |
+| `cycles` | Empty/acyclic, two-node cycle, self-loop singleton SCC and multiple disjoint-cycle tests. | SCC fixtures do not claim all diagnostics semantics. |
+| `downstream_closure` | Linear chain includes self/descendants; diamond includes both branches; isolated contains self. | No large-graph/performance claim. |
+| `upstream_closure` | Linear chain includes self/ancestors; unknown entity returns empty. | No large-graph/performance claim. |
+| `compatible_inputs_for` | Matching kind, kind mismatch exclusion, same-module candidate and unknown-port tests. | Value-kind discovery only; it does not validate fan-in, cycles or transform legality. |
+| `module_by_name` | Resolves exact module/kind; missing name returns `None`. | Does not establish lifecycle retirement after unload. |
+| `modules_of_kind` | VCO filter returns the two matching VCO modules. | One kind and fixture. |
+
+No additional native query test was needed for this reconciliation. A mismatch
+not delivered remains assigned to Arc04/CDC; in particular `CableKind::Signal`
+versus `Modulation` stays a historical representation deferral (the graph edge
+comment names D-25.7), not an implemented capability.
+
+### F-04 — inherited row walk and retained ownership
+
+Each row below is assessed separately. The cited current witness is not a
+retroactive closure of its historical ledger.
+
+| Historical row | Delivered subset/current witness | Specific remaining requirement and owner |
+|---|---|---|
+| A-04-01 | Current feature-on/off query behavior, active topology freshness, and `parameters_of` current-value/missing-getter behavior; graph package and facade variants pass. | Reconcile the complete graph-v0 requirement set and edge representation, including deferred Signal/Modulation distinction; Arc04/CDC owns any new assignment. |
+| A-04-02 | This report maps all eighteen queries to actual tests and records this live-composition subset. | Assemble and independently disposition the whole Arc04 composition and historical semantics; Arc12 CRC assembly/CDC gate. |
+| Foundation S-01 | Core active-topology mutators, cable index, schedule cache and graph query tests are current witnesses. | Historical foundation requirements outside this changed behavior have not been replayed as a whole; Arc04 carryover/CDC. |
+| Foundation S-02 | Current synchronous live cable add/remove and label occurrence behavior are evidenced here. | Broader representations, handles and lifecycle cleanup remain outside this slice; Arc12 Slice04 or later named CDC assignment. |
+| Navigation S-01 | Current navigation query test symbols/observations are mapped above. | Historical navigation ledger is not independently reconciled or accepted; Arc04 carryover/CDC. |
+| Navigation S-02 | Runtime cable changes refresh the graph through explicit raw-owner maintenance and facade synchronous maintenance. | Remaining navigation semantics beyond these cable edits retain Arc04/CDC ownership. |
+| Diagnostics S-01 | Cycle preflight and graph cycle tests cover two-node, self-loop and disjoint-cycle cases. | Complete historical diagnostic behavior remains open to Arc04/CDC reconciliation. |
+| Diagnostics S-02 | This live cycle rejection is added to Arc12 Slice03 evidence. | Remaining diagnostic and representation obligations remain with Arc04/CDC pending the Arc12 composition gate. |
+| A-05-01 | Public `patch`/`unpatch`, actual occurrence, metadata preservation, Scope and replay are evidenced. | Queued operations, handles/PortRef, unload/replacement retirement, lifecycle, transport and reset belong to Arc12 Slice04. |
+| A-05-02 | This report identifies and tests the cable-operation/metadata subset. | Assemble the complete Arc05 API and disposition its remaining findings; Arc12 CRC assembly/CDC gate. |
+
+Unload/replacement map retirement therefore remains Slice04; final child and
+carryover reconciliation remains Arc12 CRC assembly plus CDC; broader historical
+coverage/release gates remain Arc08-owned. The prior runnable recipe, 300-sample
+demo, fresh 82-row replay, Scope output, fixture hashes and CLI error behavior
+remain evidence from `981964b` at their original date. They were not regenerated
+or represented as fresh. Because the correction changed only tests, CRC may
+retain those unaffected claims if it confirms the source/fixture dependency
+boundary; the earlier CRC record was not edited.
+
+### Proposed status and handback
+
+Iteration01 closes the four identified evidence gaps for CC review, subject to
+CRC reproducing its stated criteria. All five rows remain **open** in the ledger:
+CC's proposal is not CRC acceptance. No product behavior changed, no Slice03
+closure is claimed, and Slice04 does not advance. There is no reported
+production defect or additional Arc08 bubble-up. No supporting artifact was
+created; all validation output was transient.
