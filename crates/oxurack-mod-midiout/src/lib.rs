@@ -1192,16 +1192,6 @@ mod tests {
                 .check_admission()
                 .is_err()
         );
-        silence_outputs(app.world_mut()).unwrap();
-        assert_eq!(
-            app.world().resource::<MidiOutputBuffer>().pending_count(),
-            TOTAL_EVENTS
-        );
-        let all: Vec<_> = app
-            .world_mut()
-            .resource_mut::<MidiOutputBuffer>()
-            .drain()
-            .collect();
         let expected_cleanup: Vec<_> = (0..16)
             .flat_map(|channel| {
                 let ch = channel as u8;
@@ -1223,6 +1213,101 @@ mod tests {
             })
             .collect();
         let expected = [expected_ordinary, expected_cleanup].concat();
+        let before_failed_append = app.world().resource::<MidiOutputBuffer>().events.clone();
+        assert_eq!(before_failed_append.len(), TOTAL_EVENTS);
+        assert_eq!(before_failed_append, expected);
+        assert_eq!(
+            app.world()
+                .resource::<oxurack_core::SampleTime>()
+                .completed_samples(),
+            2
+        );
+        let storage_capacity_before_failed_append =
+            app.world().resource::<MidiOutputBuffer>().events.capacity();
+        assert!(app.world().resource::<MidiOutputBuffer>().fault().is_none());
+        let states_before_failed_append = sinks
+            .iter()
+            .map(|sink| {
+                let state = app.world().get::<MidiOutState>(*sink).unwrap();
+                (
+                    state.config.channel,
+                    state.config.noise_cc,
+                    state.config.note_cc,
+                    state.config.velocity_cc,
+                    state.active_note,
+                    state.dirty,
+                )
+            })
+            .collect::<Vec<_>>();
+        assert!(
+            states_before_failed_append
+                .iter()
+                .all(|state| state.4.is_none() && !state.5)
+        );
+        let fault_before_failed_append = app
+            .world()
+            .resource::<MidiOutputBuffer>()
+            .fault()
+            .map(|error| format!("{error:?}"));
+        let mut one_event = SilenceBatch::empty();
+        one_event
+            .push(MidiOutputEvent {
+                sample: 2,
+                message: MidiWire::cc(0, 1, 1),
+            })
+            .unwrap();
+        assert!(matches!(
+            app.world_mut()
+                .resource_mut::<MidiOutputBuffer>()
+                .append_silence(&one_event),
+            Err(TickError::OutputCapacity { .. })
+        ));
+        assert_eq!(
+            app.world().resource::<MidiOutputBuffer>().events,
+            before_failed_append
+        );
+        assert_eq!(
+            app.world().resource::<MidiOutputBuffer>().events.capacity(),
+            storage_capacity_before_failed_append
+        );
+        assert_eq!(
+            app.world()
+                .resource::<MidiOutputBuffer>()
+                .fault()
+                .map(|error| format!("{error:?}")),
+            fault_before_failed_append
+        );
+        assert_eq!(
+            sinks
+                .iter()
+                .map(|sink| {
+                    let state = app.world().get::<MidiOutState>(*sink).unwrap();
+                    (
+                        state.config.channel,
+                        state.config.noise_cc,
+                        state.config.note_cc,
+                        state.config.velocity_cc,
+                        state.active_note,
+                        state.dirty,
+                    )
+                })
+                .collect::<Vec<_>>(),
+            states_before_failed_append
+        );
+        silence_outputs(app.world_mut()).unwrap();
+        assert_eq!(
+            app.world().resource::<MidiOutputBuffer>().pending_count(),
+            TOTAL_EVENTS
+        );
+        assert_eq!(
+            app.world().resource::<MidiOutputBuffer>().events,
+            before_failed_append
+        );
+        let all: Vec<_> = app
+            .world_mut()
+            .resource_mut::<MidiOutputBuffer>()
+            .drain()
+            .collect();
         assert_eq!(all.len(), expected.len());
         for (index, (actual, wanted)) in all.iter().zip(&expected).enumerate() {
             assert_eq!(actual, wanted, "event {index}");

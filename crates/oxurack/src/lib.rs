@@ -530,6 +530,9 @@ mod tests {
         ModuleSpawnContext, OxurackModule, ParameterGetter, ParameterRegistry, ParameterSchema,
         ParameterSetter, ParameterValue, PatchHandle, PortDirection, PortSchema, ValueKind,
     };
+    use oxurack_mod_clock::ClockModule;
+    use oxurack_mod_lfo::LfoModule;
+    use oxurack_mod_turingmachine::TuringMachineModule;
     use pretty_assertions::assert_eq;
     use std::collections::HashMap;
 
@@ -615,6 +618,39 @@ mod tests {
         }
     }
 
+    struct FaultLateFailure;
+
+    #[derive(Resource)]
+    struct FaultCandidateMarker;
+
+    impl OxurackModule for FaultLateFailure {
+        const KIND: &'static str = "fault_late_failure";
+        const DISPLAY_NAME: &'static str = "Fault late failure";
+
+        fn port_schema() -> &'static [PortSchema] {
+            &[]
+        }
+
+        fn parameter_schema() -> &'static [ParameterSchema] {
+            &[]
+        }
+
+        fn spawn(
+            world: &mut bevy_ecs::world::World,
+            instance_name: &str,
+            _parameters: &HashMap<String, ParameterValue>,
+        ) -> Result<Entity, CoreError> {
+            world.insert_resource(FaultCandidateMarker);
+            let entity = world.spawn_empty().id();
+            world.write_message(oxurack_core::ModuleAdded {
+                entity,
+                instance_name: instance_name.to_owned(),
+                kind: Self::KIND.into(),
+            });
+            Err(CoreError::NotImplemented("fault candidate late failure"))
+        }
+    }
+
     fn two_module_patch() -> oxurack_core::Patch {
         oxurack_core::Patch {
             version: "1.0".to_string(),
@@ -672,7 +708,81 @@ mod tests {
     struct LiveSystemRuns(usize);
 
     struct LiveBehaviorCounter;
-    struct ConflictingLiveBehaviorCounter;
+    struct FirstRecipeHook;
+    struct SecondRecipeHook;
+    struct CollidingRecipeHook;
+
+    #[derive(Resource, Default)]
+    struct RecipeHookOrder(Vec<u8>);
+
+    #[derive(Resource, Default)]
+    struct RecipeHookRuns(usize);
+
+    fn recipe_hook_probe(mut runs: ResMut<RecipeHookRuns>) {
+        runs.0 += 1;
+    }
+
+    macro_rules! recipe_hook_module {
+        ($module:ty, $kind:literal, $order:literal) => {
+            impl OxurackModule for $module {
+                const KIND: &'static str = $kind;
+                const DISPLAY_NAME: &'static str = $kind;
+
+                fn port_schema() -> &'static [PortSchema] {
+                    &[]
+                }
+
+                fn parameter_schema() -> &'static [ParameterSchema] {
+                    &[]
+                }
+
+                fn spawn(
+                    world: &mut bevy_ecs::world::World,
+                    _instance_name: &str,
+                    _parameters: &HashMap<String, ParameterValue>,
+                ) -> Result<Entity, CoreError> {
+                    Ok(world.spawn_empty().id())
+                }
+
+                fn register_systems(
+                    app: &mut App,
+                    schedule: bevy_ecs::schedule::InternedScheduleLabel,
+                ) {
+                    app.init_resource::<RecipeHookOrder>()
+                        .init_resource::<RecipeHookRuns>();
+                    app.world_mut()
+                        .resource_mut::<RecipeHookOrder>()
+                        .0
+                        .push($order);
+                    app.add_systems(schedule, recipe_hook_probe.in_set(TickPhase::Observe));
+                }
+            }
+        };
+    }
+
+    recipe_hook_module!(FirstRecipeHook, "recipe_first", 1);
+    recipe_hook_module!(SecondRecipeHook, "recipe_second", 2);
+
+    impl OxurackModule for CollidingRecipeHook {
+        const KIND: &'static str = "recipe_first";
+        const DISPLAY_NAME: &'static str = "Colliding recipe hook";
+
+        fn port_schema() -> &'static [PortSchema] {
+            &[]
+        }
+
+        fn parameter_schema() -> &'static [ParameterSchema] {
+            &[]
+        }
+
+        fn spawn(
+            _world: &mut bevy_ecs::world::World,
+            _instance_name: &str,
+            _parameters: &HashMap<String, ParameterValue>,
+        ) -> Result<Entity, CoreError> {
+            Err(CoreError::NotImplemented("collision spawner must not run"))
+        }
+    }
 
     fn live_invalid_parameter(reason: &str) -> CoreError {
         CoreError::InvalidParameterValue {
@@ -773,31 +883,23 @@ mod tests {
         }
     }
 
-    impl OxurackModule for ConflictingLiveBehaviorCounter {
-        const KIND: &'static str = "behavior_counter";
-        const DISPLAY_NAME: &'static str = "Conflicting Counter";
-
-        fn port_schema() -> &'static [PortSchema] {
-            &[]
-        }
-        fn parameter_schema() -> &'static [ParameterSchema] {
-            &[]
-        }
-        fn spawn(
-            _world: &mut bevy_ecs::world::World,
-            _instance_name: &str,
-            _parameters: &HashMap<String, ParameterValue>,
-        ) -> Result<Entity, CoreError> {
-            Err(CoreError::NotImplemented("collision spawner must not run"))
-        }
-    }
-
     fn live_state(rack: &Oxurack, handle: &PatchHandle, name: &str) -> LiveStepState {
         rack.world()
             .entity(handle.modules[name])
             .get::<LiveStepState>()
             .unwrap_or_else(|| panic!("{name} should have LiveStepState"))
             .clone()
+    }
+
+    fn module_identities(world: &bevy_ecs::world::World) -> Vec<(String, u64)> {
+        let mut identities = world
+            .resource::<PatchHandle>()
+            .modules
+            .iter()
+            .map(|(name, entity)| (name.clone(), entity.to_bits()))
+            .collect::<Vec<_>>();
+        identities.sort();
+        identities
     }
 
     fn live_parameter(rack: &mut Oxurack, entity: Entity) -> ParameterValue {
@@ -878,54 +980,352 @@ mod tests {
         let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("tests/fixtures/behavior-installation.ron");
         let mut rack = Oxurack::new();
+        rack.try_install::<FirstRecipeHook>().unwrap();
+        rack.try_install::<SecondRecipeHook>().unwrap();
         rack.try_install::<LiveBehaviorCounter>().unwrap();
         rack.set_driver_mode(SimulationDriver::Manual);
         rack.load_patch(&fixture).unwrap();
         let original_handle = rack.world().resource::<PatchHandle>().clone();
         let alpha = original_handle.modules["alpha"];
-        rack.set_parameter("alpha", "increment", ParameterValue::Int(5))
-            .unwrap();
-        assert_eq!(live_parameter(&mut rack, alpha), ParameterValue::Int(5));
+        let beta = original_handle.modules["beta"];
+        assert_eq!(rack.world().resource::<RecipeHookOrder>().0, [1, 2]);
         assert_eq!(rack.world().resource::<LiveHookCalls>().0, 1);
-        assert!(matches!(
-            rack.try_install::<ConflictingLiveBehaviorCounter>(),
-            Err(CoreError::ModuleKindConflict { .. })
-        ));
-        assert_eq!(rack.world().resource::<LiveHookCalls>().0, 1);
-
-        rack.start();
-        rack.world_mut().run_schedule(FixedUpdate);
-        rack.stop();
-        assert_eq!(live_state(&rack, &original_handle, "alpha").total, 5);
-        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 1);
-        rack.restart().unwrap();
-        assert_eq!(rack.sample_time().completed_samples(), 0);
-        assert_eq!(rack.world().resource::<LiveHookCalls>().0, 1);
-        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 0);
-        let restarted = rack.world().resource::<PatchHandle>().clone();
-        let alpha = restarted.modules["alpha"];
-        assert_eq!(live_parameter(&mut rack, alpha), ParameterValue::Int(5));
+        assert_eq!(live_parameter(&mut rack, alpha), ParameterValue::Int(2));
+        assert_eq!(live_parameter(&mut rack, beta), ParameterValue::Int(3));
         rack.start();
         assert_eq!(rack.advance_samples(1).unwrap(), 1);
-        assert_eq!(live_state(&rack, &restarted, "alpha").total, 5);
+        assert_eq!(live_state(&rack, &original_handle, "alpha").total, 2);
+        assert_eq!(live_state(&rack, &original_handle, "beta").total, 3);
         assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 1);
+        assert_eq!(rack.world().resource::<RecipeHookRuns>().0, 2);
+        rack.stop();
+        for _event in rack.drain_midi() {}
+
+        rack.set_parameter("alpha", "increment", ParameterValue::Int(4))
+            .unwrap();
+        assert_eq!(live_parameter(&mut rack, alpha), ParameterValue::Int(4));
+        assert!(matches!(
+            rack.try_install::<CollidingRecipeHook>(),
+            Err(CoreError::ModuleKindConflict { .. })
+        ));
+        rack.try_install::<LiveBehaviorCounter>().unwrap();
+        assert_eq!(rack.world().resource::<RecipeHookOrder>().0, [1, 2]);
+        assert_eq!(live_state(&rack, &original_handle, "alpha").total, 2);
+        assert_eq!(live_state(&rack, &original_handle, "beta").total, 3);
+        assert_eq!(rack.world().resource::<LiveHookCalls>().0, 1);
+        rack.start();
+        assert_eq!(rack.advance_samples(1).unwrap(), 1);
+        assert_eq!(live_state(&rack, &original_handle, "alpha").total, 6);
+        assert_eq!(live_state(&rack, &original_handle, "beta").total, 6);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 2);
+        assert_eq!(rack.world().resource::<RecipeHookRuns>().0, 4);
+        rack.stop();
+        for _event in rack.drain_midi() {}
+
+        rack.restart().unwrap();
+        assert_eq!(rack.sample_time().completed_samples(), 0);
+        assert_eq!(rack.world().resource::<RecipeHookOrder>().0, [1, 2]);
+        assert_eq!(rack.world().resource::<LiveHookCalls>().0, 1);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 0);
+        assert_eq!(rack.world().resource::<RecipeHookRuns>().0, 0);
+        assert!(!rack.world().resource::<SimulationRunning>().0);
+        assert_eq!(
+            rack.world().resource::<Time<Fixed>>().elapsed(),
+            Duration::ZERO
+        );
+        assert_eq!(
+            rack.world().resource::<Time<Fixed>>().overstep(),
+            Duration::ZERO
+        );
+        assert_eq!(
+            rack.world().resource::<Time<Virtual>>().elapsed(),
+            Duration::ZERO
+        );
+        assert_eq!(
+            rack.world().resource::<Time<Virtual>>().delta(),
+            Duration::ZERO
+        );
+        let restarted = rack.world().resource::<PatchHandle>().clone();
+        let alpha = restarted.modules["alpha"];
+        let beta = restarted.modules["beta"];
+        assert_eq!(live_parameter(&mut rack, alpha), ParameterValue::Int(4));
+        assert_eq!(live_parameter(&mut rack, beta), ParameterValue::Int(3));
+        assert_eq!(live_state(&rack, &restarted, "alpha").total, 0);
+        assert_eq!(live_state(&rack, &restarted, "beta").total, 0);
+        rack.start();
+        assert_eq!(rack.advance_samples(1).unwrap(), 1);
+        assert_eq!(live_state(&rack, &restarted, "alpha").total, 4);
+        assert_eq!(live_state(&rack, &restarted, "beta").total, 3);
+        assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 1);
+        assert_eq!(rack.world().resource::<RecipeHookRuns>().0, 2);
 
         rack.stop();
+        for _event in rack.drain_midi() {}
         rack.unload_patch().unwrap();
         assert!(rack.world().get_resource::<PatchHandle>().is_none());
         assert_eq!(rack.sample_time().completed_samples(), 0);
+        assert_eq!(rack.world().resource::<RecipeHookOrder>().0, [1, 2]);
+        assert!(!rack.world().resource::<SimulationRunning>().0);
+        assert_eq!(
+            rack.world().resource::<Time<Fixed>>().elapsed(),
+            Duration::ZERO
+        );
+        assert_eq!(
+            rack.world().resource::<Time<Fixed>>().overstep(),
+            Duration::ZERO
+        );
+        assert_eq!(
+            rack.world().resource::<Time<Virtual>>().elapsed(),
+            Duration::ZERO
+        );
+        assert_eq!(
+            rack.world().resource::<Time<Virtual>>().delta(),
+            Duration::ZERO
+        );
         assert_eq!(rack.world().resource::<LiveHookCalls>().0, 1);
         assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 0);
+        assert_eq!(rack.world().resource::<RecipeHookRuns>().0, 0);
+        rack.world_mut().insert_resource(RecipeHookRuns(17));
+        rack.unload_patch().unwrap();
+        assert_eq!(rack.world().resource::<RecipeHookOrder>().0, [1, 2]);
+        assert_eq!(rack.world().resource::<RecipeHookRuns>().0, 17);
+
         rack.load_patch(&fixture).unwrap();
         let reloaded = rack.world().resource::<PatchHandle>().clone();
         let alpha = reloaded.modules["alpha"];
+        let beta = reloaded.modules["beta"];
+        assert_eq!(rack.world().resource::<RecipeHookOrder>().0, [1, 2]);
+        assert!(!rack.world().resource::<SimulationRunning>().0);
+        assert_eq!(
+            rack.world().resource::<Time<Fixed>>().elapsed(),
+            Duration::ZERO
+        );
+        assert_eq!(
+            rack.world().resource::<Time<Fixed>>().overstep(),
+            Duration::ZERO
+        );
+        assert_eq!(
+            rack.world().resource::<Time<Virtual>>().elapsed(),
+            Duration::ZERO
+        );
+        assert_eq!(
+            rack.world().resource::<Time<Virtual>>().delta(),
+            Duration::ZERO
+        );
         assert_eq!(rack.world().resource::<LiveHookCalls>().0, 1);
         assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 0);
+        assert_eq!(rack.world().resource::<RecipeHookRuns>().0, 0);
         assert_eq!(live_parameter(&mut rack, alpha), ParameterValue::Int(2));
+        assert_eq!(live_parameter(&mut rack, beta), ParameterValue::Int(3));
         rack.start();
         assert_eq!(rack.advance_samples(1).unwrap(), 1);
         assert_eq!(live_state(&rack, &reloaded, "alpha").total, 2);
+        assert_eq!(live_state(&rack, &reloaded, "beta").total, 3);
         assert_eq!(rack.world().resource::<LiveSystemRuns>().0, 1);
+        assert_eq!(rack.world().resource::<RecipeHookRuns>().0, 2);
+    }
+
+    #[derive(Resource)]
+    struct LoadedOwnerMarker;
+
+    #[derive(Resource)]
+    struct EmptyOwnerMarker;
+
+    #[test]
+    fn failed_restart_snapshot_and_unloaded_restart_preserve_admission_boundaries() {
+        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("examples/patches/turing-machine-lfo.ron");
+        let mut rack = Oxurack::new();
+        rack.try_install::<ClockModule>().unwrap();
+        rack.try_install::<LfoModule>().unwrap();
+        rack.try_install::<TuringMachineModule>().unwrap();
+        rack.try_install::<MidiOutModule>().unwrap();
+        rack.set_driver_mode(SimulationDriver::Manual);
+        rack.load_patch(&fixture).unwrap();
+        rack.configure_scope(&[ScopeSelector::new("lfo_main", "bipolar_out")], 64)
+            .unwrap();
+        rack.start();
+        assert_eq!(rack.advance_samples(7).unwrap(), 7);
+        rack.stop();
+        let snapshot = rack.snapshot_patch().unwrap();
+        let membership = module_identities(rack.world());
+        let scope = rack.scope().unwrap().records().copied().collect::<Vec<_>>();
+        let sample_time = rack.sample_time();
+        let driver = rack.driver_mode();
+        let cable = {
+            let world = rack.world_mut();
+            let mut query = world.query::<(Entity, &oxurack_core::Cable)>();
+            query.iter(world).next().map(|(entity, _)| entity).unwrap()
+        };
+        rack.world_mut()
+            .get_mut::<oxurack_core::Cable>(cable)
+            .unwrap()
+            .enabled = false;
+        assert!(matches!(
+            rack.restart(),
+            Err(CoreError::Patch(oxurack_core::PatchError::UnsupportedSnapshot { reason }))
+                if reason.contains("disabled") && reason.contains("cable")
+        ));
+        assert_eq!(module_identities(rack.world()), membership);
+        assert_eq!(rack.sample_time(), sample_time);
+        assert_eq!(rack.driver_mode(), driver);
+        assert_eq!(
+            rack.scope().unwrap().records().copied().collect::<Vec<_>>(),
+            scope
+        );
+        assert!(rack.world().get_resource::<PatchHandle>().is_some());
+        rack.world_mut()
+            .get_mut::<oxurack_core::Cable>(cable)
+            .unwrap()
+            .enabled = true;
+        assert_eq!(rack.snapshot_patch().unwrap(), snapshot);
+
+        rack.unload_patch().unwrap();
+        assert!(matches!(rack.restart(), Err(CoreError::NoPatchLoaded)));
+        assert_eq!(rack.sample_time().completed_samples(), 0);
+        let mut unloaded_running = Oxurack::new();
+        unloaded_running
+            .set_driver_mode(SimulationDriver::Manual)
+            .start();
+        assert!(matches!(
+            unloaded_running.restart(),
+            Err(CoreError::LifecycleRequiresStopped)
+        ));
+        unloaded_running.stop();
+        assert!(matches!(
+            unloaded_running.restart(),
+            Err(CoreError::NoPatchLoaded)
+        ));
+    }
+
+    #[test]
+    fn empty_unload_retires_owner_then_repeated_noops_preserve_fault_and_hooks() {
+        let empty_patch = Patch {
+            version: "empty-test-version".into(),
+            master_seed: 91,
+            bpm: 97.5,
+            modules: Vec::new(),
+            cables: Vec::new(),
+            rack: None,
+        };
+        let path = save_patch_to_temp(&empty_patch, "oxurack-empty-lifecycle.ron");
+        let mut rack = Oxurack::new();
+        rack.try_install::<FirstRecipeHook>().unwrap();
+        rack.try_install::<SecondRecipeHook>().unwrap();
+        rack.set_driver_mode(SimulationDriver::Manual);
+        rack.load_patch(&path).unwrap();
+        assert_eq!(rack.snapshot_patch().unwrap(), empty_patch);
+        assert_eq!(rack.world().resource::<RecipeHookOrder>().0, [1, 2]);
+        rack.world_mut().insert_resource(LoadedOwnerMarker);
+        rack.unload_patch().unwrap();
+        assert!(rack.world().get_resource::<LoadedOwnerMarker>().is_none());
+        assert!(rack.world().get_resource::<PatchHandle>().is_none());
+        assert!(matches!(
+            rack.snapshot_patch(),
+            Err(CoreError::NoPatchLoaded)
+        ));
+        assert_eq!(rack.world().resource::<RecipeHookOrder>().0, [1, 2]);
+        assert!(rack.drain_midi().next().is_none());
+
+        rack.world_mut().insert_resource(EmptyOwnerMarker);
+        let known_fault = TickError::OutputCapacity {
+            reason: "empty rack fault remains first".into(),
+            completed_samples: 9,
+        };
+        rack.world_mut()
+            .resource_mut::<MidiOutputBuffer>()
+            .latch_fault(known_fault.clone());
+        let sample_time = rack.sample_time();
+        let hook_order = rack.world().resource::<RecipeHookOrder>().0.clone();
+        rack.reset().unwrap();
+        assert!(rack.drain_midi().next().is_none());
+        assert!(rack.world().get_resource::<EmptyOwnerMarker>().is_some());
+        assert_eq!(rack.world().resource::<RecipeHookOrder>().0, hook_order);
+        assert_eq!(rack.sample_time(), sample_time);
+        assert_eq!(
+            rack.midi_output_error().map(|error| format!("{error:?}")),
+            Some(format!("{known_fault:?}"))
+        );
+        rack.unload_patch().unwrap();
+        rack.unload_patch().unwrap();
+        assert!(rack.world().get_resource::<EmptyOwnerMarker>().is_some());
+        assert_eq!(rack.world().resource::<RecipeHookOrder>().0, hook_order);
+        assert_eq!(rack.sample_time(), sample_time);
+        assert_eq!(
+            rack.midi_output_error().map(|error| format!("{error:?}")),
+            Some(format!("{known_fault:?}"))
+        );
+        assert!(rack.drain_midi().next().is_none());
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn nonempty_unload_cleanup_blocks_repeat_until_the_pending_batch_is_drained() {
+        let patch = Patch {
+            version: "1.0".into(),
+            master_seed: 42,
+            bpm: 120.0,
+            modules: vec![ModuleConfig {
+                kind: MidiOutModule::KIND.into(),
+                instance_name: "midi_main".into(),
+                parameters: HashMap::new(),
+                ..Default::default()
+            }],
+            cables: Vec::new(),
+            rack: None,
+        };
+        let path = save_patch_to_temp(&patch, "oxurack-nonempty-unload-cleanup.ron");
+        let mut rack = Oxurack::new();
+        rack.try_install::<MidiOutModule>().unwrap();
+        rack.set_driver_mode(SimulationDriver::Manual);
+        rack.load_patch(&path).unwrap();
+        let sink = rack.world().resource::<PatchHandle>().modules["midi_main"];
+        for (port, value) in [
+            ("step", Value::Gate(true)),
+            ("note_valid", Value::Gate(true)),
+            ("velocity_valid", Value::Gate(true)),
+            ("gate", Value::Gate(true)),
+            ("note", Value::Raw(60)),
+            ("velocity", Value::Raw(100)),
+        ] {
+            set_port_value(&mut rack, sink, port, value);
+        }
+        rack.start();
+        assert_eq!(rack.advance_samples(1).unwrap(), 1);
+        assert_eq!(
+            rack.drain_midi()
+                .map(|event| (event.sample, event.message.to_bytes()))
+                .collect::<Vec<_>>(),
+            vec![(0, [0x90, 60, 100])]
+        );
+        rack.stop();
+        rack.unload_patch().unwrap();
+        assert!(matches!(
+            rack.snapshot_patch(),
+            Err(CoreError::NoPatchLoaded)
+        ));
+        assert_eq!(rack.sample_time().completed_samples(), 0);
+        assert!(matches!(
+            rack.unload_patch(),
+            Err(CoreError::PendingMidi { count: 3 })
+        ));
+        assert_eq!(
+            rack.world().resource::<MidiOutputBuffer>().pending_count(),
+            3
+        );
+        assert_eq!(
+            rack.drain_midi()
+                .map(|event| (event.sample, event.message.to_bytes()))
+                .collect::<Vec<_>>(),
+            vec![(1, [0x80, 60, 0]), (1, [0xB0, 123, 0]), (1, [0xB0, 120, 0]),]
+        );
+        rack.unload_patch().unwrap();
+        assert_eq!(
+            rack.world().resource::<MidiOutputBuffer>().pending_count(),
+            0
+        );
+        assert!(rack.drain_midi().next().is_none());
+        let _ = std::fs::remove_file(path);
     }
 
     #[test]
@@ -2059,6 +2459,241 @@ mod tests {
     }
 
     #[test]
+    fn pending_output_rejects_lifecycle_and_reset_preserves_then_cleans_exact_state() {
+        #[derive(Debug, PartialEq)]
+        struct RetainedState {
+            patch: Patch,
+            driver: SimulationDriver,
+            sample_time: SampleTime,
+            running: bool,
+            fixed_elapsed: Duration,
+            fixed_overstep: Duration,
+            virtual_elapsed: Duration,
+            virtual_delta: Duration,
+            virtual_paused: bool,
+            selectors: Vec<ScopeSelector>,
+            scope_capacity: usize,
+            scope_overwritten: u64,
+            scope_records: Vec<ScopeRecord>,
+            pending_events: usize,
+            fault: Option<String>,
+            modules: Vec<(u64, String, String)>,
+            loaded: Vec<(String, oxurack_core::PatchSource, usize, usize, usize)>,
+            installations: Vec<String>,
+        }
+
+        fn retained_state(rack: &mut Oxurack) -> RetainedState {
+            let patch = rack.snapshot_patch().unwrap();
+            let fixed = rack.world().resource::<Time<Fixed>>();
+            let virtual_time = rack.world().resource::<Time<Virtual>>();
+            let scope = rack.scope().unwrap();
+            let output = rack.world().resource::<MidiOutputBuffer>();
+            let modules = rack
+                .world()
+                .resource::<bevy_ecs::message::Messages<oxurack_core::ModuleAdded>>()
+                .iter_current_update_messages()
+                .map(|event| {
+                    (
+                        event.entity.to_bits(),
+                        event.instance_name.clone(),
+                        event.kind.to_string(),
+                    )
+                })
+                .collect::<Vec<_>>();
+            let loaded = rack
+                .world()
+                .resource::<bevy_ecs::message::Messages<oxurack_core::PatchLoaded>>()
+                .iter_current_update_messages()
+                .map(|event| {
+                    (
+                        event.patch_name.clone(),
+                        event.source.clone(),
+                        event.module_count,
+                        event.cable_count,
+                        event.label_count,
+                    )
+                })
+                .collect::<Vec<_>>();
+            let mut loaded = loaded;
+            loaded.sort_by(|left, right| left.0.cmp(&right.0));
+            let mut modules = modules;
+            modules.sort();
+            RetainedState {
+                patch,
+                driver: rack.driver_mode(),
+                sample_time: rack.sample_time(),
+                running: rack.world().resource::<SimulationRunning>().0,
+                fixed_elapsed: fixed.elapsed(),
+                fixed_overstep: fixed.overstep(),
+                virtual_elapsed: virtual_time.elapsed(),
+                virtual_delta: virtual_time.delta(),
+                virtual_paused: virtual_time.is_paused(),
+                selectors: scope.selectors().to_vec(),
+                scope_capacity: scope.capacity(),
+                scope_overwritten: scope.overwritten(),
+                scope_records: scope.records().copied().collect(),
+                pending_events: output.pending_count(),
+                fault: output.fault().map(|fault| format!("{fault:?}")),
+                modules,
+                loaded,
+                installations: rack
+                    .install_order
+                    .iter()
+                    .map(|installed| installed.kind.to_string())
+                    .collect(),
+            }
+        }
+
+        let mut rack = Oxurack::new();
+        rack.try_install::<MidiOutModule>().unwrap();
+        let patch = Patch {
+            version: "1.0".into(),
+            master_seed: 42,
+            bpm: 120.0,
+            modules: vec![ModuleConfig {
+                kind: MidiOutModule::KIND.into(),
+                instance_name: "midi_main".into(),
+                parameters: HashMap::new(),
+                ..Default::default()
+            }],
+            cables: Vec::new(),
+            rack: None,
+        };
+        let path = save_patch_to_temp(&patch, "oxurack-pending-lifecycle.ron");
+        rack.set_driver_mode(SimulationDriver::Manual);
+        rack.load_patch(&path).unwrap();
+        let sink = rack.world().resource::<PatchHandle>().modules["midi_main"];
+        for (port, value) in [
+            ("step", Value::Gate(true)),
+            ("note_valid", Value::Gate(true)),
+            ("velocity_valid", Value::Gate(true)),
+            ("gate", Value::Gate(true)),
+            ("note", Value::Raw(60)),
+            ("velocity", Value::Raw(100)),
+        ] {
+            set_port_value(&mut rack, sink, port, value);
+        }
+        rack.configure_scope(&[ScopeSelector::new("midi_main", "note")], 32)
+            .unwrap();
+        rack.start();
+        assert_eq!(rack.advance_samples(1).unwrap(), 1);
+        assert_eq!(
+            rack.world().resource::<MidiOutputBuffer>().pending_count(),
+            1
+        );
+
+        for operation in ["load", "restart", "unload"] {
+            let before = retained_state(&mut rack);
+            let result = match operation {
+                "load" => rack.load_patch(Path::new("/missing-running-pending")),
+                "restart" => rack.restart(),
+                "unload" => rack.unload_patch(),
+                _ => unreachable!(),
+            };
+            assert!(matches!(result, Err(CoreError::LifecycleRequiresStopped)));
+            assert_eq!(rack.sample_time().completed_samples(), 1);
+            assert_eq!(
+                rack.world().resource::<MidiOutputBuffer>().pending_count(),
+                1
+            );
+            assert_eq!(retained_state(&mut rack), before);
+        }
+        rack.stop();
+        assert_eq!(
+            rack.world().resource::<MidiOutputBuffer>().pending_count(),
+            1
+        );
+        for operation in ["load", "restart", "unload"] {
+            let before = retained_state(&mut rack);
+            let result = match operation {
+                "load" => rack.load_patch(Path::new("/missing-stopped-pending")),
+                "restart" => rack.restart(),
+                "unload" => rack.unload_patch(),
+                _ => unreachable!(),
+            };
+            assert!(matches!(result, Err(CoreError::PendingMidi { count: 1 })));
+            assert_eq!(retained_state(&mut rack), before);
+        }
+        rack.reset().unwrap();
+        assert_eq!(
+            rack.world().resource::<MidiOutputBuffer>().pending_count(),
+            4
+        );
+        let after_first_reset = retained_state(&mut rack);
+        rack.reset().unwrap();
+        assert_eq!(
+            rack.world().resource::<MidiOutputBuffer>().pending_count(),
+            4
+        );
+        assert_eq!(retained_state(&mut rack), after_first_reset);
+        let drained: Vec<_> = rack
+            .drain_midi()
+            .map(|event| (event.sample, event.message.to_bytes()))
+            .collect();
+        assert_eq!(
+            drained,
+            vec![
+                (0, [0x90, 60, 100]),
+                (1, [0x80, 60, 0]),
+                (1, [0xB0, 123, 0]),
+                (1, [0xB0, 120, 0]),
+            ]
+        );
+
+        rack.start();
+        rack.stop();
+        assert!(rack.drain_midi().next().is_none());
+        rack.start();
+        assert_eq!(rack.advance_samples(1).unwrap(), 1);
+        assert_eq!(
+            rack.drain_midi()
+                .map(|event| (event.sample, event.message.to_bytes()))
+                .collect::<Vec<_>>(),
+            vec![(1, [0x90, 60, 100])]
+        );
+        rack.reset().unwrap();
+        assert_eq!(
+            rack.drain_midi()
+                .map(|event| (event.sample, event.message.to_bytes()))
+                .collect::<Vec<_>>(),
+            vec![(2, [0x80, 60, 0]), (2, [0xB0, 123, 0]), (2, [0xB0, 120, 0]),]
+        );
+        rack.stop();
+        rack.reset().unwrap();
+        assert!(rack.drain_midi().next().is_none());
+
+        let mut unloaded = Oxurack::new();
+        unloaded.try_install::<MidiOutModule>().unwrap();
+        let sink = MidiOutModule::spawn(unloaded.world_mut(), "raw_sink", &HashMap::new()).unwrap();
+        for (port, value) in [
+            ("step", Value::Gate(true)),
+            ("note_valid", Value::Gate(true)),
+            ("velocity_valid", Value::Gate(true)),
+            ("gate", Value::Gate(true)),
+            ("note", Value::Raw(62)),
+            ("velocity", Value::Raw(99)),
+        ] {
+            set_port_value(&mut unloaded, sink, port, value);
+        }
+        unloaded.set_driver_mode(SimulationDriver::Manual).start();
+        assert_eq!(unloaded.advance_samples(1).unwrap(), 1);
+        unloaded.stop();
+        assert!(matches!(
+            unloaded.load_patch(Path::new("/missing-unloaded-pending")),
+            Err(CoreError::PendingMidi { count: 1 })
+        ));
+        assert_eq!(unloaded.sample_time().completed_samples(), 1);
+        assert_eq!(
+            unloaded
+                .world()
+                .resource::<MidiOutputBuffer>()
+                .pending_count(),
+            1
+        );
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
     fn installed_sink_without_sink_instances_keeps_grouped_advancement() {
         let mut rack = Oxurack::new();
         rack.try_install::<MidiOutModule>().unwrap();
@@ -2153,6 +2788,7 @@ mod tests {
             oxurack_core::save_patch_to_file(&patch, &path).unwrap();
             let mut rack = Oxurack::new();
             rack.try_install::<MidiOutModule>().unwrap();
+            rack.try_install::<FaultLateFailure>().unwrap();
             rack.set_driver_mode(SimulationDriver::Manual);
             rack.load_patch(&path).unwrap();
             rack.configure_scope(&[ScopeSelector::new("midi_main", "note")], 512)
@@ -2216,6 +2852,96 @@ mod tests {
                 format!("{:?}", rack.midi_output_error().unwrap()),
                 original_fault
             );
+            let retained_snapshot = rack.snapshot_patch().unwrap();
+            let retained_membership = module_identities(rack.world());
+            let retained_scope = rack.scope().unwrap().records().copied().collect::<Vec<_>>();
+            let retained_sample = rack.sample_time();
+            let retained_driver = rack.driver_mode();
+            let retained_module_messages = rack
+                .world()
+                .resource::<bevy_ecs::message::Messages<oxurack_core::ModuleAdded>>()
+                .iter_current_update_messages()
+                .map(|message| {
+                    (
+                        message.entity.to_bits(),
+                        message.instance_name.clone(),
+                        message.kind.to_string(),
+                    )
+                })
+                .collect::<Vec<_>>();
+            let retained_loaded_messages = rack
+                .world()
+                .resource::<bevy_ecs::message::Messages<oxurack_core::PatchLoaded>>()
+                .iter_current_update_messages()
+                .map(|message| {
+                    (
+                        message.patch_name.clone(),
+                        message.source.clone(),
+                        message.module_count,
+                        message.cable_count,
+                        message.label_count,
+                    )
+                })
+                .collect::<Vec<_>>();
+            let mut failed_candidate = patch.clone();
+            failed_candidate.modules.push(ModuleConfig {
+                kind: FaultLateFailure::KIND.into(),
+                instance_name: "fault_late_failure".into(),
+                ..Default::default()
+            });
+            let failed_candidate_path = std::env::temp_dir().join(format!(
+                "oxurack-real-fault-late-candidate-{operation}-{}.ron",
+                std::process::id()
+            ));
+            oxurack_core::save_patch_to_file(&failed_candidate, &failed_candidate_path).unwrap();
+            assert!(matches!(
+                rack.load_patch(&failed_candidate_path),
+                Err(CoreError::NotImplemented("fault candidate late failure"))
+            ));
+            assert!(
+                rack.world()
+                    .get_resource::<FaultCandidateMarker>()
+                    .is_none()
+            );
+            assert_eq!(rack.snapshot_patch().unwrap(), retained_snapshot);
+            assert_eq!(module_identities(rack.world()), retained_membership);
+            assert_eq!(
+                rack.scope().unwrap().records().copied().collect::<Vec<_>>(),
+                retained_scope
+            );
+            assert_eq!(rack.sample_time(), retained_sample);
+            assert_eq!(rack.driver_mode(), retained_driver);
+            assert_eq!(
+                format!("{:?}", rack.midi_output_error().unwrap()),
+                original_fault
+            );
+            assert_eq!(
+                rack.world()
+                    .resource::<bevy_ecs::message::Messages<oxurack_core::ModuleAdded>>()
+                    .iter_current_update_messages()
+                    .map(|message| (
+                        message.entity.to_bits(),
+                        message.instance_name.clone(),
+                        message.kind.to_string()
+                    ))
+                    .collect::<Vec<_>>(),
+                retained_module_messages
+            );
+            assert_eq!(
+                rack.world()
+                    .resource::<bevy_ecs::message::Messages<oxurack_core::PatchLoaded>>()
+                    .iter_current_update_messages()
+                    .map(|message| (
+                        message.patch_name.clone(),
+                        message.source.clone(),
+                        message.module_count,
+                        message.cable_count,
+                        message.label_count
+                    ))
+                    .collect::<Vec<_>>(),
+                retained_loaded_messages
+            );
+            let _ = std::fs::remove_file(failed_candidate_path);
             match operation {
                 "load" => rack.load_patch(&path).unwrap(),
                 "restart" => rack.restart().unwrap(),
@@ -2236,6 +2962,31 @@ mod tests {
                     (252, [0xB0, 120, 0]),
                 ]
             );
+            if operation == "unload" {
+                rack.load_patch(&path).unwrap();
+                let _cleanup_after_reload = rack.drain_midi().collect::<Vec<_>>();
+            }
+            let fresh_sink = rack.world().resource::<PatchHandle>().modules["midi_main"];
+            for (port, value) in [
+                ("step", Value::Gate(true)),
+                ("note_valid", Value::Gate(true)),
+                ("velocity_valid", Value::Gate(true)),
+                ("gate", Value::Gate(true)),
+                ("note", Value::Raw(60)),
+                ("velocity", Value::Raw(100)),
+            ] {
+                set_port_value(&mut rack, fresh_sink, port, value);
+            }
+            rack.start();
+            assert_eq!(rack.advance_samples(1).unwrap(), 1);
+            assert_eq!(
+                rack.drain_midi()
+                    .map(|event| (event.sample, event.message.to_bytes()))
+                    .collect::<Vec<_>>(),
+                vec![(0, [0x90, 60, 100])]
+            );
+            assert!(rack.midi_output_error().is_none());
+            rack.stop();
             let _ = std::fs::remove_file(path);
         }
     }

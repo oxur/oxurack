@@ -366,6 +366,9 @@ mod tests {
     struct CandidateFault;
     struct CandidateLateFailure;
 
+    #[derive(bevy_ecs::prelude::Resource)]
+    struct CandidateMarker;
+
     impl OxurackModule for CandidateOutput {
         const KIND: &'static str = "candidate_output";
         const DISPLAY_NAME: &'static str = "Candidate output probe";
@@ -449,6 +452,7 @@ mod tests {
             name: &str,
             _parameters: &HashMap<String, ParameterValue>,
         ) -> Result<bevy_ecs::entity::Entity, CoreError> {
+            world.insert_resource(CandidateMarker);
             let entity = world.spawn_empty().id();
             world.write_message(oxurack_core::ModuleAdded {
                 entity,
@@ -617,6 +621,7 @@ mod tests {
             rack.load_patch(&late_path),
             Err(CoreError::NotImplemented("candidate late failure witness"))
         ));
+        assert!(rack.world().get_resource::<CandidateMarker>().is_none());
         assert_eq!(owner_membership(rack.world()), before_membership);
         #[cfg(feature = "graph")]
         assert_eq!(graph_membership(rack.world()), before_graph_membership);
