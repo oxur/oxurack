@@ -3,14 +3,14 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — Arc10 and Arc11 accepted; P-07 instrument/workbench milestone done; Arc12/Slice01–03 CRC accepted; CDC directive12 acknowledged; Slice04 lifecycle prompt issued, six LF rows open; Slice05 held; Arc12 composition remains open |
+| status | active — Arc10 and Arc11 accepted; P-07 instrument/workbench milestone done; Arc12/Slice01–03 CRC accepted; CDC directive12 unchanged; Slice04 native/musical return reproduced, corrective iteration01 issued, six LF rows open; Slice05 held; Arc12 composition remains open |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
 | source baseline | `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` on `main`; original migration baseline retained below |
 | planning home | `planning` branch, `.worktrees/planning/project01-mvp` |
 
-## Current direction — v3.39, 2026-10-12
+## Current direction — v3.40, 2026-10-12
 
 Duncan requested a recalibration during Arc10/Slice02 review: this is unreleased
 open-source music software, and excessive defensive infrastructure, proof tooling
@@ -34,7 +34,13 @@ transport/reset contract conflicts and reproduced MIDI replacement/failure leaks
 [crc-escalation12.md](crc-escalation12.md) is resolved by
 [cdc-directive12.md](cdc-directive12.md): isolated patch candidates, explicit
 lifetime/cleanup contracts and preserved start/stop. CRC acknowledged CDC67e9150 and issued [lifecycle Slice04](arc12-live-rack-operations/slice04-runtime-api/cc-prompt.md)
-with six open LF rows. Instance/handle/queued-command Slice05 remains held until04 acceptance. Separate
+with six open LF rows. Was: initial implementation was assigned. Now: CRC reproduced
+CC f6fdeb5/622e9948 native and musical return, then issued
+[Slice04 iteration01](arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration01.md)
+for six missing interaction-proof groups and a retired-sample diagnostic. The
+[CRC record](arc12-live-rack-operations/slice04-runtime-api/crc-verification.md)
+preserves independent successes and limits; all LF rows remain open.
+Instance/handle/queued-command Slice05 remains held until04 acceptance. Separate
 MIDI transport remains Arc07 and catalog-specific typed vocabulary Arc13 with
 explicit re-entry; no original requirement is silently removed. The earlier Slice01
 CDC-authoring gaps were resolved without weakening the base-value or stable-replay oracles.
@@ -164,7 +170,9 @@ claimed by this acknowledgement. CRC will repin the accepted predecessor before
 opening Slice03 and apply directive08's concrete prompt and proportionate-proof
 policy to subsequent work. Three contributors and Expedited Mode remain active.
 
-Version history: **v3.39 — 2026-10-12:** CRC acknowledges directive12 and issues the approved lifecycle Slice04 open set. Six LF rows open,14 source paths, worked candidate/cleanup/hook examples and actual musical session; native evidence assigned fresh. Source/main unchanged, Slice05 and all parent gates held.
+Version history: **v3.40 — 2026-10-12:** CRC independently reproduced Slice04 f6fdeb5 native gates and actual72-row lifecycle/fresh replay; issued one bounded correction for missing interaction proof and diagnostic accuracy. Six LF rows and Slice05/parent gates remain open; no design amendment or source/main change by CRC.
+
+**v3.39 — 2026-10-12:** CRC acknowledges directive12 and issues the approved lifecycle Slice04 open set. Six LF rows open,14 source paths, worked candidate/cleanup/hook examples and actual musical session; native evidence assigned fresh. Source/main unchanged, Slice05 and all parent gates held.
 
 **v3.38 — 2026-10-12:** CDC independently reproduced the replacement leak and resolved escalation12. Approved isolated lifetimes, ordered cleanup, explicit recovery/reset/restart and five-child Arc12 delivery. Original separate transport and catalog-specific API forms retain Arc07/13 owners; no acceptance added.
 

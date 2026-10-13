@@ -29,11 +29,20 @@
 > CRC acknowledged planning67e9150 at clean sourcedeafdd228 and issued
 > [Slice04 lifecycle prompt](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/cc-prompt.md):
 > isolated replacement/unload, reset/restart/cleanup and executable --lifecycle session.
-> Six LF rows open; instance/handle/queued-command05 unopened until04 acceptance.
-> Five-child Arc12 composition remains open; source/main unchanged. Separate
+> Was: Slice04 initial prompt was issued. Now: CC returned f6fdeb5/622e9948.
+> CRC independently reproduced native gates, exact host retry, default/no-graph/
+> fresh72-row replay, ordinary save, six CLI failures and original fixture hashes.
+> [CRC review](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/crc-verification.md)
+> keeps six LF rows open for interaction proof; active
+> [iteration01](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration01.md)
+> fills those observations and corrects the retired-sample diagnostic. No lifecycle
+> implementation defect is claimed reproduced. Instance/handle/queued-command05
+> remains unopened until04 acceptance. Five-child Arc12 composition remains open;
+> source stays f6fdeb5 and protected main a7ce6e6; CRC changes planning only. Separate
 > MIDI transport and catalog-specific typed forms retain Arc07/13 re-entry owners.
-> Exact engine-state checkpoints remain future work. Existing append-only load
-> behavior is explicitly owned by Arc12/Slice04; Slice01 reloads into a fresh rack.
+> Exact engine-state checkpoints remain future work. The historical append-only
+> load defect has a proposed isolated-candidate repair atf6fdeb5, pending complete
+> Slice04 review; Slice01's earlier recipe deliberately reloaded into a fresh rack.
 > Catalog/Chord, full interfaces, hardware timing/coverage/benchmarks/soak retain
 > Arc13/07/08 owners. Three contributors, Expedited Mode and directive08 policy apply.
 > Earlier snapshots below are history.

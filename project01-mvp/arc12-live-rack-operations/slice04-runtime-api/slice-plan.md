@@ -1,12 +1,14 @@
 # Arc12 Slice04 — explicit rack lifetimes
 
-Version1.0 — 2026-10-12. Status: open, implementation assigned; no acceptance.
-Current assignment: `arc12-live-rack-operations/slice04-runtime-api/cc-prompt.md`.
+Version1.1 — 2026-10-12. Status: open, CRC return for correction; no acceptance.
+Current assignment: `arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration01.md`.
 Three contributors, Expedited Mode. CRC acknowledges CDC directive12 at planning
 67e9150; source predecessor deafdd228fb44720878c700f8ff62b2a59ddbad6.
+Current correction source baseline: f6fdeb513331a8d8962876bdf4766cedfce63f59.
 Depends on CRC-accepted Slice01–03. Main a7ce6e6 remains protected. Six LF rows
-start open; iteration budget0/5. CC implements, CRC independently reviews; CDC
-retains Arc12 acceptance. Slice05 stays unopened until this child is accepted.
+remain open; correction1/5 issued (zero correction passes completed). CC implements,
+CRC independently reviews; CDC retains Arc12 acceptance. Slice05 stays unopened
+until this child is accepted.
 
 ## Delivered capability
 
@@ -85,13 +87,63 @@ No new verifier, coverage campaign, soak or hardware witness.
    platform. Current04 contract is binding;05 is successor-only. Six open rows
    cover the scope; dependent edits follow coherent preflight without a new gate.
 
+## Initial return and corrective assignment — 2026-10-12
+
+CC returned f6fdeb513331a8d8962876bdf4766cedfce63f59 with planning622e9948.
+CRC independently reproduced every native gate (restricted CoreMIDI failure and
+passing exact host retry preserved), actual default/no-graph/fresh72-row musical
+replay, ordinary save, six CLI failures and both original fixture hashes.
+[CRC verification](crc-verification.md) identifies F-01–F-06: incomplete full-owner
+projections, multi-lifetime hook proof, actual reset/dirty/capacity oracles, complete
+admission/real-fault/current-restart/Live matrix, immediate notifications/candidate
+output rejection, and actual example/capture tests. The retired-sample diagnostic
+reports fresh0 instead of retired300. No lifecycle implementation defect is
+claimed reproduced. All six LF rows stay open; initial proposed-done evidence is
+retained. Iteration01 collects the missing observations in existing test homes
+plus narrow example factoring/diagnostic repair, without a new proof platform.
+
+## Iteration01 author readiness — Sofie/CRC, 2026-10-12
+
+1. Source-grounded: eleven-path delta, lifecycle/MIDI production and complete new
+   tests/example inspected at f6fdeb5. Existing LiveBehaviorCounter, raw sink,
+   TimeUpdateStrategy, snapshot failure, typed messages and graph rosters provide
+   viable observation seams. Native/CLI/CSV receipts independently reproduced.
+2. Design-complete: CDC12 unchanged. Test-before/after boundaries retain the old
+   owner; only supported per-App effects are promised. Six test/example paths,
+   no library production repair prescribed, no05 or endpoint scope. Missing
+   production proof is distinguished from a reproduced defect; failures return
+   exact causes instead of weakened oracles.
+3. Guideline-applied: guide07/template and correction-retention guide applied;
+   Rust2.0 AP-08/09/42/44, CLI-34/35/37/38 and27 support actual sink/recipe checks,
+   private access, fallible writers and isolated files. No dependency imported
+   from guideline examples. All relevant actual entries inspected by CRC.
+4. Executable: prompt six finding recipes name test locations/private/public
+   access, normalized within-World identities, actual candidate output fixture
+   without cables, raw note/peak bytes, real fault252, live clocks and parsed
+   writer-based example. Stop/drain precedes replacements; into_app last only.
+5. Falsifiable: literal unread note0/cleanup1; real CC/NoteOff dirty marking;
+   complete80+48 vector/second reset; restart after temporary input deletion;
+   actual Live zero/1ms transitions; immediate failure messages; actual parsed
+   recipe and retained MIDI capture. Fresh CSV independently grounds probability
+   default0 then.5 from1. Each rejects a named plausible omission.
+6. Coherent/portable: bounded ordered manifest, full current plan/ledger/review,
+   relevant preserved prompt sections and domain entries, concise intake/readback
+   in existing close record. Fresh affected tests/native/example gates; unchanged
+   strict-docs/original pins may retain CRC2026-10-12 f6fdeb5 evidence after region
+   audit. No new artifact forest; six LF rows/parent obligations all mapped.
+
 ## Assignment history
 
 | Date | Prompt | Predecessor / authority | Disposition |
 | --- | --- | --- | --- |
-| 2026-10-12 | arc12-live-rack-operations/slice04-runtime-api/cc-prompt.md | Slice03 CRC accepted deafdd228; CDC directive12 planning67e9150; Duncan relay | Initial implementation assigned; six LF rows open; no return or acceptance |
+| 2026-10-12 | arc12-live-rack-operations/slice04-runtime-api/cc-prompt.md | Slice03 CRC accepted deafdd228; CDC directive12 planning67e9150; Duncan relay | Returned f6fdeb5/622e9948; independently reproduced native/musical checks, incomplete interaction proof; superseded by iteration01, no acceptance |
+| 2026-10-12 | arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration01.md | CRC review f6fdeb5; F-01–F-06; original assignment preserved | Active CC test/evidence correction1/5; six LF rows open; Slice05 held |
 
 ## Version history
+
+- v1.1 — 2026-10-12: independent CRC native/musical reproduction, six collected
+  interaction-proof findings and accurate diagnostic repair assigned in iteration01;
+  six LF rows stay open. No design/ancestor acceptance or source change by CRC.
 
 - v1.0 — 2026-10-12: CRC acknowledges directive12 and opens the approved lifecycle
   increment with six rows, concrete implementation/test recipes and native gates.

@@ -1,6 +1,6 @@
 # Arc12 — live rack operations
 
-Version1.8 — 2026-10-12. Status: active; Slice01–03 CRC accepted atdeafdd228 or their named predecessors. CRC acknowledges CDC directive12 at67e9150 and issues [Slice04 lifecycle](slice04-runtime-api/cc-prompt.md). Six LF rows open; Slice05 stays unopened until04 acceptance. Four arc rows remain open.
+Version1.9 — 2026-10-12. Status: active; Slice01–03 CRC accepted atdeafdd228 or their named predecessors. CRC reproduced Slice04 f6fdeb5 and issued [iteration01](slice04-runtime-api/cc-prompt-iteration01.md) for six interaction-proof findings. Six LF rows open; Slice05 stays unopened until04 acceptance. Four arc rows remain open.
 Depends on accepted Arc10/Arc11; source predecessor72fe6b5. Blocks saved/live
 musical workflow and Arc07 controls. Related: carried-over Arcs02–05; Arc13 catalog.
 Authority: approved successor roadmap and Duncan's explicit “Continue with live
@@ -141,6 +141,15 @@ allowlist, guide07 readiness and Rust2.0 guidance. It delivers the existing save
 example’s --lifecycle edit/save/unload/reload/Scope musical session. Slice05 remains
 unopened until04 independent acceptance; arc gates remain.
 
+Was: the initial Slice04 prompt was issued. Now: CC returned f6fdeb5/622e9948;
+CRC independently reproduced all native gates and actual default/no-graph/fresh
+72-row replay, including exact host retry after restricted CoreMIDI failure.
+[Slice04 verification](slice04-runtime-api/crc-verification.md) retains the receipts
+and identifies six missing interaction-proof groups plus a retired-sample
+message correction. [Iteration01](slice04-runtime-api/cc-prompt-iteration01.md)
+is the active bounded test/example assignment. All six LF rows remain open;
+no new architecture decision or parent acceptance. Slice05 remains unopened.
+
 ### Current lifetime and compatibility contract
 
 A new patch lifetime is a new isolated App with deterministic installed-type
@@ -162,6 +171,10 @@ Arc13. See directive12 for exact semantics and re-entry; historical documents an
 successor register03 remain provenance, with this amendment governing current routing.
 
 ## Version history
+
+- v1.9 — 2026-10-12: Slice04 native/musical checks independently reproduce at
+  f6fdeb5; all six LF rows remain open for collected interaction evidence.
+  Iteration01 issued within CDC12; no source change/architecture/parent acceptance.
 
 - v1.8 — 2026-10-12: CRC acknowledges directive12 and opens approved Slice04 with six rows, concrete lifecycle/cleanup/hook recipes, bounded intake and fresh native/runnable gates. No new design amendment or acceptance; source/main unchanged and Slice05 held.
 
