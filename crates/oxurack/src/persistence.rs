@@ -994,6 +994,14 @@ mod tests {
             Err(CoreError::UnknownParameter { module, param })
                 if module == "no_getter" && param == "hidden"
         ));
+        let sample_before_restart = rack.sample_time();
+        assert!(matches!(
+            rack.restart(),
+            Err(CoreError::UnknownParameter { module, param })
+                if module == "no_getter" && param == "hidden"
+        ));
+        assert_eq!(rack.sample_time(), sample_before_restart);
+        assert!(rack.world().contains_resource::<PatchHandle>());
         assert!(matches!(
             rack.save_patch(&destination),
             Err(CoreError::UnknownParameter { module, param })

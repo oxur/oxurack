@@ -18,6 +18,7 @@ use bevy_time::prelude::{Fixed, Real, Time, Virtual};
 
 mod cables;
 mod labels;
+mod lifecycle;
 mod persistence;
 mod scope;
 pub use scope::{MidiDelivery, ScopeCapture, ScopeError, ScopeRecord, ScopeSelector};
@@ -71,37 +72,68 @@ pub enum SimulationDriver {
 /// engine is accessible via [`into_app`](Self::into_app) when needed.
 pub struct Oxurack {
     app: App,
-    installed_modules: HashMap<oxurack_core::ModuleKind, TypeId>,
+    installed_modules: HashMap<oxurack_core::ModuleKind, usize>,
+    install_order: Vec<InstalledType>,
     driver: SimulationDriver,
     loaded_identity: Option<persistence::LoadedIdentity>,
 }
 
+struct InstalledType {
+    kind: oxurack_core::ModuleKind,
+    type_id: TypeId,
+    install_into: fn(&mut App),
+}
+
+fn install_type<M: oxurack_core::OxurackModule>(app: &mut App) {
+    let kind = oxurack_core::ModuleKind::from(M::KIND);
+    {
+        let world = app.world_mut();
+        world
+            .resource_mut::<oxurack_core::ModuleRegistry>()
+            .register::<M>();
+        let mut parameters = world.resource_mut::<oxurack_core::ParameterRegistry>();
+        for &(name, setter) in M::parameter_setters() {
+            parameters.register(kind.clone(), name, setter);
+        }
+        for &(name, getter) in M::parameter_getters() {
+            parameters.register_getter(kind.clone(), name, getter);
+        }
+    }
+    M::register_systems(app, FixedUpdate.intern());
+}
+
+fn build_base_app() -> Result<App, CoreError> {
+    let mut app = App::new();
+    app.add_plugins(bevy_time::TimePlugin);
+    app.add_plugins(oxurack_core::CorePlugin::fixed());
+    app.insert_resource(MidiOutputBuffer::try_new()?);
+    scope::install_observer(&mut app);
+    #[cfg(feature = "graph")]
+    app.add_plugins(oxurack_graph::RackGraphPlugin);
+    app.world_mut()
+        .resource_mut::<Time<Fixed>>()
+        .set_timestep(Duration::from_millis(1));
+    app.world_mut().insert_resource(SimulationRunning(false));
+    app.world_mut().resource_mut::<Time<Virtual>>().pause();
+    app.world_mut()
+        .resource_mut::<Time<Fixed>>()
+        .discard_overstep(Duration::MAX);
+    Ok(app)
+}
+
 impl Oxurack {
     /// Build a new rack with fixed-timestep simulation at 1000 Hz.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the fixed MIDI event storage reservation fails.
     pub fn new() -> Self {
-        let mut app = App::new();
-
-        app.add_plugins(bevy_time::TimePlugin);
-        app.add_plugins(oxurack_core::CorePlugin::fixed());
-        app.world_mut().init_resource::<MidiOutputBuffer>();
-        scope::install_observer(&mut app);
-
-        #[cfg(feature = "graph")]
-        app.add_plugins(oxurack_graph::RackGraphPlugin);
-
-        app.world_mut()
-            .resource_mut::<Time<Fixed>>()
-            .set_timestep(Duration::from_millis(1));
-
-        app.world_mut().insert_resource(SimulationRunning(false));
-        app.world_mut().resource_mut::<Time<Virtual>>().pause();
-        app.world_mut()
-            .resource_mut::<Time<Fixed>>()
-            .discard_overstep(Duration::MAX);
+        let app = build_base_app().expect("cannot reserve fixed MIDI event storage for rack");
 
         Self {
             app,
             installed_modules: HashMap::new(),
+            install_order: Vec::new(),
             driver: SimulationDriver::Live,
             loaded_identity: None,
         }
@@ -127,13 +159,14 @@ impl Oxurack {
 
     /// Try to install a module type into the rack.
     ///
-    /// A module kind is registered once per rack. Reinstalling the same Rust
+    /// A module kind is registered once per App lifetime. Reinstalling the same Rust
     /// type is idempotent, while a different type claiming an installed kind
-    /// is rejected before the rack's registries or schedules are changed.
+    /// is rejected before the rack's registries, schedules, or replay recipe change.
     /// Successful installation invokes
     /// [`oxurack_core::OxurackModule::register_systems`]
-    /// once with [`FixedUpdate`]. A panic from that user-provided hook is not
-    /// caught and does not promise rollback of earlier registration changes.
+    /// once with [`FixedUpdate`]. The hook runs against this supplied App and is
+    /// replayed once into each new App lifetime. A panic, global side effect, or
+    /// change to a non-owned handle is not caught and has no rollback guarantee.
     ///
     /// # Errors
     ///
@@ -146,7 +179,7 @@ impl Oxurack {
         let type_id = TypeId::of::<M>();
 
         match self.installed_modules.get(&kind) {
-            Some(installed) if *installed == type_id => return Ok(self),
+            Some(index) if self.install_order[*index].type_id == type_id => return Ok(self),
             Some(_) => {
                 return Err(oxurack_core::CoreError::ModuleKindConflict {
                     kind: M::KIND.to_owned(),
@@ -155,23 +188,14 @@ impl Oxurack {
             None => {}
         }
 
-        {
-            let world = self.app.world_mut();
-            world
-                .resource_mut::<oxurack_core::ModuleRegistry>()
-                .register::<M>();
-
-            let mut parameter_registry = world.resource_mut::<oxurack_core::ParameterRegistry>();
-            for &(name, setter) in M::parameter_setters() {
-                parameter_registry.register(kind.clone(), name, setter);
-            }
-            for &(name, getter) in M::parameter_getters() {
-                parameter_registry.register_getter(kind.clone(), name, getter);
-            }
-        }
-
-        M::register_systems(&mut self.app, FixedUpdate.intern());
-        self.installed_modules.insert(kind, type_id);
+        install_type::<M>(&mut self.app);
+        let index = self.install_order.len();
+        self.install_order.push(InstalledType {
+            kind: kind.clone(),
+            type_id,
+            install_into: install_type::<M>,
+        });
+        self.installed_modules.insert(kind, index);
         Ok(self)
     }
 
@@ -186,54 +210,22 @@ impl Oxurack {
         oxurack_graph::GraphView::new(self.app.world())
     }
 
-    /// Loads a patch from a RON file and applies it to the world.
-    ///
-    /// On success, the resulting [`PatchHandle`]
-    /// is stored as a resource. If a handle from a previous load exists,
-    /// it is replaced.
+    /// Loads a patch from a RON file into a fresh rack lifetime.
     ///
     /// When the `graph` feature is enabled, the `GraphMaintenance`
     /// schedule runs synchronously after the patch is applied, so
     /// `rack.graph().modules()` reflects the just-loaded patch immediately.
     ///
+    /// The rack must be stopped and its MIDI output drained before file I/O.
+    /// A failed candidate leaves the current lifetime unchanged. Hooks and
+    /// spawners may have external side effects or panic; those are not rolled back.
+    ///
     /// # Errors
     ///
-    /// Returns [`CoreError`] on I/O, parse,
-    /// validation, or spawn failure. On error, no `PatchHandle` is
-    /// inserted (or the previous one is left intact).
+    /// Returns lifecycle admission errors before I/O, then I/O, validation,
+    /// candidate output, or spawn errors. Candidate MIDI output is rejected.
     pub fn load_patch(&mut self, path: &Path) -> Result<(), oxurack_core::CoreError> {
-        let patch = oxurack_core::load_patch_from_file(path)?;
-        let identity = persistence::LoadedIdentity::from_patch(&patch);
-
-        // resource_scope temporarily removes ModuleRegistry from the
-        // world, giving us an &-ref to pass to apply_patch_to_world
-        // alongside the &mut World it needs for spawning.
-        self.app
-            .world_mut()
-            .resource_scope::<oxurack_core::ModuleRegistry, _>(|world, registry| {
-                let handle = oxurack_core::apply_patch_to_world(
-                    &patch,
-                    &registry,
-                    world,
-                    oxurack_core::PatchSource::File(path.to_path_buf()),
-                )?;
-                world.insert_resource(handle);
-                Ok::<(), oxurack_core::CoreError>(())
-            })?;
-
-        self.loaded_identity = Some(identity);
-
-        // Any prior selector bindings refer to the previous patch entities.
-        scope::disable(self.app.world_mut());
-
-        // Freshness contract: run graph maintenance synchronously so
-        // rack.graph().modules() reflects the just-loaded patch.
-        #[cfg(feature = "graph")]
-        self.app
-            .world_mut()
-            .run_schedule(oxurack_graph::GraphMaintenance);
-
-        Ok(())
+        lifecycle::load_patch(self, path)
     }
 
     /// Returns the driver currently responsible for sample execution.
@@ -347,7 +339,8 @@ impl Oxurack {
     ///
     /// The returned borrow must be consumed or dropped before advancing again.
     /// Dropping it early discards remaining events. Draining does not clear a
-    /// terminal output fault; a fresh rack is required to resume after one.
+    /// terminal output fault; a successful whole-App replacement clears it.
+    /// Carried cleanup may retain a sample timestamp from the old lifetime.
     pub fn drain_midi(&mut self) -> std::vec::Drain<'_, MidiOutputEvent> {
         self.app
             .world_mut()
@@ -1121,6 +1114,14 @@ mod tests {
     fn stop_probe_rack(name: &str, control: StopControl) -> (Oxurack, PatchHandle) {
         let mut rack = Oxurack::new();
         rack.install::<StopProbe>();
+
+        let path = save_patch_to_temp(
+            &stop_probe_patch(),
+            &format!("oxurack_slice04_{name}_{}.ron", std::process::id()),
+        );
+        rack.load_patch(&path)
+            .expect("stop-accounting patch should load through the public path");
+        let _ = std::fs::remove_file(&path);
         rack.world_mut().insert_resource(control);
         rack.world_mut().insert_resource(StopTrace::default());
         rack.app.add_systems(
@@ -1132,14 +1133,6 @@ mod tests {
                 stop_probe_observe.in_set(TickPhase::Observe),
             ),
         );
-
-        let path = save_patch_to_temp(
-            &stop_probe_patch(),
-            &format!("oxurack_slice04_{name}_{}.ron", std::process::id()),
-        );
-        rack.load_patch(&path)
-            .expect("stop-accounting patch should load through the public path");
-        let _ = std::fs::remove_file(&path);
         rack.set_driver_mode(SimulationDriver::Manual).start();
 
         let handle = rack.world().resource::<PatchHandle>().clone();

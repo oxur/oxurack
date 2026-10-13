@@ -83,7 +83,8 @@ pub enum CoreCommand {
     },
     /// Set the global tempo in beats per minute.
     SetBpm(f32),
-    /// Panic: silence all voices and reset all modules.
+    /// Narrow voice-silence intent. The dispatcher currently returns
+    /// `NotImplemented`; the facade's `reset` method owns voice silence.
     Panic,
 }
 
@@ -325,11 +326,8 @@ pub struct SongPositionChanged {
 ///   [`ModuleKind`](crate::ModuleKind) from the entity's
 ///   [`Module`](crate::Module) component, and invokes the registered
 ///   setter via [`ParameterRegistry`](crate::ParameterRegistry).
-/// - [`CoreCommand::Panic`] -- returns `Ok(())` (module reset will be
-///   implemented when concrete modules exist).
-/// - [`CoreCommand::SetBpm`] -- returns `Ok(())` (tempo propagation
-///   will be wired when the RT bridge is integrated into the umbrella
-///   crate).
+/// - [`CoreCommand::Panic`] and [`CoreCommand::SetBpm`] -- return
+///   [`crate::CoreError::NotImplemented`] until their owning facade/transport exists.
 /// - [`CoreCommand::AddCable`] -- validates and adds one active cable.
 /// - [`CoreCommand::RemoveCable`] -- removes occurrence zero in effective
 ///   cable order for the exact endpoint pair.
@@ -355,7 +353,8 @@ pub fn dispatch_core_command(
     command: &CoreCommand,
 ) -> Result<(), crate::CoreError> {
     match command {
-        CoreCommand::Panic | CoreCommand::SetBpm(_) => Ok(()),
+        CoreCommand::Panic => Err(crate::CoreError::NotImplemented("Panic")),
+        CoreCommand::SetBpm(_) => Err(crate::CoreError::NotImplemented("SetBpm")),
         CoreCommand::SetParameter {
             module,
             param,
@@ -664,17 +663,20 @@ mod tests {
     fn test_dispatch_panic_command() {
         let mut world = bevy_ecs::world::World::new();
         let result = dispatch_core_command(&mut world, &CoreCommand::Panic);
-        assert!(result.is_ok(), "Panic command should return Ok: {result:?}");
+        assert!(matches!(
+            result,
+            Err(crate::CoreError::NotImplemented("Panic"))
+        ));
     }
 
     #[test]
     fn test_dispatch_set_bpm_command() {
         let mut world = bevy_ecs::world::World::new();
         let result = dispatch_core_command(&mut world, &CoreCommand::SetBpm(140.0));
-        assert!(
-            result.is_ok(),
-            "SetBpm command should return Ok: {result:?}"
-        );
+        assert!(matches!(
+            result,
+            Err(crate::CoreError::NotImplemented("SetBpm"))
+        ));
     }
 
     #[test]

@@ -236,9 +236,14 @@ pub trait OxurackModule: Send + Sync + 'static {
     /// Register the systems and resources that implement this module's
     /// behavior.
     ///
-    /// The rack calls this hook once for a module type when its kind is first
-    /// installed, passing the schedule selected by the rack. The default is a
-    /// no-op so existing metadata-only modules remain valid. Implementations
+    /// The rack calls this hook once per App lifetime for a module type when
+    /// its kind is installed, passing the schedule selected by the rack. A
+    /// facade replacement replays successful installs in original order into
+    /// a fresh App after core resources exist. Implementations should keep
+    /// mutable effects within that supplied App/World; global side effects,
+    /// non-owned handles, panic, and arbitrary Drop behavior are not rolled
+    /// back if a candidate App is abandoned. The default is a no-op so
+    /// existing metadata-only modules remain valid. Implementations
     /// should add systems that query all matching module instances and join a
     /// named [`crate::TickPhase`] set to receive the rack's start/stop gating,
     /// sample index and phase visibility guarantees. Systems left unassigned

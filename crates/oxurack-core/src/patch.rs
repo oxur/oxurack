@@ -525,6 +525,12 @@ pub struct PatchHandle {
 /// Returns [`CoreError`](crate::CoreError) if validation fails, a
 /// module spawner returns an error, or a tag fails validation
 /// ([`PatchError::InvalidTag`](crate::PatchError::InvalidTag)).
+///
+/// This low-level function mutates the supplied World as it spawns modules
+/// and cables; a later spawner error does not roll back earlier writes. The
+/// rack facade obtains replacement isolation by applying to a fresh candidate
+/// App and dropping that App on error. Callers using this function directly
+/// must provide their own lifetime/rollback boundary.
 pub fn apply_patch_to_world(
     patch: &Patch,
     registry: &crate::ModuleRegistry,

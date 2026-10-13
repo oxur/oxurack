@@ -64,6 +64,11 @@ const PORTS: [PortSchema; 7] = [
     },
 ];
 
+const MAX_SINKS: usize = 16;
+const NORMAL_EVENTS_PER_SINK: usize = 5;
+const CLEANUP_EVENTS: usize = MAX_SINKS * 3;
+const TOTAL_EVENTS: usize = MAX_SINKS * NORMAL_EVENTS_PER_SINK + CLEANUP_EVENTS;
+
 const PARAMETERS: [ParameterSchema; 4] = [
     ParameterSchema {
         name: "channel",
@@ -90,7 +95,9 @@ const PARAMETERS: [ParameterSchema; 4] = [
 /// One ordered MIDI message produced at a completed rack sample.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MidiOutputEvent {
-    /// Zero-based sample index at which this event was produced.
+    /// Zero-based sample index at which this event was produced. Indices are
+    /// local to the owning rack lifetime; carried cleanup may have an index
+    /// from the retired lifetime.
     pub sample: u64,
     /// Validated MIDI channel message.
     pub message: MidiWire,
@@ -111,11 +118,12 @@ struct Config {
 struct MidiOutState {
     config: Config,
     active_note: Option<u8>,
+    dirty: bool,
     ports: [Entity; 7],
 }
 
 /// Rack resource holding a finite MIDI event buffer and its first fault.
-#[derive(Resource, Debug, Default)]
+#[derive(Resource, Debug)]
 pub struct MidiOutputBuffer {
     events: Vec<MidiOutputEvent>,
     logical_capacity: usize,
@@ -124,7 +132,86 @@ pub struct MidiOutputBuffer {
     fault: Option<TickError>,
 }
 
+impl Default for MidiOutputBuffer {
+    /// Creates the buffer with its bounded ordinary and cleanup storage.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the fixed storage reservation cannot be allocated.
+    fn default() -> Self {
+        Self::try_new().expect("cannot reserve fixed MIDI output event storage")
+    }
+}
+
+/// Owned, fixed-size silence events and the old sink entities they retire.
+#[derive(Debug)]
+pub struct SilenceBatch {
+    events: [Option<MidiOutputEvent>; CLEANUP_EVENTS],
+    len: usize,
+    sinks: [Option<Entity>; MAX_SINKS],
+    sink_len: usize,
+}
+
+impl SilenceBatch {
+    fn empty() -> Self {
+        Self {
+            events: [None; CLEANUP_EVENTS],
+            len: 0,
+            sinks: [None; MAX_SINKS],
+            sink_len: 0,
+        }
+    }
+
+    fn push(&mut self, event: MidiOutputEvent) -> Result<(), TickError> {
+        if self.len == self.events.len() {
+            return Err(output_capacity(
+                "silence batch exceeds fixed cleanup capacity",
+            ));
+        }
+        self.events[self.len] = Some(event);
+        self.len += 1;
+        Ok(())
+    }
+
+    fn remember_sink(&mut self, entity: Entity) -> Result<(), TickError> {
+        if self.sink_len == self.sinks.len() {
+            return Err(output_capacity("silence batch exceeds fixed sink capacity"));
+        }
+        self.sinks[self.sink_len] = Some(entity);
+        self.sink_len += 1;
+        Ok(())
+    }
+
+    /// Returns the complete ordered silence sequence.
+    pub fn events(&self) -> impl Iterator<Item = MidiOutputEvent> + '_ {
+        self.events[..self.len].iter().filter_map(|event| *event)
+    }
+}
+
 impl MidiOutputBuffer {
+    /// Creates an output buffer with 128 pre-reserved event slots.
+    pub fn try_new() -> Result<Self, TickError> {
+        let mut events = Vec::new();
+        events.try_reserve_exact(TOTAL_EVENTS).map_err(|error| {
+            output_capacity(format!(
+                "cannot reserve {TOTAL_EVENTS} MIDI events: {error}"
+            ))
+        })?;
+        Ok(Self {
+            events,
+            logical_capacity: 0,
+            sink_count: 0,
+            channels: HashSet::new(),
+            fault: None,
+        })
+    }
+
+    /// Returns the number of unread ordinary and cleanup events.
+    #[must_use]
+    pub fn pending_count(&self) -> usize {
+        self.events.len()
+    }
+
     /// Returns a borrowed drain of pending events in production order.
     ///
     /// Dropping this drain before consuming it discards the remaining events.
@@ -178,26 +265,19 @@ impl MidiOutputBuffer {
                 completed_samples: 0,
             })
         })?;
-        if count > 16 {
+        if count > MAX_SINKS {
             return Err(CoreError::Tick(TickError::OutputCapacity {
                 reason: "at most 16 MIDI output sinks are supported".to_owned(),
                 completed_samples: 0,
             }));
         }
-        let capacity = count.checked_mul(5).ok_or_else(|| {
+        let capacity = count.checked_mul(NORMAL_EVENTS_PER_SINK).ok_or_else(|| {
             CoreError::Tick(TickError::OutputCapacity {
                 reason: "event capacity arithmetic overflow".to_owned(),
                 completed_samples: 0,
             })
         })?;
-        self.events
-            .try_reserve_exact(capacity.saturating_sub(self.events.len()))
-            .map_err(|error| {
-                CoreError::Tick(TickError::OutputCapacity {
-                    reason: format!("cannot reserve {capacity} MIDI events: {error}"),
-                    completed_samples: 0,
-                })
-            })?;
+        // The fixed 128-slot reservation is independent of logical capacity.
         self.sink_count = count;
         self.logical_capacity = capacity;
         self.channels.insert(channel);
@@ -221,6 +301,114 @@ impl MidiOutputBuffer {
         self.ensure_room(1)?;
         self.events.push(event);
         Ok(())
+    }
+
+    /// Appends a complete silence batch when the fixed storage has room.
+    pub fn append_silence(&mut self, batch: &SilenceBatch) -> Result<(), TickError> {
+        if self.events.len().saturating_add(batch.len) > TOTAL_EVENTS {
+            return Err(output_capacity(
+                "MIDI cleanup batch exceeds fixed event storage",
+            ));
+        }
+        for event in batch.events() {
+            self.events.push(event);
+        }
+        Ok(())
+    }
+
+    fn ensure_total_room(&self, required: usize) -> Result<(), TickError> {
+        if self.events.len().saturating_add(required) > TOTAL_EVENTS {
+            return Err(output_capacity(
+                "MIDI cleanup batch exceeds fixed event storage",
+            ));
+        }
+        Ok(())
+    }
+}
+
+/// Collects channel-ordered cleanup for every dirty sink without mutating it.
+pub fn prepare_silence(world: &World) -> Result<SilenceBatch, TickError> {
+    let boundary = world.resource::<SampleTime>().completed_samples();
+    let buffer = world.resource::<MidiOutputBuffer>();
+    let mut by_channel: [Option<(Entity, Option<u8>)>; 16] = [None; 16];
+    let mut seen = [false; 16];
+    let mut count = 0usize;
+    if let Some(mut query) = world.try_query::<(Entity, &MidiOutState)>() {
+        for (entity, state) in query.iter(world) {
+            count += 1;
+            let channel = state.config.channel as usize;
+            if channel >= 16 || seen[channel] {
+                return Err(output_capacity(
+                    "MIDI sink channel accounting is inconsistent",
+                ));
+            }
+            seen[channel] = true;
+            if state.active_note.is_some() && !state.dirty {
+                return Err(output_capacity("active MIDI note is not marked dirty"));
+            }
+            if state.dirty {
+                by_channel[channel] = Some((entity, state.active_note));
+            }
+        }
+    }
+    if count != buffer.sink_count
+        || count != buffer.channels.len()
+        || seen
+            .iter()
+            .enumerate()
+            .any(|(channel, present)| *present != buffer.channels.contains(&(channel as u8)))
+    {
+        return Err(output_capacity(
+            "MIDI sink and reservation accounting disagree",
+        ));
+    }
+    let mut batch = SilenceBatch::empty();
+    for (channel, entry) in by_channel.into_iter().enumerate() {
+        let Some((entity, active)) = entry else {
+            continue;
+        };
+        if let Some(note) = active {
+            batch.push(MidiOutputEvent {
+                sample: boundary,
+                message: MidiWire::note_off(channel as u8, note, 0),
+            })?;
+        }
+        batch.push(MidiOutputEvent {
+            sample: boundary,
+            message: MidiWire::cc(channel as u8, 123, 0),
+        })?;
+        batch.push(MidiOutputEvent {
+            sample: boundary,
+            message: MidiWire::cc(channel as u8, 120, 0),
+        })?;
+        batch.remember_sink(entity)?;
+    }
+    Ok(batch)
+}
+
+/// Appends complete cleanup to a World and then clears its dirty voice state.
+pub fn silence_outputs(world: &mut World) -> Result<(), TickError> {
+    let batch = prepare_silence(world)?;
+    world
+        .resource::<MidiOutputBuffer>()
+        .ensure_total_room(batch.len)?;
+    {
+        let mut buffer = world.resource_mut::<MidiOutputBuffer>();
+        buffer.append_silence(&batch)?;
+    }
+    for entity in batch.sinks[..batch.sink_len].iter().flatten().copied() {
+        if let Some(mut state) = world.get_mut::<MidiOutState>(entity) {
+            state.active_note = None;
+            state.dirty = false;
+        }
+    }
+    Ok(())
+}
+
+fn output_capacity(reason: impl Into<String>) -> TickError {
+    TickError::OutputCapacity {
+        reason: reason.into(),
+        completed_samples: 0,
     }
 }
 
@@ -261,6 +449,7 @@ impl OxurackModule for MidiOutModule {
         world.entity_mut(entity).insert(MidiOutState {
             config,
             active_note: None,
+            dirty: false,
             ports,
         });
         Ok(entity)
@@ -630,6 +819,9 @@ fn consume_midi_outputs(
                 return;
             }
         }
+        if count != 0 {
+            state.dirty = true;
+        }
     }
 }
 
@@ -700,6 +892,171 @@ mod tests {
             .drain()
             .map(|event| event.message.to_bytes())
             .collect()
+    }
+
+    #[test]
+    fn silence_is_channel_ordered_fixed_capacity_and_idempotent() {
+        let configs = [
+            ("z_channel_one", &[("channel", ParameterValue::Int(1))][..]),
+            ("a_channel_zero", &[("channel", ParameterValue::Int(0))][..]),
+        ];
+        let (mut app, entities) = app_with_sinks(&configs);
+        assert!(app.world().resource::<MidiOutputBuffer>().events.capacity() >= TOTAL_EVENTS);
+        assert_eq!(
+            app.world().resource::<MidiOutputBuffer>().logical_capacity,
+            10
+        );
+        for (entity, note) in entities.iter().copied().zip([61, 60]) {
+            let mut state = app.world_mut().get_mut::<MidiOutState>(entity).unwrap();
+            state.active_note = Some(note);
+            state.dirty = true;
+        }
+        let batch = prepare_silence(app.world()).unwrap();
+        assert_eq!(
+            batch
+                .events()
+                .map(|event| event.message.to_bytes())
+                .collect::<Vec<_>>(),
+            vec![
+                [0x80, 60, 0],
+                [0xB0, 123, 0],
+                [0xB0, 120, 0],
+                [0x81, 61, 0],
+                [0xB1, 123, 0],
+                [0xB1, 120, 0],
+            ]
+        );
+        silence_outputs(app.world_mut()).unwrap();
+        let emitted = bytes(&mut app);
+        assert_eq!(
+            emitted,
+            batch
+                .events()
+                .map(|event| event.message.to_bytes())
+                .collect::<Vec<_>>()
+        );
+        assert!(entities.iter().all(|entity| {
+            let state = app.world().get::<MidiOutState>(*entity).unwrap();
+            state.active_note.is_none() && !state.dirty
+        }));
+        silence_outputs(app.world_mut()).unwrap();
+        assert!(bytes(&mut app).is_empty());
+        {
+            let mut released = app
+                .world_mut()
+                .get_mut::<MidiOutState>(entities[0])
+                .unwrap();
+            released.active_note = None;
+            released.dirty = true;
+        }
+        silence_outputs(app.world_mut()).unwrap();
+        assert_eq!(bytes(&mut app), vec![[0xB1, 123, 0], [0xB1, 120, 0]]);
+    }
+
+    #[test]
+    fn failed_silence_room_check_preserves_pending_and_dirty_state_for_retry() {
+        let (mut app, entities) = app_with_sinks(&[("sink", &[])]);
+        let sink = entities[0];
+        {
+            let mut state = app.world_mut().get_mut::<MidiOutState>(sink).unwrap();
+            state.active_note = Some(60);
+            state.dirty = true;
+        }
+        let filler = MidiOutputEvent {
+            sample: 0,
+            message: MidiWire::cc(0, 1, 1),
+        };
+        let original_pending = {
+            let mut buffer = app.world_mut().resource_mut::<MidiOutputBuffer>();
+            buffer.events.resize(TOTAL_EVENTS, filler);
+            buffer.events.clone()
+        };
+        assert!(silence_outputs(app.world_mut()).is_err());
+        assert_eq!(
+            app.world().resource::<MidiOutputBuffer>().events.as_slice(),
+            original_pending.as_slice()
+        );
+        let state = app.world().get::<MidiOutState>(sink).unwrap();
+        assert_eq!(state.active_note, Some(60));
+        assert!(state.dirty);
+        app.world_mut()
+            .resource_mut::<MidiOutputBuffer>()
+            .events
+            .clear();
+        silence_outputs(app.world_mut()).unwrap();
+        assert_eq!(
+            bytes(&mut app),
+            vec![[0x80, 60, 0], [0xB0, 123, 0], [0xB0, 120, 0]]
+        );
+    }
+
+    #[test]
+    fn sixteen_sinks_fit_eighty_normal_plus_forty_eight_cleanup_events() {
+        let parameters = (0..16)
+            .map(|channel| {
+                let entries = vec![
+                    ("channel", ParameterValue::Int(channel)),
+                    ("noise_cc", ParameterValue::Int(74)),
+                    ("note_cc", ParameterValue::Int(75)),
+                    ("velocity_cc", ParameterValue::Int(76)),
+                ];
+                (format!("sink_{channel:02}"), entries)
+            })
+            .collect::<Vec<_>>();
+        let configs = parameters
+            .iter()
+            .map(|(name, values)| (name.as_str(), values.as_slice()))
+            .collect::<Vec<_>>();
+        let (mut app, sinks) = app_with_sinks(&configs);
+        for (index, sink) in sinks.iter().copied().enumerate() {
+            set_step(
+                app.world_mut(),
+                sink,
+                &[
+                    ("step", Value::Gate(true)),
+                    ("note_valid", Value::Gate(true)),
+                    ("velocity_valid", Value::Gate(true)),
+                    ("gate", Value::Gate(true)),
+                    ("note", Value::Raw(60 + index as u16)),
+                    ("velocity", Value::Raw(100)),
+                    ("noise_cc", Value::Raw(23)),
+                ],
+            );
+        }
+        run(&mut app);
+        assert_eq!(bytes(&mut app).len(), 16 * 4);
+        let capacity = app.world().resource::<MidiOutputBuffer>().events.capacity();
+        run(&mut app);
+        assert_eq!(
+            app.world().resource::<MidiOutputBuffer>().pending_count(),
+            80
+        );
+        let batch = prepare_silence(app.world()).unwrap();
+        assert_eq!(batch.len, CLEANUP_EVENTS);
+        app.world_mut()
+            .resource_mut::<MidiOutputBuffer>()
+            .append_silence(&batch)
+            .unwrap();
+        let buffer = app.world().resource::<MidiOutputBuffer>();
+        assert_eq!(buffer.pending_count(), TOTAL_EVENTS);
+        assert_eq!(buffer.logical_capacity, 80);
+        assert_eq!(buffer.events.capacity(), capacity);
+        assert!(buffer.check_admission().is_err());
+        assert!(
+            app.world_mut()
+                .resource_mut::<MidiOutputBuffer>()
+                .append_silence(&batch)
+                .is_err()
+        );
+        assert_eq!(
+            app.world().resource::<MidiOutputBuffer>().pending_count(),
+            TOTAL_EVENTS
+        );
+        assert!(
+            sinks
+                .iter()
+                .all(|sink| app.world().get::<MidiOutState>(*sink).unwrap().dirty)
+        );
     }
 
     #[test]

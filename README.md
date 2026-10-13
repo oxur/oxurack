@@ -166,6 +166,31 @@ cargo run --locked -p oxurack --example turing-machine-midi -- \
 The second command runs the saved configuration in a fresh process. Its LFO
 phase begins at zero while its frequency is 1 Hz.
 
+The facade also exposes explicit whole-rack lifetime operations. `reset()`
+appends channel-ordered Note Off, All Notes Off, and All Sound Off messages for
+dirty MIDI sinks without advancing or reseeding the rack; call `drain_midi()`
+to retrieve the complete batch. `restart()` snapshots the current live patch and
+builds it into a fresh stopped App at sample zero. `unload_patch()` creates a
+fresh empty stopped App. `load_patch()` also replaces the whole App. These three
+lifetime replacements require the rack to be stopped and all pending MIDI to be
+drained first; a running error takes precedence over pending output and file or
+snapshot errors. Replacements replay installed module types in their original
+order. They clear Scope and prior output faults on success, and retain the
+selected simulation driver. Cleanup carried from the old lifetime keeps its old
+sample index and must be drained before starting the new lifetime.
+
+Run the `save-live-patch` example's lifecycle recipe to edit/save, unload, reload,
+capture, and emit a replay trace on stdout:
+
+```bash
+cargo run --locked -p oxurack --example save-live-patch -- \
+  --patch crates/oxurack/examples/patches/turing-machine-lfo.ron \
+  --save /tmp/oxurack-lifecycle.ron --lifecycle
+```
+
+Without `--lifecycle`, the example keeps its original 200-sample edit, save,
+100-sample continuation, and summary output.
+
 `Oxurack::label` reads the active rack's raw display name, description, tags,
 or rack notes. `set_label` writes those fields on the rack, an active module,
 or a cable selected by exact source and target module/port names. Empty module

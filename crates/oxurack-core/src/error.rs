@@ -10,6 +10,23 @@ use crate::{MergePolicy, TagError, ValueKind};
 #[non_exhaustive]
 #[derive(Debug, thiserror::Error)]
 pub enum CoreError {
+    /// A whole-rack lifecycle operation requires a stopped rack.
+    #[error("rack lifecycle operation requires a stopped rack")]
+    LifecycleRequiresStopped,
+
+    /// A whole-rack lifecycle operation cannot discard unread MIDI output.
+    #[error("rack lifecycle operation requires drained MIDI output ({count} pending events)")]
+    PendingMidi {
+        /// Number of events that must be drained first.
+        count: usize,
+    },
+
+    /// A candidate module hook or spawner emitted performance MIDI before commit.
+    #[error("candidate rack produced {count} MIDI events before commit")]
+    CandidateMidiNotEmpty {
+        /// Number of candidate events that must be absent.
+        count: usize,
+    },
     /// An error occurred while building or modifying a patch.
     #[error("patch error: {0}")]
     Patch(#[from] PatchError),
