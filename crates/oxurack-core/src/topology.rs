@@ -1287,6 +1287,10 @@ mod tests {
             crate::label_value(world, &endpoint_label(0), &crate::LabelKind::Description).unwrap(),
             Some(crate::LabelValue::Text("ordinal-zero".to_owned()))
         );
+        assert_eq!(
+            crate::label_value(world, &endpoint_label(1), &crate::LabelKind::Description).unwrap(),
+            Some(crate::LabelValue::Text("ordinal-ten".to_owned()))
+        );
         crate::disconnect_cable(world, ("a", "out"), ("a", "in"), 1, ChangeSource::DirectApi)
             .unwrap();
         assert!(world.get_entity(expected[0]).is_ok());

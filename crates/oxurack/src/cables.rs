@@ -157,6 +157,8 @@ mod tests {
         assert_eq!(disconnected[0].source, ChangeSource::DirectApi);
         assert_eq!(connected.len(), 1);
         assert_eq!(connected[0].source, ChangeSource::DirectApi);
+        let source_port = connected[0].source_port;
+        let target_port = connected[0].target_port;
         assert_eq!(
             connected[0].transform,
             Some(CableTransform::Affine {
@@ -199,6 +201,112 @@ mod tests {
         let pending_before = subject.sample_time();
         let pending_records = records(&subject);
         let pending_overwritten = subject.scope().unwrap().overwritten();
+        #[derive(Debug, PartialEq)]
+        struct FailureCable {
+            entity: bevy_ecs::entity::Entity,
+            source: bevy_ecs::entity::Entity,
+            target: bevy_ecs::entity::Entity,
+            transform: Option<CableTransform>,
+            enabled: bool,
+            order: Option<usize>,
+            display_name: Option<String>,
+            description: Option<String>,
+            tags: Option<std::collections::BTreeSet<oxurack_core::Tag>>,
+        }
+        #[derive(Debug, PartialEq)]
+        struct FailureSnapshot {
+            cables: Vec<FailureCable>,
+            from_index: Vec<bevy_ecs::entity::Entity>,
+            to_index: Vec<bevy_ecs::entity::Entity>,
+            propagation_order: Vec<bevy_ecs::entity::Entity>,
+            order_dirty: bool,
+            source_value: oxurack_core::Value,
+            target_value: oxurack_core::Value,
+            contributions: Vec<oxurack_core::Value>,
+            connected_messages: usize,
+            disconnected_messages: usize,
+            graph_edges: Vec<u64>,
+        }
+        let failure_snapshot = |rack: &mut Oxurack, source_port, target_port| {
+            let mut core = {
+                let world = rack.app.world_mut();
+                let mut query = world.query::<(
+                    bevy_ecs::entity::Entity,
+                    &oxurack_core::Cable,
+                    Option<&oxurack_core::CableOrder>,
+                )>();
+                let mut cables = query
+                    .iter(world)
+                    .map(|(entity, cable, order)| FailureCable {
+                        entity,
+                        source: cable.source_port,
+                        target: cable.target_port,
+                        transform: cable.transform,
+                        enabled: cable.enabled,
+                        order: order.map(|value| value.0),
+                        display_name: world
+                            .get::<oxurack_core::DisplayName>(entity)
+                            .map(|value| value.0.clone()),
+                        description: world
+                            .get::<oxurack_core::Description>(entity)
+                            .map(|value| value.0.clone()),
+                        tags: world
+                            .get::<oxurack_core::Tags>(entity)
+                            .map(|value| value.0.clone()),
+                    })
+                    .collect::<Vec<_>>();
+                cables.sort_by_key(|cable| cable.entity);
+                let index = world.resource::<oxurack_core::CableIndex>();
+                let mut from_index = index.cables_from(source_port).to_vec();
+                let mut to_index = index.cables_targeting(target_port).to_vec();
+                from_index.sort();
+                to_index.sort();
+                let connected_messages = world
+                    .resource::<Messages<CableConnected>>()
+                    .iter_current_update_messages()
+                    .count();
+                let disconnected_messages = world
+                    .resource::<Messages<CableDisconnected>>()
+                    .iter_current_update_messages()
+                    .count();
+                FailureSnapshot {
+                    cables,
+                    from_index,
+                    to_index,
+                    propagation_order: world
+                        .resource::<oxurack_core::PropagationOrder>()
+                        .cables
+                        .clone(),
+                    order_dirty: world.resource::<oxurack_core::PropagationOrderDirty>().0,
+                    source_value: world
+                        .get::<oxurack_core::CurrentValue>(source_port)
+                        .unwrap()
+                        .0,
+                    target_value: world
+                        .get::<oxurack_core::CurrentValue>(target_port)
+                        .unwrap()
+                        .0,
+                    contributions: world
+                        .resource::<oxurack_core::MergeBuffers>()
+                        .contributions(target_port)
+                        .to_vec(),
+                    connected_messages,
+                    disconnected_messages,
+                    graph_edges: Vec::new(),
+                }
+            };
+            #[cfg(feature = "graph")]
+            {
+                core.graph_edges = rack
+                    .graph()
+                    .cables()
+                    .iter()
+                    .map(|cable| cable.entity_bits)
+                    .collect();
+            }
+            core
+        };
+        let owners_before = failure_snapshot(&mut subject, source_port, target_port);
         assert!(matches!(
             subject.patch(
                 source,
@@ -207,6 +315,10 @@ mod tests {
             ),
             Err(CoreError::InvalidCableTransform { .. })
         ));
+        assert_eq!(
+            failure_snapshot(&mut subject, source_port, target_port),
+            owners_before
+        );
         assert!(matches!(
             subject.unpatch(source, target, usize::MAX),
             Err(CoreError::UnknownCable { .. })
@@ -214,6 +326,10 @@ mod tests {
         assert_eq!(subject.sample_time(), pending_before);
         assert_eq!(records(&subject), pending_records);
         assert_eq!(subject.scope().unwrap().overwritten(), pending_overwritten);
+        assert_eq!(
+            failure_snapshot(&mut subject, source_port, target_port),
+            owners_before
+        );
         assert!(matches!(
             subject
                 .app
