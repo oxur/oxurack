@@ -29,16 +29,16 @@
 > CRC acknowledged planning67e9150 at clean sourcedeafdd228 and issued
 > [Slice04 lifecycle prompt](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/cc-prompt.md):
 > isolated replacement/unload, reset/restart/cleanup and executable --lifecycle session.
-> Was: Slice04 initial prompt was issued. Now: CC returned f6fdeb5/622e9948.
-> CRC independently reproduced native gates, exact host retry, default/no-graph/
-> fresh72-row replay, ordinary save, six CLI failures and original fixture hashes.
-> [CRC review](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/crc-verification.md)
-> keeps six LF rows open for interaction proof; active
-> [iteration01](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration01.md)
-> fills those observations and corrects the retired-sample diagnostic. No lifecycle
-> implementation defect is claimed reproduced. Instance/handle/queued-command05
-> remains unopened until04 acceptance. Five-child Arc12 composition remains open;
-> source stays f6fdeb5 and protected main a7ce6e6; CRC changes planning only. Separate
+> Was: initial f6fdeb5 return required iteration01. Now: CRC independently
+> reviews1242a60/9081268; native gates/exact host retry and default/no-graph/fresh72
+> musical trace pass, ordinary300 and six CLI failures reproduce. Diagnostic is
+> retired300/new0. [CRC review](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/crc-verification.md)
+> accepts LF-05/LF-06; LF-01–LF-04 retain missing original lifecycle interactions.
+> Active [iteration02](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration02.md)
+> collects these in four existing test paths, retaining accepted evidence.
+> No lifecycle implementation defect/design amendment claimed. Instance/handle/
+> queued-command05 remains unopened until04 acceptance. Five-child Arc12
+> composition stays open; source1242a60 and protected main a7ce6e6, CRC planning only. Separate
 > MIDI transport and catalog-specific typed forms retain Arc07/13 re-entry owners.
 > Exact engine-state checkpoints remain future work. The historical append-only
 > load defect has a proposed isolated-candidate repair atf6fdeb5, pending complete

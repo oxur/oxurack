@@ -1,6 +1,6 @@
 # Arc12 — live rack operations
 
-Version1.9 — 2026-10-12. Status: active; Slice01–03 CRC accepted atdeafdd228 or their named predecessors. CRC reproduced Slice04 f6fdeb5 and issued [iteration01](slice04-runtime-api/cc-prompt-iteration01.md) for six interaction-proof findings. Six LF rows open; Slice05 stays unopened until04 acceptance. Four arc rows remain open.
+Version1.10 — 2026-10-12. Status: active; Slice01–03 CRC accepted atdeafdd228 or their named predecessors. Slice04 iteration01 reviewed at1242a60: LF-05/LF-06 done, four rows open; [iteration02](slice04-runtime-api/cc-prompt-iteration02.md) completes remaining interaction proof. Slice05 stays unopened until04 acceptance. Four arc rows remain open.
 Depends on accepted Arc10/Arc11; source predecessor72fe6b5. Blocks saved/live
 musical workflow and Arc07 controls. Related: carried-over Arcs02–05; Arc13 catalog.
 Authority: approved successor roadmap and Duncan's explicit “Continue with live
@@ -170,7 +170,19 @@ Historical separate MIDI transport is Arc07; module-specific typed vocabulary is
 Arc13. See directive12 for exact semantics and re-entry; historical documents and
 successor register03 remain provenance, with this amendment governing current routing.
 
+## Slice04 iteration01 review — 2026-10-12
+
+Current source1242a60 independently passes native gates/host retry and actual72-row
+musical replay. Diagnostic retirement300/new0 repaired. CRC accepts LF-05/LF-06;
+four lifecycle interaction rows remain open under collected iteration02. No
+source failure or design/structural amendment claimed. Accepted child01–03 and
+four arc rows unchanged;05 remains held. Original prompts/review attempts retained.
+
 ## Version history
+
+- v1.10 — 2026-10-12: Slice04 iteration01 independently reviewed at1242a60;
+  two LF rows done, four open and iteration02 active. Routine status only;
+  five-child CDC12 design and composition gates unchanged.
 
 - v1.9 — 2026-10-12: Slice04 native/musical checks independently reproduce at
   f6fdeb5; all six LF rows remain open for collected interaction evidence.

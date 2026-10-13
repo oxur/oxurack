@@ -3,14 +3,14 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — Arc10 and Arc11 accepted; P-07 instrument/workbench milestone done; Arc12/Slice01–03 CRC accepted; CDC directive12 unchanged; Slice04 native/musical return reproduced, corrective iteration01 issued, six LF rows open; Slice05 held; Arc12 composition remains open |
+| status | active — Arc10 and Arc11 accepted; P-07 instrument/workbench milestone done; Arc12/Slice01–03 CRC accepted; CDC directive12 unchanged; Slice04 iteration01 independently reviewed at1242a60, two LF rows done/four open, corrective iteration02 issued; Slice05 held; Arc12 composition remains open |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
 | source baseline | `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` on `main`; original migration baseline retained below |
 | planning home | `planning` branch, `.worktrees/planning/project01-mvp` |
 
-## Current direction — v3.40, 2026-10-12
+## Current direction — v3.41, 2026-10-12
 
 Duncan requested a recalibration during Arc10/Slice02 review: this is unreleased
 open-source music software, and excessive defensive infrastructure, proof tooling
@@ -34,12 +34,14 @@ transport/reset contract conflicts and reproduced MIDI replacement/failure leaks
 [crc-escalation12.md](crc-escalation12.md) is resolved by
 [cdc-directive12.md](cdc-directive12.md): isolated patch candidates, explicit
 lifetime/cleanup contracts and preserved start/stop. CRC acknowledged CDC67e9150 and issued [lifecycle Slice04](arc12-live-rack-operations/slice04-runtime-api/cc-prompt.md)
-with six open LF rows. Was: initial implementation was assigned. Now: CRC reproduced
-CC f6fdeb5/622e9948 native and musical return, then issued
-[Slice04 iteration01](arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration01.md)
-for six missing interaction-proof groups and a retired-sample diagnostic. The
-[CRC record](arc12-live-rack-operations/slice04-runtime-api/crc-verification.md)
-preserves independent successes and limits; all LF rows remain open.
+with six LF rows. Initial f6fdeb5/622e9948 return required iteration01 for
+interaction proof and a retired-sample diagnostic. Now: CRC reviews1242a60/9081268;
+fresh native/host and default/no-graph/fresh72-row musical checks pass, diagnostic
+reports retired300/new0. LF-05/LF-06 are independently done; LF-01–LF-04 stay open
+for specifically missing original interactions in
+[Slice04 iteration02](arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration02.md).
+The [CRC record](arc12-live-rack-operations/slice04-runtime-api/crc-verification.md)
+preserves independent successes, historical evidence and acceptance limits.
 Instance/handle/queued-command Slice05 remains held until04 acceptance. Separate
 MIDI transport remains Arc07 and catalog-specific typed vocabulary Arc13 with
 explicit re-entry; no original requirement is silently removed. The earlier Slice01
@@ -95,6 +97,12 @@ planning/reporting is not itself the default next deliverable. Future arc planni
 must use this policy, not mechanically copy the old packets.
 
 ### Design handoff history — current
+
+CRC2026-10-12 reviewed Slice04 iteration01 at1242a60/9081268: LF-05/LF-06 done,
+LF-01–LF-04 open; current correction2/5 is
+`arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration02.md`.
+One corrective pass executed. No design amendment or Slice05 advancement.
+
 
 | Date | Packet | Predecessor / initiation | Status | Affected authority | Next action |
 | --- | --- | --- | --- | --- | --- |
@@ -170,7 +178,9 @@ claimed by this acknowledgement. CRC will repin the accepted predecessor before
 opening Slice03 and apply directive08's concrete prompt and proportionate-proof
 policy to subsequent work. Three contributors and Expedited Mode remain active.
 
-Version history: **v3.40 — 2026-10-12:** CRC independently reproduced Slice04 f6fdeb5 native gates and actual72-row lifecycle/fresh replay; issued one bounded correction for missing interaction proof and diagnostic accuracy. Six LF rows and Slice05/parent gates remain open; no design amendment or source/main change by CRC.
+Version history: **v3.41 — 2026-10-12:** CRC independently reviews Slice04 iteration01 at1242a60: two LF rows done/four open, remaining interactions collected in iteration02; native/host/actual72-row replay passes. Accepted evidence retained; source/main and CDC12 roadmap unchanged.
+
+**v3.40 — 2026-10-12:** CRC independently reproduced Slice04 f6fdeb5 native gates and actual72-row lifecycle/fresh replay; issued one bounded correction for missing interaction proof and diagnostic accuracy. Six LF rows and Slice05/parent gates remain open; no design amendment or source/main change by CRC.
 
 **v3.39 — 2026-10-12:** CRC acknowledges directive12 and issues the approved lifecycle Slice04 open set. Six LF rows open,14 source paths, worked candidate/cleanup/hook examples and actual musical session; native evidence assigned fresh. Source/main unchanged, Slice05 and all parent gates held.
 

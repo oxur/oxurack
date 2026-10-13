@@ -1,14 +1,13 @@
 # Arc12 Slice04 — explicit rack lifetimes
 
-Version1.1 — 2026-10-12. Status: open, CRC return for correction; no acceptance.
-Current assignment: `arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration01.md`.
-Three contributors, Expedited Mode. CRC acknowledges CDC directive12 at planning
-67e9150; source predecessor deafdd228fb44720878c700f8ff62b2a59ddbad6.
-Current correction source baseline: f6fdeb513331a8d8962876bdf4766cedfce63f59.
-Depends on CRC-accepted Slice01–03. Main a7ce6e6 remains protected. Six LF rows
-remain open; correction1/5 issued (zero correction passes completed). CC implements,
-CRC independently reviews; CDC retains Arc12 acceptance. Slice05 stays unopened
-until this child is accepted.
+Version1.2 — 2026-10-12. Status: open, CRC correction review.
+Current assignment: `arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration02.md`.
+Three contributors, Expedited Mode. CDC directive12 planning67e9150 unchanged.
+Current source baseline:1242a60fa3a997f95b29195de3b28f7e9a2864ff.
+Depends on CRC-accepted Slice01–03. Main a7ce6e6 protected. Six LF rows:
+LF-05/LF-06 independently done, LF-01–LF-04 open; correction1/5 executed and
+returned for missing interactions, correction2/5 issued. No Slice04 closure or
+Slice05 opening until all applicable rows pass; CDC retains Arc12 acceptance.
 
 ## Delivered capability
 
@@ -137,9 +136,34 @@ plus narrow example factoring/diagnostic repair, without a new proof platform.
 | Date | Prompt | Predecessor / authority | Disposition |
 | --- | --- | --- | --- |
 | 2026-10-12 | arc12-live-rack-operations/slice04-runtime-api/cc-prompt.md | Slice03 CRC accepted deafdd228; CDC directive12 planning67e9150; Duncan relay | Returned f6fdeb5/622e9948; independently reproduced native/musical checks, incomplete interaction proof; superseded by iteration01, no acceptance |
-| 2026-10-12 | arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration01.md | CRC review f6fdeb5; F-01–F-06; original assignment preserved | Active CC test/evidence correction1/5; six LF rows open; Slice05 held |
+| 2026-10-12 | arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration01.md | CRC review f6fdeb5; F-01–F-06; original assignment preserved | Returned1242a60/9081268; CRC accepts LF-05/LF-06, four rows remain open; superseded by iteration02, no slice acceptance |
+| 2026-10-12 | arc12-live-rack-operations/slice04-runtime-api/cc-prompt-iteration02.md | CRC review1242a60; remaining F-01–F-04; preserved prior assignments | Active CC test/evidence correction2/5; four rows open, accepted assertions/receipts retained; Slice05 held |
+
+## Iteration01 review / iteration02 readiness — 2026-10-12
+
+CRC reproduced native gates, exact host retry and actual default/no-graph/fresh72
+trace plus ordinary300/six CLI failures at1242a60. LF-05 candidate/error/event
+boundary and LF-06 runnable capture/recipe are independently done. Remaining
+F-01 resource/scalar continuation/normalized membership, F-02 ordered every-App
+and both-instance replay, F-03 reset repeat/state/retrigger/overflow and F-04
+current restart/real-fault candidate/empty/phase interactions stay open. No
+implementation failure/design amendment is claimed. Four test-only paths;
+accepted example/core/doc/fixture evidence retained under CRC's pinned rationale.
+See crc-verification.md and iteration02 for exact current findings and commands.
+
+Guide07 readiness: source-grounded1242a60 delta/private/public seams inspected;
+design-complete CDC12 unchanged; guideline-applied actual Rust AP-08/09/12/42/44
+and testing/retention; executable existing fixtures/owner access/buffer/Scope APIs;
+falsifiable before-retirement resource, ordered every-App, literal reset4/overflow129,
+real fault/current restart/phase controls; coherent portable ordered bounded
+manifest with itemized intake/readback,55–75k packet allowance and preserved
+prompts. No new proof machinery or endpoint gate; no source changes by CRC.
 
 ## Version history
+
+- v1.2 — 2026-10-12: iteration01 independently reproduces native/musical gates;
+  LF-05/LF-06 done, four rows retain specifically unproved interactions.
+  Iteration02 issued with four test paths and accepted receipts retained.
 
 - v1.1 — 2026-10-12: independent CRC native/musical reproduction, six collected
   interaction-proof findings and accurate diagnostic repair assigned in iteration01;

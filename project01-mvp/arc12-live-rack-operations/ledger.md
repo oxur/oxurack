@@ -49,3 +49,10 @@ Failure-preserving lifetimes and bounded single-owner MIDI cleanup are assigned
 implementation, not delivered/accepted. R-01–R-04 remain open; Slice05 stays
 unopened pending04 acceptance. Historical deferred rows and Arc07/13 routes retain
 the directive's re-entry obligations. No source or structural design change by CRC.
+
+
+CRC Slice04 iteration01 review — 2026-10-12: source1242a60/planning9081268,
+fresh native gates and exact host retry/musical72-row replay pass. LF-05/LF-06
+independently done; LF-01–LF-04 open for remaining assigned interaction checks.
+Iteration02 issued, one correction executed/two issued. R-01–R-04 all remain
+open; no parent/legacy acceptance or Slice05 opening. See child CRC review.
