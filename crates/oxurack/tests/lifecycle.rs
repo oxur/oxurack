@@ -933,6 +933,129 @@ fn repeated_real_patch_replacement_matches_fresh_structure_and_graph() {
 }
 
 #[test]
+fn edited_saved_lifetime_replay_matches_fresh_trace_and_scope() {
+    let saved = std::env::temp_dir().join(format!(
+        "oxurack-lifecycle-edited-{}.ron",
+        std::process::id()
+    ));
+    let mut replay = rack();
+    replay.load_patch(std::path::Path::new(LFO_PATCH)).unwrap();
+    replay.start();
+    for _ in 0..200 {
+        replay.advance_samples(1).unwrap();
+        for _event in replay.drain_midi() {}
+    }
+    replay
+        .set_parameter("lfo_main", "frequency_hz", ParameterValue::Float(1.0))
+        .unwrap();
+    replay
+        .set_parameter("tm_main", "write_probability", ParameterValue::Float(0.25))
+        .unwrap();
+    let source = ("lfo_main", "bipolar_out");
+    let target = ("tm_main", "write_modulation");
+    replay.unpatch(source, target, 0).unwrap();
+    let occurrence = replay
+        .patch(
+            source,
+            target,
+            Some(CableTransform::Affine {
+                factor: 0.0,
+                offset: 0.25,
+            }),
+        )
+        .unwrap();
+    replay
+        .set_label(
+            &LabelTarget::Cable {
+                source: (source.0.into(), source.1.into()),
+                target: (target.0.into(), target.1.into()),
+                occurrence,
+            },
+            LabelKind::Description,
+            LabelValue::Text("Constant +0.25 write modulation".into()),
+        )
+        .unwrap();
+    replay.save_patch(&saved).unwrap();
+    let snapshot = replay.snapshot_patch().unwrap();
+    assert_eq!(
+        snapshot
+            .modules
+            .iter()
+            .find(|module| module.instance_name == "tm_main")
+            .unwrap()
+            .parameters
+            .get("write_probability"),
+        Some(&ParameterValue::Float(0.25))
+    );
+    let edited_cable = snapshot
+        .cables
+        .iter()
+        .find(|cable| cable.source == (source.0.into(), source.1.into()))
+        .unwrap();
+    assert_eq!(
+        edited_cable.transform,
+        Some(CableTransform::Affine {
+            factor: 0.0,
+            offset: 0.25
+        })
+    );
+    assert_eq!(edited_cable.description, "Constant +0.25 write modulation");
+    for _ in 0..100 {
+        replay.advance_samples(1).unwrap();
+        for _event in replay.drain_midi() {}
+    }
+    replay.stop();
+    replay.unload_patch().unwrap();
+    for _event in replay.drain_midi() {}
+    replay.load_patch(&saved).unwrap();
+
+    let selectors = [
+        ScopeSelector::new("lfo_main", "bipolar_out"),
+        ScopeSelector::new("tm_main", "write_probability"),
+    ];
+    replay.configure_scope(&selectors, 21_000).unwrap();
+    let (trace, signals, copied_midi, overwritten) = capture_replay(&mut replay);
+    assert_eq!(signals.len(), 20_000);
+    assert_eq!(overwritten, 0);
+    assert_eq!(
+        signals.iter().take(4).copied().collect::<Vec<_>>(),
+        vec![
+            (0, 0, Value::Bipolar(0.0)),
+            (0, 1, Value::Float(0.0)),
+            (1, 0, signals[2].2),
+            (1, 1, Value::Float(0.5)),
+        ]
+    );
+    for sample in 0..10_000 {
+        assert_eq!(signals[sample as usize * 2].0, sample);
+        assert_eq!(signals[sample as usize * 2].1, 0);
+        assert_eq!(
+            signals[sample as usize * 2 + 1],
+            (sample, 1, Value::Float(if sample == 0 { 0.0 } else { 0.5 }),)
+        );
+    }
+    assert_eq!(copied_midi.len(), trace.len());
+    assert_eq!(
+        copied_midi,
+        trace
+            .iter()
+            .map(|(sample, bytes)| (*sample, *bytes, MidiDelivery::Generated))
+            .collect::<Vec<_>>()
+    );
+
+    let mut fresh = rack();
+    fresh.load_patch(&saved).unwrap();
+    fresh.configure_scope(&selectors, 21_000).unwrap();
+    let (fresh_trace, fresh_signals, fresh_midi, fresh_overwritten) = capture_replay(&mut fresh);
+    assert_eq!(trace, fresh_trace);
+    assert_eq!(signals, fresh_signals);
+    assert_eq!(fresh_overwritten, 0);
+    assert_eq!(trace.len(), 72);
+    assert_eq!(copied_midi, fresh_midi);
+    let _ = std::fs::remove_file(saved);
+}
+
+#[test]
 fn edited_live_snapshot_restart_matches_independent_expected_trace_and_scope() {
     let original = std::env::temp_dir().join(format!(
         "oxurack-lifecycle-original-{}.ron",
@@ -1046,6 +1169,13 @@ fn edited_live_snapshot_restart_matches_independent_expected_trace_and_scope() {
     assert_eq!(replay.sample_time().completed_samples(), 0);
     assert_eq!(replay.driver_mode(), SimulationDriver::Manual);
     assert!(replay.midi_output_error().is_none());
+    assert!(replay.scope().is_none(), "restart leaves Scope disabled");
+    assert_eq!(
+        replay.advance_samples(1).unwrap(),
+        0,
+        "restart stays stopped"
+    );
+    assert_eq!(replay.sample_time().completed_samples(), 0);
     let cleanup: Vec<_> = replay
         .drain_midi()
         .map(|event| (event.sample, event.message.to_bytes()))
@@ -1189,27 +1319,31 @@ fn stop_start_and_reset_at_sample_300_match_continuous_controls() {
     reset_control.start();
     advance_and_drain(&mut reset_subject, 300, &mut subject_midi);
     advance_and_drain(&mut reset_control, 300, &mut control_midi);
+    assert!(subject_midi.contains(&(251, [0x90, 62, 21])));
     let subject_scope_at_reset = scope_records(&reset_subject);
     let control_scope_at_reset = scope_records(&reset_control);
     let subject_config_at_reset = reset_subject.snapshot_patch().unwrap();
     let control_config_at_reset = reset_control.snapshot_patch().unwrap();
     let subject_time_at_reset = reset_subject.sample_time();
     let control_time_at_reset = reset_control.sample_time();
-    let prefix_event_count = subject_midi.len();
+    assert_eq!(
+        subject_midi, control_midi,
+        "equal musical prefix through sample 300"
+    );
     reset_subject.reset().unwrap();
-    reset_control.reset().unwrap();
     let subject_cleanup: Vec<_> = reset_subject
         .drain_midi()
         .map(|event| (event.sample, event.message.to_bytes()))
         .collect();
-    let control_cleanup: Vec<_> = reset_control
-        .drain_midi()
-        .map(|event| (event.sample, event.message.to_bytes()))
-        .collect();
-    assert_eq!(subject_cleanup, control_cleanup);
-    assert!(!subject_cleanup.is_empty());
-    assert!(subject_cleanup.iter().all(|(sample, _)| *sample == 300));
-    let cleanup_count = subject_cleanup.len();
+    assert_eq!(
+        subject_cleanup,
+        vec![
+            (300, [0x80, 62, 0]),
+            (300, [0xB0, 123, 0]),
+            (300, [0xB0, 120, 0]),
+        ],
+        "reset cleanup is separate from musical continuation"
+    );
     assert_eq!(scope_records(&reset_subject), subject_scope_at_reset);
     assert_eq!(scope_records(&reset_control), control_scope_at_reset);
     assert_eq!(subject_time_at_reset.completed_samples(), 300);
@@ -1225,17 +1359,71 @@ fn stop_start_and_reset_at_sample_300_match_continuous_controls() {
         control_config_at_reset
     );
     assert_eq!(subject_config_at_reset, control_config_at_reset);
-    subject_midi.extend(subject_cleanup);
-    control_midi.extend(control_cleanup);
 
-    advance_and_drain(&mut reset_subject, 1_000, &mut subject_midi);
-    advance_and_drain(&mut reset_control, 1_000, &mut control_midi);
+    let mut subject_future = Vec::new();
+    let mut control_future = Vec::new();
+    advance_and_drain(&mut reset_subject, 1_000, &mut subject_future);
+    advance_and_drain(&mut reset_control, 1_000, &mut control_future);
     assert_eq!(reset_subject.sample_time(), reset_control.sample_time());
-    assert_eq!(subject_midi, control_midi);
+    assert_eq!(reset_subject.sample_time().completed_samples(), 1_300);
     let subject_scope = scope_records(&reset_subject);
     let control_scope = scope_records(&reset_control);
     assert_eq!(subject_scope, control_scope);
-    let continuation_midi = &subject_midi[prefix_event_count + cleanup_count..];
+    assert_eq!(
+        reset_subject.scope().unwrap().selectors(),
+        reset_control.scope().unwrap().selectors()
+    );
+    assert_eq!(
+        reset_subject.scope().unwrap().capacity(),
+        reset_control.scope().unwrap().capacity()
+    );
+    assert_eq!(reset_subject.scope().unwrap().overwritten(), 0);
+    assert_eq!(reset_control.scope().unwrap().overwritten(), 0);
+    let old_release = (376, [0x80, 62, 0]);
+    assert_eq!(
+        control_future
+            .iter()
+            .filter(|event| **event == old_release)
+            .count(),
+        1,
+        "uninterrupted control naturally releases the note silenced at 300"
+    );
+    let controls_at_376 = |trace: &MidiTrace| {
+        trace
+            .iter()
+            .filter(|(sample, bytes)| {
+                *sample == 376 && bytes[0] == 0xB0 && matches!(bytes[1], 74 | 75)
+            })
+            .copied()
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(controls_at_376(&control_future).len(), 2);
+    assert_eq!(
+        controls_at_376(&subject_future),
+        controls_at_376(&control_future)
+    );
+    let mut expected_future = control_future.clone();
+    let release_index = expected_future
+        .iter()
+        .position(|event| *event == old_release)
+        .expect("control release is present exactly once");
+    expected_future.remove(release_index);
+    assert_eq!(subject_future, expected_future);
+    assert!(subject_future.contains(&(626, [0x90, 64, 44])));
+    assert!(control_future.contains(&(626, [0x90, 64, 44])));
+    let subject_suffix = subject_future
+        .iter()
+        .filter(|(sample, _)| *sample >= 626)
+        .copied()
+        .collect::<Vec<_>>();
+    let control_suffix = control_future
+        .iter()
+        .filter(|(sample, _)| *sample >= 626)
+        .copied()
+        .collect::<Vec<_>>();
+    assert_eq!(subject_suffix, control_suffix);
+    assert!(subject_suffix.iter().any(|(_, bytes)| bytes[0] == 0x80));
+    let continuation_midi = &subject_future;
     assert!(
         continuation_midi
             .iter()

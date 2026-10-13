@@ -1149,7 +1149,6 @@ mod tests {
         rack.stop();
         let snapshot = rack.snapshot_patch().unwrap();
         let membership = module_identities(rack.world());
-        let scope = rack.scope().unwrap().records().copied().collect::<Vec<_>>();
         let sample_time = rack.sample_time();
         let driver = rack.driver_mode();
         let cable = {
@@ -1161,18 +1160,96 @@ mod tests {
             .get_mut::<oxurack_core::Cable>(cable)
             .unwrap()
             .enabled = false;
+        let capture_disabled_owner = |rack: &Oxurack| {
+            let fixed = rack.world().resource::<Time<Fixed>>();
+            let virtual_time = rack.world().resource::<Time<Virtual>>();
+            let scope = rack.scope().unwrap();
+            let output = rack.world().resource::<MidiOutputBuffer>();
+            let cable_state = rack.world().get::<oxurack_core::Cable>(cable).unwrap();
+            let mut handle_modules = rack
+                .world()
+                .resource::<PatchHandle>()
+                .modules
+                .iter()
+                .map(|(name, entity)| (name.clone(), entity.to_bits()))
+                .collect::<Vec<_>>();
+            handle_modules.sort();
+            let module_added = rack
+                .world()
+                .resource::<bevy_ecs::message::Messages<oxurack_core::ModuleAdded>>()
+                .iter_current_update_messages()
+                .map(|event| {
+                    (
+                        event.entity.to_bits(),
+                        event.instance_name.clone(),
+                        event.kind.to_string(),
+                    )
+                })
+                .collect::<Vec<_>>();
+            let patch_loaded = rack
+                .world()
+                .resource::<bevy_ecs::message::Messages<oxurack_core::PatchLoaded>>()
+                .iter_current_update_messages()
+                .map(|event| {
+                    (
+                        event.patch_name.clone(),
+                        event.source.clone(),
+                        event.module_count,
+                        event.cable_count,
+                        event.label_count,
+                    )
+                })
+                .collect::<Vec<_>>();
+            let installations = rack
+                .install_order
+                .iter()
+                .map(|installed| installed.kind.to_string())
+                .collect::<Vec<_>>();
+            (
+                (
+                    rack.sample_time(),
+                    rack.driver_mode(),
+                    rack.world().resource::<SimulationRunning>().0,
+                    fixed.elapsed(),
+                    fixed.overstep(),
+                    virtual_time.elapsed(),
+                    virtual_time.delta(),
+                    virtual_time.is_paused(),
+                    output.fault().map(|fault| format!("{fault:?}")),
+                ),
+                (
+                    scope.selectors().to_vec(),
+                    scope.capacity(),
+                    scope.overwritten(),
+                    scope.records().copied().collect::<Vec<_>>(),
+                ),
+                (
+                    module_identities(rack.world()),
+                    handle_modules,
+                    (
+                        cable.to_bits(),
+                        cable_state.enabled,
+                        cable_state.source_port.to_bits(),
+                        cable_state.target_port.to_bits(),
+                        rack.world()
+                            .get::<oxurack_core::CableOrder>(cable)
+                            .map(|order| order.0),
+                    ),
+                    installations,
+                ),
+                (module_added, patch_loaded),
+            )
+        };
+        let before_failed_restart = capture_disabled_owner(&rack);
         assert!(matches!(
             rack.restart(),
             Err(CoreError::Patch(oxurack_core::PatchError::UnsupportedSnapshot { reason }))
                 if reason.contains("disabled") && reason.contains("cable")
         ));
+        assert_eq!(capture_disabled_owner(&rack), before_failed_restart);
         assert_eq!(module_identities(rack.world()), membership);
         assert_eq!(rack.sample_time(), sample_time);
         assert_eq!(rack.driver_mode(), driver);
-        assert_eq!(
-            rack.scope().unwrap().records().copied().collect::<Vec<_>>(),
-            scope
-        );
         assert!(rack.world().get_resource::<PatchHandle>().is_some());
         rack.world_mut()
             .get_mut::<oxurack_core::Cable>(cable)
@@ -2429,7 +2506,14 @@ mod tests {
                 completed_samples: 0
             })
         ));
+        let first_fault = rack.midi_output_error().map(|error| format!("{error:?}"));
+        assert!(first_fault.is_some());
         rack.reset().unwrap();
+        assert_eq!(
+            rack.midi_output_error().map(|error| format!("{error:?}")),
+            first_fault,
+            "the first reset preserves the actual stored backpressure fault"
+        );
         let reset_events: Vec<_> = rack.drain_midi().collect();
         assert_eq!(
             reset_events
@@ -2614,7 +2698,15 @@ mod tests {
             assert!(matches!(result, Err(CoreError::PendingMidi { count: 1 })));
             assert_eq!(retained_state(&mut rack), before);
         }
+        let mut expected_first_reset = retained_state(&mut rack);
+        assert_eq!(expected_first_reset.pending_events, 1);
+        expected_first_reset.pending_events = 4;
         rack.reset().unwrap();
+        assert_eq!(
+            retained_state(&mut rack),
+            expected_first_reset,
+            "first reset preserves all retained owner state except pending output 1→4"
+        );
         assert_eq!(
             rack.world().resource::<MidiOutputBuffer>().pending_count(),
             4
@@ -2651,7 +2743,17 @@ mod tests {
                 .collect::<Vec<_>>(),
             vec![(1, [0x90, 60, 100])]
         );
+        let mut expected_running_reset = retained_state(&mut rack);
+        assert!(expected_running_reset.running);
+        assert_eq!(expected_running_reset.sample_time.completed_samples(), 2);
+        assert_eq!(expected_running_reset.pending_events, 0);
+        expected_running_reset.pending_events = 3;
         rack.reset().unwrap();
+        assert_eq!(
+            retained_state(&mut rack),
+            expected_running_reset,
+            "running reset preserves state and appends exactly three cleanup events"
+        );
         assert_eq!(
             rack.drain_midi()
                 .map(|event| (event.sample, event.message.to_bytes()))
