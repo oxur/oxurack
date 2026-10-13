@@ -8,8 +8,8 @@ use bevy_ecs::world::World;
 
 use crate::{
     Cable, CableConnected, CableDisconnected, CableIndex, CableOrder, CableTransform, ChangeSource,
-    CoreError, MergePolicy, Module, ModuleConfig, Patch, PatchError, PatchHandle, Port,
-    PortDirection, ValueKind, mark_propagation_order_dirty,
+    CoreError, MergePolicy, Module, ModuleConfig, ModuleRegistry, ModuleRemoved, Patch, PatchError,
+    PatchHandle, Port, PortDirection, ValueKind, mark_propagation_order_dirty,
 };
 
 struct Endpoint {
@@ -25,6 +25,33 @@ struct PreparedCable {
     cable: Cable,
     ordinal: usize,
     occurrence: usize,
+}
+
+struct PreparedIncidentCable {
+    entity: Entity,
+    cable: Cable,
+}
+
+/// Fully validated state for one in-place module retirement.
+///
+/// Construct this with [`prepare_module_removal`] and pass it to
+/// [`commit_module_removal`] only after caller-owned cleanup admission succeeds.
+/// The value owns all identities required by the commit so no cable or module
+/// names are resolved after mutation begins.
+pub struct PreparedModuleRemoval {
+    name: String,
+    entity: Entity,
+    kind: crate::ModuleKind,
+    hook: crate::ModuleRemovalHook,
+    cables: Vec<PreparedIncidentCable>,
+}
+
+impl PreparedModuleRemoval {
+    /// Returns the retiring module entity for module-author cleanup preparation.
+    #[must_use]
+    pub fn module_entity(&self) -> Entity {
+        self.entity
+    }
 }
 
 /// Adds one enabled cable after validating it against the active patch.
@@ -90,18 +117,211 @@ pub fn disconnect_cable(
         .expect("selected cable remains present during preflight")
         .clone();
 
+    commit_disconnect_cable(world, cable_entity, cable, source_of_change);
+    Ok(())
+}
+
+/// Validates active membership, hierarchy ownership and every incident cable
+/// without mutating the World or emitting a message.
+pub fn prepare_module_removal(
+    world: &mut World,
+    name: &str,
+) -> Result<PreparedModuleRemoval, CoreError> {
+    let handle = world
+        .get_resource::<PatchHandle>()
+        .ok_or(CoreError::NoPatchLoaded)?;
+    let entity = handle
+        .modules
+        .get(name)
+        .copied()
+        .ok_or_else(|| CoreError::UnknownModule(name.to_owned()))?;
+    let module = world
+        .get::<Module>(entity)
+        .filter(|module| module.instance_name == name)
+        .ok_or_else(|| {
+            invalid_ownership(name, "active PatchHandle entry has no matching Module")
+        })?;
+    let kind = module.kind.clone();
+    let hook = world
+        .resource::<ModuleRegistry>()
+        .removal_hook(&kind)
+        .ok_or_else(|| invalid_ownership(name, "module kind has no registered removal hook"))?;
+
+    let active_modules = handle.modules.clone();
+    let mut children_by_parent: HashMap<Entity, Vec<Entity>> = HashMap::new();
+    let mut hierarchy = world.query::<(Entity, &ChildOf)>();
+    for (child, parent) in hierarchy.iter(world) {
+        children_by_parent
+            .entry(parent.parent())
+            .or_default()
+            .push(child);
+    }
+
+    let mut descendants = HashSet::from([entity]);
+    let mut pending = vec![entity];
+    while let Some(parent) = pending.pop() {
+        if let Some(children) = children_by_parent.get(&parent) {
+            for child in children {
+                if descendants.insert(*child) {
+                    pending.push(*child);
+                }
+            }
+        }
+    }
+    for (active_name, active_entity) in &active_modules {
+        if *active_entity != entity && descendants.contains(active_entity) {
+            return Err(invalid_ownership(
+                name,
+                &format!("active module '{active_name}' is nested in the retiring hierarchy"),
+            ));
+        }
+    }
+
+    let mut ports = HashSet::new();
+    let mut port_query = world.query::<(Entity, &Port)>();
+    for (port_entity, _) in port_query.iter(world) {
+        if descendants.contains(&port_entity) {
+            ports.insert(port_entity);
+        }
+    }
+
+    let mut incident = Vec::new();
+    let mut incident_endpoints = HashMap::new();
+    let mut cable_query = world.query::<(Entity, &Cable, Option<&CableOrder>)>();
+    for (cable_entity, cable, order) in cable_query.iter(world) {
+        if !ports.contains(&cable.source_port) && !ports.contains(&cable.target_port) {
+            continue;
+        }
+        if world.get::<Port>(cable.source_port).is_none()
+            || world.get::<Port>(cable.target_port).is_none()
+            || world.get::<ChildOf>(cable.source_port).is_none()
+            || world.get::<ChildOf>(cable.target_port).is_none()
+        {
+            return Err(invalid_ownership(
+                name,
+                &format!("incident cable {cable_entity:?} has a missing endpoint owner"),
+            ));
+        }
+        let index = world.resource::<CableIndex>();
+        if index
+            .cables_from(cable.source_port)
+            .iter()
+            .filter(|id| **id == cable_entity)
+            .count()
+            != 1
+            || index
+                .cables_targeting(cable.target_port)
+                .iter()
+                .filter(|id| **id == cable_entity)
+                .count()
+                != 1
+        {
+            return Err(invalid_ownership(
+                name,
+                &format!("incident cable {cable_entity:?} is inconsistent with CableIndex"),
+            ));
+        }
+        incident.push((
+            order.is_none(),
+            order.map_or(0, |value| value.0),
+            cable_entity,
+            cable.clone(),
+        ));
+        incident_endpoints.insert(cable_entity, (cable.source_port, cable.target_port));
+    }
+    let index = world.resource::<CableIndex>();
+    for port in &ports {
+        for (indexed, is_source) in index
+            .cables_from(*port)
+            .iter()
+            .map(|entity| (*entity, true))
+            .chain(
+                index
+                    .cables_targeting(*port)
+                    .iter()
+                    .map(|entity| (*entity, false)),
+            )
+        {
+            let Some((source, target)) = incident_endpoints.get(&indexed) else {
+                return Err(invalid_ownership(
+                    name,
+                    &format!("CableIndex contains stale incident entity {indexed:?}"),
+                ));
+            };
+            if (is_source && source != port) || (!is_source && target != port) {
+                return Err(invalid_ownership(
+                    name,
+                    &format!("CableIndex incident entity {indexed:?} has inconsistent endpoints"),
+                ));
+            }
+        }
+    }
+    incident.sort_by_key(|(absent, ordinal, entity, _)| (*absent, *ordinal, *entity));
+
+    Ok(PreparedModuleRemoval {
+        name: name.to_owned(),
+        entity,
+        kind,
+        hook,
+        cables: incident
+            .into_iter()
+            .map(|(_, _, entity, cable)| PreparedIncidentCable { entity, cable })
+            .collect(),
+    })
+}
+
+/// Applies a previously prepared module retirement without recoverable failure.
+///
+/// The caller must enqueue selected output cleanup before calling this method.
+pub fn commit_module_removal(
+    world: &mut World,
+    removal: PreparedModuleRemoval,
+    source: ChangeSource,
+) {
+    for incident in removal.cables {
+        commit_disconnect_cable(world, incident.entity, incident.cable, source.clone());
+    }
+    (removal.hook)(world, removal.entity);
+    let removed = world
+        .resource_mut::<PatchHandle>()
+        .modules
+        .remove(&removal.name);
+    debug_assert_eq!(removed, Some(removal.entity));
+    let despawned = world.despawn(removal.entity);
+    debug_assert!(despawned);
+    world.write_message(ModuleRemoved {
+        entity: removal.entity,
+        instance_name: removal.name,
+        kind: removal.kind,
+    });
+    mark_propagation_order_dirty(world);
+}
+
+fn commit_disconnect_cable(
+    world: &mut World,
+    cable_entity: Entity,
+    cable: Cable,
+    source: ChangeSource,
+) {
     world
         .resource_mut::<CableIndex>()
         .remove_cable(cable_entity, &cable);
-    world.despawn(cable_entity);
+    let despawned = world.despawn(cable_entity);
+    debug_assert!(despawned);
     mark_propagation_order_dirty(world);
     world.write_message(CableDisconnected {
         cable_entity,
         source_port: cable.source_port,
         target_port: cable.target_port,
-        source: source_of_change,
+        source,
     });
-    Ok(())
+}
+
+fn invalid_ownership(module: &str, reason: &str) -> CoreError {
+    CoreError::InvalidModuleOwnership {
+        module: module.to_owned(),
+        reason: reason.to_owned(),
+    }
 }
 
 fn prepare_cable(
@@ -404,6 +624,38 @@ mod tests {
     use bevy_ecs::prelude::Messages;
     use pretty_assertions::assert_eq;
 
+    #[derive(bevy_ecs::prelude::Resource, Default)]
+    struct RemovalHookLog(Vec<(usize, usize)>);
+
+    struct RemovalProbe;
+
+    impl crate::OxurackModule for RemovalProbe {
+        const KIND: &'static str = "removal_probe";
+        const DISPLAY_NAME: &'static str = "Removal Probe";
+
+        fn port_schema() -> &'static [crate::PortSchema] {
+            &[]
+        }
+        fn parameter_schema() -> &'static [crate::ParameterSchema] {
+            &[]
+        }
+        fn spawn(
+            world: &mut World,
+            name: &str,
+            _parameters: &HashMap<String, crate::ParameterValue>,
+        ) -> Result<Entity, CoreError> {
+            Ok(crate::spawn_module_entity(world, Self::KIND, name))
+        }
+        fn on_remove(world: &mut World, _entity: Entity) {
+            let disconnected = world.resource::<Messages<CableDisconnected>>().len();
+            let removed = world.resource::<Messages<ModuleRemoved>>().len();
+            world
+                .resource_mut::<RemovalHookLog>()
+                .0
+                .push((disconnected, removed));
+        }
+    }
+
     struct TestWorld {
         app: App,
         a_out: Entity,
@@ -516,6 +768,127 @@ mod tests {
             bipolar_in,
             reject_in,
         }
+    }
+
+    #[test]
+    fn module_removal_orders_all_incident_cables_before_hook_and_module_event() {
+        let mut app = App::new();
+        app.add_plugins(crate::CorePlugin);
+        app.world_mut()
+            .resource_mut::<ModuleRegistry>()
+            .register::<RemovalProbe>();
+        app.world_mut().insert_resource(RemovalHookLog::default());
+        let a = crate::spawn_module_entity(app.world_mut(), "removal_probe", "a");
+        let b = crate::spawn_module_entity(app.world_mut(), "removal_probe", "b");
+        let c = crate::spawn_module_entity(app.world_mut(), "removal_probe", "c");
+        let a_out = crate::spawn_port_on_module(
+            app.world_mut(),
+            a,
+            "out",
+            PortDirection::Output,
+            ValueKind::Float,
+            MergePolicy::Reject,
+        );
+        let b_in = crate::spawn_port_on_module(
+            app.world_mut(),
+            b,
+            "in",
+            PortDirection::Input,
+            ValueKind::Float,
+            MergePolicy::LastWins,
+        );
+        let b_out = crate::spawn_port_on_module(
+            app.world_mut(),
+            b,
+            "out",
+            PortDirection::Output,
+            ValueKind::Float,
+            MergePolicy::Reject,
+        );
+        let c_in = crate::spawn_port_on_module(
+            app.world_mut(),
+            c,
+            "in",
+            PortDirection::Input,
+            ValueKind::Float,
+            MergePolicy::LastWins,
+        );
+        app.world_mut().insert_resource(PatchHandle {
+            modules: [("a".into(), a), ("b".into(), b), ("c".into(), c)].into(),
+        });
+
+        let specs = [
+            (a_out, b_in, 3),
+            (b_out, c_in, 1),
+            (b_out, b_in, 2),
+            (b_out, c_in, 0),
+        ];
+        let cables: Vec<_> = specs
+            .into_iter()
+            .map(|(source_port, target_port, order)| {
+                let cable = Cable {
+                    source_port,
+                    target_port,
+                    transform: None,
+                    enabled: true,
+                };
+                let entity = app
+                    .world_mut()
+                    .spawn((cable.clone(), CableOrder(order)))
+                    .id();
+                app.world_mut()
+                    .resource_mut::<CableIndex>()
+                    .add_cable(entity, &cable);
+                (entity, order)
+            })
+            .collect();
+        let removal = prepare_module_removal(app.world_mut(), "b").unwrap();
+        commit_module_removal(app.world_mut(), removal, ChangeSource::DirectApi);
+
+        let disconnected: Vec<_> = app
+            .world()
+            .resource::<Messages<CableDisconnected>>()
+            .iter_current_update_messages()
+            .map(|event| event.cable_entity)
+            .collect();
+        let expected: Vec<_> = cables
+            .iter()
+            .filter(|(_, order)| matches!(order, 0..=3))
+            .map(|(entity, order)| (*order, *entity))
+            .collect();
+        let mut expected = expected;
+        expected.sort_by_key(|(order, _)| *order);
+        assert_eq!(
+            disconnected,
+            expected
+                .into_iter()
+                .map(|(_, entity)| entity)
+                .collect::<Vec<_>>()
+        );
+        assert!(
+            app.world()
+                .resource::<Messages<CableDisconnected>>()
+                .iter_current_update_messages()
+                .all(|event| event.source == ChangeSource::DirectApi)
+        );
+        assert_eq!(app.world().resource::<RemovalHookLog>().0, vec![(4, 0)]);
+        assert_eq!(app.world().resource::<Messages<ModuleRemoved>>().len(), 1);
+        assert_eq!(app.world().resource::<PatchHandle>().modules.len(), 2);
+        assert!(app.world().get::<Module>(a).is_some());
+        assert!(app.world().get::<Module>(c).is_some());
+        assert!(app.world().get::<Module>(b).is_none());
+        assert!(
+            app.world()
+                .resource::<CableIndex>()
+                .cables_targeting(b_in)
+                .is_empty()
+        );
+        assert!(
+            app.world()
+                .resource::<CableIndex>()
+                .cables_from(b_out)
+                .is_empty()
+        );
     }
 
     #[test]

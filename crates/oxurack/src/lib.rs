@@ -7,6 +7,7 @@
 use std::any::TypeId;
 use std::collections::HashMap;
 use std::path::Path;
+use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
 
@@ -17,10 +18,14 @@ use bevy_time::TimeUpdateStrategy;
 use bevy_time::prelude::{Fixed, Real, Time, Virtual};
 
 mod cables;
+mod commands;
+mod handles;
 mod labels;
 mod lifecycle;
 mod persistence;
 mod scope;
+pub use commands::{CommandId, CommandResult, CommandStatus};
+pub use handles::{Handle, KnobRef, ModuleRef, PortRef};
 pub use scope::{MidiDelivery, ScopeCapture, ScopeError, ScopeRecord, ScopeSelector};
 
 // ── Re-exports from oxurack-graph (feature-gated) ──────────────────
@@ -35,9 +40,9 @@ pub use oxurack_graph;
 pub use oxurack_core::OxurackModule as Module;
 
 pub use oxurack_core::{
-    ChangeSource, CoreError, CorePlugin, CorePluginFixed, LabelKind, LabelTarget, LabelValue,
-    ModuleSpawnContext, PatchHandle, SampleStart, SampleTime, Scale, SimulationRunning, Tag,
-    TagError, TickError,
+    ChangeSource, CoreCommand, CoreError, CorePlugin, CorePluginFixed, LabelKind, LabelTarget,
+    LabelValue, ModuleSpawnContext, PatchHandle, SampleStart, SampleTime, Scale, SimulationRunning,
+    Tag, TagError, TickError,
 };
 
 pub use oxurack_mod_midiout::{MidiOutModule, MidiOutputBuffer, MidiOutputEvent};
@@ -76,11 +81,15 @@ pub struct Oxurack {
     install_order: Vec<InstalledType>,
     driver: SimulationDriver,
     loaded_identity: Option<persistence::LoadedIdentity>,
+    lifetime_token: Arc<()>,
+    instance_tokens: HashMap<String, Arc<()>>,
+    command_queue: commands::CommandQueue,
 }
 
 struct InstalledType {
     kind: oxurack_core::ModuleKind,
     type_id: TypeId,
+    type_name: &'static str,
     install_into: fn(&mut App),
 }
 
@@ -136,6 +145,9 @@ impl Oxurack {
             install_order: Vec::new(),
             driver: SimulationDriver::Live,
             loaded_identity: None,
+            lifetime_token: Arc::new(()),
+            instance_tokens: HashMap::new(),
+            command_queue: commands::CommandQueue::new(),
         }
     }
 
@@ -193,6 +205,7 @@ impl Oxurack {
         self.install_order.push(InstalledType {
             kind: kind.clone(),
             type_id,
+            type_name: std::any::type_name::<M>(),
             install_into: install_type::<M>,
         });
         self.installed_modules.insert(kind, index);
@@ -470,8 +483,12 @@ impl Oxurack {
     ///
     /// The caller takes responsibility for preserving the shared
     /// [`SimulationRunning`] state and named [`TickPhase`] membership after
-    /// ownership transfers to Bevy.
+    /// ownership transfers to Bevy. Facade command slots and their results are
+    /// not stored in the App; process them before consuming the rack or they
+    /// are abandoned with the facade.
     pub fn into_app(self) -> App {
+        // Queued facade commands and their results are intentionally not a
+        // Bevy resource. Collect results before transferring App ownership.
         self.app
     }
 

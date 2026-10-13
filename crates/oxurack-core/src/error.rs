@@ -133,6 +133,51 @@ pub enum CoreError {
     /// by the umbrella crate.
     #[error("command not implemented: {0}")]
     NotImplemented(&'static str),
+
+    /// The requested module instance has a different registered Rust type.
+    #[error("module type mismatch for '{module}': expected {expected}, found {actual}")]
+    ModuleTypeMismatch {
+        /// Module instance name.
+        module: String,
+        /// Requested Rust type name.
+        expected: String,
+        /// Installed Rust type name or actual module kind.
+        actual: String,
+    },
+
+    /// A bound module, port, or knob reference belongs to a retired owner.
+    #[error("stale handle for module '{module}'")]
+    StaleHandle {
+        /// Module instance name carried by the reference.
+        module: String,
+    },
+
+    /// A dotted reference is empty or ambiguous.
+    #[error("invalid reference '{value}'")]
+    InvalidReference {
+        /// Original dotted input.
+        value: String,
+    },
+
+    /// The active patch and ECS ownership hierarchy disagree.
+    #[error("invalid ownership for module '{module}': {reason}")]
+    InvalidModuleOwnership {
+        /// Module instance name.
+        module: String,
+        /// Description of the inconsistent ownership state.
+        reason: String,
+    },
+
+    /// The facade command queue already contains its maximum outstanding slots.
+    #[error("command queue is full (capacity {capacity})")]
+    CommandQueueFull {
+        /// Maximum number of pending or uncollected result slots.
+        capacity: usize,
+    },
+
+    /// No further command identifier can be allocated without wrapping.
+    #[error("command identifier space is exhausted")]
+    CommandIdExhausted,
 }
 
 /// Errors related to patch construction and cable routing.

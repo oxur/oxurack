@@ -250,6 +250,37 @@ The second command replays the saved configuration in a fresh process. It
 restarts the LFO and Turing Machine engines while retaining the edited cable,
 order, and description.
 
+Typed `Handle<M>` values and bound port/knob references identify one exact
+module instance in one committed rack lifetime. A handle becomes stale when its
+module is removed or the rack successfully loads, restarts, or unloads; a failed
+replacement keeps the existing handles valid. Tuple constructors preserve dots
+inside names, while dotted reference parsing rejects ambiguous names. The
+string-based parameter and cable methods remain available for current-name
+lookups.
+
+`remove_module` requires a stopped rack and drained MIDI. It preflights the
+module hierarchy and incident cables, queues cleanup for that MIDI sink only,
+then retires the module without resetting surviving engines. Drain any resulting
+cleanup before advancing again. Scope is disabled if it selected the removed
+module, and the optional graph is refreshed before the method returns.
+
+`CoreCommand` can be executed synchronously with `execute_command` or submitted
+to the bounded 64-slot FIFO with `enqueue_command` and `process_commands`.
+Processing returns typed per-command outcomes in submission order; failed
+commands do not stop later commands. A successful reset cancels only commands
+still pending behind it. Completed and cancelled slots use queue capacity until
+`process_commands` collects them. `SetBpm` changes patch metadata used by
+snapshot/save/restart; it does not change the Clock module's independent `bpm`
+parameter.
+
+Run the complete live-session example with the default graph or without it:
+
+```bash
+cargo run --locked -p oxurack --example rack-session -- \
+  --patch crates/oxurack/examples/patches/turing-machine-lfo.ron \
+  --save /tmp/oxurack-session.ron --samples 2000
+```
+
 Capture selected scalar ports and the runner's generated MIDI events to a
 bounded CSV file. Capacity counts mixed records; when full, the oldest rows are
 discarded. Signal rows name the selected module and port. MIDI rows distinguish

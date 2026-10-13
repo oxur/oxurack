@@ -960,19 +960,21 @@ fn handle_module_added(mut graph: ResMut<RackGraph>, mut reader: MessageReader<M
 fn handle_module_removed(mut graph: ResMut<RackGraph>, mut reader: MessageReader<ModuleRemoved>) {
     for msg in reader.read() {
         if let Some(idx) = graph.node_by_entity.remove(&msg.entity) {
-            // StableDiGraph::remove_node also removes incident edges.
-            // Collect cable entities from incident edges first so we
-            // can prune edge_by_entity before the edges disappear.
-            let cable_entities: Vec<Entity> = graph
-                .inner
-                .edges(idx)
-                .filter_map(|e| graph.inner.edge_weight(e.id()).map(|w| w.cable_entity))
-                .collect();
+            // A directed graph's `edges()` sees outgoing edges only. Collect
+            // both directions and deduplicate self-edges before node removal.
+            let cable_entities: HashSet<Entity> =
+                [petgraph::Direction::Incoming, petgraph::Direction::Outgoing]
+                    .into_iter()
+                    .flat_map(|direction| graph.inner.edges_directed(idx, direction))
+                    .filter_map(|edge| graph.inner.edge_weight(edge.id()).map(|w| w.cable_entity))
+                    .collect();
             for cable_entity in cable_entities {
                 graph.edge_by_entity.remove(&cable_entity);
             }
             graph.inner.remove_node(idx);
-            graph.by_instance_name.remove(&msg.instance_name);
+            if graph.by_instance_name.get(&msg.instance_name) == Some(&msg.entity) {
+                graph.by_instance_name.remove(&msg.instance_name);
+            }
         }
     }
 }
@@ -1348,10 +1350,14 @@ mod tests {
 
         let mod_a = app.world_mut().spawn_empty().id();
         let mod_b = app.world_mut().spawn_empty().id();
-        let port_out = app.world_mut().spawn_empty().id();
-        app.world_mut().entity_mut(mod_a).add_child(port_out);
-        let port_in = app.world_mut().spawn_empty().id();
-        app.world_mut().entity_mut(mod_b).add_child(port_in);
+        let a_out = app.world_mut().spawn_empty().id();
+        let a_in = app.world_mut().spawn_empty().id();
+        let b_out = app.world_mut().spawn_empty().id();
+        let b_in = app.world_mut().spawn_empty().id();
+        app.world_mut().entity_mut(mod_a).add_child(a_out);
+        app.world_mut().entity_mut(mod_a).add_child(a_in);
+        app.world_mut().entity_mut(mod_b).add_child(b_out);
+        app.world_mut().entity_mut(mod_b).add_child(b_in);
 
         app.world_mut().write_message(ModuleAdded {
             entity: mod_a,
@@ -1365,13 +1371,22 @@ mod tests {
         });
         app.update();
 
-        let cable = app.world_mut().spawn_empty().id();
-        app.world_mut().write_message(CableConnected {
-            cable_entity: cable,
-            source_port: port_out,
-            target_port: port_in,
-            transform: None,
-            source: oxurack_core::ChangeSource::DirectApi,
+        let cables = [
+            (a_out, b_in), // outgoing
+            (b_out, a_in), // incoming
+            (a_out, a_in), // self-edge
+            (a_out, a_in), // parallel self-edge
+        ]
+        .map(|(source_port, target_port)| {
+            let cable = app.world_mut().spawn_empty().id();
+            app.world_mut().write_message(CableConnected {
+                cable_entity: cable,
+                source_port,
+                target_port,
+                transform: None,
+                source: oxurack_core::ChangeSource::DirectApi,
+            });
+            cable
         });
         app.update();
 
@@ -1385,7 +1400,45 @@ mod tests {
         let graph = app.world().resource::<RackGraph>();
         assert_eq!(graph.module_count(), 1);
         assert_eq!(graph.cable_count(), 0);
-        assert!(!graph.contains_cable(cable));
+        for cable in cables {
+            assert!(!graph.contains_cable(cable));
+            assert!(!graph.edge_by_entity.contains_key(&cable));
+        }
+    }
+
+    #[test]
+    fn module_removed_keeps_a_newer_same_name_mapping() {
+        let mut app = graph_test_app();
+        app.update();
+        let old = app.world_mut().spawn_empty().id();
+        let new = app.world_mut().spawn_empty().id();
+        for entity in [old, new] {
+            app.world_mut().write_message(ModuleAdded {
+                entity,
+                instance_name: "reused".to_owned(),
+                kind: ModuleKind::from("voice"),
+            });
+        }
+        app.update();
+        assert_eq!(
+            app.world()
+                .resource::<RackGraph>()
+                .entity_by_instance_name("reused"),
+            Some(new)
+        );
+        app.world_mut().write_message(ModuleRemoved {
+            entity: old,
+            instance_name: "reused".to_owned(),
+            kind: ModuleKind::from("voice"),
+        });
+        app.update();
+        assert_eq!(
+            app.world()
+                .resource::<RackGraph>()
+                .entity_by_instance_name("reused"),
+            Some(new)
+        );
+        assert!(app.world().resource::<RackGraph>().contains_module(new));
     }
 
     // ── Serde roundtrip tests ─────────────────────────────────────

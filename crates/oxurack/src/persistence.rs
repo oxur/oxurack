@@ -24,6 +24,13 @@ impl LoadedIdentity {
             bpm: patch.bpm,
         }
     }
+
+    pub(super) fn bpm(&self) -> f32 {
+        self.bpm
+    }
+    pub(super) fn set_bpm(&mut self, bpm: f32) {
+        self.bpm = bpm;
+    }
 }
 
 impl super::Oxurack {
@@ -66,14 +73,18 @@ impl super::Oxurack {
         param: &str,
         value: ParameterValue,
     ) -> Result<(), CoreError> {
+        self.set_parameter_with_source(module, param, value, oxurack_core::ChangeSource::DirectApi)
+    }
+
+    pub(super) fn set_parameter_with_source(
+        &mut self,
+        module: &str,
+        param: &str,
+        value: ParameterValue,
+        source: oxurack_core::ChangeSource,
+    ) -> Result<(), CoreError> {
         active_module(self.app.world(), module)?;
-        oxurack_core::set_module_parameter(
-            self.app.world_mut(),
-            module,
-            param,
-            &value,
-            oxurack_core::ChangeSource::DirectApi,
-        )
+        oxurack_core::set_module_parameter(self.app.world_mut(), module, param, &value, source)
     }
 
     /// Returns the current loaded patch configuration, including live parameter

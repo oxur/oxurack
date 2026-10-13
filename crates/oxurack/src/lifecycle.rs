@@ -5,11 +5,51 @@ use std::time::Instant;
 
 use bevy_time::prelude::{Fixed, Real, Time, Virtual};
 use oxurack_core::{CoreError, ModuleRegistry, Patch, PatchSource, SimulationRunning};
-use oxurack_mod_midiout::{MidiOutputBuffer, prepare_silence, silence_outputs};
+use oxurack_mod_midiout::{
+    MidiOutputBuffer, prepare_silence, prepare_silence_for, silence_outputs,
+};
 
 use crate::{Oxurack, build_base_app};
 
 impl Oxurack {
+    /// Removes one active module and its owned descendants while preserving
+    /// the current rack lifetime and all surviving engines.
+    pub fn remove_module(&mut self, name: &str) -> Result<(), CoreError> {
+        self.require_stopped_and_drained()?;
+        let removal = oxurack_core::prepare_module_removal(self.app.world_mut(), name)?;
+        let module_entity = removal.module_entity();
+        let cleanup = prepare_silence_for(self.app.world(), module_entity)?;
+        self.app
+            .world_mut()
+            .resource_mut::<MidiOutputBuffer>()
+            .append_silence(&cleanup)
+            .map_err(CoreError::Tick)?;
+        if self
+            .app
+            .world()
+            .get_resource::<crate::ScopeCapture>()
+            .is_some_and(|scope| {
+                scope
+                    .selectors()
+                    .iter()
+                    .any(|selector| selector.module == name)
+            })
+        {
+            crate::scope::disable(self.app.world_mut());
+        }
+        oxurack_core::commit_module_removal(
+            self.app.world_mut(),
+            removal,
+            oxurack_core::ChangeSource::DirectApi,
+        );
+        self.instance_tokens.remove(name);
+        #[cfg(feature = "graph")]
+        self.app
+            .world_mut()
+            .run_schedule(oxurack_graph::GraphMaintenance);
+        Ok(())
+    }
+
     /// Appends complete MIDI voice silence while preserving this rack lifetime.
     ///
     /// This does not tick, reseed, stop, or clear a previously latched fault.
@@ -20,7 +60,9 @@ impl Oxurack {
     /// Returns an output capacity/invariant error before changing events or
     /// voice state when the complete silence batch cannot be prepared.
     pub fn reset(&mut self) -> Result<(), CoreError> {
-        silence_outputs(self.app.world_mut()).map_err(CoreError::Tick)
+        silence_outputs(self.app.world_mut()).map_err(CoreError::Tick)?;
+        self.command_queue.cancel_pending();
+        Ok(())
     }
 
     /// Rebuilds the loaded patch from its current live snapshot at sample zero.
@@ -112,16 +154,38 @@ impl Oxurack {
         next: bevy_app::App,
         identity: Option<super::persistence::LoadedIdentity>,
     ) {
+        let instance_tokens = next
+            .world()
+            .get_resource::<oxurack_core::PatchHandle>()
+            .map(|handle| {
+                handle
+                    .modules
+                    .keys()
+                    .map(|name| (name.clone(), std::sync::Arc::new(())))
+                    .collect()
+            })
+            .unwrap_or_default();
+        let lifetime_token = std::sync::Arc::new(());
         let old = std::mem::replace(&mut self.app, next);
         self.loaded_identity = identity;
+        self.lifetime_token = lifetime_token;
+        self.instance_tokens = instance_tokens;
         drop(old);
     }
 }
 
 pub(super) fn load_patch(rack: &mut Oxurack, path: &Path) -> Result<(), CoreError> {
+    load_patch_with_source(rack, path, PatchSource::File(path.to_path_buf()))
+}
+
+pub(super) fn load_patch_with_source(
+    rack: &mut Oxurack,
+    path: &Path,
+    source: PatchSource,
+) -> Result<(), CoreError> {
     rack.require_stopped_and_drained()?;
     let patch = oxurack_core::load_patch_from_file(path)?;
-    rack.replace_configuration(&patch, PatchSource::File(path.to_path_buf()))
+    rack.replace_configuration(&patch, source)
 }
 
 fn apply_in_candidate(
@@ -472,6 +536,80 @@ mod tests {
         "/examples/patches/turing-machine-lfo.ron"
     );
 
+    fn removal_test_rack() -> Oxurack {
+        let mut rack = Oxurack::new();
+        rack.try_install::<ClockModule>().unwrap();
+        rack.try_install::<LfoModule>().unwrap();
+        rack.try_install::<TuringMachineModule>().unwrap();
+        rack.try_install::<oxurack_mod_midiout::MidiOutModule>()
+            .unwrap();
+        rack.load_patch(Path::new(LFO_PATCH)).unwrap();
+        rack
+    }
+
+    #[test]
+    fn removal_despawns_owned_grandchildren() {
+        let mut rack = removal_test_rack();
+        let module = rack
+            .app
+            .world()
+            .resource::<oxurack_core::PatchHandle>()
+            .modules["lfo_main"];
+        let child = rack.app.world_mut().spawn_empty().id();
+        let grandchild = rack.app.world_mut().spawn_empty().id();
+        rack.app.world_mut().entity_mut(module).add_child(child);
+        rack.app.world_mut().entity_mut(child).add_child(grandchild);
+        rack.remove_module("lfo_main").unwrap();
+        assert!(rack.app.world().get_entity(child).is_err());
+        assert!(rack.app.world().get_entity(grandchild).is_err());
+    }
+
+    #[test]
+    fn removal_preflight_rejects_nested_active_module_without_messages() {
+        let mut rack = removal_test_rack();
+        let lfo = rack
+            .app
+            .world()
+            .resource::<oxurack_core::PatchHandle>()
+            .modules["lfo_main"];
+        let tm = rack
+            .app
+            .world()
+            .resource::<oxurack_core::PatchHandle>()
+            .modules["tm_main"];
+        rack.app.world_mut().entity_mut(lfo).add_child(tm);
+        let cable_events = rack
+            .app
+            .world()
+            .resource::<bevy_ecs::message::Messages<oxurack_core::CableDisconnected>>()
+            .len();
+        let module_events = rack
+            .app
+            .world()
+            .resource::<bevy_ecs::message::Messages<oxurack_core::ModuleRemoved>>()
+            .len();
+        assert!(matches!(
+            rack.remove_module("lfo_main"),
+            Err(CoreError::InvalidModuleOwnership { .. })
+        ));
+        assert!(rack.app.world().get_entity(lfo).is_ok());
+        assert!(rack.app.world().get_entity(tm).is_ok());
+        assert_eq!(
+            rack.app
+                .world()
+                .resource::<bevy_ecs::message::Messages<oxurack_core::CableDisconnected>>()
+                .len(),
+            cable_events
+        );
+        assert_eq!(
+            rack.app
+                .world()
+                .resource::<bevy_ecs::message::Messages<oxurack_core::ModuleRemoved>>()
+                .len(),
+            module_events
+        );
+    }
+
     #[test]
     fn reset_preserves_first_fault_and_replacement_clears_it() {
         let mut rack = Oxurack::new();
@@ -506,6 +644,43 @@ mod tests {
         rack.load_patch(Path::new(PATCH)).unwrap();
         assert!(rack.midi_output_error().is_none());
         assert_eq!(rack.sample_time().completed_samples(), 0);
+    }
+
+    #[test]
+    fn in_place_removal_preserves_the_first_output_fault() {
+        let mut rack = Oxurack::new();
+        rack.try_install::<ClockModule>().unwrap();
+        rack.try_install::<LfoModule>().unwrap();
+        rack.try_install::<TuringMachineModule>().unwrap();
+        rack.try_install::<oxurack_mod_midiout::MidiOutModule>()
+            .unwrap();
+        rack.load_patch(Path::new(LFO_PATCH)).unwrap();
+        rack.set_driver_mode(crate::SimulationDriver::Manual)
+            .start();
+        for _ in 0..300 {
+            rack.advance_samples(1).unwrap();
+            drop(rack.drain_midi());
+        }
+        rack.stop();
+        let first = TickError::OutputCapacity {
+            reason: "retirement fault witness".into(),
+            completed_samples: 300,
+        };
+        rack.world_mut()
+            .resource_mut::<MidiOutputBuffer>()
+            .latch_fault(first.clone());
+        rack.remove_module("midi_main").unwrap();
+        let first_debug = format!("{first:?}");
+        assert_eq!(
+            rack.midi_output_error().map(|fault| format!("{fault:?}")),
+            Some(first_debug.clone())
+        );
+        let cleanup: Vec<_> = rack.drain_midi().collect();
+        assert_eq!(cleanup.len(), 3);
+        assert_eq!(
+            rack.midi_output_error().map(|fault| format!("{fault:?}")),
+            Some(first_debug)
+        );
     }
 
     #[test]

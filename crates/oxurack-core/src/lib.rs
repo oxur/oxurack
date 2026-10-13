@@ -69,7 +69,10 @@ pub use tick::{
     SimulationRunning, TickNow, TickOrder, TickPhase, compute_tick_order,
     mark_propagation_order_dirty,
 };
-pub use topology::{connect_cable, disconnect_cable};
+pub use topology::{
+    PreparedModuleRemoval, commit_module_removal, connect_cable, disconnect_cable,
+    prepare_module_removal,
+};
 
 // Phase 4
 pub use event::{
@@ -83,8 +86,8 @@ pub use label::{
     display_name_of, label_value, set_label_value,
 };
 pub use module::{
-    ModuleRegistration, ModuleRegistry, ModuleSpawnContext, ModuleSpawner, OxurackModule,
-    PortSchema,
+    ModuleRegistration, ModuleRegistry, ModuleRemovalHook, ModuleSpawnContext, ModuleSpawner,
+    OxurackModule, PortSchema,
 };
 pub use parameter::{
     ParameterGetter, ParameterName, ParameterRegistry, ParameterSchema, ParameterSetter,

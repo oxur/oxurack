@@ -284,6 +284,14 @@ impl MidiOutputBuffer {
         Ok(())
     }
 
+    fn release_sink(&mut self, channel: u8) {
+        if self.channels.remove(&channel) {
+            debug_assert!(self.sink_count > 0);
+            self.sink_count = self.sink_count.saturating_sub(1);
+            self.logical_capacity = self.sink_count * NORMAL_EVENTS_PER_SINK;
+        }
+    }
+
     fn ensure_room(&self, required: usize) -> Result<(), TickError> {
         if self.events.len().saturating_add(required) > self.logical_capacity {
             return Err(TickError::OutputCapacity {
@@ -328,6 +336,19 @@ impl MidiOutputBuffer {
 
 /// Collects channel-ordered cleanup for every dirty sink without mutating it.
 pub fn prepare_silence(world: &World) -> Result<SilenceBatch, TickError> {
+    prepare_silence_selected(world, None)
+}
+
+/// Collects cleanup for one selected MIDI sink while checking whole-rack
+/// reservation accounting. A non-MIDI entity or a clean sink yields no events.
+pub fn prepare_silence_for(world: &World, module: Entity) -> Result<SilenceBatch, TickError> {
+    prepare_silence_selected(world, Some(module))
+}
+
+fn prepare_silence_selected(
+    world: &World,
+    selected: Option<Entity>,
+) -> Result<SilenceBatch, TickError> {
     let boundary = world.resource::<SampleTime>().completed_samples();
     let buffer = world.resource::<MidiOutputBuffer>();
     let mut by_channel: [Option<(Entity, Option<u8>)>; 16] = [None; 16];
@@ -346,7 +367,7 @@ pub fn prepare_silence(world: &World) -> Result<SilenceBatch, TickError> {
             if state.active_note.is_some() && !state.dirty {
                 return Err(output_capacity("active MIDI note is not marked dirty"));
             }
-            if state.dirty {
+            if state.dirty && selected.is_none_or(|selected_entity| selected_entity == entity) {
                 by_channel[channel] = Some((entity, state.active_note));
             }
         }
@@ -459,6 +480,17 @@ impl OxurackModule for MidiOutModule {
         app.init_resource::<MidiOutputBuffer>()
             .add_systems(schedule, check_output_admission.before(SampleStart))
             .add_systems(schedule, consume_midi_outputs.in_set(TickPhase::Consume));
+    }
+
+    fn on_remove(world: &mut World, entity: Entity) {
+        let channel = world
+            .get::<MidiOutState>(entity)
+            .map(|state| state.config.channel);
+        if let (Some(channel), Some(mut buffer)) =
+            (channel, world.get_resource_mut::<MidiOutputBuffer>())
+        {
+            buffer.release_sink(channel);
+        }
     }
 
     fn parameter_getters() -> &'static [(&'static str, oxurack_core::ParameterGetter)] {
@@ -1323,6 +1355,61 @@ mod tests {
         }));
         silence_outputs(app.world_mut()).unwrap();
         assert!(bytes(&mut app).is_empty());
+    }
+
+    #[test]
+    fn selected_silence_and_removal_preserve_other_dirty_sink_and_reuse_channel() {
+        let configs = [
+            ("first", &[("channel", ParameterValue::Int(0))][..]),
+            ("second", &[("channel", ParameterValue::Int(1))][..]),
+        ];
+        let (mut app, sinks) = app_with_sinks(&configs);
+        for (sink, note) in sinks.iter().copied().zip([60, 61]) {
+            let mut state = app.world_mut().get_mut::<MidiOutState>(sink).unwrap();
+            state.active_note = Some(note);
+            state.dirty = true;
+        }
+        let fixed_capacity = app.world().resource::<MidiOutputBuffer>().events.capacity();
+        let selected = prepare_silence_for(app.world(), sinks[0]).unwrap();
+        assert_eq!(selected.events().count(), 3);
+        assert_eq!(
+            selected
+                .events()
+                .map(|event| event.message.to_bytes())
+                .collect::<Vec<_>>(),
+            vec![[0x80, 60, 0], [0xB0, 123, 0], [0xB0, 120, 0]]
+        );
+        app.world_mut()
+            .resource_mut::<MidiOutputBuffer>()
+            .append_silence(&selected)
+            .unwrap();
+        MidiOutModule::on_remove(app.world_mut(), sinks[0]);
+        assert_eq!(app.world().resource::<MidiOutputBuffer>().sink_count, 1);
+        assert_eq!(
+            app.world().resource::<MidiOutputBuffer>().logical_capacity,
+            5
+        );
+        assert_eq!(
+            app.world().resource::<MidiOutputBuffer>().events.capacity(),
+            fixed_capacity
+        );
+        app.world_mut().despawn(sinks[0]);
+        let remaining = prepare_silence_for(app.world(), sinks[1]).unwrap();
+        assert_eq!(
+            remaining
+                .events()
+                .map(|event| event.message.to_bytes())
+                .collect::<Vec<_>>(),
+            vec![[0x81, 61, 0], [0xB1, 123, 0], [0xB1, 120, 0]]
+        );
+        let replacement = MidiOutModule::spawn(
+            app.world_mut(),
+            "replacement",
+            &params(&[("channel", ParameterValue::Int(0))]),
+        )
+        .unwrap();
+        assert!(app.world().get::<MidiOutState>(replacement).is_some());
+        assert_eq!(app.world().resource::<MidiOutputBuffer>().sink_count, 2);
     }
 
     #[test]

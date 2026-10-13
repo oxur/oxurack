@@ -255,6 +255,17 @@ pub trait OxurackModule: Send + Sync + 'static {
     ) {
     }
 
+    /// Releases per-instance registrations owned outside the entity hierarchy.
+    ///
+    /// The rack calls this once for a successful in-place instance removal,
+    /// after recoverable validation and selected MIDI cleanup have completed,
+    /// but before the module entity is despawned. Whole-App retirement does not
+    /// call this hook; App and World resources own whole-lifetime cleanup.
+    /// Implementations must be infallible, must not emit MIDI, and must not
+    /// modify unrelated instances. A panic is outside the rack's recoverable
+    /// failure guarantee.
+    fn on_remove(_world: &mut World, _entity: Entity) {}
+
     /// Returns setter functions for each declared parameter.
     ///
     /// Each entry is a `(name, setter_fn)` pair. The registration
@@ -294,6 +305,9 @@ type ModuleContextSpawner = for<'a> fn(
     &ModuleSpawnContext<'a>,
     &HashMap<String, crate::ParameterValue>,
 ) -> Result<Entity, crate::CoreError>;
+
+/// Type-erased per-instance cleanup hook for a registered module type.
+pub type ModuleRemovalHook = fn(&mut World, Entity);
 
 // ── ModuleRegistration ───────────────────────────────────────────
 
@@ -354,6 +368,7 @@ impl fmt::Debug for ModuleRegistration {
 pub struct ModuleRegistry {
     registrations: HashMap<ModuleKind, ModuleRegistration>,
     context_spawners: HashMap<ModuleKind, ModuleContextSpawner>,
+    removal_hooks: HashMap<ModuleKind, ModuleRemovalHook>,
 }
 
 impl ModuleRegistry {
@@ -375,7 +390,9 @@ impl ModuleRegistry {
             spawner: M::spawn,
         };
         self.registrations.insert(kind.clone(), reg);
-        self.context_spawners.insert(kind, M::spawn_with_context);
+        self.context_spawners
+            .insert(kind.clone(), M::spawn_with_context);
+        self.removal_hooks.insert(kind, M::on_remove);
     }
 
     /// Look up a module registration by kind.
@@ -396,7 +413,20 @@ impl ModuleRegistry {
     /// without going through the [`OxurackModule`] trait.
     pub fn insert(&mut self, kind: ModuleKind, registration: ModuleRegistration) {
         self.context_spawners.remove(&kind);
+        self.removal_hooks.remove(&kind);
         self.registrations.insert(kind, registration);
+    }
+
+    /// Returns the registered per-instance cleanup hook, or a no-op for a
+    /// manually inserted legacy registration.
+    #[must_use]
+    pub fn removal_hook(&self, kind: &ModuleKind) -> Option<ModuleRemovalHook> {
+        self.registrations.get(kind).map(|_| {
+            self.removal_hooks
+                .get(kind)
+                .copied()
+                .unwrap_or(noop_module_removal)
+        })
     }
 
     /// Spawns through the registered context hook, falling back to the public
@@ -421,6 +451,8 @@ impl ModuleRegistry {
         self.registrations.keys()
     }
 }
+
+fn noop_module_removal(_world: &mut World, _entity: Entity) {}
 
 #[cfg(test)]
 mod tests {
