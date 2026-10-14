@@ -18,17 +18,23 @@ struct Reference {
     binding: Option<Binding>,
 }
 
-/// An unbound module name for a current rack lookup.
+/// An unbound exact module name for a current rack lookup.
+///
+/// Member names built from this value are resolved when used. A dotted name is
+/// not parsed here; use tuple constructors when names contain dots.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ModuleRef(String);
 
 impl ModuleRef {
+    /// Creates a reference to the exact module name supplied.
     pub fn new(module: impl Into<String>) -> Self {
         Self(module.into())
     }
+    /// Returns the exact module name.
     pub fn module(&self) -> &str {
         &self.0
     }
+    /// Builds an unbound port reference whose member lookup is deferred.
     pub fn port(&self, port: impl Into<String>) -> PortRef {
         PortRef(Reference {
             module: self.0.clone(),
@@ -36,6 +42,7 @@ impl ModuleRef {
             binding: None,
         })
     }
+    /// Builds an unbound parameter reference whose member lookup is deferred.
     pub fn knob(&self, parameter: impl Into<String>) -> KnobRef {
         KnobRef(Reference {
             module: self.0.clone(),
@@ -60,9 +67,18 @@ impl std::fmt::Debug for PortRef {
 }
 
 impl PortRef {
+    /// Creates an unbound reference from exact module and port names.
     pub fn new(module: impl Into<String>, port: impl Into<String>) -> Self {
         ModuleRef::new(module).port(port)
     }
+    /// Parses exactly one `module.port` separator.
+    ///
+    /// Use [`Self::new`] for names containing dots.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CoreError::InvalidReference`] when either part is empty or
+    /// the input contains zero or more than one separator.
     pub fn from_dotted(value: &str) -> Result<Self, CoreError> {
         let Some((module, port)) = value.split_once('.') else {
             return Err(invalid_reference(value));
@@ -72,9 +88,11 @@ impl PortRef {
         }
         Ok(Self::new(module, port))
     }
+    /// Returns the exact module name.
     pub fn module(&self) -> &str {
         &self.0.module
     }
+    /// Returns the exact port name.
     pub fn port(&self) -> &str {
         &self.0.member
     }
@@ -95,9 +113,18 @@ impl std::fmt::Debug for KnobRef {
 }
 
 impl KnobRef {
+    /// Creates an unbound reference from exact module and parameter names.
     pub fn new(module: impl Into<String>, parameter: impl Into<String>) -> Self {
         ModuleRef::new(module).knob(parameter)
     }
+    /// Parses exactly one `module.parameter` separator.
+    ///
+    /// Use [`Self::new`] for names containing dots.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CoreError::InvalidReference`] when either part is empty or
+    /// the input contains zero or more than one separator.
     pub fn from_dotted(value: &str) -> Result<Self, CoreError> {
         let Some((module, parameter)) = value.split_once('.') else {
             return Err(invalid_reference(value));
@@ -107,9 +134,11 @@ impl KnobRef {
         }
         Ok(Self::new(module, parameter))
     }
+    /// Returns the exact module name.
     pub fn module(&self) -> &str {
         &self.0.module
     }
+    /// Returns the exact parameter name.
     pub fn parameter(&self) -> &str {
         &self.0.member
     }
@@ -140,13 +169,28 @@ impl<M: OxurackModule> std::fmt::Debug for Handle<M> {
 }
 
 impl<M: OxurackModule> Handle<M> {
+    /// Returns the instance name captured when this handle was created.
     pub fn name(&self) -> &str {
         &self.name
     }
+    /// Reads a parameter from this exact live module instance.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CoreError::StaleHandle`] after rack replacement or removal,
+    /// and otherwise delegates unknown member and parameter-type errors to the
+    /// rack parameter API.
     pub fn parameter(&self, rack: &Oxurack, param: &str) -> Result<ParameterValue, CoreError> {
         rack.validate_bound(&self.name, &self.binding)?;
         rack.parameter(&self.name, param)
     }
+    /// Sets a parameter on this exact live module instance.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CoreError::StaleHandle`] after rack replacement or removal,
+    /// and otherwise delegates member, type, and value validation errors to
+    /// the rack parameter API.
     pub fn set_parameter(
         &self,
         rack: &mut Oxurack,
@@ -156,6 +200,9 @@ impl<M: OxurackModule> Handle<M> {
         rack.validate_bound(&self.name, &self.binding)?;
         rack.set_parameter(&self.name, param, value)
     }
+    /// Builds a port reference bound to this module instance.
+    ///
+    /// Port existence is checked when the reference is used.
     pub fn port(&self, name: &str) -> PortRef {
         PortRef(Reference {
             module: self.name.clone(),
@@ -163,6 +210,9 @@ impl<M: OxurackModule> Handle<M> {
             binding: Some(self.binding.clone()),
         })
     }
+    /// Builds a parameter reference bound to this module instance.
+    ///
+    /// Parameter existence is checked when the reference is used.
     pub fn knob(&self, name: &str) -> KnobRef {
         KnobRef(Reference {
             module: self.name.clone(),
@@ -173,6 +223,13 @@ impl<M: OxurackModule> Handle<M> {
 }
 
 impl Oxurack {
+    /// Binds a typed handle to the named active module in this rack lifetime.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CoreError::NoPatchLoaded`], [`CoreError::UnknownModule`],
+    /// [`CoreError::ModuleTypeMismatch`], or [`CoreError::StaleHandle`] when
+    /// the live module cannot be bound to `M`.
     pub fn module<M: OxurackModule>(&self, name: &str) -> Result<Handle<M>, CoreError> {
         let entity = self
             .app
@@ -242,6 +299,16 @@ impl Oxurack {
         Ok(())
     }
 
+    /// Connects the exact ports named by the references.
+    ///
+    /// Unbound references resolve against the current patch; bound references
+    /// reject a replaced rack lifetime or removed module before topology work.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CoreError::StaleHandle`] for invalidated bound references and
+    /// delegates patch admission, module/port lookup, direction, type, cycle,
+    /// and capacity failures to the topology API.
     pub fn patch_ports(
         &mut self,
         source: &PortRef,
@@ -256,6 +323,13 @@ impl Oxurack {
             transform,
         )
     }
+    /// Removes the selected occurrence of the cable between two exact ports.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CoreError::StaleHandle`] for invalidated bound references and
+    /// delegates module/port lookup and cable occurrence failures to the
+    /// topology API.
     pub fn unpatch_ports(
         &mut self,
         source: &PortRef,
@@ -270,10 +344,25 @@ impl Oxurack {
             occurrence,
         )
     }
+    /// Reads the parameter named by an exact or instance-bound reference.
+    ///
+    /// Unbound names are resolved against the current patch. Bound references
+    /// first verify that both rack lifetime and module instance are unchanged.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CoreError::NoPatchLoaded`], [`CoreError::UnknownModule`],
+    /// [`CoreError::StaleHandle`], or the underlying parameter lookup error.
     pub fn knob(&self, reference: &KnobRef) -> Result<ParameterValue, CoreError> {
         self.validate_reference(&reference.0)?;
         self.parameter(&reference.0.module, &reference.0.member)
     }
+    /// Sets the parameter named by an exact or instance-bound reference.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CoreError::NoPatchLoaded`], [`CoreError::UnknownModule`],
+    /// [`CoreError::StaleHandle`], or the underlying parameter validation error.
     pub fn set_knob(
         &mut self,
         reference: &KnobRef,

@@ -14,6 +14,19 @@ use crate::{Oxurack, build_base_app};
 impl Oxurack {
     /// Removes one active module and its owned descendants while preserving
     /// the current rack lifetime and all surviving engines.
+    ///
+    /// The rack must be stopped and its MIDI output drained. Selected voice
+    /// cleanup is appended before teardown and remains available to the caller
+    /// through [`Oxurack::drain_midi`]. Scope capture is disabled if it selects
+    /// the removed module. Surviving handles remain valid; handles for the
+    /// removed instance become stale. User removal-hook panics are not caught.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CoreError::LifecycleRequiresStopped`], [`CoreError::PendingMidi`],
+    /// [`CoreError::UnknownModule`], [`CoreError::InvalidModuleOwnership`], or
+    /// [`CoreError::Tick`] for output accounting and cleanup-capacity failures.
+    /// A failed preparation leaves the module active.
     pub fn remove_module(&mut self, name: &str) -> Result<(), CoreError> {
         self.require_stopped_and_drained()?;
         let removal = oxurack_core::prepare_module_removal(self.app.world_mut(), name)?;

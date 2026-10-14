@@ -190,6 +190,11 @@ impl SilenceBatch {
 
 impl MidiOutputBuffer {
     /// Creates an output buffer with 128 pre-reserved event slots.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`TickError::OutputCapacity`] if the fixed event storage cannot
+    /// be reserved.
     pub fn try_new() -> Result<Self, TickError> {
         let mut events = Vec::new();
         events.try_reserve_exact(TOTAL_EVENTS).map_err(|error| {
@@ -312,6 +317,14 @@ impl MidiOutputBuffer {
     }
 
     /// Appends a complete silence batch when the fixed storage has room.
+    ///
+    /// Callers must append selected cleanup before releasing or removing its
+    /// sink. The batch is all-or-nothing with respect to this buffer.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`TickError::OutputCapacity`] if the fixed event storage cannot
+    /// hold the whole batch; no event is appended in that case.
     pub fn append_silence(&mut self, batch: &SilenceBatch) -> Result<(), TickError> {
         if self.events.len().saturating_add(batch.len) > TOTAL_EVENTS {
             return Err(output_capacity(
@@ -335,12 +348,24 @@ impl MidiOutputBuffer {
 }
 
 /// Collects channel-ordered cleanup for every dirty sink without mutating it.
+///
+/// # Errors
+///
+/// Returns [`TickError::OutputCapacity`] if sink state, reservation accounting,
+/// or available fixed storage cannot safely represent the whole-rack batch.
 pub fn prepare_silence(world: &World) -> Result<SilenceBatch, TickError> {
     prepare_silence_selected(world, None)
 }
 
 /// Collects cleanup for one selected MIDI sink while checking whole-rack
 /// reservation accounting. A non-MIDI entity or a clean sink yields no events.
+/// The caller must append the returned batch before releasing or removing the
+/// selected sink.
+///
+/// # Errors
+///
+/// Returns [`TickError::OutputCapacity`] if whole-rack sink accounting is
+/// inconsistent or the selected cleanup cannot be represented safely.
 pub fn prepare_silence_for(world: &World, module: Entity) -> Result<SilenceBatch, TickError> {
     prepare_silence_selected(world, Some(module))
 }

@@ -139,7 +139,8 @@ pub struct ModuleAdded {
 
 /// Emitted when a module entity is removed from the rack.
 ///
-/// Producers: future `remove_module` API (no emission site today).
+/// Producers: [`commit_module_removal`](crate::commit_module_removal). Dropping
+/// an entire App does not emit one event per contained module.
 #[derive(Message, Clone, Debug)]
 pub struct ModuleRemoved {
     /// The ECS entity that was removed.

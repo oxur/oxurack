@@ -123,6 +123,15 @@ pub fn disconnect_cable(
 
 /// Validates active membership, hierarchy ownership and every incident cable
 /// without mutating the World or emitting a message.
+///
+/// Keep the World intact between preparation and commit: the returned plan
+/// contains the entities and hook selected from this validated snapshot.
+///
+/// # Errors
+///
+/// Returns [`CoreError::NoPatchLoaded`], [`CoreError::UnknownModule`], or
+/// [`CoreError::InvalidModuleOwnership`] when the active hierarchy, hook registry,
+/// ports, incident cables, or cable index is inconsistent.
 pub fn prepare_module_removal(
     world: &mut World,
     name: &str,
@@ -272,7 +281,10 @@ pub fn prepare_module_removal(
 
 /// Applies a previously prepared module retirement without recoverable failure.
 ///
-/// The caller must enqueue selected output cleanup before calling this method.
+/// The caller must enqueue selected output cleanup before calling this method
+/// and must not mutate the World between preparation and commit. Invariant
+/// violations can panic in debug builds; a registered removal hook can also
+/// panic, which is not rolled back.
 pub fn commit_module_removal(
     world: &mut World,
     removal: PreparedModuleRemoval,

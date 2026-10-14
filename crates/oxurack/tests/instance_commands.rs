@@ -89,8 +89,8 @@ fn handles_are_type_checked_instance_bound_and_retired_independently() {
     let queued = rack.process_commands();
     assert_eq!(queued.len(), 1);
     assert!(matches!(
-        queued[0].status,
-        oxurack::CommandStatus::Completed(Ok(()))
+        queued[0].result,
+        oxurack::CommandResult::Completed(Ok(()))
     ));
     assert_eq!(rack.bpm().unwrap(), 133.0);
     assert!(matches!(
@@ -121,9 +121,6 @@ fn command_queue_is_fifo_bounded_and_reset_cancels_only_pending_slots() {
         .unwrap();
     let panic = rack.enqueue_command(CoreCommand::Panic).unwrap();
     let tail = rack.enqueue_command(CoreCommand::SetBpm(133.0)).unwrap();
-    assert_eq!(first, oxurack::CommandId(0));
-    assert_eq!(panic, oxurack::CommandId(1));
-    assert_eq!(tail, oxurack::CommandId(2));
     let final_tail = rack
         .enqueue_command(CoreCommand::SavePatch(
             std::env::temp_dir().join(format!("oxurack-cancelled-save-{}.ron", std::process::id())),
@@ -133,23 +130,23 @@ fn command_queue_is_fifo_bounded_and_reset_cancels_only_pending_slots() {
     assert_eq!(results.len(), 4);
     assert_eq!(results[0].id, first);
     assert!(matches!(
-        results[0].status,
-        oxurack::CommandStatus::Completed(Ok(()))
+        results[0].result,
+        oxurack::CommandResult::Completed(Ok(()))
     ));
     assert_eq!(results[1].id, panic);
     assert!(matches!(
-        results[1].status,
-        oxurack::CommandStatus::Completed(Ok(()))
+        results[1].result,
+        oxurack::CommandResult::Completed(Ok(()))
     ));
     assert_eq!(results[2].id, tail);
     assert!(matches!(
-        results[2].status,
-        oxurack::CommandStatus::CancelledByReset
+        results[2].result,
+        oxurack::CommandResult::CancelledByReset
     ));
     assert_eq!(results[3].id, final_tail);
     assert!(matches!(
-        results[3].status,
-        oxurack::CommandStatus::CancelledByReset
+        results[3].result,
+        oxurack::CommandResult::CancelledByReset
     ));
     assert_eq!(rack.bpm().unwrap(), 120.0);
     assert!(rack.process_commands().is_empty());
@@ -179,8 +176,8 @@ fn direct_reset_cancellation_occupies_its_queue_slot_until_processed() {
     let results = rack.process_commands();
     assert_eq!(results.len(), 64);
     assert!(matches!(
-        results[0].status,
-        oxurack::CommandStatus::CancelledByReset
+        results[0].result,
+        oxurack::CommandResult::CancelledByReset
     ));
 }
 

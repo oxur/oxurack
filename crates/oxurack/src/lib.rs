@@ -24,7 +24,7 @@ mod labels;
 mod lifecycle;
 mod persistence;
 mod scope;
-pub use commands::{CommandId, CommandResult, CommandStatus};
+pub use commands::{CommandId, CommandOutcome, CommandResult};
 pub use handles::{Handle, KnobRef, ModuleRef, PortRef};
 pub use scope::{MidiDelivery, ScopeCapture, ScopeError, ScopeRecord, ScopeSelector};
 

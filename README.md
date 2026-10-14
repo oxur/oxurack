@@ -276,10 +276,27 @@ parameter.
 Run the complete live-session example with the default graph or without it:
 
 ```bash
+OXURACK_SESSION_DIR=$(mktemp -d)
 cargo run --locked -p oxurack --example rack-session -- \
   --patch crates/oxurack/examples/patches/turing-machine-lfo.ron \
-  --save /tmp/oxurack-session.ron --samples 2000
+  --save "$OXURACK_SESSION_DIR/session.ron" --samples 2000 \
+  > "$OXURACK_SESSION_DIR/session.trace"
+cargo run --locked -p oxurack --example turing-machine-midi -- \
+  --patch "$OXURACK_SESSION_DIR/session.ron" --samples 2000 \
+  > "$OXURACK_SESSION_DIR/fresh.trace"
+cmp "$OXURACK_SESSION_DIR/session.trace" "$OXURACK_SESSION_DIR/fresh.trace"
+cargo run --locked -p oxurack --no-default-features --example rack-session -- \
+  --patch crates/oxurack/examples/patches/turing-machine-lfo.ron \
+  --save "$OXURACK_SESSION_DIR/no-graph.ron" --samples 2000 \
+  > "$OXURACK_SESSION_DIR/no-graph.trace"
+cmp "$OXURACK_SESSION_DIR/session.trace" "$OXURACK_SESSION_DIR/no-graph.trace"
 ```
+
+The first run writes only its final lifetime's MIDI trace to stdout. Its
+phase-labelled cleanup events, including `final-cleanup` and the independently
+loaded `reference-cleanup`, go to stderr after playback; both racks are reset
+and their cleanup vectors are compared. `SetBpm` changes saved patch metadata,
+while the Clock module's own `bpm` parameter remains independently audible.
 
 Capture selected scalar ports and the runner's generated MIDI events to a
 bounded CSV file. Capacity counts mixed records; when full, the oldest rows are
