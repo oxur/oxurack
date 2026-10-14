@@ -122,6 +122,50 @@ cargo run -p oxurack --example turing-machine-midi -- \
 Each output row is `sample|STATUS DATA1 DATA2`, with uppercase hexadecimal
 bytes. The example drains each completed sample before advancing the rack.
 
+### Run and edit a live rack
+
+`rack-live` starts paused at sample zero. Its stdin command reader is bounded;
+the rack owner continues its 1 ms sample loop while waiting for a line. MIDI
+trace rows use stdout, while command replies and Scope views use stderr:
+
+```bash
+cargo run --locked -p oxurack --example rack-live -- \
+  --patch crates/oxurack/examples/patches/turing-machine-lfo.ron \
+  --scope-view --scope-port lfo_main.bipolar_out
+```
+
+Enter `help` for the command list. For example, `play` starts, `pause` sends
+voice cleanup and retains the current sample and engine phase, and `reset`
+sends cleanup while preserving whether the rack is running. `get` and `set`
+operate on registered live parameters; `save PATH` writes the current
+configuration, and `scope-save PATH` creates a new CSV without replacing an
+existing file. Configuration saves do not include engine phase. Scope labels
+trace-only events as Generated and native events as Sent only after a successful
+device send. Scope views and synchronous file operations can delay wall-clock
+pacing while preserving the continuous rack state; the loop rebases afterward
+and never catches up with a burst of samples. Type `quit` or send Ctrl-C to clean
+up and exit. Add `--output-name EXACT_NAME` or
+`--output-index N` to connect to one selected native MIDI output; without either
+flag the example writes the deterministic MIDI trace and does not enumerate or
+open MIDI devices.
+
+To inspect current output names before selecting a device, run
+`cargo run --locked -p oxurack --example rack-live -- --list-outputs`. A short
+session against the LFO fixture can use:
+
+```text
+play
+set clock_main bpm 90
+set tm_main write_probability 0.25
+set lfo_main frequency_hz 1
+get tm_main write_probability
+scope
+save /tmp/my-live-patch.ron
+pause
+status
+quit
+```
+
 The LFO-modulated patch keeps the same seeded Turing Machine and MIDI route,
 with a slow sine LFO changing its write probability. Run its sample-indexed
 trace offline:

@@ -452,7 +452,12 @@ impl Oxurack {
             .saturating_sub(request_start))
     }
 
-    fn is_running(&self) -> bool {
+    /// Returns whether this rack is currently advancing samples.
+    ///
+    /// The result reads the rack's authoritative running state; it is not a
+    /// cached playback flag and this call does not mutate the rack.
+    #[must_use]
+    pub fn is_running(&self) -> bool {
         self.app.world().resource::<SimulationRunning>().0
     }
 
@@ -2190,6 +2195,24 @@ mod tests {
         );
         assert!(!rack.world().resource::<Time<Virtual>>().is_paused());
         assert_eq!(rack.sample_time().completed_samples(), 1);
+    }
+
+    #[test]
+    fn public_running_observation_tracks_start_and_stop_without_advancing() {
+        let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/behavior-installation.ron");
+        let mut rack = Oxurack::new();
+        rack.install::<LiveBehaviorCounter>();
+        rack.load_patch(&fixture)
+            .expect("behavior fixture should load through the public path");
+        let before = rack.sample_time();
+        assert!(!rack.is_running());
+        rack.start();
+        assert!(rack.is_running());
+        assert_eq!(rack.sample_time(), before);
+        rack.stop();
+        assert!(!rack.is_running());
+        assert_eq!(rack.sample_time(), before);
     }
 
     #[test]

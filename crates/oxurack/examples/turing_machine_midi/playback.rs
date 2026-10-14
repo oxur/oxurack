@@ -106,7 +106,10 @@ impl<S: MidiSender> Session<S> {
         }
     }
 
-    fn send_performance(&mut self, event: MidiOutputEvent) -> Result<(), Box<dyn Error>> {
+    pub(crate) fn send_performance(
+        &mut self,
+        event: MidiOutputEvent,
+    ) -> Result<(), Box<dyn Error>> {
         if self.terminal {
             return Err("playback session is already finished".into());
         }
