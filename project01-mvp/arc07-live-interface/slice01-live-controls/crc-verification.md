@@ -6,8 +6,12 @@ Source `a603a24d3e02c377557445bd2ef27e4203b33392`; CC planning
 `9fdb513a2cc72ea9d4cafdc3c4f063408966e333`, both worktrees clean at intake.
 Initial assignment `cc-prompt.md`, SHA256
 `db9e7e9501e778a0c38eb92cccc9c4839cf26a5a903eb440a45d150f642a3189`.
-Parent source27ca00f is the CDC-accepted Arc12 implementation. Protected main
-remains a7ce6e61536ca96b6aeb2227ee06e430ed8df162. CRC authored no source repair.
+Parent source27ca00f is the CDC-accepted Arc12 implementation. CRC authored no
+source repair or root-main change. At final state check, root main is clean at
+1954fad49898e556f57b15997f306a65ff80c75e, a separate docs-only commit after the
+recorded a7ce6e6 baseline. The assigned implementation worktree remains clean at
+a603a24; that root documentation update is outside this review and has no code/
+fixture/dependency impact on these results.
 
 ## Review method and findings
 
@@ -148,3 +152,9 @@ proof gaps only. The arc breakdown/architecture and directive13 residual owners
 remain valid; no plan amendment or CDC escalation is needed for these in-scope
 repairs. Slice01 and both Arc07 rows remain open. Slice02 remains held; CDC's
 observer/lifecycle/metadata design return is due only after Slice01 closure.
+
+Final handoff metadata reconciliation, before relay: the unrelated root-main
+README update was identified after review commit c29f29a. Corrected the unrelayed
+iteration01 draft's root-state note without changing its source pin, scope or
+oracles. No second iteration was issued or executed; original cc-prompt.md remains
+byte-identical. All worktrees are clean after the scoped metadata follow-up.

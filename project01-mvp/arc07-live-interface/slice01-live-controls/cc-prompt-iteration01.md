@@ -18,8 +18,11 @@ W=`/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning`, branch planning;
 P=W/project01-mvp; A=P/arc07-live-interface; D=A/slice01-live-controls.
 K=`/Users/oubiwann/Library/Application Support/ChatGPT-Profiles/personal/codex-home/skills`.
 Planning baseline is this prompt's issuance descendant of9fdb513; check actual
-HEAD/status in both worktrees. Unexpected source drift returns to CRC. Main stays
-`a7ce6e61536ca96b6aeb2227ee06e430ed8df162`. CRC has changed planning only.
+HEAD/status in both worktrees. Unexpected implementation drift returns to CRC.
+Root main is outside this assignment: CDC baseline was a7ce6e6; final CRC check
+observes separate documentation-only commit1954fad49898e556f57b15997f306a65ff80c75e
+there. Do not reset/change root main or copy that README over the assigned source.
+The implementation remains clean at a603a24. CRC has changed planning only.
 
 | Order | Input | Scope/purpose |
 | --- | --- | --- |

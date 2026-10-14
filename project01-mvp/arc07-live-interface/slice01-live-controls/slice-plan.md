@@ -104,3 +104,8 @@ Iteration01 readiness (CRC, not acceptance):
 
 Version history: v1.1 — initial review rejects incomplete frontend/proof at
 source a603a24; iteration01 details in-scope repairs without changing acceptance.
+
+Pre-relay root-state check: main is independently updated to docs-only1954fad,
+while assigned source stays clean a603a24. Iteration01's unrelayed draft corrects
+that metadata before handoff; same assignment/scope/oracles, no second correction
+or source operation. The original prompt remains unchanged.

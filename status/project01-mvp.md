@@ -16,7 +16,8 @@
 > preserves passing native/ordinary CLI checks and actual failed behavior probes.
 > Terminal play/pause, parameter edits, Scope and save reuse the single MIDI owner.
 > CC source a603a24 is implemented but unaccepted; CRC changed planning only.
-> Protected main remains unchanged.
+> Root main separately advanced to docs-only1954fad; assigned source pin is
+> unchanged by CRC.
 > Historical unload notification/common observer ordering re-enter Arc07/Slice02;
 > metadata/config/controller/transport and catalog/typed/graph extensions retain
 > explicit Arc07/13 owners. Exact checkpoints remain future work.
