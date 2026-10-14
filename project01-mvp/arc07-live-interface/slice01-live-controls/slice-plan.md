@@ -1,10 +1,10 @@
 # Arc07 Slice01 — live controls
 
-Version 1.1, 2026-10-14. Status: open, initial CC return reviewed; iteration01 issued;
-five LC rows open, no implementation acceptance. Three contributors/Expedited Mode.
+Version 1.1, 2026-10-14. Status: open, iteration01 returned to CRC;
+five LC rows remain open, no implementation acceptance. Three contributors/Expedited Mode.
 CDC author; CRC reviewer; Duncan relays. Depends on Arc12 accepted 27ca00f.
-Current assignment: [cc-prompt-iteration01.md](cc-prompt-iteration01.md).
-Correction1/5 issued, 0 corrective passes executed; initial prompt preserved.
+Current assignment: none; CC's [iteration01](cc-prompt-iteration01.md) return is
+pending independent CRC disposition. Correction1/5 executed; initial prompt preserved.
 
 ## Goal and boundary
 
@@ -66,7 +66,7 @@ This readiness is CDC author judgment, not independent implementation acceptance
 | Date | Assignment | Predecessor | Reason/status | Next owner |
 | --- | --- | --- | --- | --- |
 | 2026-10-14 | cc-prompt.md | Arc12 CDC acceptance27ca00f; directive13; Duncan selected live controls | Returned a603a24/9fdb513; CRC changes required, five rows open | Preserved; iteration01 supersedes assignment |
-| 2026-10-14 | cc-prompt-iteration01.md | Initial a603a24/9fdb513; CRC F-01–F-05 | Active correction1/5 issued; none executed yet | Duncan relays to CC, then CRC independently reviews |
+| 2026-10-14 | cc-prompt-iteration01.md | Initial a603a24/9fdb513; CRC F-01–F-05 | Correction1/5 executed and returned proposed-done at source a603a24 descendant; all LC rows remain open, CRC pending | Duncan relays return to CRC for independent review |
 
 ## Version history
 
@@ -109,3 +109,12 @@ Pre-relay root-state check: main is independently updated to docs-only1954fad,
 while assigned source stays clean a603a24. Iteration01's unrelayed draft corrects
 that metadata before handoff; same assignment/scope/oracles, no second correction
 or source operation. The original prompt remains unchanged.
+
+## CC iteration01 execution disposition — 2026-10-14
+
+CC completed the issued correction within the four named frontend/README source
+paths and the ledger/report documentation allowance. The detailed receipts,
+failed attempts, hashes and per-row proposed evidence are in the dated iteration01
+execution section of [ledger.md](ledger.md). This return is proposed-done only:
+all five LC rows stay open pending CRC, and Slice02/Arc07 advancement remains held.
+The two worktree commits are separate; no merge or push was performed.
