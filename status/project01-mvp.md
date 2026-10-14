@@ -36,10 +36,13 @@
 > Reset first-state/fault, uninterrupted control, saved replay and snapshot-error
 > proof now satisfy the contract. No product defect or structural design change.
 > [Final Slice05](../project01-mvp/arc12-live-rack-operations/slice05-instance-commands/cc-prompt.md)
-> is issued with six open IC rows: in-place removal, stale-safe handles/refs,
-> synchronous and bounded queued commands/results/reset cancellation, global BPM
-> and a runnable saved/fresh session. Arc12's five-child composition/CDC review stays
-> open; MVP/release is not accepted. Source ec85ebe and main a7ce6e6 unchanged by CRC.
+> returned7404fe2/a3f350e: CRC accepts IC-01/02/03/05 (removal, handles, synchronous
+> commands/BPM and selected MIDI cleanup). IC-04/06 remain open for exact queue API,
+> session failure/cleanup/docs and immediate failed-reset comparison.
+> [Iteration01](../project01-mvp/arc12-live-rack-operations/slice05-instance-commands/cc-prompt-iteration01.md)
+> is issued; native/host gates and normal session/fresh/no-graph recipes pass.
+> No structural/design amendment. Arc12 composition/CDC and MVP/release gates stay
+> open. Source7404fe2 and main a7ce6e6 unchanged by CRC.
 > Separate transport remains Arc07; catalog-specific typed forms remain Arc13.
 > Exact engine-state checkpoints remain future work. The historical append-only
 > load defect is repaired by independently accepted Slice04; Slice01's earlier

@@ -7,7 +7,7 @@ CRC assembles composition; CDC independently accepts. No child completion inferr
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | R-01 | Current live configuration survives save and fresh reload with seeded musical behavior | Run edit/save/reload on real Clock/LFO/TM/MIDI; compare fresh equivalent configuration and unchanged saving-rack continuation | correctness-grade | Arc02 live snapshot; Operator selection | open | Slice01 CRC accepted at fabfa1cb; slice01-live-persistence/crc-verification.md | Child evidence only; full arc assembly/CDC gate pending |
 | R-02 | Runtime metadata/topology changes compose with events, graph freshness and persistence | Execute live edits and rejected edits; assert notifications, immediate graph queries and reloaded patch | correctness-grade | Arcs03/04 | open | Slice02 five M rows CRC accepted at20c60ef; Slice03 five G rows CRC accepted atdeafdd228; respective crc-verification.md records | Reconcile all inherited child rows |
-| R-03 | Public lifecycle and runtime operations preserve ownership through replacement/unload/reset | Actual running rack and MIDI owner checks; old entities retired and explicit failures; retained API/command obligations dispositioned | correctness-grade | Arc05; discovered append-only loading | open | Slice04 six LF rows CRC accepted at ec85ebe; slice04-runtime-api/crc-verification.md; Slice05 six IC rows open | No implicit async platform prerequisite; final composition/CDC review pending |
+| R-03 | Public lifecycle and runtime operations preserve ownership through replacement/unload/reset | Actual running rack and MIDI owner checks; old entities retired and explicit failures; retained API/command obligations dispositioned | correctness-grade | Arc05; discovered append-only loading | open | Slice04 six LF rows CRC accepted at ec85ebe; slice04-runtime-api/crc-verification.md; Slice05 IC-01/02/03/05 CRC done at7404fe2, IC-04/06 open | No implicit async platform prerequisite; final composition/CDC review pending |
 | R-04 | Children, legacy obligations and native checks reconcile without scope loss | Five child walks, inherited successor table, fresh composed demonstration and retained/fresh checks | serious | Framework composition | open | — | Full project/release gates remain separate |
 
 ## Child advancement — 2026-10-12
@@ -70,3 +70,10 @@ restricted failures and historical musical/docs evidence preserved. Final approv
 child slice05-instance-commands opens six IC rows for removal/handles/commands/BPM
 and actual session. R-01–R-04 remain open; CDC12 design unchanged. No inherited,
 project/release acceptance or source/main changes by CRC.
+
+CRC Slice05 initial review — 2026-10-13: source7404fe2/CCa3f350e. Four IC rows
+independently done, IC-04/06 open with correction01 issued. Native gates/host retry
+and ordinary session/fresh/no-graph/fixture hashes pass; exact public queue API,
+example failure/cleanup/docs and immediate reset-failure evidence need correction.
+R-01–R-04 remain open; five-child composition/CDC acceptance not yet assembled.
+See child crc-verification.md. No architectural or inherited-scope amendment.

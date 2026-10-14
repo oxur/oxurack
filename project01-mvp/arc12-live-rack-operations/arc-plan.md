@@ -1,9 +1,10 @@
 # Arc12 — live rack operations
 
-Version1.12 — 2026-10-13. Status: active; Slice01–04 CRC accepted. Slice04
+Version1.13 — 2026-10-13. Status: active; Slice01–04 CRC accepted. Slice04
 iteration03 at ec85ebe closes all six LF rows after three corrections. Final child
-[Slice05 instance/commands](slice05-instance-commands/cc-prompt.md) is issued with
-six IC rows open. Four arc rows remain open for five-child composition and CDC review.
+[Slice05 instance/commands](slice05-instance-commands/cc-prompt-iteration01.md) has
+four IC rows independently done at7404fe2; IC-04/06 open with iteration01 issued.
+Four arc rows remain open for five-child composition and CDC review.
 Depends on accepted Arc10/Arc11; source predecessor72fe6b5. Blocks saved/live
 musical workflow and Arc07 controls. Related: carried-over Arcs02–05; Arc13 catalog.
 Authority: approved successor roadmap and Duncan's explicit “Continue with live
@@ -208,7 +209,20 @@ six author-readiness checks are in the prompt/plan. No source/main edits by CRC.
 R-01–R-04 stay open; after05, CRC assembles the full inherited/composition walk
 for independent CDC acceptance, without claiming Arc05 or MVP closure.
 
+## Slice05 initial review / iteration01 — 2026-10-13
+
+CRC reviewed7404fe2/a3f350e: removal, handles, synchronous commands/BPM and selected
+MIDI cleanup independently accepted (IC-01/02/03/05). IC-04/06 remain open for exact
+queue public API/opacity, session missing-input/final cleanup, new API docs and
+immediate failed-reset observation. All native/host gates and ordinary musical
+recipes pass. See child crc-verification.md and preserved iteration01 prompt.
+No structural/design amendment or final-child/arc closure; zero corrective passes
+executed, first issued. CDC composition gate and inherited re-entry owners unchanged.
+
 ## Version history
+
+- v1.13 — 2026-10-13: routine Slice05 review at7404fe2; four IC rows done/two
+  open, bounded iteration01 issued. CDC12 design and arc gates unchanged.
 
 - v1.12 — 2026-10-13: routine Slice04 acceptance at ec85ebe and authorized final
   Slice05 open set; no CDC12 design/structure amendment. Source/main unchanged by CRC.

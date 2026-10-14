@@ -1,13 +1,14 @@
 # Arc12 Slice05 — instance removal, handles and explicit commands
 
-Version1.0 — 2026-10-13. Status: open, initial CC assignment issued.
-Current assignment: `arc12-live-rack-operations/slice05-instance-commands/cc-prompt.md`.
-Source baseline: `ec85ebe99c09b8a2ea64d55da0346af4ae317a67` on the assigned
+Version1.1 — 2026-10-13. Status: open, CRC initial review/correction.
+Current assignment: `arc12-live-rack-operations/slice05-instance-commands/cc-prompt-iteration01.md`.
+Current source baseline: `7404fe227e561746dbda76543b59893feeacfe15` on the assigned
 implementation branch/worktree. Slice04 accepted, all six LF rows done after
 three corrections. Depends on accepted Arc12 children01–04. Blocks Arc12
 composition, not the existing playable instrument/workbench. Three contributors,
 Expedited Mode; CDC directive12 D3/D4 and retained D1/D2 are the approved design.
-Main a7ce6e6 remains protected. Six IC rows open; zero corrections executed.
+Main a7ce6e6 remains protected. Six IC rows: IC-01/02/03/05 independently done;
+IC-04/06 open. Iteration01 issued, first correction1/5; zero corrections executed.
 
 ## Delivered capability and design
 
@@ -105,9 +106,50 @@ walk for CDC's independent gate; CRC does not author a new arc unilaterally.
 
 | Date | Prompt | Predecessor / authority | Disposition |
 | --- | --- | --- | --- |
-| 2026-10-13 | arc12-live-rack-operations/slice05-instance-commands/cc-prompt.md | CRC accepted Slice04 ec85ebe/CC planning972e3b7; CDC12 D3/D4; Duncan relay/Expedited Mode | Active initial implementation; six IC rows open, no acceptance |
+| 2026-10-13 | arc12-live-rack-operations/slice05-instance-commands/cc-prompt.md | CRC accepted Slice04 ec85ebe/CC planning972e3b7; CDC12 D3/D4; Duncan relay/Expedited Mode | Returned7404fe2/a3f350e; CRC four rows done/two open, superseded by iteration01; no slice acceptance |
+| 2026-10-13 | arc12-live-rack-operations/slice05-instance-commands/cc-prompt-iteration01.md | CRC initial review F-01–F-04 at7404fe2; initial prompt preserved | Active first correction1/5; exact queue API, bounded session fixes/docs and immediate failure observation |
+
+## Initial CRC review and iteration01 readiness — 2026-10-13
+
+Four behavior rows independently done at7404fe2. IC-04/06 remain open for the
+specific mismatches in crc-verification.md: exact public queue API/opaque IDs,
+private queue states, predictable missing-load input, final cleanup recipe,
+immediate failed-reset observation and required new API docs. Native gates,
+host retry, fixture hashes and ordinary session/fresh/no-graph replay all pass.
+No architecture or scope amendment, no new composition acceptance or source
+repair by CRC. CC's initial report remains preserved; artifacts none.
+
+Six author checks for iteration01:
+
+1. Source-grounded: full actual delta/new modules/runner/tests inspected at7404fe2;
+   external required-API compile/forged-ID witnesses and valid existing sibling
+   reproduce failures; actual300-sample held final note/status inspected. Corrected
+   CRC witness used actual baseline cable count after an initial bad assumption.
+2. Design-complete: original exact API restored, not redesigned; private slot
+   enum preserves pop-before-Panic/cancelled capacity; reserved temporary missing
+   directory never overwrites siblings; final reset/drain after ordinary comparison
+   records subject/reference cleanup only to status/Scope. No open design question.
+3. Guideline-applied: guide07/template and actual Rust API-02/07/23, EH-01/14,
+   TD-03/05/06/07 applied to owned typed outcomes, private IDs, explicit slot states
+   and useful failure docs. Native proportionate proof; no new validator platform.
+4. Executable: sections F-01–F-04 specify exact files/symbols, consumer/export
+   migration, worked Rust queue/cleanup bodies, atomic directory reservation,
+   public doctests and an inline immediate invalid-world observation without
+   snapshotting a dead sink. Ten named files, doc-only fences where appropriate.
+5. Falsifiable: required-API positive compile and opaque/non-exhaustive negative
+   doctests; valid pre-existing sibling cannot alter outcomes/bytes; exact final
+   sample300 cleanup, nonempty stdout retained; failed-reset projection captured
+   immediately before/after Err before collection. Existing accepted checks stay.
+6. Coherent/portable: full current prompt/plan/ledger/review plus bounded authority
+   and source manifest, itemized pre-edit intake/readback and45–65k budget. Initial
+   prompt immutable; four accepted rows dated and proposed for retention, affected
+   facade/docs/example/native recipes fresh. Zero executed/one issued correction;
+   Slice05 and CDC arc gate held. Only routine planning/status updates.
 
 ## Version history
+
+- v1.1 — 2026-10-13: CRC accepts four rows at7404fe2, keeps IC-04/06 open and
+  issues bounded iteration01 F-01–F-04 under unchanged CDC12.
 
 - v1.0 — 2026-10-13: open final approved child after Slice04 acceptance; concrete
   removal/identity/command/cancellation/BPM/runnable scope and six IC rows issued.
