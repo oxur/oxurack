@@ -1,6 +1,6 @@
 # project01-mvp — status
 
-> Current (2026-10-13): Arc10 and [Arc11](../project01-mvp/arc11-observation-workbench/cdc-verification.md)
+> Current (2026-10-14): Arc10 and [Arc11](../project01-mvp/arc11-observation-workbench/cdc-verification.md)
 > are CDC accepted. Arc11 source72fe6b5 delivers five-waveform LFO modulation,
 > bounded Scope capture and terminal/CSV inspection; 14 child and four arc rows done.
 > CDC reproduced46 focused tests and actual repeated10000-sample trace/view/CSV,
@@ -36,13 +36,17 @@
 > Reset first-state/fault, uninterrupted control, saved replay and snapshot-error
 > proof now satisfy the contract. No product defect or structural design change.
 > [Final Slice05](../project01-mvp/arc12-live-rack-operations/slice05-instance-commands/cc-prompt.md)
-> returned7404fe2/a3f350e: CRC accepts IC-01/02/03/05 (removal, handles, synchronous
-> commands/BPM and selected MIDI cleanup). IC-04/06 remain open for exact queue API,
-> session failure/cleanup/docs and immediate failed-reset comparison.
-> [Iteration01](../project01-mvp/arc12-live-rack-operations/slice05-instance-commands/cc-prompt-iteration01.md)
-> is issued; native/host gates and normal session/fresh/no-graph recipes pass.
-> No structural/design amendment. Arc12 composition/CDC and MVP/release gates stay
-> open. Source7404fe2 and main a7ce6e6 unchanged by CRC.
+> was returned7404fe2 with two open rows; now CRC accepts iteration01 at27ca00f/
+> 818d146, all six IC rows done after one correction. All five Arc12 children/27
+> rows accepted. Native/host/feature/docs/build gates, exact collision/cleanup and
+> default/fresh/no-graph recipes pass; original hashes retained.
+> [Arc12 closing report](../project01-mvp/arc12-live-rack-operations/closing-report.md)
+> and [CRC operational evidence](../project01-mvp/arc12-live-rack-operations/crc-verification.md)
+> reproduce the composed edit/save-continuation/metadata/topology/removal/queue/
+> lifecycle/replay session and walk eighteen inherited Arc02–05 rows. Four arc
+> rows remain open for CDC's independent gate and explicit historical-disposition
+> decisions. No current CC prompt or next arc by CRC; no MVP/release acceptance.
+> Source27ca00f and main a7ce6e6 unchanged by CRC.
 > Separate transport remains Arc07; catalog-specific typed forms remain Arc13.
 > Exact engine-state checkpoints remain future work. The historical append-only
 > load defect is repaired by independently accepted Slice04; Slice01's earlier

@@ -1,14 +1,16 @@
 # Arc12 Slice05 — instance removal, handles and explicit commands
 
-Version1.1 — 2026-10-13. Status: open, CRC initial review/correction.
-Current assignment: `arc12-live-rack-operations/slice05-instance-commands/cc-prompt-iteration01.md`.
-Current source baseline: `7404fe227e561746dbda76543b59893feeacfe15` on the assigned
+Version1.2 — 2026-10-14. Status: closed, CRC accepted at27ca00f.
+Current assignment: none; accepted closing assignment is
+`arc12-live-rack-operations/slice05-instance-commands/cc-prompt-iteration01.md`.
+Accepted source: `27ca00f64c902b77c2c16d943f1a2b5f650f7f67` on the assigned
 implementation branch/worktree. Slice04 accepted, all six LF rows done after
 three corrections. Depends on accepted Arc12 children01–04. Blocks Arc12
 composition, not the existing playable instrument/workbench. Three contributors,
 Expedited Mode; CDC directive12 D3/D4 and retained D1/D2 are the approved design.
-Main a7ce6e6 remains protected. Six IC rows: IC-01/02/03/05 independently done;
-IC-04/06 open. Iteration01 issued, first correction1/5; zero corrections executed.
+Main a7ce6e6 remains protected. All six IC rows done; one correction completed1/5.
+Arc12 five-child composition is assembled for CDC, not independently accepted
+by its assembler. Earlier dated review/readiness notes below are history.
 
 ## Delivered capability and design
 
@@ -107,7 +109,7 @@ walk for CDC's independent gate; CRC does not author a new arc unilaterally.
 | Date | Prompt | Predecessor / authority | Disposition |
 | --- | --- | --- | --- |
 | 2026-10-13 | arc12-live-rack-operations/slice05-instance-commands/cc-prompt.md | CRC accepted Slice04 ec85ebe/CC planning972e3b7; CDC12 D3/D4; Duncan relay/Expedited Mode | Returned7404fe2/a3f350e; CRC four rows done/two open, superseded by iteration01; no slice acceptance |
-| 2026-10-13 | arc12-live-rack-operations/slice05-instance-commands/cc-prompt-iteration01.md | CRC initial review F-01–F-04 at7404fe2; initial prompt preserved | Active first correction1/5; exact queue API, bounded session fixes/docs and immediate failure observation |
+| 2026-10-13 | arc12-live-rack-operations/slice05-instance-commands/cc-prompt-iteration01.md | CRC initial review F-01–F-04 at7404fe2; initial prompt preserved | Returned27ca00f/818d146; CRC2026-10-14 accepts IC-04/06, retains four accepted rows; Slice05 closed, one correction completed1/5 |
 
 ## Initial CRC review and iteration01 readiness — 2026-10-13
 
@@ -146,7 +148,25 @@ Six author checks for iteration01:
    facade/docs/example/native recipes fresh. Zero executed/one issued correction;
    Slice05 and CDC arc gate held. Only routine planning/status updates.
 
+## Final review and bubble-up — 2026-10-14
+
+Iteration01 satisfies F-01–F-04; all six rows done. Required public API and privacy
+compile checks, immediate failed-reset state, collision300/exact cleanup, useful
+API docs and fresh affected/native/host/recipe checks reproduce. Four prior
+acceptances retain their original date/revision with an inspected delta rationale.
+No source/architecture/scope amendment by CRC, no durable supporting artifacts.
+Initial prompts/failed evidence and CC's closing report remain preserved.
+
+This completes the final child: Arc12 has five accepted slices/27 rows. CRC
+assembles current composition, all eighteen Arc02–05 inherited rows and original
+future deferrals in the arc closing-report/crc-verification records. CDC retains
+independent acceptance and explicit historical-disposition decisions; all four
+arc rows and six original project rows remain open. No next arc or CC prompt.
+
 ## Version history
+
+- v1.2 — 2026-10-14: iteration01 accepted at27ca00f, all six IC rows done;
+  final child closes after one correction, Arc12 assembled for independent CDC gate.
 
 - v1.1 — 2026-10-13: CRC accepts four rows at7404fe2, keeps IC-04/06 open and
   issues bounded iteration01 F-01–F-04 under unchanged CDC12.

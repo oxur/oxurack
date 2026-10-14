@@ -1,10 +1,11 @@
 # Arc12 — live rack operations
 
-Version1.13 — 2026-10-13. Status: active; Slice01–04 CRC accepted. Slice04
-iteration03 at ec85ebe closes all six LF rows after three corrections. Final child
-[Slice05 instance/commands](slice05-instance-commands/cc-prompt-iteration01.md) has
-four IC rows independently done at7404fe2; IC-04/06 open with iteration01 issued.
-Four arc rows remain open for five-child composition and CDC review.
+Version1.14 — 2026-10-14. Status: CRC composition assembled; awaiting CDC review
+and historical-disposition decisions. All five children/27 rows CRC accepted;
+final Slice05 iteration01 closes at27ca00f after one correction. Four arc rows
+remain open. See [closing report](closing-report.md), [CRC operational evidence](crc-verification.md)
+and [ledger](ledger.md). CDC's independent verification is not yet authored;
+no next arc or CC assignment. Earlier dated child-state notes below are history.
 Depends on accepted Arc10/Arc11; source predecessor72fe6b5. Blocks saved/live
 musical workflow and Arc07 controls. Related: carried-over Arcs02–05; Arc13 catalog.
 Authority: approved successor roadmap and Duncan's explicit “Continue with live
@@ -93,13 +94,14 @@ Read registered getters at snapshot time; missing getters fail rather than silen
 saving defaults or initial overrides. Public facades use owned Patch/ParameterValue
 and CoreError, without requiring consumers to obtain the Bevy world.
 
-Loaded patch membership uses PatchHandle. A source inspection found that current
-load_patch/apply_patch_to_world appends entities and replaces only the handle; its
-existing replacement test checks the handle alone. Slice04 must repair and prove
-actual old-module/cable retirement, reset ownership and failure behavior before
-claiming in-place replacement. Slice01 reloads into a fresh rack and snapshots
-only the active handle; it must not accidentally persist stale prior entities.
-This discovered gap is owned here, not an Arc11 defect or a new prerequisite arc.
+Loaded patch membership uses PatchHandle. Was: facade load/apply appended entities
+and replaced only the handle, and its historical test checked that handle alone.
+Now: accepted Slice04 constructs an isolated candidate and retires the complete
+old App only after validation/cleanup admission. Failure preserves the old owner;
+Slice05 retires single instances in place. Core apply_patch_to_world remains the
+explicitly low-level nontransactional primitive; facade lifetime semantics must
+not be attributed to it. Slice01's fresh-rack snapshot recipe remains valid.
+The discovered gap was repaired here, not reframed as an Arc11 defect or new arc.
 
 The existing RON CableConfig has no enabled field. Slice01 reports an explicit
 unsupported-snapshot error for disabled selected cables, rather than silently
@@ -120,7 +122,8 @@ Explicitly disposition original requirements at the arc close; no silent droppin
 
 ## Proof, closure and boundaries
 
-Five first-slice rows and four arc composition rows are the present contracts.
+Five child slices/27 accepted rows and four still-open arc composition rows
+are the present contracts.
 Use real modules, loaded RON, per-sample MIDI drain and fresh replay. Preserve
 unaffected independent evidence with revision/rationale; rerun affected native
 checks. No new validator, probe crate, coverage campaign or endpoint audition is
@@ -219,7 +222,28 @@ recipes pass. See child crc-verification.md and preserved iteration01 prompt.
 No structural/design amendment or final-child/arc closure; zero corrective passes
 executed, first issued. CDC composition gate and inherited re-entry owners unchanged.
 
+## Final child closure / CDC composition handoff — 2026-10-14
+
+CRC accepts Slice05 iteration01 at27ca00f/818d146, all six IC rows done after one
+correction. All five children/27 rows accepted; current all-target feature modes,
+public doctests, native/host retry, lint/strict Clippy/docs/builds and musical
+recipes reproduce. One composed real owner carries parameter/metadata/topology
+edits and save-continuation through removal, queued reload, fresh replay, restart,
+failed-load preservation and reset cancellation in both feature modes. No source
+repair or structural amendment by CRC.
+
+Arc closing-report.md/crc-verification.md assemble R-01–R-04 and eighteen inherited
+Arc02–05 rows. All four arc rows remain open for CDC's independent gate, including
+explicit disposition of the original PatchUnloaded trigger and interpretation of
+source-ordered versus globally timestamped notification proof. Original future
+metadata/graph and approved Arc07/13 deferrals are disclosed, not silently removed.
+CDC confirms or issues the next directive; CRC does not open Arc13/07 here.
+
 ## Version history
+
+- v1.14 — 2026-10-14: Slice05 closes at27ca00f; five children/27 rows accepted.
+  Current composition/18-row inherited packet assembled for independent CDC
+  review and residual disposition; all four arc gates remain open.
 
 - v1.13 — 2026-10-13: routine Slice05 review at7404fe2; four IC rows done/two
   open, bounded iteration01 issued. CDC12 design and arc gates unchanged.

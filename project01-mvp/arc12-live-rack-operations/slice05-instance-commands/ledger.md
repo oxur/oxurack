@@ -1,19 +1,19 @@
 # Instance commands — acceptance ledger
 
-Opened2026-10-13 before implementation. Six IC rows. CRC independently reviews
-7404fe2/a3f350e: IC-01/02/03/05 done; IC-04/06 open for F-01–F-04 in
-crc-verification.md. Current assignment cc-prompt-iteration01.md, first
-correction1/5 issued, zero corrections executed. Slice05/Arc12 remain open.
-CC attestation and independent reproduction are separately attributed below.
+Opened2026-10-13 before implementation. Six IC rows, all done. CRC accepts
+iteration01 at27ca00f on2026-10-14; Slice05 closed after one correction1/5.
+IC-01/02/03/05 retain their CRC2026-10-13 acceptance at7404fe2 with checked
+applicability; IC-04/06 freshly accepted at27ca00f. See crc-verification.md.
+No current CC assignment; Arc12 independent composition/CDC gate remains open.
 
 | ID | Criterion | Verify | Significance | Origin | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | IC-01 | In-place removal retires exact owned hierarchy and incident topology in order, preserving survivors and failure state | Actual A→B→C/B→B/parallel removal; index/World/graph and ordered events; direct graph incoming/outgoing/self/name-map regressions; survivor/control/Scope and admission/error boundaries | correctness-grade | CDC12 D1/D3/D4; Arc05 runtime membership | done | attested: `cargo test --locked -p oxurack-core module_removal_orders_all_incident_cables`; `cargo test --locked -p oxurack --test instance_commands`; lifecycle removal/nested-owner tests; reproduced: CRC2026-10-13 at7404fe2, crc-verification.md | CRC accepted behavior at7404fe2; dated evidence retained only after delta review. Parent gates remain open. |
 | IC-02 | Owned references and typed handles reject wrong type, cross-rack and stale lifetime/instance use before mutation | Real Clock/LFO/TM bindings; same-kind different Rust type; removed/reused/replaced/restarted/unloaded and failed-load/survivor cases; bound ports/knobs and dotted/tuple names | correctness-grade | CDC12 D3; Arc05 handles | done | attested: `cargo test --locked -p oxurack --test instance_commands` (14 tests); reproduced: CRC2026-10-13 at7404fe2, crc-verification.md | CRC accepted behavior at7404fe2; dated evidence retained only after delta review. Parent gates remain open. |
 | IC-03 | Every synchronous command uses actual behavior/provenance and global BPM persists independently of Clock | All eight variants; typed events/graph without tick; real save/load, Panic/reset; global133/Clock120, invalid BPM and low-level unsupported cases | correctness-grade | CDC12 D3 commands/global tempo | done | attested: `cargo test --locked -p oxurack commands::tests` (4 tests); `cargo test --locked -p oxurack --example rack-session` (2 tests); `instance_commands` (14 tests); reproduced: CRC2026-10-13 at7404fe2, crc-verification.md | CRC accepted behavior at7404fe2; dated evidence retained only after delta review. Parent gates remain open. |
-| IC-04 | Explicit FIFO queue preserves bounded outstanding slots, failures, identity and exactly-once reset cancellation results |64 accepted/65th rejected; checked ID exhaustion; execution-time path/name resolution; App swap retains tail; direct/queued reset, cancelled capacity, reset failure and one-time collection | correctness-grade | CDC12 D1/D3 queued load/save | open | iteration01 attested in source `27ca00f`: 4 command unit tests, 14 `instance_commands` tests, private/non-exhaustive API positive and 3 compile-fail doctests; immediate owned failed-reset projection compares before processing. Full facade all-target feature gates passed. Retained: CRC 2026-10-13 at7404fe2, `crc-verification.md`. | CRC F-01 public API/opacity and F-03 immediate failed-reset observation; iteration01. |
+| IC-04 | Explicit FIFO queue preserves bounded outstanding slots, failures, identity and exactly-once reset cancellation results |64 accepted/65th rejected; checked ID exhaustion; execution-time path/name resolution; App swap retains tail; direct/queued reset, cancelled capacity, reset failure and one-time collection | correctness-grade | CDC12 D1/D3 queued load/save | done | reproduced: CRC2026-10-14 at27ca00f, crc-verification.md Iteration01 independent review; prior CC attestation remains in closing-report.md | Exact public API/privacy, bounded queue and immediate failed-reset state proof pass. |
 | IC-05 | Selected sink removal appends exact bounded cleanup before releasing reservation, preserving other sinks and first fault | Actual sample300 literal NoteOff62/CC123/CC120; zero-sink drain, channel reuse/accounting/storage and other dirty sink/peak regressions | correctness-grade | CDC12 D2/D3; single MIDI owner | done | attested: `cargo test --locked -p oxurack-mod-midiout` (10 tests); selected-silence/channel-reuse and first-fault tests; live session trace; reproduced: CRC2026-10-13 at7404fe2, crc-verification.md | CRC accepted behavior at7404fe2; dated evidence retained only after delta review. Parent gates remain open. |
-| IC-06 | Runnable instance/command session composes with persistence, Scope and native feature gates; inherited scope remains accounted for | rack-session real handles/removal/FIFO/failure/save plus fresh/default-no-graph traces; native core/MIDI-out/graph/facade/workspace/lint/Clippy/docs/builds; six-row/Arc05 and successor walk | serious | CDC12 D4; directive08; Arc12 composition | open | iteration01 attested in source `27ca00f`: runner 2 tests cover existing adjacent valid sibling preservation, exact 300-sample trace and both cleanup batches, repeat-reset emptiness, missing input and invalid save; live/fresh/no-graph 2000-sample traces match; MIDI2000 and LFO10000 hashes unchanged; full native gates pass after unchanged host retry. Retained: CRC 2026-10-13 at7404fe2, `crc-verification.md`. | CRC F-02 session missing-path/final cleanup and F-04 documentation; iteration01. |
+| IC-06 | Runnable instance/command session composes with persistence, Scope and native feature gates; inherited scope remains accounted for | rack-session real handles/removal/FIFO/failure/save plus fresh/default-no-graph traces; native core/MIDI-out/graph/facade/workspace/lint/Clippy/docs/builds; six-row/Arc05 and successor walk | serious | CDC12 D4; directive08; Arc12 composition | done | reproduced: CRC2026-10-14 at27ca00f, crc-verification.md Iteration01 independent review; prior CC attestation remains in closing-report.md | Collision-safe runner, exact final/reference cleanup, API docs and current recipes/gates pass. |
 
 ## CRC initial review — 2026-10-13
 
@@ -23,3 +23,11 @@ CRC independently accepts IC-01/02/03/05 at that source/date. Native gates, exac
 host retry and normal musical recipes pass; restricted failures preserved.
 Initial cc-prompt.md remains unchanged. Iteration01 repairs only the unresolved
 contract/recipe/documentation/evidence gaps; no slice or Arc12 acceptance.
+
+## CRC iteration01 final disposition — 2026-10-14
+
+All six IC rows done; four prior acceptances retained with byte/delta rationale,
+two remaining rows independently accepted at27ca00f. One correction completed1/5.
+No criterion change or new unresolved Slice05 finding. Source/main unchanged by
+CRC; initial failed review and both issued prompts remain preserved. Arc12 now
+has five accepted children/27 rows; composition/CDC acceptance stays separate.

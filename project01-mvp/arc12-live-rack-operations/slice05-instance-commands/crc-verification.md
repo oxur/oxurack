@@ -1,5 +1,9 @@
 # Slice05 independent CRC review
 
+**Current verdict — 2026-10-14: iteration01 accepted at27ca00f; all six IC rows
+done, Slice05 closed.** One corrective pass completed. The initial failed review
+below remains history. Arc12 composition/CDC acceptance is separate and pending.
+
 2026-10-13. Sofie/CRC, Three-Contributor Workflow, Expedited Mode.
 Reviewed source `7404fe227e561746dbda76543b59893feeacfe15`, parent
 `ec85ebe99c09b8a2ea64d55da0346af4ae317a67`, and CC planning return
@@ -172,3 +176,119 @@ Planning handoff check: six current rows (four done/two open), exact eight
 planning paths, active iteration01 identity and unchanged initial prompt digest
 verified. No pre-staged files, source/main pins clean and unchanged; planning
 git diff --check passes. The original CC closing report is unedited.
+
+## Iteration01 independent review and closure — 2026-10-14
+
+Reviewed `27ca00f64c902b77c2c16d943f1a2b5f650f7f67`, parent7404fe2, and CC
+planning `818d146007c359333b3188f234a1328e0b01f4ab`. Review began2026-10-13
+and completed2026-10-14. Preserved `cc-prompt-iteration01.md` SHA256
+`8b240480647fec590e4783d319a4b73ee39a4aaaff6c925aa81f253b7918f3f4`
+matches issuance603a32d and CC intake. Source/planning clean at intake; main
+remains a7ce6e6. The full delta changes exactly the ten authorized paths; no
+source repair by CRC. CC records complete intake/readback and failed/retried
+checks in its existing report. Its earlier mistaken sentence about all rows
+being open did not change the four already accepted ledger rows.
+
+### Findings resolved and retention
+
+- F-01: exact public CommandOutcome{id,result}, non-exhaustive CommandResult and
+  opaque CommandId now exported. Private Pending/Completed enum, preallocated64
+  slots, checked increment, cancelled capacity and pop-before-execute preserved.
+  Fresh public consumer compiles/runs with Vec<CommandOutcome>; constructing
+  CommandId(42) now fails E0423. Native positive and three compile-fail doctests
+  pass, including field privacy and non-exhaustive matching. FIFO/reset/capacity/
+  exhaustion tests pass in both facade modes.
+- F-02: missing-load input lives in an exclusively created temporary directory;
+  AlreadyExists retries leave existing paths intact. Normal and early-return
+  cleanup use its owned guard; directory removal is best-effort in Drop, not a
+  guarantee under arbitrary external filesystem failure. The prior valid sibling
+  reproducer now succeeds and preserves its bytes. Actual samples300 stdout stays
+  exactly `251|90 3E 15\n`; final/reference each record the ordered sample300
+  NoteOff62, CC123, CC120. Repeated reset is empty; post-cleanup Scope count604.
+  The ordinary2000 trace remains14 rows and matches fresh/no-graph; status now
+  reports4016 records after cleanup. Zero/missing input and invalid save tests pass.
+- F-03: a real16-sample captured run, two distinguishable queued commands and
+  explicit test fault marker precede deliberately corrupted sink accounting.
+  Owned projection includes queue IDs/commands/counter, SampleTime, Fixed elapsed/
+  overstep, Virtual elapsed/delta/pause, driver/running, output/fault, complete
+  Scope selection/capacity/overwrite/records and all existing typed mutation/load
+  messages. Exact OutputCapacity accounting error followed immediately by equality
+  precedes any processing. Original IDs then complete in order without cancellation;
+  fault marker remains. No snapshot of the invalid World or new product defect.
+- F-04: required new API error/lifetime/cancellation documentation and producer
+  descriptions are supplied; README has the full default/fresh/no-graph recipe.
+  Inspection confirms the docs describe actual delegated behavior; strict docs pass.
+
+Five doc-only paths (core event/topology, MIDI-out, facade handles/lifecycle)
+are byte-identical after stripping rustdoc lines. Lib change is the authorized
+export migration. Integration changes only migrate the queue representation and
+remove external numeric-ID construction; accepted removal/identity/MIDI assertions
+remain. Commands retain the same synchronous eight-variant implementation. Thus
+IC-01/02/03/05 acceptance from CRC2026-10-13 at7404fe2 remains applicable, with
+affected tests freshly rerun and additional current arc integration below. This
+does not relabel the earlier external witness as newly run.
+
+### Fresh final-source gates and recipes
+
+All commands from the assigned source worktree at27ca00f:
+
+| Command | Result |
+| --- | --- |
+| cargo test --locked -p oxurack --all-targets | exit0;63 facade unit,14 instance-command,11 lifecycle; other integrations/examples pass |
+| cargo test --locked -p oxurack --no-default-features --all-targets | exit0;61 facade unit and corresponding integrations/examples pass |
+| cargo test --locked -p oxurack --doc | exit0;1 positive,3 compile-fail |
+| make test, restricted | exit2; RT146 passed,4 existing CoreMIDI initialization failures,3 existing ignores |
+| unchanged make test, host access | exit0; RT150 passed,0 failed,3 existing ignores; workspace/doctests pass |
+| make lint | exit0 |
+| cargo clippy --locked -p oxurack-core -p oxurack-mod-midiout -p oxurack-graph -p oxurack --all-features --all-targets -- -D warnings | exit0 |
+| RUSTDOCFLAGS='-D warnings' make docs | exit0 |
+| cargo build --locked -p oxurack --examples | exit0 |
+| cargo build --locked -p oxurack --no-default-features --examples | exit0 |
+| git diff --check | exit0 |
+
+Restricted failure names/reasons are unchanged from the initial review. Existing
+block0.1.6 and no-default unused_mut advisories remain visible; no suppression,
+new ignore or endpoint. Transient logs: tmpdir
+`oxurack-crc-slice05-iteration01-f5r35cs6`,01–10.log/results.jsonl; host
+`/tmp/oxurack-crc-27ca00f-host-make-test.log`.
+
+Fresh CLI reproduction uses the README recipe plus the previous existing-sibling
+negative case, original fixtures, annotation/rewire recipes and --lifecycle.
+All exit0. The original MIDI13/LFO70 hashes and current14-row session hash recorded
+above remain exact; sample300 sibling case gives one trace row and both cleanup
+blocks. The lifecycle CLI remains72 rows, SHA256
+`20d86b836d7540a2ac6bf725f5045dfe6304fa7a027d703f22e1fe93f27613ba`.
+Temporary recipe directory: `oxurack-crc-27ca00f-recipes-zjt2n6jn`.
+The current public compile/execute/privacy witnesses use fresh Cargo JSON artifact
+paths in `oxurack-crc-arc12-composition-go1xjkk5/default`, not an old facade rlib.
+
+### Six-row close walk and bubble-up
+
+| Row | Final | Evidence |
+| --- | --- | --- |
+| IC-01 | done | CRC7404fe2 retirement/hierarchy/order/index/graph/survivor/admission proof retained; unchanged behavior, affected tests fresh |
+| IC-02 | done | CRC7404fe2 identity/type/bound-ref proof retained; handles implementation unchanged, tests fresh |
+| IC-03 | done | CRC7404fe2 eight-command/provenance/global-BPM proof retained; representation migration preserves execution, current composed run confirms save/load/edit/BPM/reset |
+| IC-04 | done | CRC27ca00f exact external API/privacy, native queue boundaries and immediate failed-reset state proof |
+| IC-05 | done | CRC7404fe2 selected sink cleanup/reservation/fault proof retained; only docs changed, workspace and affected facade checks fresh |
+| IC-06 | done | CRC27ca00f collision300/exact cleanup/docs and normal default/fresh/no-graph/native recipes |
+
+Six rows done, zero open/deferred/no-op; one correction completed1/5. Assigned
+capability is delivered, initial and corrective prompts preserved, no criterion
+or source-scope amendment. Supporting durable artifacts: none; reports/prompts
+remain first-class slice files, temporary witnesses/logs are conveniences only.
+CC's closing report stays unedited. What worked: public-consumer checks, a real
+existing-file counterexample, exact cleanup and immediate owned observations
+closed the actual gaps without new product infrastructure.
+
+This final child makes all five Arc12 children/27 rows accepted. CRC now assembles
+the arc's current composition and inherited walk, with CDC retaining independent
+design/composition acceptance and remaining historical-disposition decisions.
+Arc12 R-01–R-04/projectP-01–P-06 are not closed here. No new arc/CC assignment,
+merge, push, release or endpoint authority follows.
+
+Planning close/relay check,2026-10-14: exact ten planning paths, all five child
+ledgers/27 done, four arc rows open, six original project rows open/P-07 done,
+eighteen inherited rows and unchanged issued prompts/CC report verified. New
+arc links resolve; source/main pins remain clean/unchanged; no staged unrelated
+files or prefilled CDC verdict. Planning diff check passed.

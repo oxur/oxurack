@@ -94,3 +94,15 @@ meets P-07 as written; CDC marks that row done. Six original project rows remain
 open and project closure still requires its full independent/Operator gates.
 Directive10 opens Arc12/Slice01 at Duncan's request. P-02/P-04 gain future evidence
 from live configuration saves; their broader project acceptance is not claimed now.
+
+## Arc12 CRC composition return — 2026-10-14
+
+[Arc12 closing report](arc12-live-rack-operations/closing-report.md) and
+[CRC operational record](arc12-live-rack-operations/crc-verification.md) at27ca00f
+account for five accepted children/27 rows, current composed edit/save/metadata/
+topology/removal/queue/lifecycle/Scope replay in both feature modes and eighteen
+inherited Arc02–05 rows. Arc12 R-01–R-04 remain open for CDC independent review
+and explicit residual disposition; next arc/first slice remains CDC-owned.
+This supports P-01/P-02/P-04/P-05/P-06 but closes none. P-03 hardware timing,
+P-04 Operator/controller acceptance and P-05 quality/resource obligations remain;
+P-07 keeps its prior CDC acceptance and no endpoint/release claim is added.

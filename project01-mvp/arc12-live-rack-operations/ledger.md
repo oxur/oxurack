@@ -1,14 +1,16 @@
 # Arc12 — composition ledger
 
-Opened2026-10-11 before implementation. Five planned children after directive12; four open rows.
-CRC assembles composition; CDC independently accepts. No child completion inferred.
+Opened2026-10-11 before implementation. Five accepted children/27 rows as of
+2026-10-14, final source27ca00f. CRC composition packet assembled; all four arc
+rows remain open for independent CDC verification and historical disposition.
+See closing-report.md and crc-verification.md; no CDC verdict inferred.
 
 | ID | Criterion | Verify | Significance | Origin | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| R-01 | Current live configuration survives save and fresh reload with seeded musical behavior | Run edit/save/reload on real Clock/LFO/TM/MIDI; compare fresh equivalent configuration and unchanged saving-rack continuation | correctness-grade | Arc02 live snapshot; Operator selection | open | Slice01 CRC accepted at fabfa1cb; slice01-live-persistence/crc-verification.md | Child evidence only; full arc assembly/CDC gate pending |
-| R-02 | Runtime metadata/topology changes compose with events, graph freshness and persistence | Execute live edits and rejected edits; assert notifications, immediate graph queries and reloaded patch | correctness-grade | Arcs03/04 | open | Slice02 five M rows CRC accepted at20c60ef; Slice03 five G rows CRC accepted atdeafdd228; respective crc-verification.md records | Reconcile all inherited child rows |
-| R-03 | Public lifecycle and runtime operations preserve ownership through replacement/unload/reset | Actual running rack and MIDI owner checks; old entities retired and explicit failures; retained API/command obligations dispositioned | correctness-grade | Arc05; discovered append-only loading | open | Slice04 six LF rows CRC accepted at ec85ebe; slice04-runtime-api/crc-verification.md; Slice05 IC-01/02/03/05 CRC done at7404fe2, IC-04/06 open | No implicit async platform prerequisite; final composition/CDC review pending |
-| R-04 | Children, legacy obligations and native checks reconcile without scope loss | Five child walks, inherited successor table, fresh composed demonstration and retained/fresh checks | serious | Framework composition | open | — | Full project/release gates remain separate |
+| R-01 | Current live configuration survives save and fresh reload with seeded musical behavior | Run edit/save/reload on real Clock/LFO/TM/MIDI; compare fresh equivalent configuration and unchanged saving-rack continuation | correctness-grade | Arc02 live snapshot; Operator selection | open | CRC operational reproduction at27ca00f,2026-10-14; closing-report.md and crc-verification.md; accepted child ledgers | Current composed behavior reproduced; independent CDC acceptance pending, row remains open. |
+| R-02 | Runtime metadata/topology changes compose with events, graph freshness and persistence | Execute live edits and rejected edits; assert notifications, immediate graph queries and reloaded patch | correctness-grade | Arcs03/04 | open | CRC operational reproduction at27ca00f,2026-10-14; closing-report.md and crc-verification.md; accepted child ledgers | Current composed behavior reproduced; independent CDC acceptance pending, row remains open. |
+| R-03 | Public lifecycle and runtime operations preserve ownership through replacement/unload/reset | Actual running rack and MIDI owner checks; old entities retired and explicit failures; retained API/command obligations dispositioned | correctness-grade | Arc05; discovered append-only loading | open | CRC operational reproduction at27ca00f,2026-10-14; closing-report.md and crc-verification.md; accepted child ledgers | Current composed behavior reproduced; independent CDC acceptance pending, row remains open. |
+| R-04 | Children, legacy obligations and native checks reconcile without scope loss | Five child walks, inherited successor table, fresh composed demonstration and retained/fresh checks | serious | Framework composition | open | CRC operational reproduction at27ca00f,2026-10-14; closing-report.md and crc-verification.md; accepted child ledgers | Five children/27 rows and eighteen inherited rows accounted; original notification/future-feature dispositions require CDC gate. |
 
 ## Child advancement — 2026-10-12
 
@@ -77,3 +79,11 @@ and ordinary session/fresh/no-graph/fixture hashes pass; exact public queue API,
 example failure/cleanup/docs and immediate reset-failure evidence need correction.
 R-01–R-04 remain open; five-child composition/CDC acceptance not yet assembled.
 See child crc-verification.md. No architectural or inherited-scope amendment.
+
+CRC final-child/composition return — 2026-10-14: Slice05 iteration01 accepted
+at27ca00f/CC818d146; all27 child rows done. Current runtime composition and native
+host/feature/recipe evidence reproduced; no new product defect. closing-report.md
+and crc-verification.md account for all eighteen inherited Arc02–05 rows and
+remaining historical questions. R-01–R-04 stay open until CDC verifies the same
+candidate and dispositions residuals. No cdc-verification.md authored by CRC;
+no new arc/project/release acceptance or source/main change.
