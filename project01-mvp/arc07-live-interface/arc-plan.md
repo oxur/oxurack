@@ -1,7 +1,8 @@
 # Live interface
 
-Status: active — v2.1, 2026-10-14; Slice01 iteration01 issued, all acceptance
-rows open. The current executable plan below supersedes this historical outline.
+Status: active — v2.2, 2026-10-14; Slice01 CRC-accepted at e582aed,
+both arc acceptance rows open; Slice02 design return awaits CDC. The current
+executable plan below supersedes this historical outline.
 
 ## Capability and dependencies
 
@@ -72,7 +73,7 @@ release. Keep A-07-01/A-07-02 open until the full capability composes.
 
 | Slice | Product increment / inherited responsibilities | Dependency/state |
 | --- | --- | --- |
-| slice01-live-controls | Play/pause/reset, scalar live edits, Scope and save while the existing instrument plays; executable terminal | Arc12; complete open set issued |
+| slice01-live-controls | Play/pause/reset, scalar live edits, Scope and save while the existing instrument plays; executable terminal | CRC accepted e582aed, five LC rows done after one correction |
 | slice02-session-observation | Interactive lifecycle/topology/metadata session editing, REPL completion and watch/subscriber observation; actual unload receipt and cross-type observer proof, tag search, per-note/richer metadata representation | Slice01; detail before issue, CDC resolves new observer/metadata semantics |
 | slice03-controller-config | Bounded MIDI-CC/controller mapping with user configuration, remaining tag/formatter configuration | Slice01/02; detail before issue and specify device witness |
 | slice04-external-transport | Separate power/external START/STOP/CONTINUE and clock-selection controls over actual RT bridge | Prior live session; design before issue; retains hardware timing owner Arc08 |
@@ -111,8 +112,9 @@ These obligations are neither silently dropped nor called delivered by 01.
 
 CDC owns arc/first-slice design; CRC reviews 01 and escalates consequential02 design
 through Duncan. Expedited Mode retains scoped commits, preserved prompts and
-independent gates. Current assignment: slice01-live-controls/cc-prompt.md; no
-other child assignment. Slice01's 5 rows are open, arc 2 rows open. CRC assembles
+independent gates. Current assignment: none; Slice01's five rows are CRC-accepted
+at e582aed. [Escalation14](../crc-escalation14.md) awaits CDC design return before02
+authoring. Both arc rows stay open. CRC assembles
 arc closure only when its whole capability and retained responsibilities compose.
 
 Version history: v2.0 — 2026-10-14, Arc12's working lifecycle/commands remove the
@@ -153,3 +155,17 @@ structure and CDC13 residual/design boundaries remain unchanged; no02 prompt.
 
 Version history: v2.1 — Slice01 initial review surfaces in-scope frontend repair
 and proof needs; record corrective assignment without changing arc scope/design.
+
+CRC closure/design return — 2026-10-14: accepted Slice01 iteration01 e582aed /
+CC518897; five LC rows done, one corrective pass executed. [CRC record](slice01-live-controls/crc-verification.md)
+contains fresh affected native/host/actual CLI/control proof and resolves F-01–F-05.
+No structural amendment is needed for01. Directive13's post-close source inspection
+is complete; [crc-escalation14.md](../crc-escalation14.md) is **awaiting CDC** through
+Duncan, predecessor directive13 and accepted01 return. It requests observation
+owner/identity/delivery/order, lifetime transition matrix, session/Scope/MIDI rules,
+per-note/persistence/tag-query compatibility and completion/sizing decisions.
+CRC has not approved a new architecture or issued02. CDC returns directive14;
+CRC can then detail the approved successor. A-07-01/A-07-02 remain open.
+
+Version history: v2.2 — independently close01 and record the required02 design
+return; existing four-increment outline and inherited responsibilities unchanged.

@@ -1,7 +1,12 @@
 # Arc07 Slice01 — independent CRC verification
 
 2026-10-14, Sofie/CRC; Three-Contributor Workflow, Expedited Mode.
-**Initial verdict: changes required. LC-01–LC-05 remain open.**
+**Current verdict: iteration01 accepted at e582aed6e87c234799921cc66a5dd55214f76afd;
+LC-01–LC-05 done, Slice01 closed.** Initial failed review below is preserved;
+see the dated iteration01 verification for the current evidence and bubble-up.
+
+## Initial review — 2026-10-14 (a603a24)
+
 Source `a603a24d3e02c377557445bd2ef27e4203b33392`; CC planning
 `9fdb513a2cc72ea9d4cafdc3c4f063408966e333`, both worktrees clean at intake.
 Initial assignment `cc-prompt.md`, SHA256
@@ -158,3 +163,129 @@ README update was identified after review commit c29f29a. Corrected the unrelaye
 iteration01 draft's root-state note without changing its source pin, scope or
 oracles. No second iteration was issued or executed; original cc-prompt.md remains
 byte-identical. All worktrees are clean after the scoped metadata follow-up.
+
+## Iteration01 independent verification — 2026-10-14
+
+**Accepted source:** `e582aed6e87c234799921cc66a5dd55214f76afd`.
+CC planning return: `518897ed5978e9e6b3fece776a1fe8bb1ca63537`, clean at intake.
+Assignment: `cc-prompt-iteration01.md`, SHA256
+`91b126d3a2c7de111584ba8719e3c6361afb93446895663c5b943fc235fb6a74`.
+Initial prompt retains its db9e7e95… SHA above; both match issuance39b8427 bytes.
+One corrective pass executed1/5. No source repair by CRC. Root main is separately
+clean at docs-only cd3119ca7ca3884d4a6705904cb1dc42f9d87bad; source checkout
+stays the named implementation worktree, not that documentation branch state.
+
+### Delta, intake and independent results
+
+Reviewed the full four-path delta a603a24→e582aed: README, rack-live.rs,
+rack_live/control.rs and input.rs only. No facade/core/engine/RT/shared-helper/
+fixture/dependency change. Read CC's required-reading/readback and correction
+history: CC disclosed an early draft patch restored before completing intake,
+then reapplied after readback. Final scope/contract is coherent; reading receipts
+remain attestation. This review checks behavior rather than inferring it from
+that receipt or the report's green gate summary.
+
+The real owner_turn services up to8 inputs before one sample opportunity, tests
+cancellation and preserves due time across repeated play/status. Only a paused→
+running transition establishes a fresh deadline; post-tick scheduling discards
+accumulated lateness. Default capture/status/help follow the assigned observation
+contract. Native delivery writes trace after successful send and marks Sent only
+for success. LiveFailure preserves primary and later cleanup stages, and completed
+reader panic now reaches the executable result. Receiver drop stops the reader.
+
+Recompiled the **same three initial CRC probes**, keeping their expectations
+unchanged and substituting only the copied current production source plus fresh
+Cargo-JSON-resolved rlibs. All3 now pass (compile0, tests0). This independently
+reproduces repair of the status-flood starvation, native empty trace and discarded
+secondary trace-flush failures. The transient sleeping writer remains a failure
+reproduction; the native production-turn tests supply deterministic fake-time
+correctness checks. No permanent probe or verification framework was added.
+
+Fresh commands from S at e582aed:
+
+| Command / check | Actual result |
+| --- | --- |
+| `cargo test --locked -p oxurack --all-targets` | exit0;20 target groups,212 passed/0 failed; facade64, rack-live41, old MIDI example26 |
+| Same `--no-default-features` | exit0;20 groups,210 passed/0 failed; facade62, rack-live41; existing cables.rs:231 unused-mut warning |
+| `cargo build --locked -p oxurack --examples`, same no-default | both exit0 |
+| `make lint` | exit0 |
+| `cargo clippy --locked -p oxurack --all-features --all-targets -- -D warnings` | exit0 |
+| `RUSTDOCFLAGS='-D warnings' cargo doc --locked -p oxurack --all-features --no-deps` | exit0 |
+| `make test`, restricted | exit2; RT146 passed/4 known CoreMIDI init failures/3 ignored |
+| Exact `make test`, approved host retry | exit0;35 reported groups,1051 passed/0 failed/3 existing ignores, including RT150 and workspace/doctests |
+| `git diff --check` source and scoped planning | exit0 |
+
+Counts are the printed groups of each named invocation, not coverage percentages
+or independent populations to add across runs. Existing block v0.1.6 advisory and
+three RT ignores remain explicit. No warning suppression or endpoint opening.
+Logs: `/tmp/oxurack-crc-arc07-iteration01-*.log`; copied-source probe and actual CLI
+outputs under `/tmp/oxurack-crc-arc07-iteration01-witness`. These are supporting
+scratch, not durable dependencies. Existing native tests are the repeatable checks.
+
+Actual default CLI, **no --scope-view**: startup paused0 with stdin open; help/
+status/Scope; play until real MIDI; reject NaN then Clock90/TM.25/LFO1; getters;
+pause and repeated pause/status570/570; Scope/save/export and collision; clean
+quit0. Trace6 rows, MIDI-only CSV7 lines, default capacity100000. Full status shows
+Clock90 beside global120 and sorted module kinds/parameters. Export collision
+returns an error and later getter still succeeds. Stdout contains only trace rows.
+Actual no-graph CLI selects lfo_main.bipolar_out/capacity16 **without an enable
+flag**; play until a real note, edit/get, pause/status258/258, Scope/export/quit0:
+4 trace rows,17 CSV lines and honest overwritten records. Idle input remained open.
+Plain EOF exits0. Dirty SIGINT while stdin stays open exits0, with:
+
+```text
+251|90 3E 15
+254|80 3E 00
+254|B0 7B 00
+254|B0 78 00
+```
+
+Actual saved file from nonzero live sample570 and a separately edited original
+fixture each replay fresh for2000 samples:8 nonempty MIDI rows, identical SHA256
+`307f3ae91bb6c2e76b5736e8c9cb25ae8db0ff7fb945106eac0f5d0b997e9830`.
+The independent fixture applies Clock90/TM.25/LFO1 to original patch text rather
+than copying the saved file. Native real-rack test additionally compares full
+Scope and negative unchanged-control replay; pause/resume matches public
+stop/reset/drain control through1000 subsequent samples with changing LFO values.
+
+Fresh current example builds retain MIDI2000/13 rows and LFO10000/70 rows:
+`98e109812e40f52ebdd9ae419b8a04938eee84608462158ee10a068760f5dc7b` and
+`988563371b7473412325a22d6babb68cba1468b7719bef3512fafa431e8a687c`.
+These are fresh runs; initial historical evidence is retained at its original
+revision/date only for unchanged facade is_running and prior runtime contracts.
+All affected frontend claims were exercised freshly, not accepted by retention.
+
+### Final five-row walk
+
+| Row | Independently reproduced verifier and result | Disposition |
+| --- | --- | --- |
+| LC-01 | Typed real command/getter/save and invalid-input recovery suites; actual NaN→valid/getter, complete sorted status/help with global120 versus Clock90 | done at e582aed |
+| LC-02 | Actual owner_turn fake-time eight-input/due pause/quit/one-late-sample/repeated-play tests; original flood probe now passes; blocked-reader playback and real1000-sample resumed control/Scope | done at e582aed |
+| LC-03 | Native/trace-only parity including pause, Generated/Sent accounting, failing sender without Sent, literal dirty cleanup, combined failure probe, completed worker panic and bounded shutdown tests; actual EOF/SIGINT | done at e582aed |
+| LC-04 | Default/selected bounded capture, export collision and live Scope/save continuation to1200 with control; nonempty2000-sample independent config replay plus unchanged negative control; actual CLI save/fresh replay | done at e582aed |
+| LC-05 | Both feature/all-target/build/real CLI modes, current lint/strict docs/Clippy, unchanged host retry and pinned finite musical traces | done at e582aed |
+
+F-01–F-05 resolved;5/5 rows done,0 deferred,0 no-op, no remaining reproduced
+Slice01 defect. Initial failed review/report/prompt and correction history remain
+preserved. Slice01 closed after one correction; not Arc07 or project acceptance.
+
+### Bubble-up to Arc07
+
+The delivered increment is a real terminal instrument: paused startup, continuous
+single-owner playback despite waiting input, live scalar edits, honest status/
+Scope/save and explicit endpoint opt-in with orderly silence. Source/ledger/report
+now support the promised Slice01 capability. No new architecture/arc restructuring
+was required by the repairs; the original four-increment outline remains approved.
+CC's close report describes delivery and retained boundaries; its artifact inventory
+is reconciled here: only canonical slice records, no durable supporting artifacts.
+No hidden test harness, new source dependency or release/timing claim was added.
+
+The silent-drop walk distinguishes remaining Arc07 work from delivered01:
+lifecycle/topology/metadata editing, ordered watch across patch replacement,
+per-note/authorship/tag-query representation, REPL completion, controllers/config
+and external transport remain named successors. A-07-01/A-07-02 and P-01–P-06
+remain open; P-07 retains prior acceptance. Directive13 explicitly requires CDC's
+observer/lifecycle/metadata decisions **before**02 implementation authoring.
+CRC inspected those seams at current source and returns the concrete questions
+in [crc-escalation14.md](../../crc-escalation14.md). No Slice02 CC assignment is
+issued. This design gate is unrelated to the now-closed corrective loop.

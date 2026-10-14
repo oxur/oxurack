@@ -27,3 +27,13 @@ Closure must compose the full capability, not merely the first terminal. Histori
 PatchUnloaded/common observer ordering and metadata/config residuals are retained
 as explicit successor obligations in arc-plan.md/directive13. Three contributors,
 Expedited Mode; CRC reviews slices and CDC independently gates the arc.
+
+## CRC child closure / design return — 2026-10-14
+
+Slice01's five LC rows are independently done at e582aed6e87c234799921cc66a5dd55214f76afd
+([CRC verification](slice01-live-controls/crc-verification.md)); one correction
+executed. This delivers terminal playback/editing/Scope/save, not full Arc07.
+Both A-07-01/A-07-02 remain open: controller, session observation/metadata/completion,
+external transport and complete child/residual composition remain outstanding.
+[Escalation14](../crc-escalation14.md) follows directive13's explicit design return
+before02 implementation. No current CC assignment or arc acceptance claimed.

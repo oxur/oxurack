@@ -7,17 +7,18 @@
 > Five children/27 rows and four arc rows done. CDC reproduced composed playback
 > preservation and 10000-sample fresh replay in both feature modes (82 MIDI/30082
 > Scope records); host workspace/lint/docs pass; restricted CoreMIDI failures retained.
-> Duncan selected **live controls for the existing workbench** next.
-> [Directive13](../project01-mvp/cdc-directive13.md) opens Arc07/Slice01:
-> Initial a603a24/9fdb513 return requires correction; current assignment is
-> `arc07-live-interface/slice01-live-controls/cc-prompt-iteration01.md`.
-> Five LC rows remain open: fairness/native trace/error retention and observation/
-> proof gaps; [CRC record](../project01-mvp/arc07-live-interface/slice01-live-controls/crc-verification.md)
-> preserves passing native/ordinary CLI checks and actual failed behavior probes.
-> Terminal play/pause, parameter edits, Scope and save reuse the single MIDI owner.
-> CC source a603a24 is implemented but unaccepted; CRC changed planning only.
-> Root main separately advanced to docs-only1954fad; assigned source pin is
-> unchanged by CRC.
+> Duncan selected **live controls for the existing workbench**. Arc07/Slice01 is
+> now CRC-accepted at e582aed/CC518897: five LC rows done after one correction.
+> [Independent review](../project01-mvp/arc07-live-interface/slice01-live-controls/crc-verification.md)
+> reproduces typed live edits/status, fair playback, default Scope/export/save,
+> native trace/accounting and shutdown; all three original failing probes now pass.
+> Both feature/native/host gates and actual CLI sessions pass; nonempty saved/fresh
+> replay matches independent configuration and pinned MIDI/LFO hashes are intact.
+> [Escalation14](../project01-mvp/crc-escalation14.md), required by directive13,
+> returns02's observer/lifecycle/metadata/completion decisions to CDC through Duncan.
+> No current CC assignment;02 unissued and both Arc07 rows remain open. No arc or
+> project acceptance inferred. Source worktree remains e582aed; CRC changed plans
+> only. Root main has separate documentation-only updates through cd3119c.
 > Historical unload notification/common observer ordering re-enter Arc07/Slice02;
 > metadata/config/controller/transport and catalog/typed/graph extensions retain
 > explicit Arc07/13 owners. Exact checkpoints remain future work.

@@ -1,10 +1,10 @@
 # Arc07 Slice01 — live controls
 
-Version 1.1, 2026-10-14. Status: open, iteration01 returned to CRC;
-five LC rows remain open, no implementation acceptance. Three contributors/Expedited Mode.
+Version 1.2, 2026-10-14. Status: closed; five LC rows CRC-accepted at
+e582aed6e87c234799921cc66a5dd55214f76afd. Three contributors/Expedited Mode.
 CDC author; CRC reviewer; Duncan relays. Depends on Arc12 accepted 27ca00f.
-Current assignment: none; CC's [iteration01](cc-prompt-iteration01.md) return is
-pending independent CRC disposition. Correction1/5 executed; initial prompt preserved.
+Current assignment: none; [iteration01](cc-prompt-iteration01.md) is independently
+accepted. One correction executed1/5; initial prompt and failed review preserved.
 
 ## Goal and boundary
 
@@ -66,7 +66,7 @@ This readiness is CDC author judgment, not independent implementation acceptance
 | Date | Assignment | Predecessor | Reason/status | Next owner |
 | --- | --- | --- | --- | --- |
 | 2026-10-14 | cc-prompt.md | Arc12 CDC acceptance27ca00f; directive13; Duncan selected live controls | Returned a603a24/9fdb513; CRC changes required, five rows open | Preserved; iteration01 supersedes assignment |
-| 2026-10-14 | cc-prompt-iteration01.md | Initial a603a24/9fdb513; CRC F-01–F-05 | Correction1/5 executed and returned proposed-done at source a603a24 descendant; all LC rows remain open, CRC pending | Duncan relays return to CRC for independent review |
+| 2026-10-14 | cc-prompt-iteration01.md | Initial a603a24/9fdb513; CRC F-01–F-05 | CRC accepted e582aed/CC518897 on2026-10-14; correction1/5 executed, all five LC rows done | Closed; mandatory02 design return to CDC |
 
 ## Version history
 
@@ -118,3 +118,22 @@ failed attempts, hashes and per-row proposed evidence are in the dated iteration
 execution section of [ledger.md](ledger.md). This return is proposed-done only:
 all five LC rows stay open pending CRC, and Slice02/Arc07 advancement remains held.
 The two worktree commits are separate; no merge or push was performed.
+
+## CRC closure and bubble-up — 2026-10-14
+
+[CRC verification](crc-verification.md) independently reproduces the complete
+five-row contract at e582aed/CC518897. One correction executed, all five rows done,
+none deferred/no-op; initial failed findings retained. The ordinary terminal
+instrument now supports the approved controls, fair single-owner playback,
+Scope/save and full shutdown semantics in both feature modes. No structural arc
+change is needed to accept01; no durable supporting artifacts outside canonical
+slice records. No source repair, endpoint audition or new acceptance gate by CRC.
+
+As directive13 requires, [escalation14](../../crc-escalation14.md) returns02's
+concrete observation/lifecycle/metadata/completion design decisions to CDC before
+implementation authoring. That named gate, not an unresolved01 failure, holds
+advancement. Arc07's two rows remain open and no02 CC prompt is issued.
+
+Version history: v1.2 — 2026-10-14, independently close iteration01 at e582aed after
+fresh affected native/CLI/control proof; preserve all prior attempts and return
+successor design to CDC through Duncan.

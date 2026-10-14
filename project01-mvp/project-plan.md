@@ -3,26 +3,27 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — Arc10/11/12 CDC accepted; P-07 done; Arc07 live controls selected and Slice01 issued; original P-01–P-06/release gates open |
+| status | active — Arc10/11/12 CDC accepted; P-07 done; Arc07 Slice01 CRC-accepted; Slice02 design with CDC; original P-01–P-06/release gates open |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
 | source baseline | `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` on `main`; original migration baseline retained below |
 | planning home | `planning` branch, `.worktrees/planning/project01-mvp` |
 
-## Current direction — v3.47, 2026-10-14
+## Current direction — v3.48, 2026-10-14
 
 **Current:** [CDC accepted Arc12](arc12-live-rack-operations/cdc-verification.md)
 at 27ca00f after fresh composed/default/no-graph/native host checks; five children/
 27 rows and R-01–R-04 done. Duncan selected **live controls for the existing
 workbench**, advancing existing [Arc07](arc07-live-interface/arc-plan.md) ahead
-of catalog expansion. [Directive13](cdc-directive13.md) issues
-`arc07-live-interface/slice01-live-controls/cc-prompt.md` with five open LC rows.
-CRC reviewed the initial a603a24/9fdb513 return: all five LC rows stay open;
-[iteration01](arc07-live-interface/slice01-live-controls/cc-prompt-iteration01.md)
-repairs fairness/native trace/error retention and observation/proof gaps.
-[Independent record](arc07-live-interface/slice01-live-controls/crc-verification.md)
-retains passing native/ordinary-session evidence and reproduced failures.
+of catalog expansion. [Directive13](cdc-directive13.md) governs Arc07. CRC
+independently accepted
+[Slice01 iteration01](arc07-live-interface/slice01-live-controls/crc-verification.md)
+at e582aed/CC518897: all five LC rows done after one correction. Fresh affected
+native/host/actual CLI and real-rack interaction checks pass; initial failed review
+is preserved. [Escalation14](crc-escalation14.md) now returns the required02
+observer/lifecycle/metadata/completion decisions to CDC through Duncan. No current
+CC assignment or02 implementation prompt; Arc07's two rows remain open.
 This terminal increment delivers playback, parameter edits, Scope and saving;
 controller/subscriber/transport work remains in named later slices. Arc13 retains
 catalog/typed vocabulary/checkpoints. Historical PatchUnloaded and measured
@@ -100,7 +101,7 @@ backlog/release envelope, not a prerequisite to testing this first instrument.
 | Arc10 | Playable seeded Clock/TM/MIDI rack, four children/22 rows; T-01–T-05 CDC accepted at65522f1 | Actual software endpoint witness; release timing remains open |
 | [Arc11](arc11-observation-workbench/arc-plan.md) | LFO modulation, bounded Scope and terminal/CSV workbench | CDC accepted at72fe6b5; 14 child/four composition rows done |
 | [Arc12](arc12-live-rack-operations/arc-plan.md) | Live persistence, metadata/events, cable/graph operations, coherent runtime lifecycle | CDC accepted 27ca00f;27 child/four arc rows done; historical residuals explicitly routed |
-| [Arc07](arc07-live-interface/arc-plan.md) | Live terminal controls, then session observation, controllers/config and distinct transport | Operator-selected next; Slice01 issued, five LC rows open |
+| [Arc07](arc07-live-interface/arc-plan.md) | Live terminal controls, then session observation, controllers/config and distinct transport | Active; Slice01 CRC-accepted e582aed, five rows done;02 design awaiting CDC |
 | Arc13 | Remaining catalog and typed/API vocabulary | Preserve inventory/Chord/checkpoints, port labels and graph edge-type extensions; re-entry before richer module vocabulary |
 | Arc08 / release | Coverage provenance/95%, hardware jitter, benchmarks, soak, broader musical acceptance | Retained obligations, not M1/M2 entry gates |
 
@@ -126,6 +127,14 @@ planning/reporting is not itself the default next deliverable. Future arc planni
 must use this policy, not mechanically copy the old packets.
 
 ### Design handoff history — current
+
+CRC2026-10-14: accepts Arc07/Slice01 iteration01 e582aed/CC518897, all five LC rows
+done after one correction. Directive13's required successor source inspection
+returns [crc-escalation14.md](crc-escalation14.md), status **awaiting CDC** through
+Duncan. CDC resolves D1–D5 before CRC authors02; no current CC assignment. Both
+Arc07 rows and original project gates remain open, with P-07 still accepted.
+
+Historical initial review:
 
 CRC2026-10-14: initial Arc07/Slice01 a603a24/9fdb513 reviewed, changes required;
 iteration01 is the current CC assignment. Five LC/two Arc07 rows remain open.
@@ -937,3 +946,7 @@ independent review after CC return. Slice04 remains unissued.
 
 Version history: v3.47 — 2026-10-14, Arc07/Slice01 initial review and scoped
 iteration01 issuance; roadmap, residual owners and all parent gates unchanged.
+
+Version history: v3.48 — 2026-10-14, close Arc07/Slice01 after independent iteration01
+review and return successor design questions under directive13. No structural
+roadmap amendment, scope deletion, source repair or project acceptance by CRC.
