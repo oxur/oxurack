@@ -250,3 +250,146 @@ claimed. All six IC rows remain open for CRC review.
 | TD-17 SHOULD | Use `PhantomData<fn(M) -> M>` for invariant `Handle<M>` tagging; manual Clone/Debug so `M: Clone/Debug` is not imposed. Compile and use actual module handles. |
 | EH-14 MUST | Document public errors, panic boundary, token invalidation, queue admission/result behavior, reset cancellation, `into_app`, and global BPM distinction; strict docs gate. |
 | Anti-pattern review | No public smart pointers/Entity, no untyped error strings, no silent command success or swallowed results, no unnecessary Box/worker, no public invariant-bearing token fields; use short borrows and named constants for queue bounds. |
+
+## Iteration01 pre-edit intake and contract readback
+
+2026-10-13. Active assignment: `arc12-live-rack-operations/slice05-instance-commands/cc-prompt-iteration01.md`, SHA256 `8b240480647fec590e4783d319a4b73ee39a4aaaff6c925aa81f253b7918f3f4`.
+Source S is `/Users/oubiwann/lab/oxur/oxurack/.worktrees/codex-oxurack-module-behavior-installation`, branch `codex/oxurack-module-behavior-installation`, clean at `7404fe227e561746dbda76543b59893feeacfe15`. Planning W is `/Users/oubiwann/lab/oxur/oxurack/.worktrees/planning`, branch `planning`, clean at `603a32d9cfb4d8179bc3770f35f7f0ec05483545`. Protected root R remains clean at `a7ce6e61536ca96b6aeb2227ee06e430ed8df162`. This intake was recorded before any source edit. One combined reading command exceeded its output budget; I recovered the required text using smaller contiguous reads. No structured-data query or conditional dependency lookup was triggered.
+
+| # | Required input and pinned state | Loaded extent and relevance |
+| --- | --- | --- |
+| 1 | W `AGENTS.md`; S `CLAUDE.md` | Required-full. Planning/source boundaries, workflow roles, repository commands and Rust conventions. |
+| 2 | Iteration01 prompt; Slice05 `slice-plan.md`, `ledger.md`, `crc-verification.md` | Required-full. Iteration prompt read in contiguous portions through its end; plan, ledger and CRC review read completely. Confirms first correction pass, four accepted rows and IC-04/06 open. |
+| 3 | Initial `cc-prompt.md` at its preserved issuance | Required metadata and source/guidance route, full sections 2–5 and Gates/scope/return (contiguous sections). Carries handle/command semantics, compatibility, original native gates and commit fence. |
+| 4 | W `project01-mvp/cdc-directive12.md` | Required D2 in full; D3 reference/handle and Commands/global-tempo sections; D4 loader/source boundary, discriminating proof and guidance/readiness sections. Confirms no new design authority. |
+| 5 | W project plan; Arc12 plan and full Arc12 ledger | Project metadata, current direction and current design handoff; arc capability, five slices, binding design, current lifetime contract and closure; entire ledger. Arc composition and higher gates remain open. |
+| 6 | W `cdc-directive08.md` | Prompt-quality and Checks/correction-policy sections in full; playable-first and proportionate-proof rules plus native gates. |
+| 7 | Installed `collaboration-framework/SKILL.md`; project-management `guides/README.md`, iteration filename contract and issue/execute workflow | Required skill/guide extents loaded completely or by named sections. Preserve issued prompts, keep this same slice, execute all checks, commit only explicit paths. |
+| 8 | Installed engineering-methods guide07 and work-verification guide05 | Required-full. Guide07 loaded through its end in contiguous ranges; guide05 loaded completely. Intake/readback, correction retention and assigned-review boundary. |
+| 9 | Installed Rust `SKILL.md` and `guides/11-anti-patterns.md` | Required-full; both read in contiguous portions through their final sections. Rust API, error, type, ownership, docs, anti-pattern and error-disclosure requirements. |
+| 10 | Rust `02-api-design.md`, `03-error-handling.md`, `05-type-design.md` | Required sections with complete examples/rationale: API-02/07/23, EH-01/14, TD-03/05/06/07. Private identity, opaque IDs, explicit result states and public errors/docs. |
+| 11 | Installed testing entrypoint and guides `01-testing-discipline.md`, `03-validation-gates.md` | Required-full. Behavior-focused failure triage, repository-native gates and proportionate proof. |
+| 12 | S `commands.rs`, `handles.rs`, `tests/instance_commands.rs`, `examples/rack-session.rs` at7404fe2 | Required-full: lines1–276,1–297,1–445,1–295 respectively. Confirms concrete API mismatches, existing state tests, session call order and writer seams. |
+| 13 | S `lib.rs`, `lifecycle.rs`, core `event.rs`/`topology.rs`, MIDI-out `lib.rs` at7404fe2 | Required sections: facade exports/fields/constructor/into_app; lifecycle production lines1–229 through test boundary; CoreCommand and ModuleRemoved definitions; prepared removal types and prepare/commit; silence batch, buffer admission, selected cleanup and module hook. |
+| 14 | S README, Makefile, immutable `turing-machine-lfo.ron` | README live persistence/handles/commands/runner recipe lines110–442; Makefile test/lint/docs/build prerequisites/targets; fixture read completely. The current README has only a single-session command and needs the fresh/no-graph comparison recipe. |
+
+### Contract readback
+
+For IC-04, `CommandId` must have a private field and `CommandResult` is an externally matchable, `#[non_exhaustive]` enum containing only terminal `Completed(Result<(), CoreError>)` and `CancelledByReset` outcomes; `CommandOutcome` owns `id` and `result`. The current tuple constructor and `Pending` public status violate that contract although FIFO behavior passes. Internally, keep the existing 64 slots as `Pending { id, command } | Completed(outcome)`, count cancelled-but-uncollected slots, and leave checked-ID admission behavior unchanged. A real public doctest must use `Vec<CommandOutcome>`; compile-fail doctests reject tuple construction, `.0` access, and an exhaustive downstream match without `_`.
+
+The queue must pop a `Pending` slot before invoking its command. Therefore a queued Panic's own slot is no longer in the queue when reset succeeds: Panic receives `Completed(Ok(()))`, earlier local outcomes remain intact, and only the still-pending tail is converted to `CancelledByReset`. Taking the entire queue into a local vector before execution would hide that tail and break cancellation. Direct reset leaves the completed cancellation slots to be collected once; failure before the cancellation boundary changes no slots.
+
+For IC-06, deriving `--save.with_extension("guaranteed-missing.ron")` cannot establish a missing file: the user may already have a valid sibling there, so the expected failed Load can replace the rack and cause a later cleanup error. Reserve a unique directory with `create_dir` collision retries, use a never-created child, preserve all pre-existing siblings, surface real I/O failures, and clean only the directory this run owns. After ordinary final-versus-fresh trace/scalar/MIDI comparison, reset both stopped racks, drain each cleanup into `final-cleanup`/`reference-cleanup` status, record each event in Scope and compare vectors. At 300 samples each must emit exactly `(300, 80 3E 00)`, `(300, B0 7B 00)`, `(300, B0 78 00)`; a repeated reset is empty and stdout remains exactly `251|90 3E 15\n`. Scope counts must include those newly recorded cleanup rows. Add collision and invalid-save-destination tests.
+
+For the failed-reset interaction, load the real patch, configure Clock/TM Scope, capture a short nonempty run, stop and drain, enqueue at least two distinct commands, then inject the already specified inconsistent MIDI accounting by despawning the sink without releasing its reservation. Build an owned pre-call projection of queued IDs/commands and next ID, sample/time/driver/running state, pending MIDI and first fault, Scope selectors/capacity/overwrite/records, and typed lifecycle/parameter/label/cable messages. Assert the typed `TickError::OutputCapacity` reason, then compare the projection immediately—before command processing or any other operation. Do not call `snapshot_patch` on this intentionally invalid World. After equality is established, process the original commands and assert their IDs/order and ordinary Completed results, not cancellation. The injected marker is test setup, not a reproduced playback defect.
+
+F-04 is real public API documentation: document `# Errors` on every new fallible function, bound versus unbound name behavior, deferred builder resolution, staleness/survivors, queue capacity/identity/errors/cancellation/execution-time lookup/once-only processing, reset and `into_app` abandonment, global BPM versus Clock, and removal's stopped/drained cleanup order and hook panic boundary. Also document selected-silence and prepared-removal errors/required ordering, and correct `ModuleRemoved`'s producer statement. README must show default, fresh saved replay and no-default session comparison. IC-01/02/03/05 behavior stays intact; only IC-04/06 receive fresh row evidence, and all six statuses remain open until CRC's independent review.
+
+## Iteration01 execution and disposition
+
+2026-10-13. Executed the first correction pass from
+`cc-prompt-iteration01.md`, SHA256
+`8b240480647fec590e4783d319a4b73ee39a4aaaff6c925aa81f253b7918f3f4`.
+Pre-edit intake and contract readback are recorded in the preceding
+`Iteration01 pre-edit intake and contract readback` section. Source S was the
+assigned `codex/oxurack-module-behavior-installation` worktree at baseline
+`7404fe227e561746dbda76543b59893feeacfe15`; planning W was at
+`603a32d9cfb4d8179bc3770f35f7f0ec05483545`. Source changes are committed as
+`27ca00f`; protected main R was not edited.
+
+### Iteration changes
+
+- Restored the required public command surface: opaque `CommandId`,
+  non-exhaustive `CommandResult`, `CommandOutcome`, and
+  `process_commands() -> Vec<CommandOutcome>`. Pending state is private; the
+  64-capacity deque is preallocated, reset changes only pending slots, and
+  processing still pops each slot before execution. Integration tests compare
+  returned IDs instead of constructing them. Positive/compile-fail doctests
+  cover external use, ID construction/access, and downstream exhaustive match.
+- Replaced the save-adjacent missing path with an exclusively created private
+  temporary directory, retrying only `AlreadyExists` and cleaning the owned
+  directory on normal and error returns. The runner now resets and drains both
+  stopped final racks after ordinary trace/scalar/MIDI comparison, records
+  phase-labelled Scope cleanup, verifies repeated-reset idempotence and compares
+  the cleanup vectors. Its 300-sample test proves stdout exactly
+  `251|90 3E 15\n`, both literal three-event cleanup blocks at sample 300, and
+  preservation of a pre-existing valid former-suffix sibling. A directory used
+  as the save target returns an error.
+- Replaced the deferred failed-reset assertion with an immediate owned
+  before/after projection: pending IDs and commands/next ID, sample and fixed /
+  virtual clocks, driver/running, MIDI pending/debug/first fault, Scope
+  selection/capacity/overwrite/records and available typed lifecycle, parameter,
+  label and cable messages. Reset asserts the exact output-accounting error and
+  compares before any command processing; the original two IDs then complete in
+  order. A fault marker is test setup, not a reproduced runtime defect. This
+  checkout has no `PatchUnloaded` message type, so the projection covers the
+  existing patch-loaded, module-added/removed and edit-message types without
+  fabricating a notification.
+- Added API rustdoc for reference builders/accessors, handle operations,
+  command outcomes/queue behavior, BPM, removal preflight/commit and selected
+  MIDI silence. Corrected `ModuleRemoved` producer documentation. README now
+  includes the default 2,000-sample run, fresh saved-patch comparison and
+  no-default-features trace comparison, with cleanup described as stderr status.
+
+Rust-guidelines application: the command identifier representation is private;
+public state is expressed with a non-exhaustive typed enum and owned outcomes;
+bounded queue accounting and checked ID increment remain explicit; ordinary
+execution errors stay in `Result`; command slots are removed before effects;
+reset mutation follows successful output preparation. New Result APIs name their
+error classes and the cleanup-before-release ordering. The runner's reserved
+directory owns only its own cleanup; an unrelated collision is never opened or
+removed. No behavior outside the iteration allowlist was changed.
+
+### Final-source validation
+
+| Check | Result |
+| --- | --- |
+| `cargo test --locked -p oxurack commands::tests` | 4 passed, including immediate failed-reset projection |
+| `cargo test --locked -p oxurack --test instance_commands` | 14 passed |
+| `cargo test --locked -p oxurack --example rack-session` | 2 passed, including collision/sibling, exact cleanup, invalid save and missing input |
+| `cargo test --locked -p oxurack --doc` | 1 positive and 3 compile-fail doctests passed |
+| `cargo test --locked -p oxurack-core` | 426 unit, 14 integration and 2 doctests passed |
+| `cargo test --locked -p oxurack-mod-midiout` | 10 passed |
+| `cargo test --locked -p oxurack-graph` | 68 unit and 1 integration passed |
+| `cargo test --locked -p oxurack --all-targets` | passed |
+| `cargo test --locked -p oxurack --no-default-features --all-targets` | passed; pre-existing unused-mut warning retained |
+| restricted `make test` | 146 RT passed, four CoreMIDI initialization failures, three existing ignores; unchanged retry follows |
+| unchanged `make test` with host MIDI access | passed; RT 150 passed, zero failed, three existing ignores; workspace tests/doctests passed |
+| `make lint` | passed; Clippy and format |
+| strict all-features/all-targets Clippy with `-D warnings` | passed |
+| `RUSTDOCFLAGS='-D warnings' make docs` | passed |
+| default and no-default-features example builds | both passed |
+| `git diff --check` | passed |
+
+The README recipe ran at 2,000 samples. The live session's 14-row trace matched
+both the saved-patch fresh run and the no-graph run. It reported 4,016 Scope
+records after final cleanup (the count includes those appended cleanup records),
+global BPM 133 and Clock BPM 120. The session's private reserved missing-load
+directory was removed. The sample-300 writer test reported exactly three cleanup
+events for each final rack and unchanged sibling bytes. Original MIDI2000 stayed
+at 13 rows / SHA256
+`98e109812e40f52ebdd9ae419b8a04938eee84608462158ee10a068760f5dc7b`; LFO10000
+stayed at 70 rows / SHA256
+`988563371b7473412325a22d6babb68cba1468b7719bef3512fafa431e8a687c`. The
+2000-sample trace remained 14 rows / SHA256
+`40965cc5f2031cbd3b26bd7275e0012359800c959d9c08f3dd5139f3707a76a2`.
+
+### Iteration row walk and retained evidence
+
+| Row | Iteration01 proposed evidence; CRC status remains open where applicable |
+| --- | --- |
+| IC-01 | No production delta. CRC's accepted behavior is retained subject to the source delta; core, facade and graph gates were freshly rerun. |
+| IC-02 | No production delta. CRC's accepted behavior is retained subject to the source delta; handle integration tests freshly passed. |
+| IC-03 | No behavior delta beyond command result representation. The executable command sequence and command behavior tests freshly passed. |
+| IC-04 | F-01 public type/visibility contract, positive/compile-fail doctests, queue behavior, and F-03 immediate failed-reset state preservation now have fresh evidence in `27ca00f`; remains open for CRC. |
+| IC-05 | No MIDI behavior delta. MIDI-out selected-silence tests and facade lifecycle gates freshly passed; CRC acceptance remains retained subject to delta review. |
+| IC-06 | F-02 private missing path, adjacent-file preservation, exact final/reference cleanup, repeat-reset emptiness, error handling, replay recipe and F-04 docs have fresh evidence in `27ca00f`; remains open for CRC. |
+
+The only final source paths changed are the ten authorized prompt paths listed in
+the source diff. Planning edits are limited to this report and `ledger.md`. No
+fixture, manifest, lockfile, dependency or endpoint changed; transient replay
+files remain under the system temporary directory and are not retained as
+project artifacts. CRC should independently review the final source commit and
+this evidence. Source commit: `27ca00f` (`arc12 slice05: restore command API
+and session cleanup`). This is CC-proposed evidence only: IC-04/IC-06 remain open,
+Slice05 and Arc12 remain open, and no parent acceptance is claimed.
