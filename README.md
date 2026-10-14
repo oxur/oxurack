@@ -131,19 +131,27 @@ trace rows use stdout, while command replies and Scope views use stderr:
 ```bash
 cargo run --locked -p oxurack --example rack-live -- \
   --patch crates/oxurack/examples/patches/turing-machine-lfo.ron \
-  --scope-view --scope-port lfo_main.bipolar_out
+  --scope-port lfo_main.bipolar_out --scope-capacity 100000
 ```
 
-Enter `help` for the command list. For example, `play` starts, `pause` sends
+Scope capture is always enabled for a loaded patch. With no `--scope-port`, the
+bounded capture records MIDI events only; specify one or more exact scalar ports
+to also capture their values. `--scope-capacity` works independently. The old
+`--scope-view` flag remains accepted for compatibility and does not enable or
+disable capture. Enter `help` for the command list. `status` reports patch-global
+BPM separately from each Clock's audible `bpm` parameter. For example, `play` starts, `pause` sends
 voice cleanup and retains the current sample and engine phase, and `reset`
 sends cleanup while preserving whether the rack is running. `get` and `set`
 operate on registered live parameters; `save PATH` writes the current
-configuration, and `scope-save PATH` creates a new CSV without replacing an
-existing file. Configuration saves do not include engine phase. Scope labels
-trace-only events as Generated and native events as Sent only after a successful
-device send. Scope views and synchronous file operations can delay wall-clock
-pacing while preserving the continuous rack state; the loop rebases afterward
-and never catches up with a burst of samples. Type `quit` or send Ctrl-C to clean
+configuration and overwrites an existing destination as the facade's SavePatch
+command does; `scope-save PATH` creates a new CSV without replacing an existing
+file. Configuration saves do not include engine phase. Scope labels generated
+events as Generated and records native delivery as Sent only after a successful
+device send. Both output modes also write the rack's sample-indexed MIDI trace
+to stdout. Scope views and synchronous file operations can delay wall-clock
+pacing while preserving the continuous rack state; a sample that became due
+during the operation is admitted once, then accumulated lateness is discarded.
+Type `quit` or send Ctrl-C to clean
 up and exit. Add `--output-name EXACT_NAME` or
 `--output-index N` to connect to one selected native MIDI output; without either
 flag the example writes the deterministic MIDI trace and does not enumerate or

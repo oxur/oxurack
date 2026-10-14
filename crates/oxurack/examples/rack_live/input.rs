@@ -1,6 +1,7 @@
 use std::io::{self, Read};
 use std::sync::mpsc::{Receiver, SyncSender, sync_channel};
 use std::thread::{self, JoinHandle};
+use std::{error::Error, fmt};
 
 /// Prevent unbounded terminal input from growing the owner's queue payload.
 const LINE_LIMIT: usize = 8192;
@@ -19,6 +20,7 @@ pub(super) enum Input {
     RejectedLine(&'static str),
     Eof,
     ReadError(io::Error),
+    Disconnected,
 }
 
 pub(super) struct Reader {
@@ -42,17 +44,42 @@ impl Reader {
 
     /// Drop the receiver first so a blocked bounded send exits. The only
     /// permitted detached case is a reader still blocked in terminal stdin.
-    pub(super) fn shutdown(mut self) {
-        drop(self.receiver);
-        if let Some(handle) = self.handle.take() {
+    pub(super) fn shutdown(self) -> Result<(), Box<dyn Error>> {
+        let Self { receiver, handle } = self;
+        drop(receiver);
+        if let Some(handle) = handle {
             let deadline = std::time::Instant::now() + READER_JOIN_GRACE;
             while !handle.is_finished() && std::time::Instant::now() < deadline {
                 thread::sleep(JOIN_POLL);
             }
             if handle.is_finished() {
-                let _ = handle.join();
+                handle.join().map_err(|payload| {
+                    Box::new(ReaderPanicked(panic_message(payload))) as Box<dyn Error>
+                })?;
             }
         }
+        Ok(())
+    }
+}
+
+#[derive(Debug)]
+struct ReaderPanicked(String);
+
+impl fmt::Display for ReaderPanicked {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "stdin reader worker panicked: {}", self.0)
+    }
+}
+
+impl Error for ReaderPanicked {}
+
+fn panic_message(payload: Box<dyn std::any::Any + Send>) -> String {
+    if let Some(message) = payload.downcast_ref::<String>() {
+        message.clone()
+    } else if let Some(message) = payload.downcast_ref::<&'static str>() {
+        (*message).to_owned()
+    } else {
+        "non-string panic payload".to_owned()
     }
 }
 
@@ -63,8 +90,10 @@ fn read_input(mut reader: impl Read, sender: SyncSender<Input>) {
     loop {
         match reader.read(&mut chunk) {
             Ok(0) => {
-                if !line.is_empty() || oversized {
-                    deliver_line(&sender, &line, oversized);
+                if (!line.is_empty() || oversized)
+                    && deliver_line(&sender, &line, oversized).is_err()
+                {
+                    return;
                 }
                 let _ = sender.send(Input::Eof);
                 return;
@@ -72,7 +101,9 @@ fn read_input(mut reader: impl Read, sender: SyncSender<Input>) {
             Ok(count) => {
                 for &byte in &chunk[..count] {
                     if byte == b'\n' {
-                        deliver_line(&sender, &line, oversized);
+                        if deliver_line(&sender, &line, oversized).is_err() {
+                            return;
+                        }
                         line.clear();
                         oversized = false;
                     } else if !oversized {
@@ -94,7 +125,11 @@ fn read_input(mut reader: impl Read, sender: SyncSender<Input>) {
     }
 }
 
-fn deliver_line(sender: &SyncSender<Input>, bytes: &[u8], oversized: bool) {
+fn deliver_line(
+    sender: &SyncSender<Input>,
+    bytes: &[u8],
+    oversized: bool,
+) -> Result<(), std::sync::mpsc::SendError<Input>> {
     let input = if oversized {
         Input::RejectedLine("input line exceeds 8192 bytes")
     } else {
@@ -104,7 +139,7 @@ fn deliver_line(sender: &SyncSender<Input>, bytes: &[u8], oversized: bool) {
             Err(_) => Input::RejectedLine("input line is not valid UTF-8"),
         }
     };
-    let _ = sender.send(input);
+    sender.send(input)
 }
 
 #[cfg(test)]
@@ -127,6 +162,44 @@ mod tests {
         assert!(matches!(reader.receiver.recv().unwrap(), Input::Line(line) if line == "help"));
         assert!(matches!(reader.receiver.recv().unwrap(), Input::Line(line) if line == "last"));
         assert!(matches!(reader.receiver.recv().unwrap(), Input::Eof));
-        reader.shutdown();
+        reader.shutdown().unwrap();
+    }
+
+    #[test]
+    fn completed_reader_panic_is_reported_by_shutdown() {
+        struct PanicReader;
+        impl Read for PanicReader {
+            fn read(&mut self, _buffer: &mut [u8]) -> io::Result<usize> {
+                panic!("injected reader panic")
+            }
+        }
+
+        let reader = Reader::spawn(PanicReader);
+        assert!(matches!(reader.receiver.recv(), Err(_)));
+        let error = reader.shutdown().unwrap_err();
+        assert!(error.to_string().contains("injected reader panic"));
+    }
+
+    #[test]
+    fn reader_stops_after_receiver_is_dropped_while_send_is_blocked() {
+        use std::sync::Arc;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        struct CountLines(Arc<AtomicUsize>);
+        impl Read for CountLines {
+            fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+                self.0.fetch_add(1, Ordering::SeqCst);
+                buffer[..2].copy_from_slice(b"x\n");
+                Ok(2)
+            }
+        }
+
+        let reads = Arc::new(AtomicUsize::new(0));
+        let reader = Reader::spawn(CountLines(Arc::clone(&reads)));
+        while reads.load(Ordering::SeqCst) <= INPUT_CAPACITY {
+            thread::yield_now();
+        }
+        reader.shutdown().unwrap();
+        assert_eq!(reads.load(Ordering::SeqCst), INPUT_CAPACITY + 1);
     }
 }

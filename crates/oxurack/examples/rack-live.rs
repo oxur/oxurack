@@ -51,22 +51,20 @@ struct Cli {
     /// Select a zero-based MIDI output position from the current list.
     #[arg(long)]
     output_index: Option<usize>,
-    /// Enable bounded Scope capture for the selected exact scalar ports.
+    /// Select exact scalar ports for bounded Scope capture.
     #[arg(
         long,
         value_parser = scope_selector,
-        requires = "scope_view",
         conflicts_with = "list_outputs"
     )]
     scope_port: Vec<ScopeSelector>,
-    /// Print a Scope workbench view; also enables MIDI-only capture with no ports.
+    /// Compatibility flag; Scope capture is always enabled for a loaded patch.
     #[arg(long, conflicts_with = "list_outputs")]
     scope_view: bool,
     /// Maximum mixed Scope records (default 100000).
     #[arg(
         long,
         value_parser = positive_usize,
-        requires = "scope_view",
         conflicts_with = "list_outputs"
     )]
     scope_capacity: Option<usize>,
@@ -110,9 +108,7 @@ fn prepare_rack(cli: &Cli) -> Result<Oxurack, Box<dyn Error>> {
     rack.try_install::<MidiOutModule>()?;
     rack.load_patch(patch)?;
     rack.set_driver_mode(SimulationDriver::Manual);
-    if cli.scope_view {
-        rack.configure_scope(&cli.scope_port, cli.scope_capacity.unwrap_or(100_000))?;
-    }
+    rack.configure_scope(&cli.scope_port, cli.scope_capacity.unwrap_or(100_000))?;
     Ok(rack)
 }
 
@@ -210,9 +206,8 @@ fn run(cli: Cli) -> Result<(), Box<dyn Error>> {
             &cancellation,
         )
     };
-    reader.shutdown();
-    result?;
-    Ok(())
+    let reader_result = reader.shutdown();
+    control::combine_results(result, reader_result)
 }
 
 fn main() -> ExitCode {
@@ -231,7 +226,7 @@ mod tests {
     use clap::CommandFactory;
 
     #[test]
-    fn cli_requires_exact_selection_and_scopes_only_with_capture() {
+    fn cli_requires_exact_selection_and_always_accepts_scope_options() {
         assert!(Cli::try_parse_from(["rack-live", "--patch", "x"]).is_ok());
         assert!(Cli::try_parse_from(["rack-live", "--list-outputs"]).is_ok());
         assert!(Cli::try_parse_from(["rack-live"]).is_err());
@@ -250,7 +245,10 @@ mod tests {
         );
         assert!(
             Cli::try_parse_from(["rack-live", "--patch", "x", "--scope-port", "lfo_main.out"])
-                .is_err()
+                .is_ok()
+        );
+        assert!(
+            Cli::try_parse_from(["rack-live", "--patch", "x", "--scope-capacity", "1"]).is_ok()
         );
         assert!(
             Cli::try_parse_from([
@@ -278,5 +276,33 @@ mod tests {
         );
         assert!(Cli::try_parse_from(["rack-live", "--list-outputs", "--scope-view"]).is_err());
         Cli::command().debug_assert();
+    }
+
+    #[test]
+    fn prepare_rack_enables_scope_by_default_and_honors_capacity_and_selectors() {
+        let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("examples/patches/turing-machine-lfo.ron");
+        let plain =
+            Cli::try_parse_from(["rack-live", "--patch", fixture.to_str().unwrap()]).unwrap();
+        let rack = prepare_rack(&plain).unwrap();
+        let capture = rack.scope().unwrap();
+        assert!(capture.selectors().is_empty());
+        assert_eq!(capture.capacity(), 100_000);
+
+        let selected = Cli::try_parse_from([
+            "rack-live",
+            "--patch",
+            fixture.to_str().unwrap(),
+            "--scope-port",
+            "lfo_main.bipolar_out",
+            "--scope-capacity",
+            "16",
+        ])
+        .unwrap();
+        let rack = prepare_rack(&selected).unwrap();
+        let capture = rack.scope().unwrap();
+        assert_eq!(capture.capacity(), 16);
+        assert_eq!(capture.selectors()[0].module, "lfo_main");
+        assert_eq!(capture.selectors()[0].port, "bipolar_out");
     }
 }
