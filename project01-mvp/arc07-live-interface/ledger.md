@@ -16,3 +16,14 @@ Implementation status and commit pointers are in the project backlog.
 This arc is planned, not started or eligible for closure. Both rows remain open.
 The introductory One-Contributor note is historical; the project plan now selects
 three contributors and Expedited Mode.
+
+
+## CDC opening — 2026-10-14
+
+Arc12 independently accepted 27ca00f; Operator selects live controls. Arc07 v2.0
+opens four planned software increments: controls, session observation, controller/
+config, external transport. Both A rows remain open; Slice01's 5 LC rows open.
+Closure must compose the full capability, not merely the first terminal. Historical
+PatchUnloaded/common observer ordering and metadata/config residuals are retained
+as explicit successor obligations in arc-plan.md/directive13. Three contributors,
+Expedited Mode; CRC reviews slices and CDC independently gates the arc.

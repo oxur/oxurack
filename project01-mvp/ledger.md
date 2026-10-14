@@ -6,8 +6,9 @@ All rows start open. One-Contributor checks will be recorded as attested; any
 required independent or Operator acceptance must be attributed when it occurs.
 Implementation status and commit pointers are in the project backlog.
 
-Current2026-10-11: P-07 done; P-01–P-06 open. Earlier open/pending notes below
-are preserved history; see the dated Arc11 CDC disposition.
+Current 2026-10-14: P-07 done; P-01–P-06 open. Arc12 is independently accepted;
+Arc07 live controls is next. Earlier open/pending notes below are preserved history;
+see the dated Arc11 and Arc12 CDC dispositions.
 
 | ID | Criterion | Verify | Significance | Origin | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -106,3 +107,12 @@ and explicit residual disposition; next arc/first slice remains CDC-owned.
 This supports P-01/P-02/P-04/P-05/P-06 but closes none. P-03 hardware timing,
 P-04 Operator/controller acceptance and P-05 quality/resource obligations remain;
 P-07 keeps its prior CDC acceptance and no endpoint/release claim is added.
+
+
+## Arc12 CDC acceptance / Arc07 selection — 2026-10-14
+
+Arc12 accepted at 27ca00f with four composition rows and 27 child rows done; see
+[CDC verification](arc12-live-rack-operations/cdc-verification.md). This supports
+P-01/02/04/05/06 but closes none of them. Original six rows remain open; P-07 stays
+done. Directive13 records concrete residual routing. Duncan selected Arc07 live
+controls next; Slice01's 5 rows are open, no controller/transport/release acceptance.

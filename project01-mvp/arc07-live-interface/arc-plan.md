@@ -1,6 +1,7 @@
 # Live interface
 
-Status: planned outline; reconstructed 2026-09-17.
+Status: active — v2.0, 2026-10-14; Slice01 live controls issued, all acceptance
+rows open. The current executable plan below supersedes this historical outline.
 
 ## Capability and dependencies
 
@@ -54,3 +55,67 @@ memo. Arc12 restart is seeded reconstruction, not MIDI START. Arc12/Slice05 owns
 bounded queued load/save and synchronous command results, so that feature is not
 deferred here. Original Arc05 rows remain deferred until their full successor
 walk is supported. This routing is design, not acceptance of transport behavior.
+
+## Current executable plan — v2.0, 2026-10-14
+
+**Active.** Was: a reconstructed interface outline, no issued child. Now: Duncan
+explicitly selected live controls for the existing workbench after Arc12's return;
+CDC accepted Arc12 at 27ca00f and opens this arc ahead of catalog expansion.
+[Directive13](../cdc-directive13.md) records acceptance and inherited routing.
+The earlier outline is history, not simultaneous implementation instructions.
+
+Capability: play, inspect, persist and control the current modular instrument
+from a usable terminal and later MIDI controls, with honest lifecycle/observation
+and distinct external transport. Depends on accepted Arcs10–12; blocks project
+P-01/P-04 live musical workflow. Related: Arc13 typed/catalog work and Arc08 timing/
+release. Keep A-07-01/A-07-02 open until the full capability composes.
+
+| Slice | Product increment / inherited responsibilities | Dependency/state |
+| --- | --- | --- |
+| slice01-live-controls | Play/pause/reset, scalar live edits, Scope and save while the existing instrument plays; executable terminal | Arc12; complete open set issued |
+| slice02-session-observation | Interactive lifecycle/topology/metadata session editing, REPL completion and watch/subscriber observation; actual unload receipt and cross-type observer proof, tag search, per-note/richer metadata representation | Slice01; detail before issue, CDC resolves new observer/metadata semantics |
+| slice03-controller-config | Bounded MIDI-CC/controller mapping with user configuration, remaining tag/formatter configuration | Slice01/02; detail before issue and specify device witness |
+| slice04-external-transport | Separate power/external START/STOP/CONTINUE and clock-selection controls over actual RT bridge | Prior live session; design before issue; retains hardware timing owner Arc08 |
+
+These are retained delivery responsibilities, not four prompts ready to execute.
+CRC may review/close 01 and inspect 02; it must obtain CDC's resolved notification/
+metadata design before issuing 02. No generic event bus or broad REPL framework
+is a prerequisite to 01. Catalog-specific enums/convenience forms, port labels,
+CableKind/knob-edge graph vocabulary and exact checkpoints remain Arc13; its
+reconciliation re-enters before exposing those catalog/interface forms. Full GUI/
+TUI remains unselected. Existing controller/interface requirements are retained.
+
+### Binding first increment
+
+Use the [Slice01 open set](slice01-live-controls/slice-plan.md) and its detailed
+prompt. One synchronous owner drives samples/drains/sends; only stdin blocking
+is isolated into an input thread. Parameter edits/save/status occur between
+samples with no acknowledgment tick. Synchronous I/O may delay wall time; no
+catch-up burst and no unmeasured timing guarantee. Startup paused; frontend pause
+composes stop + reset + delivery, while reset alone preserves running state.
+Native output remains explicit opt-in, trace-only does not open MIDI resources.
+Old finite runners and facade semantics remain intact.
+
+### Historical residuals accepted for tracking
+
+Arc12 [CDC verification](../arc12-live-rack-operations/cdc-verification.md) records
+all 18 original rows. Arc03 PatchUnloaded's old unload-exists trigger is renewed as
+Slice02's lifetime-aware observer requirement; runtime-observed cross-type ordering
+also remains there before any ordered watch claim. Source summary-last plus typed
+counts is sufficient for current synchronous consumers, not that stronger proof.
+Per-note/authorship history/tag query UX re-enters 02; expanded/hierarchical tags
+and formatter persistence re-enter 03. Arc05 external transport re-enters 04.
+These obligations are neither silently dropped nor called delivered by 01.
+
+### Workflow and handoff
+
+CDC owns arc/first-slice design; CRC reviews 01 and escalates consequential02 design
+through Duncan. Expedited Mode retains scoped commits, preserved prompts and
+independent gates. Current assignment: slice01-live-controls/cc-prompt.md; no
+other child assignment. Slice01's 5 rows are open, arc 2 rows open. CRC assembles
+arc closure only when its whole capability and retained responsibilities compose.
+
+Version history: v2.0 — 2026-10-14, Arc12's working lifecycle/commands remove the
+previous prerequisite; Operator prioritizes live controls over catalog expansion.
+Open a concrete first frontend and explicit successor responsibilities, preserving
+notification, controller and external transport work with their design gates.

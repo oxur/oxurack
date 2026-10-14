@@ -1,58 +1,23 @@
 # project01-mvp — status
 
-> Current (2026-10-14): Arc10 and [Arc11](../project01-mvp/arc11-observation-workbench/cdc-verification.md)
-> are CDC accepted. Arc11 source72fe6b5 delivers five-waveform LFO modulation,
-> bounded Scope capture and terminal/CSV inspection; 14 child and four arc rows done.
-> CDC reproduced46 focused tests and actual repeated10000-sample trace/view/CSV,
-> all modulation observations, bounds and empty behavior. P-07 is done with the
-> preserved Arc10 MIDI Bus1 → PatchWork/Kontakt musical witness; six original
-> project rows and full project/release gates remain open.
-> Duncan selected live persistence next. [Directive10](../project01-mvp/cdc-directive10.md)
-> opens [Arc12/Slice01](../project01-mvp/arc12-live-rack-operations/slice01-live-persistence/slice-plan.md):
-> public parameter edits, actual current-configuration snapshot/save and fresh replay.
-> Was: initial return exposed configured/effective readback and cable tie-order gaps.
-> Now: CDC11 correction fabfa1cb is independently accepted by CRC; all five LP
-> rows done. Focused/default/no-default/native host gates and fresh-process replay
-> pass; saved1/saved2/reference traces are identical71 rows, original fixtures unchanged.
-> [Slice02 metadata/events](../project01-mvp/arc12-live-rack-operations/slice02-events-and-metadata/crc-verification.md)
-> independently accepted at20c60ef: five M rows done; core/both feature modes/native
-> host and300-sample annotation/fresh70-row replay pass, originals unchanged.
-> [Slice03 graph composition](../project01-mvp/arc12-live-rack-operations/slice03-graph-composition/crc-verification.md)
-> iteration01 independently accepted atdeafdd228: five G rows done. Corrected
-> native/core/graph/default/no-default and host workspace checks pass; unchanged
-> independent300-sample/82-row demo/docs/build evidence retained at981964b.
-> Next-slice investigation reproduced MIDI replacement
-> and failed-candidate reservation leaks, plus historical/current transport conflicts.
-> [Directive12](../project01-mvp/cdc-directive12.md) resolves escalation12:
-> isolated candidate lifetimes, stopped/drained replacement, narrow MIDI reset,
-> explicit restart and preserved start/stop continuation. CDC reproduced the leak.
-> CRC acknowledged planning67e9150 at clean sourcedeafdd228 and issued
-> [Slice04 lifecycle prompt](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/cc-prompt.md):
-> isolated replacement/unload, reset/restart/cleanup and executable --lifecycle session.
-> Was: initial f6fdeb5 required three corrections. Now: CRC2026-10-13 accepts
-> iteration03 ec85ebe/972e3b7, all six LF rows done, Slice04 closed. Fresh native/host
-> gates pass; restricted CoreMIDI failures and dated earlier musical/docs/example
-> evidence remain recorded in the [CRC review](../project01-mvp/arc12-live-rack-operations/slice04-runtime-api/crc-verification.md).
-> Reset first-state/fault, uninterrupted control, saved replay and snapshot-error
-> proof now satisfy the contract. No product defect or structural design change.
-> [Final Slice05](../project01-mvp/arc12-live-rack-operations/slice05-instance-commands/cc-prompt.md)
-> was returned7404fe2 with two open rows; now CRC accepts iteration01 at27ca00f/
-> 818d146, all six IC rows done after one correction. All five Arc12 children/27
-> rows accepted. Native/host/feature/docs/build gates, exact collision/cleanup and
-> default/fresh/no-graph recipes pass; original hashes retained.
-> [Arc12 closing report](../project01-mvp/arc12-live-rack-operations/closing-report.md)
-> and [CRC operational evidence](../project01-mvp/arc12-live-rack-operations/crc-verification.md)
-> reproduce the composed edit/save-continuation/metadata/topology/removal/queue/
-> lifecycle/replay session and walk eighteen inherited Arc02–05 rows. Four arc
-> rows remain open for CDC's independent gate and explicit historical-disposition
-> decisions. No current CC prompt or next arc by CRC; no MVP/release acceptance.
-> Source27ca00f and main a7ce6e6 unchanged by CRC.
-> Separate transport remains Arc07; catalog-specific typed forms remain Arc13.
-> Exact engine-state checkpoints remain future work. The historical append-only
-> load defect is repaired by independently accepted Slice04; Slice01's earlier
-> recipe deliberately reloaded into a fresh rack.
-> Catalog/Chord, full interfaces, hardware timing/coverage/benchmarks/soak retain
-> Arc13/07/08 owners. Three contributors, Expedited Mode and directive08 policy apply.
+> Current (2026-10-14): Arc10, Arc11 and [Arc12](../project01-mvp/arc12-live-rack-operations/cdc-verification.md)
+> are CDC accepted. Arc12 source 27ca00f delivers live parameters/metadata/topology,
+> current configuration saving, failure-preserving replacement, unload/reset/restart,
+> instance removal/stale-safe handles and explicit bounded command results.
+> Five children/27 rows and four arc rows done. CDC reproduced composed playback
+> preservation and 10000-sample fresh replay in both feature modes (82 MIDI/30082
+> Scope records); host workspace/lint/docs pass; restricted CoreMIDI failures retained.
+> Duncan selected **live controls for the existing workbench** next.
+> [Directive13](../project01-mvp/cdc-directive13.md) opens Arc07/Slice01:
+> `arc07-live-interface/slice01-live-controls/cc-prompt.md`, five LC rows open.
+> Terminal play/pause, parameter edits, Scope and save reuse the single MIDI owner.
+> Source/main are unchanged by CDC; no new feature implementation is claimed yet.
+> Historical unload notification/common observer ordering re-enter Arc07/Slice02;
+> metadata/config/controller/transport and catalog/typed/graph extensions retain
+> explicit Arc07/13 owners. Exact checkpoints remain future work.
+> P-07 stays accepted with the original software MIDI witness; P-01–P-06 and
+> hardware timing/coverage/benchmarks/soak/release remain open. Three contributors,
+> Expedited Mode and directive08 playable-first policy apply.
 > Earlier snapshots below are history.
 
 **Historical estimate (2026-09-17): approximately 45% of the reconstructed MVP implemented**

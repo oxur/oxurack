@@ -73,3 +73,17 @@ Re-entry: Before accepting runtime mutation APIs; include all historical graph q
 - v3.0 — 2026-09-17: CRC escalation03 and child carryover reviews completed the
   administrative evidence; CDC closed this work as carried over and assigned
   successors without accepting its unproved capability or weakening its criteria.
+
+
+## Successor reconciliation — v3.1, 2026-10-14
+
+Arc12 CDC acceptance at 27ca00f verifies current v0 graph freshness/navigation
+through runtime edits and lifetime replacement. Original deferred ledgers remain
+historical. Richer CableKind Signal/Modulation, knob edges, signal-only filters,
+provenance and corresponding diagnostics remain Arc13 catalog/API reconciliation,
+re-entering before those distinctions appear in public module vocabulary; current
+combined-edge v0 and unspecified diamond tie behavior are not silently tightened.
+See [directive13](../cdc-directive13.md) and Arc12's CDC residual walk.
+
+Version history: v3.1 — current v0 accepted through Arc12; richer graph vocabulary
+retained with Arc13 before exposing typed connection distinctions.

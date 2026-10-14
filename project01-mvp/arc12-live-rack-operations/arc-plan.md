@@ -1,11 +1,12 @@
 # Arc12 — live rack operations
 
-Version1.14 — 2026-10-14. Status: CRC composition assembled; awaiting CDC review
-and historical-disposition decisions. All five children/27 rows CRC accepted;
-final Slice05 iteration01 closes at27ca00f after one correction. Four arc rows
-remain open. See [closing report](closing-report.md), [CRC operational evidence](crc-verification.md)
-and [ledger](ledger.md). CDC's independent verification is not yet authored;
-no next arc or CC assignment. Earlier dated child-state notes below are history.
+Version 1.15 — 2026-10-14. Status: **closed, CDC accepted** at 27ca00f.
+All five children/27 rows and all four composition rows are done. See
+[CDC verification](cdc-verification.md), [CRC operational record](crc-verification.md),
+[closing report](closing-report.md) and [ledger](ledger.md). Historical deferred
+notification/metadata/graph/API obligations retain explicit owners under directive13;
+no original MVP/release acceptance is inferred. Duncan selected Arc07 live controls
+next. Earlier dated child-state notes below are preserved history.
 Depends on accepted Arc10/Arc11; source predecessor72fe6b5. Blocks saved/live
 musical workflow and Arc07 controls. Related: carried-over Arcs02–05; Arc13 catalog.
 Authority: approved successor roadmap and Duncan's explicit “Continue with live
@@ -240,6 +241,8 @@ metadata/graph and approved Arc07/13 deferrals are disclosed, not silently remov
 CDC confirms or issues the next directive; CRC does not open Arc13/07 here.
 
 ## Version history
+
+- v1.15 — 2026-10-14: CDC independently reproduces same-candidate composition/default/no-graph/native host checks; accepts R-01–R-04. Historical observer/metadata/graph/API residuals retain explicit Arc07/13 owners under directive13. Operator selects live controls next.
 
 - v1.14 — 2026-10-14: Slice05 closes at27ca00f; five children/27 rows accepted.
   Current composition/18-row inherited packet assembled for independent CDC

@@ -3,14 +3,29 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — Arc10 and Arc11 accepted; P-07 instrument/workbench milestone done; Arc12/Slice01–03 CRC accepted; CDC directive12 unchanged; Slice04 iteration03 accepted at ec85ebe, all six LF rows done; Slice05 closed at27ca00f, all five Arc12 children/27 rows accepted; CRC composition assembled for CDC independent review/historical disposition; Arc12 remains open |
+| status | active — Arc10/11/12 CDC accepted; P-07 done; Arc07 live controls selected and Slice01 issued; original P-01–P-06/release gates open |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
 | source baseline | `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` on `main`; original migration baseline retained below |
 | planning home | `planning` branch, `.worktrees/planning/project01-mvp` |
 
-## Current direction — v3.45, 2026-10-14
+## Current direction — v3.46, 2026-10-14
+
+**Current:** [CDC accepted Arc12](arc12-live-rack-operations/cdc-verification.md)
+at 27ca00f after fresh composed/default/no-graph/native host checks; five children/
+27 rows and R-01–R-04 done. Duncan selected **live controls for the existing
+workbench**, advancing existing [Arc07](arc07-live-interface/arc-plan.md) ahead
+of catalog expansion. [Directive13](cdc-directive13.md) issues
+`arc07-live-interface/slice01-live-controls/cc-prompt.md` with five open LC rows.
+This terminal increment delivers playback, parameter edits, Scope and saving;
+controller/subscriber/transport work remains in named later slices. Arc13 retains
+catalog/typed vocabulary/checkpoints. Historical PatchUnloaded and measured
+cross-type observer order remain Arc07/Slice02 before watch claims; richer
+metadata/config and graph residuals have explicit Arc07/13 re-entry in the CDC
+record. P-01–P-06 and release remain open. Earlier turn-by-turn notes below are
+history; this paragraph and the current roadmap govern advancement.
+
 
 Duncan requested a recalibration during Arc10/Slice02 review: this is unreleased
 open-source music software, and excessive defensive infrastructure, proof tooling
@@ -79,8 +94,9 @@ backlog/release envelope, not a prerequisite to testing this first instrument.
 | --- | --- | --- |
 | Arc10 | Playable seeded Clock/TM/MIDI rack, four children/22 rows; T-01–T-05 CDC accepted at65522f1 | Actual software endpoint witness; release timing remains open |
 | [Arc11](arc11-observation-workbench/arc-plan.md) | LFO modulation, bounded Scope and terminal/CSV workbench | CDC accepted at72fe6b5; 14 child/four composition rows done |
-| [Arc12](arc12-live-rack-operations/arc-plan.md) | Live persistence, metadata/events, cable/graph operations, coherent runtime lifecycle | Slice01–03 accepted; lifecycle04 accepted at ec85ebe; all five children/27 rows accepted, final source27ca00f; CRC composition assembled, independent CDC/historical disposition gate open |
-| Arc13 and Arc07 | Remaining catalog and CLI/REPL/controllers | Preserve inventory, Chord and module-state checkpoint candidate |
+| [Arc12](arc12-live-rack-operations/arc-plan.md) | Live persistence, metadata/events, cable/graph operations, coherent runtime lifecycle | CDC accepted 27ca00f;27 child/four arc rows done; historical residuals explicitly routed |
+| [Arc07](arc07-live-interface/arc-plan.md) | Live terminal controls, then session observation, controllers/config and distinct transport | Operator-selected next; Slice01 issued, five LC rows open |
+| Arc13 | Remaining catalog and typed/API vocabulary | Preserve inventory/Chord/checkpoints, port labels and graph edge-type extensions; re-entry before richer module vocabulary |
 | Arc08 / release | Coverage provenance/95%, hardware jitter, benchmarks, soak, broader musical acceptance | Retained obligations, not M1/M2 entry gates |
 
 **Was:** Arc10 had three remaining slices, including a dedicated asynchronous
@@ -105,6 +121,13 @@ planning/reporting is not itself the default next deliverable. Future arc planni
 must use this policy, not mechanically copy the old packets.
 
 ### Design handoff history — current
+
+CDC 2026-10-14: directive13 issued for relay, CRC acknowledgment pending. Arc12
+closed at 27ca00f; Operator selected Arc07 live controls. Current CC assignment:
+`arc07-live-interface/slice01-live-controls/cc-prompt.md`. CRC reviews 01; the
+consequential observer/controller/transport designs still require CDC before issue.
+
+Historical CRC handoff before CDC review:
 
 CRC2026-10-13 accepted Slice04 iteration03 at ec85ebe/972e3b7: all six LF rows
 done; three corrective passes executed3/5. CRC2026-10-14 accepts Slice05
@@ -188,7 +211,9 @@ claimed by this acknowledgement. CRC will repin the accepted predecessor before
 opening Slice03 and apply directive08's concrete prompt and proportionate-proof
 policy to subsequent work. Three contributors and Expedited Mode remain active.
 
-Version history: **v3.45 — 2026-10-14:** CRC accepts final Slice05 at27ca00f and assembles Arc12 composition/18-row inherited return; all27 child rows done, four arc rows remain open for CDC independent review and historical disposition. No next arc, source/main change or project acceptance.
+Version history: **v3.46 — 2026-10-14:** Arc12 independently accepted at 27ca00f with explicit historical residual owners; Duncan chooses live controls, so Arc07 precedes catalog. CDC authors executable Slice01 with concrete input/output/cleanup design. No project/release row closed.
+
+**v3.45 — 2026-10-14:** CRC accepts final Slice05 at 27ca00f and assembles Arc12 composition/18-row inherited return; all 27 child rows done, four arc rows remain open for CDC independent review and historical disposition. No next arc, source/main change or project acceptance.
 
 **v3.44 — 2026-10-13:** CRC independently reviews Slice05 at7404fe2, accepts four IC rows and assigns iteration01 for IC-04/06; native/host/musical recipes pass, exact API/example/docs/error observation remain. CDC12 and parent gates unchanged.
 

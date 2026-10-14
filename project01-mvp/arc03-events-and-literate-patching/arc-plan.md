@@ -72,3 +72,16 @@ Re-entry: Before adding runtime removal/label/note mutation or claiming live met
 - v3.0 — 2026-09-17: CRC escalation03 and child carryover reviews completed the
   administrative evidence; CDC closed this work as carried over and assigned
   successors without accepting its unproved capability or weakening its criteria.
+
+
+## Successor reconciliation — v3.1, 2026-10-14
+
+[Arc12 CDC acceptance](../arc12-live-rack-operations/cdc-verification.md) accepts
+current labels, direct/command/load notifications and synchronous graph composition.
+Historical ledgers stay deferred. PatchUnloaded and runtime-observed common
+cross-type ordering now re-enter Arc07/Slice02 session observation before public
+watch/subscriber claims; source summary-last plus typed counts is not that stronger
+proof. Per-note/authorship/history/tag queries also re-enter 02; expanded/hierarchical
+tags and formatter/user config re-enter 03. Port labels re-enter Arc13 catalog/API
+reconciliation. See directive13 and Arc07 v2.0; these explicit owners supersede
+register03's single Slice02 destination without rewriting its history.

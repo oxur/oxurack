@@ -127,3 +127,12 @@ results appear in the CRC record. Source/main unchanged by CRC, no endpoint used
 Duncan relays this closing report, sibling crc-verification.md and ledger.md to
 CDC for the independent gate and explicit residual disposition. CDC owns the
 next arc/first slice after acceptance. No next CC prompt is issued by CRC here.
+
+
+## CDC disposition — 2026-10-14
+
+The above CRC return is preserved. CDC independently accepted this same27ca00f
+candidate; all four R rows are now done. [CDC verification](cdc-verification.md)
+contains reproduction, limits and explicit disposition of all three historical
+questions. [Directive13](../cdc-directive13.md) opens Operator-selected Arc07 live
+controls. Original deferred ledgers and full project/release gates remain unchanged.
