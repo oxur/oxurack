@@ -119,3 +119,26 @@ Version history: v2.0 — 2026-10-14, Arc12's working lifecycle/commands remove 
 previous prerequisite; Operator prioritizes live controls over catalog expansion.
 Open a concrete first frontend and explicit successor responsibilities, preserving
 notification, controller and external transport work with their design gates.
+
+### Design handoff history
+
+CRC acknowledgment — 2026-10-14: Duncan relayed
+[directive13](../cdc-directive13.md) after passing Slice01 to CC. Read the directive,
+Arc12 CDC acceptance/residual dispositions, current project v3.46/Arc07 v2.0 and
+Slice01's complete assignment at planning
+`241cc203a2dd8df4f17813f6571ccf9b06869391` (predecessor: CRC Arc12 return
+`a5a8e65`). Verified source HEAD
+`27ca00f64c902b77c2c16d943f1a2b5f650f7f67`; CC already has in-progress frontend
+edits in that checkout, which CRC leaves untouched. Protected main remains
+`a7ce6e61536ca96b6aeb2227ee06e430ed8df162` and clean.
+
+Status: **acknowledged**. Arc12's five children/27 rows and R-01–R-04 are CDC
+accepted; historical residuals retain the exact owners/re-entry in the CDC record.
+Current assignment remains `slice01-live-controls/cc-prompt.md`, issued by CDC
+and already relayed by Duncan; no duplicate or corrective assignment is issued.
+LC-01–LC-05 and A-07-01/A-07-02 remain open. CC returns source/planning commits;
+CRC then independently reviews the five LC rows and records the verdict in
+Slice01's `crc-verification.md`. After Slice01 closes, CRC inspects Slice02 and
+returns concrete observer/lifecycle/metadata design questions through Duncan to
+CDC before authoring its implementation prompt. This acknowledgment changes no
+implementation contract, acceptance status or successor design authority.

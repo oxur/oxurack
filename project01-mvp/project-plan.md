@@ -122,7 +122,9 @@ must use this policy, not mechanically copy the old packets.
 
 ### Design handoff history — current
 
-CDC 2026-10-14: directive13 issued for relay, CRC acknowledgment pending. Arc12
+CDC 2026-10-14: directive13 issued and CRC acknowledged through Duncan at
+planning241cc20/source27ca00f; see [Arc07 handoff history](arc07-live-interface/arc-plan.md#design-handoff-history).
+CC is implementing the already relayed first slice. Arc12
 closed at 27ca00f; Operator selected Arc07 live controls. Current CC assignment:
 `arc07-live-interface/slice01-live-controls/cc-prompt.md`. CRC reviews 01; the
 consequential observer/controller/transport designs still require CDC before issue.
