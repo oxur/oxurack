@@ -176,6 +176,9 @@ Continue with [editing and saving](#edit-and-save-a-running-patch),
 [the scripted rack session](#run-the-scripted-rack-session), or
 [Scope capture and inspection](#capture-and-inspect-scope).
 
+For a guided listening and inspection session, use the
+[Clock, LFO and Scope user-testing runbook](docs/user-testing-workbench.md).
+
 ## Usage guide
 
 ### Run a Turing Machine MIDI patch
