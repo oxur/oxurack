@@ -1,9 +1,10 @@
 # Arc07 Slice01 — live controls
 
-Version 1.0, 2026-10-14. Status: open, CC initial implementation assignment issued;
+Version 1.1, 2026-10-14. Status: open, initial CC return reviewed; iteration01 issued;
 five LC rows open, no implementation acceptance. Three contributors/Expedited Mode.
 CDC author; CRC reviewer; Duncan relays. Depends on Arc12 accepted 27ca00f.
-Current assignment: [cc-prompt.md](cc-prompt.md), initial pass, correction 0/5.
+Current assignment: [cc-prompt-iteration01.md](cc-prompt-iteration01.md).
+Correction1/5 issued, 0 corrective passes executed; initial prompt preserved.
 
 ## Goal and boundary
 
@@ -13,9 +14,9 @@ pause with silence and quit cleanly. New rack-live example uses a single synchro
 rack/output owner and a bounded stdin-only helper thread. Default is paced trace;
 explicit endpoint selection enables native MIDI. Startup is paused at sample 0.
 
-The [prompt](cc-prompt.md) is the complete binding design, source map, command
-matrix, failure/shutdown policy, test oracles and allowed paths. This plan does
-not duplicate it. The only facade addition is public read-only is_running, needed
+The [initial prompt](cc-prompt.md) and current iteration carry the binding design,
+source map, command matrix, failure/shutdown policy, test oracles and allowed
+paths. This plan does not duplicate them. The only facade addition is public read-only is_running, needed
 for actual current state rather than a frontend shadow flag. No new dependencies.
 Unissued successor capabilities—subscriptions, interactive topology/replacement,
 controllers/config, external transport—remain in the arc plan. Scale values remain
@@ -64,9 +65,42 @@ This readiness is CDC author judgment, not independent implementation acceptance
 
 | Date | Assignment | Predecessor | Reason/status | Next owner |
 | --- | --- | --- | --- | --- |
-| 2026-10-14 | cc-prompt.md | Arc12 CDC acceptance27ca00f; directive13; Duncan selected live controls | Initial implementation issued through Duncan; LC-01–05 open | CC returns source/planning commits, CRC independently reviews |
+| 2026-10-14 | cc-prompt.md | Arc12 CDC acceptance27ca00f; directive13; Duncan selected live controls | Returned a603a24/9fdb513; CRC changes required, five rows open | Preserved; iteration01 supersedes assignment |
+| 2026-10-14 | cc-prompt-iteration01.md | Initial a603a24/9fdb513; CRC F-01–F-05 | Active correction1/5 issued; none executed yet | Duncan relays to CC, then CRC independently reviews |
 
 ## Version history
 
 - v1.0 — Arc12 acceptance and Operator selection open the first playable control
   surface; larger historical interface capabilities remain named successor slices.
+
+## CRC initial review and corrective author readiness — 2026-10-14
+
+[Independent record](crc-verification.md): native gates and ordinary CLI work,
+but actual fairness/native trace/error probes fail; status/default Scope are
+incomplete. Resume/save proof needs discriminating control continuation; no
+runtime phase/save defect reproduced. Five LC rows remain open. No structural
+arc/architecture change; Slice02 stays held under directive13.
+
+Iteration01 readiness (CRC, not acceptance):
+
+1. Source-grounded: inspected all six changed paths at clean a603a24; verified
+   actual bpm/snapshot/reset APIs, CLI gating, delivery, turn and input shutdown.
+2. Design-complete: preserve original behavior; eligible sampling survives long
+   command work, ready pause/quit wins, one late sample then rebase; native
+   send-before-trace; aggregate primary/cleanup and completed-reader errors.
+3. Guideline-applied: EH-01/AP-33 error retention, CA-01 join versus explicit
+   blocked-reader exception, CA-02/07 bounded sole ownership, CLI-27 both backends.
+4. Executable: four authorized existing frontend/README paths; production-turn
+   seam, unconditional startup Scope, full snapshot status, private failure result;
+   no library/dependency changes. Sketches are labeled uncompiled guidance.
+5. Falsifiable: three transient failing baseline probes, real default CLI failure,
+   fake-time combined turn, literal native trace/cleanup, dual-fault result,
+   nonempty 2000-sample fresh/negative control and actual resumed engines.
+6. Coherent/portable: explicit roots, bounded full/section reading, existing ledger
+   intake home, original prompt retained, affected mode/native/subprocess gates.
+   Expected correction packet fits one pass with approximately55–75k tokens
+   including reads/implementation/validation and recovery headroom; no proof
+   platform, hardware campaign, new arc or subscriber design is assigned.
+
+Version history: v1.1 — initial review rejects incomplete frontend/proof at
+source a603a24; iteration01 details in-scope repairs without changing acceptance.

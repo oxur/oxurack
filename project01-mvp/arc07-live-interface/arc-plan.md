@@ -1,6 +1,6 @@
 # Live interface
 
-Status: active — v2.0, 2026-10-14; Slice01 live controls issued, all acceptance
+Status: active — v2.1, 2026-10-14; Slice01 iteration01 issued, all acceptance
 rows open. The current executable plan below supersedes this historical outline.
 
 ## Capability and dependencies
@@ -142,3 +142,14 @@ Slice01's `crc-verification.md`. After Slice01 closes, CRC inspects Slice02 and
 returns concrete observer/lifecycle/metadata design questions through Duncan to
 CDC before authoring its implementation prompt. This acknowledgment changes no
 implementation contract, acceptance status or successor design authority.
+
+CRC review handoff — 2026-10-14: initial Slice01 return a603a24/9fdb513 is not
+accepted; [CRC record](slice01-live-controls/crc-verification.md) reproduces working
+ordinary controls/native gates and actual fairness/trace/error defects plus
+observation/proof gaps. [Iteration01](slice01-live-controls/cc-prompt-iteration01.md)
+repairs only the approved frontend, correction1/5 issued (0 executed). Five LC and
+two A rows stay open. Duncan relays to CC; CRC reviews its return. The four-slice
+structure and CDC13 residual/design boundaries remain unchanged; no02 prompt.
+
+Version history: v2.1 — Slice01 initial review surfaces in-scope frontend repair
+and proof needs; record corrective assignment without changing arc scope/design.

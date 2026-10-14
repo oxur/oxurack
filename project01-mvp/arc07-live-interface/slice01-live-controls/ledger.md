@@ -1,15 +1,17 @@
 # Live controls — acceptance ledger
 
 Opened 2026-10-14 before implementation. All five rows open. CC supplies proposed
-results; CRC independently accepts. Authority: slice plan and cc-prompt.md.
+results; CRC independently accepts. Authority: slice plan and preserved prompts.
+Evidence cells retain CC initial attestation, not CRC acceptance; the dated CRC
+disposition below and crc-verification.md identify reproduced support and gaps.
 
 | ID | Criterion | Verify | Significance | Origin | Status | Evidence | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| LC-01 | Commands change actual live parameters and reject invalid input without corrupting the session | Real getter/setter/save values; malformed→valid input and typed validation; command replies/provenance | correctness-grade | Operator live controls | proposed-done | Direct commands verify Clock90, LFO frequency, TM base/waveform and saved values; malformed, invalid numeric, unknown/extra args and Scale rejected without snapshot/time mutation; valid follow-up and zero accepted; exact CLI values observed | Scalar/bool/string; scale via patch file |
-| LC-02 | Waiting input and command processing coexist with continuous single-owner playback | Real 200+1000-sample subject/control/unchanged comparison; bounded fairness; paused 0; no wall-time catch-up | correctness-grade | Existing direct runner | proposed-done | Subject equals independently edited control through 1200 samples, MIDI and Scope; unchanged third differs; blocked stdin still permits owner ticks; batch capped at 8; paused cycles advance 0; late deadline advances at most one sample | Public read-only is_running, no shadow flag |
-| LC-03 | Pause/reset/shutdown preserve semantics and release output ownership honestly | Exact cleanup and sample state; EOF/quit/Ctrl-C/read/send/write failure paths; Generated versus Sent; blocked-reader exit | correctness-grade | Arc12 lifetime/MIDI contract | proposed-done | Exact NoteOff/CC123/CC120 cleanup at same sample; repeated pause inert; resume preserves phase; reset preserves running; EOF/quit/Ctrl-C and read/disconnect/send/trace failures converge on cleanup; blocked-reader quit exits; Generated/Sent distinction asserted | No hidden second drain or stuck join |
-| LC-04 | Scope inspection/export and save expose current state without interrupting simulation continuity | Full retained records, export collision/error, save/fresh configuration replay and continuing control | correctness-grade | Arc11/12 composition | proposed-done | Scope retains bounded rows and reports overwrite count; CSV collision preserves original bytes and live session; save reload matches independent fresh control trace at zero cursor; ongoing control trace remains equal; flush/error path visible | No performance checkpoint claim |
-| LC-05 | Runnable terminal recipe, both feature modes and affected native gates pass | Actual idle-open stdin/play/edit/pause/save/quit subprocess; fake native output; default/no-graph/native/lint/docs and old example regressions | serious | Playable-first policy | proposed-done | Default and no-default example builds and actual idle-open subprocess smokes pass; fake sender/native selection tests pass; all-target suites, lint, Clippy, rustdoc, formatting and full workspace tests pass; old fixture regressions retained | No hardware/coverage/soak expansion |
+| LC-01 | Commands change actual live parameters and reject invalid input without corrupting the session | Real getter/setter/save values; malformed→valid input and typed validation; command replies/provenance | correctness-grade | Operator live controls | open | Direct commands verify Clock90, LFO frequency, TM base/waveform and saved values; malformed, invalid numeric, unknown/extra args and Scale rejected without snapshot/time mutation; valid follow-up and zero accepted; exact CLI values observed | Scalar/bool/string; scale via patch file |
+| LC-02 | Waiting input and command processing coexist with continuous single-owner playback | Real 200+1000-sample subject/control/unchanged comparison; bounded fairness; paused 0; no wall-time catch-up | correctness-grade | Existing direct runner | open | Subject equals independently edited control through 1200 samples, MIDI and Scope; unchanged third differs; blocked stdin still permits owner ticks; batch capped at 8; paused cycles advance 0; late deadline advances at most one sample | Public read-only is_running, no shadow flag |
+| LC-03 | Pause/reset/shutdown preserve semantics and release output ownership honestly | Exact cleanup and sample state; EOF/quit/Ctrl-C/read/send/write failure paths; Generated versus Sent; blocked-reader exit | correctness-grade | Arc12 lifetime/MIDI contract | open | Exact NoteOff/CC123/CC120 cleanup at same sample; repeated pause inert; resume preserves phase; reset preserves running; EOF/quit/Ctrl-C and read/disconnect/send/trace failures converge on cleanup; blocked-reader quit exits; Generated/Sent distinction asserted | No hidden second drain or stuck join |
+| LC-04 | Scope inspection/export and save expose current state without interrupting simulation continuity | Full retained records, export collision/error, save/fresh configuration replay and continuing control | correctness-grade | Arc11/12 composition | open | Scope retains bounded rows and reports overwrite count; CSV collision preserves original bytes and live session; save reload matches independent fresh control trace at zero cursor; ongoing control trace remains equal; flush/error path visible | No performance checkpoint claim |
+| LC-05 | Runnable terminal recipe, both feature modes and affected native gates pass | Actual idle-open stdin/play/edit/pause/save/quit subprocess; fake native output; default/no-graph/native/lint/docs and old example regressions | serious | Playable-first policy | open | Default and no-default example builds and actual idle-open subprocess smokes pass; fake sender/native selection tests pass; all-target suites, lint, Clippy, rustdoc, formatting and full workspace tests pass; old fixture regressions retained | No hardware/coverage/soak expansion |
 
 ## Execution notes
 
@@ -90,3 +92,16 @@ here, linking the closing report on return. No prefilled completion claims.
 - Final `git diff --check` is recorded separately for S and W before commit.
   Correction count: 0/5. All five rows are returned proposed-done for CRC review;
   no acceptance or closure verdict is claimed. See [closing report](closing-report.md).
+
+### CRC initial disposition — 2026-10-14
+
+Reviewed source a603a24d3e02c377557445bd2ef27e4203b33392 / CC planning
+9fdb513a2cc72ea9d4cafdc3c4f063408966e333. **All five LC rows remain open**;
+CC's initial proposed-done evidence above is preserved as attestation.
+[CRC verification](crc-verification.md) reproduces native/mode/ordinary CLI
+success and F-01–F-04 failures/gaps; F-05 needs stronger continuation/replay proof.
+LC-01: status/help; LC-02: combined owner fairness/resume; LC-03: native trace,
+shutdown and actual delivery/fault proof; LC-04: default Scope and nonempty saved/
+live continuation; LC-05: affected integration regressions. Current CC assignment
+is [iteration01](cc-prompt-iteration01.md), correction1/5 issued, none executed.
+No acceptance/closure/deferral or successor advancement; parent gates unchanged.

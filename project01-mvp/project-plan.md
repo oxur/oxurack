@@ -10,7 +10,7 @@
 | source baseline | `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` on `main`; original migration baseline retained below |
 | planning home | `planning` branch, `.worktrees/planning/project01-mvp` |
 
-## Current direction — v3.46, 2026-10-14
+## Current direction — v3.47, 2026-10-14
 
 **Current:** [CDC accepted Arc12](arc12-live-rack-operations/cdc-verification.md)
 at 27ca00f after fresh composed/default/no-graph/native host checks; five children/
@@ -18,6 +18,11 @@ at 27ca00f after fresh composed/default/no-graph/native host checks; five childr
 workbench**, advancing existing [Arc07](arc07-live-interface/arc-plan.md) ahead
 of catalog expansion. [Directive13](cdc-directive13.md) issues
 `arc07-live-interface/slice01-live-controls/cc-prompt.md` with five open LC rows.
+CRC reviewed the initial a603a24/9fdb513 return: all five LC rows stay open;
+[iteration01](arc07-live-interface/slice01-live-controls/cc-prompt-iteration01.md)
+repairs fairness/native trace/error retention and observation/proof gaps.
+[Independent record](arc07-live-interface/slice01-live-controls/crc-verification.md)
+retains passing native/ordinary-session evidence and reproduced failures.
 This terminal increment delivers playback, parameter edits, Scope and saving;
 controller/subscriber/transport work remains in named later slices. Arc13 retains
 catalog/typed vocabulary/checkpoints. Historical PatchUnloaded and measured
@@ -121,6 +126,13 @@ planning/reporting is not itself the default next deliverable. Future arc planni
 must use this policy, not mechanically copy the old packets.
 
 ### Design handoff history — current
+
+CRC2026-10-14: initial Arc07/Slice01 a603a24/9fdb513 reviewed, changes required;
+iteration01 is the current CC assignment. Five LC/two Arc07 rows remain open.
+After Slice01 closes, return observer/lifecycle/metadata design questions to CDC
+before02 implementation. No arc/project acceptance change or source repair by CRC.
+
+Prior directive acknowledgment:
 
 CDC 2026-10-14: directive13 issued and CRC acknowledged through Duncan at
 planning241cc20/source27ca00f; see [Arc07 handoff history](arc07-live-interface/arc-plan.md#design-handoff-history).
@@ -922,3 +934,6 @@ facade drain and runnable seeded trace, with code sketches and real behavior
 oracles. A narrow ordering label on the existing core sample-start boundary
 allows admission before the latch; no phase/driver/clock is added. CRC performs
 independent review after CC return. Slice04 remains unissued.
+
+Version history: v3.47 — 2026-10-14, Arc07/Slice01 initial review and scoped
+iteration01 issuance; roadmap, residual owners and all parent gates unchanged.

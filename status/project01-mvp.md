@@ -9,9 +9,14 @@
 > Scope records); host workspace/lint/docs pass; restricted CoreMIDI failures retained.
 > Duncan selected **live controls for the existing workbench** next.
 > [Directive13](../project01-mvp/cdc-directive13.md) opens Arc07/Slice01:
-> `arc07-live-interface/slice01-live-controls/cc-prompt.md`, five LC rows open.
+> Initial a603a24/9fdb513 return requires correction; current assignment is
+> `arc07-live-interface/slice01-live-controls/cc-prompt-iteration01.md`.
+> Five LC rows remain open: fairness/native trace/error retention and observation/
+> proof gaps; [CRC record](../project01-mvp/arc07-live-interface/slice01-live-controls/crc-verification.md)
+> preserves passing native/ordinary CLI checks and actual failed behavior probes.
 > Terminal play/pause, parameter edits, Scope and save reuse the single MIDI owner.
-> Source/main are unchanged by CDC; no new feature implementation is claimed yet.
+> CC source a603a24 is implemented but unaccepted; CRC changed planning only.
+> Protected main remains unchanged.
 > Historical unload notification/common observer ordering re-enter Arc07/Slice02;
 > metadata/config/controller/transport and catalog/typed/graph extensions retain
 > explicit Arc07/13 owners. Exact checkpoints remain future work.
