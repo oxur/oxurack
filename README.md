@@ -46,7 +46,10 @@ oxurack aims for the middle:
   across thousands of modules. oxurack aims for the same feel in the MIDI
   domain.
 
-## What it lets you do
+## Where we are heading
+
+These are the intended musical workflows. The [current state](#current-state)
+and [quick start](#quick-start) below describe what is available today.
 
 - Build a generative rhythm section from a Euclidean module, a noise
   source, and a Turing Machine; record the result into Logic Pro (or any
@@ -55,7 +58,8 @@ oxurack aims for the middle:
   synth and drive its pitch with self-similar melodies shaped by the
   instruments' physical controls.
 - Save a patch you built during a late-night experiment, come back in a
-  week, load it with the same seed, and pick up exactly where you were.
+  week, load it with the same seed, and recreate its starting configuration.
+  Exact mid-performance checkpoints remain future work.
 - Map a nanoKONTROL2 (or any MIDI controller) to module parameters and
   play oxurack like an instrument while it plays your synth.
 - Sync to your DAW as a clock slave so your generative performance
@@ -67,20 +71,23 @@ oxurack aims for the middle:
 
 ## Shape of the project
 
-oxurack is a Cargo workspace with four kinds of crate:
+oxurack is a Cargo workspace:
 
 - `oxurack-core` — the shared vocabulary: values, ports, cables, the
   tick cycle, and the patch file format.
-- `oxurack-rt` — the real-time thread: MIDI I/O and clocking, as
-  master or slave.
-- `oxurack-mod-*` — one crate per module. Each depends only on
-  `oxurack-core` and can be used on its own.
-- `oxurack` — the umbrella: REPL, patch CLI, rack assembly.
+- `oxurack-rt` — MIDI I/O and real-time clock infrastructure. Integration
+  with the live interface's external transport controls remains planned.
+- `oxurack-mod-*` — module engines and rack adapters. Clock, LFO and
+  Turing Machine can run standalone; their optional `rack` feature adds
+  Bevy/core integration.
+- `oxurack-graph` — optional rack navigation and topology queries.
+- `oxurack` — the public rack API, patch loading, persistence, Scope capture
+  and executable examples. The interactive interface is still in development.
 
-Modules are Bevy plugins over the core crate. Adding one to a rack looks
-like `app.add_plugins(TuringMachineModule)`. The rack loads patches from
-RON files, drives them from its clock, and routes values between
-modules every tick.
+Install module types with the facade, for example
+`rack.install::<TuringMachineModule>()`, before loading a patch that uses them.
+The rack creates the patch's module instances and runs their registered Bevy
+systems, routing values between modules on each 1 ms simulation sample.
 
 Planning lives on the dedicated `planning` branch in `.worktrees/planning`.
 Start with [project01-mvp](.worktrees/planning/project01-mvp/project-plan.md)
@@ -91,21 +98,85 @@ If the worktree is absent, create it with
 
 ## Current state
 
-oxurack is in early development. The Turing Machine Mk2 port
-(`crates/oxurack-mod-turingmachine/`) is the first working module; the core
-infrastructure, RT thread, and additional modules are being built out
-against the v1 roadmap. APIs will change until v1.0 is tagged.
+oxurack is unreleased, but the Clock → Turing Machine → MIDI-out instrument
+now runs in the rack, with LFO modulation and a bounded Scope workbench. APIs
+may change before v1.0.
 
-If you want to follow along or try the Turing Machine in isolation, its
-crate has its own README with examples.
+Available on `main`:
 
-## Lineage
+- Seeded RON patches, deterministic MIDI traces and paced playback to a
+  selected MIDI output.
+- Clock, Turing Machine and five-waveform LFO modules, plus the MIDI-out sink.
+- Scope capture of selected signal ports and MIDI events, with terminal
+  inspection and CSV export.
+- Live parameter, metadata and cable edits through the Rust API; saving the
+  current configuration and replaying it in a fresh rack.
+- Explicit reset/restart/load/unload operations, module removal, typed instance
+  handles and bounded command processing.
 
-oxurack is the Rust successor to
-[underack](https://github.com/ut-proj/underack), an LFE/Erlang project
-that explored the same design space. The modular-MIDI stance and the
-rough shape of the module catalog carry forward; the architecture is new,
-built on Bevy ECS as the runtime substrate.
+The examples below exercise these capabilities. Interactive `play`/`set` commands,
+controller mapping and external transport controls are not yet on `main`.
+The Scope terminal view is printed after a finite run; it is not a continuously
+redrawing interface. Additional modules, including Chord, remain planned.
+
+Saved patches preserve configuration and seed, not the current engine position.
+A fresh load restarts the sequence; it does not resume the exact performance.
+For standalone Turing Machine use, see its
+[crate README](crates/oxurack-mod-turingmachine/README.md).
+
+## Quick start
+
+Run these commands from the repository root with Rust and Cargo installed.
+The examples are built from this workspace; no separate CLI installation is
+needed. Trace-only runs do not open a MIDI device or produce audio.
+
+Start with a short Clock/Turing Machine trace:
+
+```bash
+cargo run --locked -p oxurack --example turing-machine-midi -- \
+  --patch crates/oxurack/examples/patches/turing-machine-midi.ron --samples 2000
+```
+
+Then inspect the LFO-modulated instrument and save its Scope capture:
+
+```bash
+OXURACK_DEMO_DIR=$(mktemp -d)
+cargo run --locked -p oxurack --example turing-machine-midi -- \
+  --patch crates/oxurack/examples/patches/turing-machine-lfo.ron \
+  --samples 10000 --scope-view \
+  --scope-port lfo_main.bipolar_out --scope-port tm_main.note \
+  --scope-csv "$OXURACK_DEMO_DIR/scope.csv" \
+  > "$OXURACK_DEMO_DIR/midi.trace"
+```
+
+The terminal view goes to stderr; `midi.trace` contains the MIDI bytes and
+`scope.csv` contains the retained signal/MIDI records. Offline runs advance
+simulation time as fast as the runner can execute. With a selected MIDI output,
+samples are paced at 1 ms, so 10,000 samples represent roughly ten seconds.
+
+To hear it, first list available outputs, then replace the example name below
+with one exact name from that list. Route that output to a hardware synth or a
+DAW instrument track configured to receive MIDI:
+
+```bash
+cargo run --locked -p oxurack --example turing-machine-midi -- --list-outputs
+cargo run --locked -p oxurack --example turing-machine-midi -- \
+  --patch crates/oxurack/examples/patches/turing-machine-lfo.ron \
+  --output-name "YOUR MIDI OUTPUT NAME" --samples 10000
+```
+
+Playback ends at the sample limit; Ctrl-C requests an earlier stop and MIDI
+cleanup. For the full flag list:
+
+```bash
+cargo run --locked -p oxurack --example turing-machine-midi -- --help
+```
+
+Continue with [editing and saving](#edit-and-save-a-running-patch),
+[the scripted rack session](#run-the-scripted-rack-session), or
+[Scope capture and inspection](#capture-and-inspect-scope).
+
+## Usage guide
 
 ### Run a Turing Machine MIDI patch
 
@@ -130,6 +201,8 @@ trace offline:
 cargo run -p oxurack --example turing-machine-midi -- \
   --patch crates/oxurack/examples/patches/turing-machine-lfo.ron --samples 10000
 ```
+
+### Edit and save a running patch
 
 `Oxurack::parameter` reads a registered getter from the active module instance;
 `set_parameter` applies its normal validation and emits one `DirectApi`
@@ -166,6 +239,8 @@ cargo run --locked -p oxurack --example turing-machine-midi -- \
 The second command runs the saved configuration in a fresh process. Its LFO
 phase begins at zero while its frequency is 1 Hz.
 
+### Reset, restart and replace a rack
+
 The facade also exposes explicit whole-rack lifetime operations. `reset()`
 appends channel-ordered Note Off, All Notes Off, and All Sound Off messages for
 dirty MIDI sinks without advancing or reseeding the rack; call `drain_midi()`
@@ -190,6 +265,8 @@ cargo run --locked -p oxurack --example save-live-patch -- \
 
 Without `--lifecycle`, the example keeps its original 200-sample edit, save,
 100-sample continuation, and summary output.
+
+### Edit patch metadata
 
 `Oxurack::label` reads the active rack's raw display name, description, tags,
 or rack notes. `set_label` writes those fields on the rack, an active module,
@@ -226,6 +303,8 @@ the live configuration, then advances and drains another 100 samples. It prints
 the raw values it wrote and `completed_samples=300`. The saved file preserves
 configuration metadata; it does not checkpoint running module engines.
 
+### Rewire a running patch
+
 Live cable edits use `Oxurack::patch` and `Oxurack::unpatch` between samples.
 They validate exact active module/port names and signal compatibility before
 changing topology. Successful edits refresh the optional graph before returning
@@ -250,6 +329,8 @@ The second command replays the saved configuration in a fresh process. It
 restarts the LFO and Turing Machine engines while retaining the edited cable,
 order, and description.
 
+### Use instance handles and commands
+
 Typed `Handle<M>` values and bound port/knob references identify one exact
 module instance in one committed rack lifetime. A handle becomes stale when its
 module is removed or the rack successfully loads, restarts, or unloads; a failed
@@ -273,7 +354,11 @@ still pending behind it. Completed and cancelled slots use queue capacity until
 snapshot/save/restart; it does not change the Clock module's independent `bpm`
 parameter.
 
-Run the complete live-session example with the default graph or without it:
+### Run the scripted rack session
+
+`rack-session` is an automated demonstration of edits, persistence and lifecycle
+operations, rather than an interactive command prompt. Run it with the default
+graph or without it:
 
 ```bash
 OXURACK_SESSION_DIR=$(mktemp -d)
@@ -297,6 +382,8 @@ phase-labelled cleanup events, including `final-cleanup` and the independently
 loaded `reference-cleanup`, go to stderr after playback; both racks are reset
 and their cleanup vectors are compared. `SetBpm` changes saved patch metadata,
 while the Clock module's own `bpm` parameter remains independently audible.
+
+### Capture and inspect Scope
 
 Capture selected scalar ports and the runner's generated MIDI events to a
 bounded CSV file. Capacity counts mixed records; when full, the oldest rows are
@@ -425,6 +512,8 @@ CSV export happens after stop and live cleanup, including when playback fails;
 the primary playback error is retained if export also fails. Scope rows do not
 change the existing stdout performance trace.
 
+### Play through a MIDI output
+
 For live playback, choose an exact endpoint name from the current host's list:
 
 ```bash
@@ -456,6 +545,14 @@ a disconnected endpoint or forced process termination can prevent delivery.
 Live samples are paced at 1 ms and do not catch up in bursts after a slow rack
 step or MIDI send. The sample-indexed trace records successfully sent patch
 messages only; it does not prove that a synthesizer rendered or recorded them.
+
+## Lineage
+
+oxurack is the Rust successor to
+[underack](https://github.com/ut-proj/underack), an LFE/Erlang project
+that explored the same design space. The modular-MIDI stance and the
+rough shape of the module catalog carry forward; the architecture is new,
+built on Bevy ECS as the runtime substrate.
 
 ## License
 
