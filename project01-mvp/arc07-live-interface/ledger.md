@@ -37,3 +37,13 @@ Both A-07-01/A-07-02 remain open: controller, session observation/metadata/compl
 external transport and complete child/residual composition remain outstanding.
 [Escalation14](../crc-escalation14.md) follows directive13's explicit design return
 before02 implementation. No current CC assignment or arc acceptance claimed.
+
+## CDC design return — 2026-10-14
+
+[Directive14](../cdc-directive14.md) resolves escalation14 for02 authoring, source
+e582aed. Slice01's five rows remain done; both arc rows stay open. Runtime watch/
+unload ordering and current tag/full-list note UX are 02; persistent per-note
+identity/authorship/history moves explicitly to 05; real completion to 06. Existing
+controller/config03 and transport04 obligations remain. CRC acknowledges and
+creates02's actual open set next; no placeholder successor acceptance or CC prompt
+is inferred from this planning return.

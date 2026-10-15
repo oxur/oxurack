@@ -17,9 +17,11 @@ the restart-planning conversation is CDC. CRC and CC are separate contexts
 selected by Duncan (Operator); no context is implicitly created or assigned.
 CDC owns architecture, arc plans and first slices; CRC reviews CC and advances
 approved slices. All handoffs pass through the Operator. Read the project plan
-and `project01-mvp/cdc-directive13.md` for Arc12 acceptance and current Arc07
-live controls. CDC issued Arc07/Slice01; CRC reviews it, then returns consequential
-Slice02 observer design to CDC before implementation. Directive11 getter/order and
+and `project01-mvp/cdc-directive14.md` for current Arc07 work. Slice01 is
+CRC-accepted at e582aed. CDC resolved 02 session editing/observation; CRC acknowledges
+and authors its detailed prompt next. Persistent notes move to 05 and real terminal
+completion to 06, then controller/config03 and external transport04; entry gates and
+scope are explicit in directive14/Arc07 v2.3. Directive11 getter/order and
 directive12 lifecycle semantics remain implemented contracts. Directive08 retains the playable-first/proportionate-proof policy.
 Arc10, Arc11 and Arc12 are accepted; P-07 is done.
 Use `crc-verification.md` for new slice review, and both CRC and CDC records

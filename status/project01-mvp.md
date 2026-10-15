@@ -14,14 +14,15 @@
 > native trace/accounting and shutdown; all three original failing probes now pass.
 > Both feature/native/host gates and actual CLI sessions pass; nonempty saved/fresh
 > replay matches independent configuration and pinned MIDI/LFO hashes are intact.
-> [Escalation14](../project01-mvp/crc-escalation14.md), required by directive13,
-> returns02's observer/lifecycle/metadata/completion decisions to CDC through Duncan.
-> No current CC assignment;02 unissued and both Arc07 rows remain open. No arc or
-> project acceptance inferred. Source worktree remains e582aed; CRC changed plans
-> only. Root main has separate documentation-only updates through cd3119c.
-> Historical unload notification/common observer ordering re-enter Arc07/Slice02;
-> metadata/config/controller/transport and catalog/typed/graph extensions retain
-> explicit Arc07/13 owners. Exact checkpoints remain future work.
+> [Directive14](../project01-mvp/cdc-directive14.md) resolves escalation14 after
+> accepted 01. Next: CRC authors 02 session editing/ordered watch, including load/
+> unload/restart/remove, cables, existing labels/notes and exact tag queries.
+> Persistent note identity/authorship/history moves to named Arc07/05; actual
+> terminal completion to 06, then retained controller/config03 and transport04.
+> No requirement dropped, no CC prompt yet, both Arc07 rows remain open.
+> Main cd3119c contains accepted Arc09–12 and README/user-testing runbook;
+> source e582aed contains accepted live controls. CDC changed planning only.
+> Catalog/typed/graph extensions and exact checkpoints retain Arc13 ownership.
 > P-07 stays accepted with the original software MIDI witness; P-01–P-06 and
 > hardware timing/coverage/benchmarks/soak/release remain open. Three contributors,
 > Expedited Mode and directive08 playable-first policy apply.

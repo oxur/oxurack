@@ -85,3 +85,14 @@ proof. Per-note/authorship/history/tag queries also re-enter 02; expanded/hierar
 tags and formatter/user config re-enter 03. Port labels re-enter Arc13 catalog/API
 reconciliation. See directive13 and Arc07 v2.0; these explicit owners supersede
 register03's single Slice02 destination without rewriting its history.
+
+## Successor refinement — v3.2, 2026-10-14
+
+[Directive14](../cdc-directive14.md), prompted by escalation14 after accepted
+Arc07/01, supersedes the combined 02 metadata assignment: actual cross-lifetime
+unload/common-order observations and exact tag search remain Arc07/02; persistent
+per-note IDs/CRUD/authorship/revision history move to Arc07/05 before rich-note
+claims or Arc07 closure. Configuration/tag hierarchy remains03; port labels
+remain Arc13. Historical deferred rows retain their original status and evidence.
+Version history: v3.2 — separate the note schema migration from session observation
+while preserving explicit ownership and re-entry; no capability acceptance added.

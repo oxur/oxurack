@@ -1,7 +1,8 @@
 # Live interface
 
-Status: active — v2.2, 2026-10-14; Slice01 CRC-accepted at e582aed,
-both arc acceptance rows open; Slice02 design return awaits CDC. The current
+Status: active — v2.3, 2026-10-14; Slice01 CRC-accepted at e582aed;
+CDC directive14 resolves 02 and assigns CRC its prompt authoring. Both arc rows
+remain open; note history and terminal completion have named successor slices. The current
 executable plan below supersedes this historical outline.
 
 ## Capability and dependencies
@@ -57,13 +58,15 @@ bounded queued load/save and synchronous command results, so that feature is not
 deferred here. Original Arc05 rows remain deferred until their full successor
 walk is supported. This routing is design, not acceptance of transport behavior.
 
-## Current executable plan — v2.0, 2026-10-14
+## Current executable plan — v2.3, 2026-10-14
 
-**Active.** Was: a reconstructed interface outline, no issued child. Now: Duncan
-explicitly selected live controls for the existing workbench after Arc12's return;
-CDC accepted Arc12 at 27ca00f and opens this arc ahead of catalog expansion.
-[Directive13](../cdc-directive13.md) records acceptance and inherited routing.
-The earlier outline is history, not simultaneous implementation instructions.
+**Active.** Was: directive13's four-increment outline combined observation,
+persistent note history and terminal completion in 02. Now: accepted 01 and
+[CRC escalation14](../crc-escalation14.md) expose three distinct integration
+boundaries. [CDC directive14](../cdc-directive14.md) resolves 02's public journal,
+lifecycle/Scope/MIDI contracts and command grammar; note history moves to 05 and
+real completion to 06 without deleting either requirement. Duncan's prior
+replanning authority, playable-first policy and live-controls selection govern.
 
 Capability: play, inspect, persist and control the current modular instrument
 from a usable terminal and later MIDI controls, with honest lifecycle/observation
@@ -71,25 +74,27 @@ and distinct external transport. Depends on accepted Arcs10–12; blocks project
 P-01/P-04 live musical workflow. Related: Arc13 typed/catalog work and Arc08 timing/
 release. Keep A-07-01/A-07-02 open until the full capability composes.
 
-| Slice | Product increment / inherited responsibilities | Dependency/state |
+| Execution order / slice | Product increment / inherited responsibilities | Dependency/state |
 | --- | --- | --- |
-| slice01-live-controls | Play/pause/reset, scalar live edits, Scope and save while the existing instrument plays; executable terminal | CRC accepted e582aed, five LC rows done after one correction |
-| slice02-session-observation | Interactive lifecycle/topology/metadata session editing, REPL completion and watch/subscriber observation; actual unload receipt and cross-type observer proof, tag search, per-note/richer metadata representation | Slice01; detail before issue, CDC resolves new observer/metadata semantics |
-| slice03-controller-config | Bounded MIDI-CC/controller mapping with user configuration, remaining tag/formatter configuration | Slice01/02; detail before issue and specify device witness |
-| slice04-external-transport | Separate power/external START/STOP/CONTINUE and clock-selection controls over actual RT bridge | Prior live session; design before issue; retains hardware timing owner Arc08 |
+| 1 — slice01-live-controls | Play/pause/reset, scalar live edits, Scope/save | CRC accepted e582aed; five LC rows done |
+| 2 — slice02-session-observation | Interactive lifecycle/topology/current metadata editing, exact tag queries and bounded ordered watch across replacement; actual unload receipt and runtime common-order proof | Directive14 resolves design; CRC authors detailed initial prompt next |
+| 3 — slice05-note-history | Persistent per-note IDs, CRUD, explicit authorship and retained revisions; legacy/new notes compatibility | After02, before rich-note claims/arc close; model in directive14, actual codec probes before prompt |
+| 4 — slice06-terminal-completion | Actual Tab completion, line/history editing and watch-safe terminal presentation | After02/05, before completed REPL claims/arc close; real PTY/stream integration probe before prompt |
+| 5 — slice03-controller-config | MIDI-CC/controller mapping, user configuration, expanded/hierarchical tags and formatter policy | Existing scope retained; detail before issue |
+| 6 — slice04-external-transport | Separate power/external START/STOP/CONTINUE and clock-selection over RT bridge | Existing scope retained; design before issue; hardware timing remains Arc08 |
 
-These are retained delivery responsibilities, not four prompts ready to execute.
-CRC may review/close 01 and inspect 02; it must obtain CDC's resolved notification/
-metadata design before issuing 02. No generic event bus or broad REPL framework
-is a prerequisite to 01. Catalog-specific enums/convenience forms, port labels,
-CableKind/knob-edge graph vocabulary and exact checkpoints remain Arc13; its
-reconciliation re-enters before exposing those catalog/interface forms. Full GUI/
-TUI remains unselected. Existing controller/interface requirements are retained.
+IDs 03/04 are retained; execution order is explicit. Only 02 is ready for CRC's
+implementation-prompt authoring. Do not create future placeholder directories.
+These increments deliver runnable capabilities, not separate planning/proof-only
+slices. No generic event service or asynchronous output owner is a prerequisite.
+Catalog-specific enums/convenience forms, port labels, CableKind/knob edges and
+exact checkpoints remain Arc13 before those public vocabulary claims. Full GUI/
+TUI remains unselected. Both arc rows remain open until all retained scope composes.
 
-### Binding first increment
+### Accepted first increment
 
-Use the [Slice01 open set](slice01-live-controls/slice-plan.md) and its detailed
-prompt. One synchronous owner drives samples/drains/sends; only stdin blocking
+The accepted [Slice01](slice01-live-controls/slice-plan.md) established the
+following behavior. One synchronous owner drives samples/drains/sends; only stdin blocking
 is isolated into an input thread. Parameter edits/save/status occur between
 samples with no acknowledgment tick. Synchronous I/O may delay wall time; no
 catch-up burst and no unmeasured timing guarantee. Startup paused; frontend pause
@@ -104,18 +109,21 @@ all 18 original rows. Arc03 PatchUnloaded's old unload-exists trigger is renewed
 Slice02's lifetime-aware observer requirement; runtime-observed cross-type ordering
 also remains there before any ordered watch claim. Source summary-last plus typed
 counts is sufficient for current synchronous consumers, not that stronger proof.
-Per-note/authorship history/tag query UX re-enters 02; expanded/hierarchical tags
-and formatter persistence re-enter 03. Arc05 external transport re-enters 04.
-These obligations are neither silently dropped nor called delivered by 01.
+Directive14 supersedes the prior combined 02 destination: exact tag queries and
+legacy full-list notes are 02; persistent per-note identity/authorship/history is 05;
+real completion is 06. Expanded/hierarchical tags and formatter persistence remain 03;
+Arc05 external transport remains04. All re-enter before their capability claims
+and before Arc07 closure. Nothing is called delivered by naming its successor.
 
 ### Workflow and handoff
 
-CDC owns arc/first-slice design; CRC reviews 01 and escalates consequential02 design
-through Duncan. Expedited Mode retains scoped commits, preserved prompts and
-independent gates. Current assignment: none; Slice01's five rows are CRC-accepted
-at e582aed. [Escalation14](../crc-escalation14.md) awaits CDC design return before02
-authoring. Both arc rows stay open. CRC assembles
-arc closure only when its whole capability and retained responsibilities compose.
+CDC resolves architecture; CRC now acknowledges directive14 and authors 02's
+plan/ledger/detailed cc-prompt.md under guide07, then independently reviews its
+implementation. Current CC assignment: none until that prompt is issued.
+Source baseline e582aed; planning return follows b1f2081. Accepted01 evidence
+remains preserved, and Arc07/project acceptance is unchanged. Subsequent prompts
+follow the explicit dependencies and integration gates above. Source implementation
+stays in its existing worktree; this CDC response changes planning only.
 
 Version history: v2.0 — 2026-10-14, Arc12's working lifecycle/commands remove the
 previous prerequisite; Operator prioritizes live controls over catalog expansion.
@@ -169,3 +177,17 @@ CRC can then detail the approved successor. A-07-01/A-07-02 remain open.
 
 Version history: v2.2 — independently close01 and record the required02 design
 return; existing four-increment outline and inherited responsibilities unchanged.
+
+
+CDC design return — 2026-10-14: [directive14](../cdc-directive14.md) answers
+[escalation14](../crc-escalation14.md), predecessor directive13, inspected source
+e582aed/planning b1f2081. Status: **issued for Duncan relay; CRC acknowledgment
+pending**. D1–D3 authorize02's observer/session design and exact current metadata/
+tag query scope. D4 assigns the persistent note model to 05; D5 assigns real
+completion to 06 with a concrete integration probe before its prompt. Prior
+Operator replanning/live-controls authority applies; no acceptance gate waived.
+CRC owns02 authoring and returns its exact project-relative prompt path to Duncan.
+
+Version history: v2.3 — escalation14 after accepted 01 reveals that the old02
+combined three compatibility problems. Preserve all scope across02/05/06, retain
+03/04 IDs, resolve02 architecture and re-entry, and advance actual session editing.

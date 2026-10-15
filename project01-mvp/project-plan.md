@@ -3,34 +3,39 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — Arc10/11/12 CDC accepted; P-07 done; Arc07 Slice01 CRC-accepted; Slice02 design with CDC; original P-01–P-06/release gates open |
+| status | active — Arc10/11/12 CDC accepted; P-07 done; Arc07 Slice01 CRC-accepted; directive14 resolves Slice02 for CRC authoring; original P-01–P-06/release gates open |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
-| source baseline | `a7ce6e61536ca96b6aeb2227ee06e430ed8df162` on `main`; original migration baseline retained below |
+| source baseline | `main` at `cd3119c` includes accepted Arc09–12 plus usage docs; implementation worktree at CRC-accepted `e582aed`; original migration baseline retained below |
 | planning home | `planning` branch, `.worktrees/planning/project01-mvp` |
 
-## Current direction — v3.48, 2026-10-14
+## Current direction — v3.49, 2026-10-14
 
 **Current:** [CDC accepted Arc12](arc12-live-rack-operations/cdc-verification.md)
 at 27ca00f after fresh composed/default/no-graph/native host checks; five children/
 27 rows and R-01–R-04 done. Duncan selected **live controls for the existing
 workbench**, advancing existing [Arc07](arc07-live-interface/arc-plan.md) ahead
-of catalog expansion. [Directive13](cdc-directive13.md) governs Arc07. CRC
+of catalog expansion. [Directive13](cdc-directive13.md), as amended by directive14, governs Arc07. CRC
 independently accepted
 [Slice01 iteration01](arc07-live-interface/slice01-live-controls/crc-verification.md)
 at e582aed/CC518897: all five LC rows done after one correction. Fresh affected
 native/host/actual CLI and real-rack interaction checks pass; initial failed review
-is preserved. [Escalation14](crc-escalation14.md) now returns the required02
-observer/lifecycle/metadata/completion decisions to CDC through Duncan. No current
-CC assignment or02 implementation prompt; Arc07's two rows remain open.
-This terminal increment delivers playback, parameter edits, Scope and saving;
-controller/subscriber/transport work remains in named later slices. Arc13 retains
-catalog/typed vocabulary/checkpoints. Historical PatchUnloaded and measured
-cross-type observer order remain Arc07/Slice02 before watch claims; richer
-metadata/config and graph residuals have explicit Arc07/13 re-entry in the CDC
-record. P-01–P-06 and release remain open. Earlier turn-by-turn notes below are
-history; this paragraph and the current roadmap govern advancement.
+is preserved. [Directive14](cdc-directive14.md) answers
+[escalation14](crc-escalation14.md):02 delivers real session editing, an owned
+bounded ordered journal across replacement, current labels/notes and exact tag
+queries. CRC authors its detailed initial prompt next; no CC assignment yet.
+Was:02 also held persistent note history and terminal completion. Now: explicit
+Arc07 Slice05 note history and Slice06 completion follow02, before the retained
+Slice03 controller/config and Slice04 external transport work. This preserves
+requirements while separating runtime, persistence and terminal integration.
+Each successor's entry/acceptance conditions are in directive14 and Arc07 v2.3.
+Arc13 retains catalog/typed vocabulary/checkpoints and graph/port extensions.
+P-01–P-06 and release stay open. Earlier dated notes below are history; this
+paragraph and the current roadmap govern advancement. Main now contains accepted
+Arc09–12 plus README/runbook updates at cd3119c; the accepted live-controls01
+implementation remains on its branch at e582aed. No merge/push is part of this return.
+
 
 
 Duncan requested a recalibration during Arc10/Slice02 review: this is unreleased
@@ -101,7 +106,7 @@ backlog/release envelope, not a prerequisite to testing this first instrument.
 | Arc10 | Playable seeded Clock/TM/MIDI rack, four children/22 rows; T-01–T-05 CDC accepted at65522f1 | Actual software endpoint witness; release timing remains open |
 | [Arc11](arc11-observation-workbench/arc-plan.md) | LFO modulation, bounded Scope and terminal/CSV workbench | CDC accepted at72fe6b5; 14 child/four composition rows done |
 | [Arc12](arc12-live-rack-operations/arc-plan.md) | Live persistence, metadata/events, cable/graph operations, coherent runtime lifecycle | CDC accepted 27ca00f;27 child/four arc rows done; historical residuals explicitly routed |
-| [Arc07](arc07-live-interface/arc-plan.md) | Live terminal controls, then session observation, controllers/config and distinct transport | Active; Slice01 CRC-accepted e582aed, five rows done;02 design awaiting CDC |
+| [Arc07](arc07-live-interface/arc-plan.md) | Live controls → session observation → note history → completion → controllers/config → distinct transport | Slice01 CRC-accepted e582aed; directive14 resolves 02 for CRC prompt authoring; both arc rows open |
 | Arc13 | Remaining catalog and typed/API vocabulary | Preserve inventory/Chord/checkpoints, port labels and graph edge-type extensions; re-entry before richer module vocabulary |
 | Arc08 / release | Coverage provenance/95%, hardware jitter, benchmarks, soak, broader musical acceptance | Retained obligations, not M1/M2 entry gates |
 
@@ -127,6 +132,14 @@ planning/reporting is not itself the default next deliverable. Future arc planni
 must use this policy, not mechanically copy the old packets.
 
 ### Design handoff history — current
+
+CDC 2026-10-14: directive14 issued in response to escalation14; acknowledgment
+pending through Duncan. Source e582aed/planning b1f2081 inspected. Arc07 v2.3
+preserves inherited scope across02/05/06 and retains03/04; CRC authors 02 next.
+No current CC assignment or new implementation/arc acceptance claimed.
+
+Earlier handoffs:
+
 
 CRC2026-10-14: accepts Arc07/Slice01 iteration01 e582aed/CC518897, all five LC rows
 done after one correction. Directive13's required successor source inspection
@@ -950,3 +963,7 @@ iteration01 issuance; roadmap, residual owners and all parent gates unchanged.
 Version history: v3.48 — 2026-10-14, close Arc07/Slice01 after independent iteration01
 review and return successor design questions under directive13. No structural
 roadmap amendment, scope deletion, source repair or project acceptance by CRC.
+
+Version history: v3.49 — 2026-10-14, CDC resolves escalation14 after Arc07/01
+closure; separate session observation, persistent notes and completion without
+scope loss, assign02 authoring to CRC, and refresh landed-main/source pins.
