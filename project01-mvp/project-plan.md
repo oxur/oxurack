@@ -3,14 +3,14 @@
 | Field | Value |
 | --- | --- |
 | project | project01-mvp |
-| status | active — Arc10/11/12 CDC accepted; P-07 done; Arc07 Slice01 CRC-accepted; directive14 resolves Slice02 for CRC authoring; original P-01–P-06/release gates open |
+| status | active — Arc10/11/12 CDC accepted; P-07 done; Arc07 Slice01 CRC-accepted; Arc07 Slice02 session-observation issued; five SO rows open; original P-01–P-06/release gates open |
 | depends-on | No other project required for the baseline MIDI rack; local Rust/Bevy/MIDI toolchain and test hardware |
 | blocks | A reproducible modular MIDI recording workflow and an accepted MVP |
 | related | underack; Lykn embedding (optional, externally gated); original v1 roadmap |
 | source baseline | `main` at `cd3119c` includes accepted Arc09–12 plus usage docs; implementation worktree at CRC-accepted `e582aed`; original migration baseline retained below |
 | planning home | `planning` branch, `.worktrees/planning/project01-mvp` |
 
-## Current direction — v3.49, 2026-10-14
+## Current direction — v3.50, 2026-10-15
 
 **Current:** [CDC accepted Arc12](arc12-live-rack-operations/cdc-verification.md)
 at 27ca00f after fresh composed/default/no-graph/native host checks; five children/
@@ -24,7 +24,10 @@ native/host/actual CLI and real-rack interaction checks pass; initial failed rev
 is preserved. [Directive14](cdc-directive14.md) answers
 [escalation14](crc-escalation14.md):02 delivers real session editing, an owned
 bounded ordered journal across replacement, current labels/notes and exact tag
-queries. CRC authors its detailed initial prompt next; no CC assignment yet.
+queries. CRC acknowledged the return and issued
+[Slice02](arc07-live-interface/slice02-session-observation/cc-prompt.md) under guide07:
+five SO rows open, source still pinned to accepted e582aed. Duncan relays to CC;
+CRC independently reviews its return. No new feature acceptance is claimed.
 Was:02 also held persistent note history and terminal completion. Now: explicit
 Arc07 Slice05 note history and Slice06 completion follow02, before the retained
 Slice03 controller/config and Slice04 external transport work. This preserves
@@ -106,7 +109,7 @@ backlog/release envelope, not a prerequisite to testing this first instrument.
 | Arc10 | Playable seeded Clock/TM/MIDI rack, four children/22 rows; T-01–T-05 CDC accepted at65522f1 | Actual software endpoint witness; release timing remains open |
 | [Arc11](arc11-observation-workbench/arc-plan.md) | LFO modulation, bounded Scope and terminal/CSV workbench | CDC accepted at72fe6b5; 14 child/four composition rows done |
 | [Arc12](arc12-live-rack-operations/arc-plan.md) | Live persistence, metadata/events, cable/graph operations, coherent runtime lifecycle | CDC accepted 27ca00f;27 child/four arc rows done; historical residuals explicitly routed |
-| [Arc07](arc07-live-interface/arc-plan.md) | Live controls → session observation → note history → completion → controllers/config → distinct transport | Slice01 CRC-accepted e582aed; directive14 resolves 02 for CRC prompt authoring; both arc rows open |
+| [Arc07](arc07-live-interface/arc-plan.md) | Live controls → session observation → note history → completion → controllers/config → distinct transport | Slice01 CRC-accepted e582aed; Slice02 detailed prompt issued, five SO rows and both arc rows open |
 | Arc13 | Remaining catalog and typed/API vocabulary | Preserve inventory/Chord/checkpoints, port labels and graph edge-type extensions; re-entry before richer module vocabulary |
 | Arc08 / release | Coverage provenance/95%, hardware jitter, benchmarks, soak, broader musical acceptance | Retained obligations, not M1/M2 entry gates |
 
@@ -132,6 +135,15 @@ planning/reporting is not itself the default next deliverable. Future arc planni
 must use this policy, not mechanically copy the old packets.
 
 ### Design handoff history — current
+
+CRC2026-10-15: directive14 at planning42b00f5/source e582aed acknowledged through
+Duncan. [Slice02 prompt](arc07-live-interface/slice02-session-observation/cc-prompt.md)
+is the current initial CC assignment, correction0/5; five SO rows open. Source and
+root main unchanged. CRC details D1–D3 without re-scoping;05 note history and06
+real completion retain prescribed pre-authoring integration probes. Duncan relays,
+CC implements, CRC independently reviews; arc/project gates remain open.
+
+Historical CDC issuance / preceding return:
 
 CDC 2026-10-14: directive14 issued in response to escalation14; acknowledgment
 pending through Duncan. Source e582aed/planning b1f2081 inspected. Arc07 v2.3
@@ -967,3 +979,16 @@ roadmap amendment, scope deletion, source repair or project acceptance by CRC.
 Version history: v3.49 — 2026-10-14, CDC resolves escalation14 after Arc07/01
 closure; separate session observation, persistent notes and completion without
 scope loss, assign02 authoring to CRC, and refresh landed-main/source pins.
+
+CRC acknowledgment — 2026-10-15: Duncan relayed [directive14](cdc-directive14.md)
+and explicitly authorized detailed02 prompt authoring. Read the complete return
+against clean source e582aed6e87c234799921cc66a5dd55214f76afd/planning
+42b00f5c6adf2317a94fbbf18e0ef56919fc06a5, root main cd3119c. Status acknowledged;
+escalation14 is resolved by D1–D5, with note-history05 and completion06 prerequisites
+retained. CRC now details only approved02; no source mutation or prior acceptance
+change. Duncan relays the finished prompt to CC; CRC independently reviews its
+five proposed rows. Arc07 A-07-01/A-07-02 and project P-01–P-06 remain open.
+
+Version history: v3.50 — 2026-10-15, acknowledge directive14 and issue executable
+Arc07/Slice02 open set with source-grounded producer/journal/cursor/CLI recipes;
+prior acceptance and all retained successor/release responsibilities unchanged.

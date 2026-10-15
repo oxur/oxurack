@@ -1,8 +1,8 @@
 # Live interface
 
-Status: active — v2.3, 2026-10-14; Slice01 CRC-accepted at e582aed;
-CDC directive14 resolves 02 and assigns CRC its prompt authoring. Both arc rows
-remain open; note history and terminal completion have named successor slices. The current
+Status: active — v2.4, 2026-10-15; Slice01 CRC-accepted at e582aed;
+CRC acknowledged directive14 and issued Slice02 session observation. Five SO rows
+and both arc rows remain open; note history/completion retain named successors. The current
 executable plan below supersedes this historical outline.
 
 ## Capability and dependencies
@@ -58,7 +58,7 @@ bounded queued load/save and synchronous command results, so that feature is not
 deferred here. Original Arc05 rows remain deferred until their full successor
 walk is supported. This routing is design, not acceptance of transport behavior.
 
-## Current executable plan — v2.3, 2026-10-14
+## Current executable plan — v2.4, 2026-10-15
 
 **Active.** Was: directive13's four-increment outline combined observation,
 persistent note history and terminal completion in 02. Now: accepted 01 and
@@ -77,7 +77,7 @@ release. Keep A-07-01/A-07-02 open until the full capability composes.
 | Execution order / slice | Product increment / inherited responsibilities | Dependency/state |
 | --- | --- | --- |
 | 1 — slice01-live-controls | Play/pause/reset, scalar live edits, Scope/save | CRC accepted e582aed; five LC rows done |
-| 2 — slice02-session-observation | Interactive lifecycle/topology/current metadata editing, exact tag queries and bounded ordered watch across replacement; actual unload receipt and runtime common-order proof | Directive14 resolves design; CRC authors detailed initial prompt next |
+| 2 — slice02-session-observation | Interactive lifecycle/topology/current metadata editing, exact tag queries and bounded ordered watch across replacement; actual unload receipt and runtime common-order proof | [Initial CC prompt issued](slice02-session-observation/cc-prompt.md); five SO rows open |
 | 3 — slice05-note-history | Persistent per-note IDs, CRUD, explicit authorship and retained revisions; legacy/new notes compatibility | After02, before rich-note claims/arc close; model in directive14, actual codec probes before prompt |
 | 4 — slice06-terminal-completion | Actual Tab completion, line/history editing and watch-safe terminal presentation | After02/05, before completed REPL claims/arc close; real PTY/stream integration probe before prompt |
 | 5 — slice03-controller-config | MIDI-CC/controller mapping, user configuration, expanded/hierarchical tags and formatter policy | Existing scope retained; detail before issue |
@@ -117,9 +117,10 @@ and before Arc07 closure. Nothing is called delivered by naming its successor.
 
 ### Workflow and handoff
 
-CDC resolves architecture; CRC now acknowledges directive14 and authors 02's
-plan/ledger/detailed cc-prompt.md under guide07, then independently reviews its
-implementation. Current CC assignment: none until that prompt is issued.
+CDC resolves architecture; CRC acknowledged directive14 and authored02's complete
+open set under guide07. Current CC assignment:
+`slice02-session-observation/cc-prompt.md`; Duncan relays it to CC, then CRC
+independently reviews the five SO rows.
 Source baseline e582aed; planning return follows b1f2081. Accepted01 evidence
 remains preserved, and Arc07/project acceptance is unchanged. Subsequent prompts
 follow the explicit dependencies and integration gates above. Source implementation
@@ -191,3 +192,25 @@ CRC owns02 authoring and returns its exact project-relative prompt path to Dunca
 Version history: v2.3 — escalation14 after accepted 01 reveals that the old02
 combined three compatibility problems. Preserve all scope across02/05/06, retain
 03/04 IDs, resolve02 architecture and re-entry, and advance actual session editing.
+
+CRC acknowledgment — 2026-10-15: Duncan relayed [directive14](../cdc-directive14.md)
+and explicitly authorized detailed02 prompt authoring. Read the complete return
+against clean source e582aed6e87c234799921cc66a5dd55214f76afd/planning
+42b00f5c6adf2317a94fbbf18e0ef56919fc06a5, root main cd3119c. Status acknowledged;
+escalation14 is resolved by D1–D5, with note-history05 and completion06 prerequisites
+retained. CRC now details only approved02; no source mutation or prior acceptance
+change. Duncan relays the finished prompt to CC; CRC independently reviews its
+five proposed rows. Arc07 A-07-01/A-07-02 and project P-01–P-06 remain open.
+
+CRC issuance — 2026-10-15: [Slice02 open set](slice02-session-observation/slice-plan.md)
+is complete, with five open SO rows and [cc-prompt.md](slice02-session-observation/cc-prompt.md).
+Directive14/escalation14 exchange is acknowledged and implemented as planning,
+not as source functionality. Current source remains clean e582aed; root main
+cd3119c untouched. Readiness records actual producer/commit inspection, Rust
+application, public/API/CLI recipes, compiled RON/fixture feasibility and literal
+oracles; observation code is not yet implemented or accepted. Duncan relays to CC;
+CRC reviews returned source/planning hashes. Later05/06 probes and03/04 obligations
+remain binding; no placeholder successor directories or architecture change by CRC.
+
+Version history: v2.4 — directive14 acknowledged and approved02 detailed/issued;
+all five SO and two arc rows open, earlier acceptance retained.

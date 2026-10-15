@@ -1,6 +1,6 @@
 # project01-mvp — status
 
-> Current (2026-10-14): Arc10, Arc11 and [Arc12](../project01-mvp/arc12-live-rack-operations/cdc-verification.md)
+> Current (2026-10-15): Arc10, Arc11 and [Arc12](../project01-mvp/arc12-live-rack-operations/cdc-verification.md)
 > are CDC accepted. Arc12 source 27ca00f delivers live parameters/metadata/topology,
 > current configuration saving, failure-preserving replacement, unload/reset/restart,
 > instance removal/stale-safe handles and explicit bounded command results.
@@ -15,11 +15,14 @@
 > Both feature/native/host gates and actual CLI sessions pass; nonempty saved/fresh
 > replay matches independent configuration and pinned MIDI/LFO hashes are intact.
 > [Directive14](../project01-mvp/cdc-directive14.md) resolves escalation14 after
-> accepted 01. Next: CRC authors 02 session editing/ordered watch, including load/
-> unload/restart/remove, cables, existing labels/notes and exact tag queries.
+> accepted01. CRC acknowledged and issued
+> [Slice02 session editing/ordered watch](../project01-mvp/arc07-live-interface/slice02-session-observation/cc-prompt.md):
+> load/unload/restart/remove, cables, current labels/notes and exact tag queries.
+> Five SO rows open; source remains e582aed, no implementation acceptance yet.
 > Persistent note identity/authorship/history moves to named Arc07/05; actual
 > terminal completion to 06, then retained controller/config03 and transport04.
-> No requirement dropped, no CC prompt yet, both Arc07 rows remain open.
+> No requirement dropped; Duncan relays the02 prompt to CC, then CRC reviews.
+> Both Arc07 rows remain open.
 > Main cd3119c contains accepted Arc09–12 and README/user-testing runbook;
 > source e582aed contains accepted live controls. CDC changed planning only.
 > Catalog/typed/graph extensions and exact checkpoints retain Arc13 ownership.

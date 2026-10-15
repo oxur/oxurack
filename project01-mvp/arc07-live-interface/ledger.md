@@ -47,3 +47,11 @@ identity/authorship/history moves explicitly to 05; real completion to 06. Exist
 controller/config03 and transport04 obligations remain. CRC acknowledges and
 creates02's actual open set next; no placeholder successor acceptance or CC prompt
 is inferred from this planning return.
+
+## CRC approved successor issuance — 2026-10-15
+
+Directive14 resolves escalation14. [Slice02 session observation](slice02-session-observation/slice-plan.md)
+now has a detailed initial [CC prompt](slice02-session-observation/cc-prompt.md)
+and five open SO rows. No source implementation or acceptance claimed by authoring.
+A-07-01/A-07-02 remain open. Persistent notes/history05 and real completion06 follow02
+with their explicit probes, then retained controller/config03 and external transport04.
