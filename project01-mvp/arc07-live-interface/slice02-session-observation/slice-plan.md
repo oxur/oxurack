@@ -109,3 +109,12 @@ P-01–P-06 stay open; P-07 and accepted arcs remain accepted.
 
 Version history: v1.0 — directive14's approved02 design detailed into a runnable,
 source-grounded open set; persistent notes/completion remain named later increments.
+
+## CC execution note — 2026-10-15
+
+CC implemented an initial source pass and recorded proposed evidence, preserved
+failures/retries, artifact inventory and per-row residuals in [ledger.md](ledger.md)
+and [closing-report.md](closing-report.md). All five SO rows remain open for CRC.
+The CC closeout identified incomplete independent documentation of every
+manifest reading extent; CRC should disposition whether a corrective intake pass
+is required. Source and planning commits are separate and use explicit paths.
