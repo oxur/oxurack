@@ -1,0 +1,13 @@
+(
+    version: "1.0",
+    master_seed: 42,
+    bpm: 120.0,
+    modules: [
+        (kind: "clock", instance_name: "z_clock", parameters: { "bpm": Float(90.0), "ppqn": Int(4) }, display_name: "Clock", description: "tempo", tags: ["workbench"]),
+        (kind: "lfo", instance_name: "a_lfo", parameters: { "waveform": String("sine"), "frequency_hz": Float(1.0) }, display_name: "LFO", description: "modulation", tags: ["workbench"]),
+    ],
+    cables: [
+        (source: ("z_clock", "pulse"), target: ("a_lfo", "sync_in"), transform: None, display_name: "Sync", description: "reset", tags: ["workbench"]),
+    ],
+    rack: Some((display_name: "Rig", description: "session", notes: ["one"], tags: ["workbench"])),
+)

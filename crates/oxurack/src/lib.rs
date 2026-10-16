@@ -22,10 +22,18 @@ mod commands;
 mod handles;
 mod labels;
 mod lifecycle;
+mod observation;
 mod persistence;
+mod queries;
 mod scope;
 pub use commands::{CommandId, CommandOutcome, CommandResult};
 pub use handles::{Handle, KnobRef, ModuleRef, PortRef};
+pub use observation::{
+    CableInfo, LifetimeId, Observation, ObservationBatchId, ObservationChange, ObservationCounter,
+    ObservationCursor, ObservationError, ObservationGap, ObservationPage, ObservationSequence,
+    ObservationStart, ObservationTarget, PatchInfo, PatchOrigin, TagMatch, TagQueryError,
+    UnloadReason,
+};
 pub use scope::{MidiDelivery, ScopeCapture, ScopeError, ScopeRecord, ScopeSelector};
 
 // ── Re-exports from oxurack-graph (feature-gated) ──────────────────
@@ -84,6 +92,7 @@ pub struct Oxurack {
     lifetime_token: Arc<()>,
     instance_tokens: HashMap<String, Arc<()>>,
     command_queue: commands::CommandQueue,
+    observation: observation::Journal,
 }
 
 struct InstalledType {
@@ -115,6 +124,7 @@ fn build_base_app() -> Result<App, CoreError> {
     let mut app = App::new();
     app.add_plugins(bevy_time::TimePlugin);
     app.add_plugins(oxurack_core::CorePlugin::fixed());
+    app.init_resource::<oxurack_core::ObservationStaging>();
     app.insert_resource(MidiOutputBuffer::try_new()?);
     scope::install_observer(&mut app);
     #[cfg(feature = "graph")]
@@ -148,6 +158,7 @@ impl Oxurack {
             lifetime_token: Arc::new(()),
             instance_tokens: HashMap::new(),
             command_queue: commands::CommandQueue::new(),
+            observation: observation::Journal::default(),
         }
     }
 
@@ -278,7 +289,18 @@ impl Oxurack {
 
     /// Starts the rack without resetting module state or sample time.
     pub fn start(&mut self) -> &mut Self {
+        let previous = self.app.world().resource::<SimulationRunning>().0;
         self.app.world_mut().resource_mut::<SimulationRunning>().0 = true;
+        if !previous {
+            self.observation.publish(
+                self.observation.lifetime,
+                self.sample_time().completed_samples(),
+                vec![observation::ObservationChange::RunningChanged {
+                    previous,
+                    running: true,
+                }],
+            );
+        }
 
         self.rebase_live_time();
         if self.driver == SimulationDriver::Live {
@@ -292,7 +314,18 @@ impl Oxurack {
 
     /// Stops the rack without resetting module state or sample time.
     pub fn stop(&mut self) -> &mut Self {
+        let previous = self.app.world().resource::<SimulationRunning>().0;
         self.app.world_mut().resource_mut::<SimulationRunning>().0 = false;
+        if previous {
+            self.observation.publish(
+                self.observation.lifetime,
+                self.sample_time().completed_samples(),
+                vec![observation::ObservationChange::RunningChanged {
+                    previous,
+                    running: false,
+                }],
+            );
+        }
         self.app.world_mut().resource_mut::<Time<Virtual>>().pause();
         self.discard_fixed_overstep();
         self.rebase_live_time();

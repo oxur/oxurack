@@ -465,10 +465,20 @@ pub fn set_module_parameter(
                 entity,
                 instance_name: instance_name.to_string(),
                 param: crate::ParameterName::from(param),
-                previous,
+                previous: previous.clone(),
                 new: value.clone(),
-                source,
+                source: source.clone(),
             });
+            crate::observation::stage(
+                world,
+                crate::OwnedChange::ParameterChanged {
+                    module: instance_name.to_owned(),
+                    param: crate::ParameterName::from(param),
+                    previous,
+                    new: value.clone(),
+                    source,
+                },
+            );
             Ok(())
         }
         Err(e) => Err(e),

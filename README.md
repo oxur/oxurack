@@ -174,6 +174,20 @@ status
 quit
 ```
 
+The live rack also supports `load PATH`, `unload`, `restart`, and `remove MODULE`
+while keeping its MIDI sender session open. `cables` lists stable cable IDs and
+current parallel-cable occurrences; `find any|all TAG...` searches current rack,
+module, and cable tags exactly. `patch` and `unpatch` edit endpoints with explicit
+occurrences; `label get|set|clear` edits rack, module, cable, and rack-note values.
+`scope-select MODULE.PORT...` reconfigures capture; `scope-select none` selects
+MIDI-only capture. `watch on` starts an independent reader at the
+current end of the bounded 1024-record journal; `watch off` releases it. Each
+owner turn prints at most 32 records, including batch/lifetime/sample boundaries
+and any exact retention gap. Watch rows and command replies go to stderr; stdout
+remains the MIDI trace. See
+[`docs/user-testing-rack-session.md`](docs/user-testing-rack-session.md) for a
+copy/paste interaction check and report-back template.
+
 The LFO-modulated patch keeps the same seeded Turing Machine and MIDI route,
 with a slow sine LFO changing its write probability. Run its sample-indexed
 trace offline:

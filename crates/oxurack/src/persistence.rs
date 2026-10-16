@@ -14,14 +14,26 @@ pub(super) struct LoadedIdentity {
     version: String,
     master_seed: u64,
     bpm: f32,
+    origin: crate::PatchOrigin,
 }
 
 impl LoadedIdentity {
-    pub(super) fn from_patch(patch: &Patch) -> Self {
+    pub(super) fn from_patch(patch: &Patch, origin: crate::PatchOrigin) -> Self {
         Self {
             version: patch.version.clone(),
             master_seed: patch.master_seed,
             bpm: patch.bpm,
+            origin,
+        }
+    }
+
+    pub(super) fn observation_info(&self, lifetime: crate::LifetimeId) -> crate::PatchInfo {
+        crate::PatchInfo {
+            lifetime,
+            origin: self.origin.clone(),
+            version: self.version.clone(),
+            master_seed: self.master_seed,
+            bpm: self.bpm,
         }
     }
 
@@ -84,7 +96,9 @@ impl super::Oxurack {
         source: oxurack_core::ChangeSource,
     ) -> Result<(), CoreError> {
         active_module(self.app.world(), module)?;
-        oxurack_core::set_module_parameter(self.app.world_mut(), module, param, &value, source)
+        oxurack_core::set_module_parameter(self.app.world_mut(), module, param, &value, source)?;
+        self.flush_staging();
+        Ok(())
     }
 
     /// Returns the current loaded patch configuration, including live parameter

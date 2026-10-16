@@ -516,7 +516,7 @@ pub struct PatchHandle {
 ///    `CableConnected` then `LabelChanged` per non-empty cable label.
 /// 4. If `patch.rack` is `Some`, validates tags, inserts `RackMeta`
 ///    resource, and emits `LabelChanged` per non-empty rack field
-///    (DisplayName → Description → Notes → Tags).
+///    (DisplayName → Description → Tags → Notes).
 /// 5. Emits `PatchLoaded` with `label_count` equal to the total number
 ///    of `LabelChanged` events emitted in this batch.
 ///
@@ -558,6 +558,13 @@ pub fn apply_patch_to_world(
             instance_name: module_config.instance_name.clone(),
             kind: kind.clone(),
         });
+        crate::observation::stage(
+            world,
+            crate::OwnedChange::ModuleAdded {
+                module: module_config.instance_name.clone(),
+                kind: kind.clone(),
+            },
+        );
 
         // Insert label components and emit LabelChanged per non-empty label.
         if !module_config.display_name.is_empty() {
@@ -572,6 +579,12 @@ pub fn apply_patch_to_world(
                 new: crate::LabelValue::Text(module_config.display_name.clone()),
                 source: crate::ChangeSource::PatchLoad,
             });
+            crate::observation::stage_label(
+                world,
+                crate::LogicalTarget::Module(module_config.instance_name.clone()),
+                crate::LabelKind::DisplayName,
+                crate::LabelValue::Text(module_config.display_name.clone()),
+            );
             label_count += 1;
         }
 
@@ -587,6 +600,12 @@ pub fn apply_patch_to_world(
                 new: crate::LabelValue::Text(module_config.description.clone()),
                 source: crate::ChangeSource::PatchLoad,
             });
+            crate::observation::stage_label(
+                world,
+                crate::LogicalTarget::Module(module_config.instance_name.clone()),
+                crate::LabelKind::Description,
+                crate::LabelValue::Text(module_config.description.clone()),
+            );
             label_count += 1;
         }
 
@@ -610,13 +629,21 @@ pub fn apply_patch_to_world(
                 instance_name: module_config.instance_name.clone(),
                 kind: crate::LabelKind::Tags,
                 previous: None,
-                new: crate::LabelValue::Tags(tag_set),
+                new: crate::LabelValue::Tags(tag_set.clone()),
                 source: crate::ChangeSource::PatchLoad,
             });
+            crate::observation::stage_label(
+                world,
+                crate::LogicalTarget::Module(module_config.instance_name.clone()),
+                crate::LabelKind::Tags,
+                crate::LabelValue::Tags(tag_set.clone()),
+            );
             label_count += 1;
         }
 
-        for (param_name, param_value) in &module_config.parameters {
+        let mut ordered_parameters: Vec<_> = module_config.parameters.iter().collect();
+        ordered_parameters.sort_by_key(|(name, _)| *name);
+        for (param_name, param_value) in ordered_parameters {
             world.write_message(crate::ParameterChanged {
                 entity,
                 instance_name: module_config.instance_name.clone(),
@@ -628,6 +655,16 @@ pub fn apply_patch_to_world(
                 new: param_value.clone(),
                 source: crate::ChangeSource::PatchLoad,
             });
+            crate::observation::stage(
+                world,
+                crate::OwnedChange::ParameterChanged {
+                    module: module_config.instance_name.clone(),
+                    param: crate::ParameterName::from(param_name.as_str()),
+                    previous: None,
+                    new: param_value.clone(),
+                    source: crate::ChangeSource::PatchLoad,
+                },
+            );
         }
     }
 
@@ -680,6 +717,26 @@ pub fn apply_patch_to_world(
             transform: cable_config.transform,
             source: crate::ChangeSource::PatchLoad,
         });
+        if let Some(mut staging) = world.get_resource_mut::<crate::ObservationStaging>()
+            && let Some(id) = staging.allocate_cable(cable_entity)
+        {
+            staging.record(crate::OwnedChange::CableConnected {
+                cable: crate::ObservedCable {
+                    id,
+                    source: cable_config.source.clone(),
+                    target: cable_config.target.clone(),
+                    occurrence: patch.cables[..ordinal]
+                        .iter()
+                        .filter(|prior| {
+                            prior.source == cable_config.source
+                                && prior.target == cable_config.target
+                        })
+                        .count(),
+                    transform: cable_config.transform,
+                },
+                source: crate::ChangeSource::PatchLoad,
+            });
+        }
 
         // Insert label components and emit LabelChanged per non-empty cable label.
         let cable_instance_name = format!(
@@ -702,6 +759,14 @@ pub fn apply_patch_to_world(
                 new: crate::LabelValue::Text(cable_config.display_name.clone()),
                 source: crate::ChangeSource::PatchLoad,
             });
+            if let Some(cable) = crate::observation::describe_cable(world, cable_entity) {
+                crate::observation::stage_label(
+                    world,
+                    crate::LogicalTarget::Cable(cable),
+                    crate::LabelKind::DisplayName,
+                    crate::LabelValue::Text(cable_config.display_name.clone()),
+                );
+            }
             label_count += 1;
         }
 
@@ -717,6 +782,14 @@ pub fn apply_patch_to_world(
                 new: crate::LabelValue::Text(cable_config.description.clone()),
                 source: crate::ChangeSource::PatchLoad,
             });
+            if let Some(cable) = crate::observation::describe_cable(world, cable_entity) {
+                crate::observation::stage_label(
+                    world,
+                    crate::LogicalTarget::Cable(cable),
+                    crate::LabelKind::Description,
+                    crate::LabelValue::Text(cable_config.description.clone()),
+                );
+            }
             label_count += 1;
         }
 
@@ -746,9 +819,17 @@ pub fn apply_patch_to_world(
                 instance_name: cable_instance_name,
                 kind: crate::LabelKind::Tags,
                 previous: None,
-                new: crate::LabelValue::Tags(tag_set),
+                new: crate::LabelValue::Tags(tag_set.clone()),
                 source: crate::ChangeSource::PatchLoad,
             });
+            if let Some(cable) = crate::observation::describe_cable(world, cable_entity) {
+                crate::observation::stage_label(
+                    world,
+                    crate::LogicalTarget::Cable(cable),
+                    crate::LabelKind::Tags,
+                    crate::LabelValue::Tags(tag_set.clone()),
+                );
+            }
             label_count += 1;
         }
     }
@@ -758,7 +839,7 @@ pub fn apply_patch_to_world(
 
     // 5. Rack-level metadata: validate tags, insert RackMeta resource,
     //    emit LabelChanged per non-empty field (DisplayName → Description
-    //    → Notes → Tags).
+    //    → Tags → Notes).
     if let Some(rack_config) = &patch.rack {
         let mut rack_tags = BTreeSet::new();
         for tag_str in &rack_config.tags {
@@ -789,6 +870,12 @@ pub fn apply_patch_to_world(
                 new: crate::LabelValue::Text(rack_config.display_name.clone()),
                 source: crate::ChangeSource::PatchLoad,
             });
+            crate::observation::stage_label(
+                world,
+                crate::LogicalTarget::Rack,
+                crate::LabelKind::DisplayName,
+                crate::LabelValue::Text(rack_config.display_name.clone()),
+            );
             label_count += 1;
         }
 
@@ -801,6 +888,30 @@ pub fn apply_patch_to_world(
                 new: crate::LabelValue::Text(rack_config.description.clone()),
                 source: crate::ChangeSource::PatchLoad,
             });
+            crate::observation::stage_label(
+                world,
+                crate::LogicalTarget::Rack,
+                crate::LabelKind::Description,
+                crate::LabelValue::Text(rack_config.description.clone()),
+            );
+            label_count += 1;
+        }
+
+        if !rack_tags.is_empty() {
+            world.write_message(crate::LabelChanged {
+                entity: None,
+                instance_name: String::new(),
+                kind: crate::LabelKind::Tags,
+                previous: None,
+                new: crate::LabelValue::Tags(rack_tags.clone()),
+                source: crate::ChangeSource::PatchLoad,
+            });
+            crate::observation::stage_label(
+                world,
+                crate::LogicalTarget::Rack,
+                crate::LabelKind::Tags,
+                crate::LabelValue::Tags(rack_tags.clone()),
+            );
             label_count += 1;
         }
 
@@ -813,18 +924,12 @@ pub fn apply_patch_to_world(
                 new: crate::LabelValue::Notes(rack_config.notes.clone()),
                 source: crate::ChangeSource::PatchLoad,
             });
-            label_count += 1;
-        }
-
-        if !rack_tags.is_empty() {
-            world.write_message(crate::LabelChanged {
-                entity: None,
-                instance_name: String::new(),
-                kind: crate::LabelKind::Tags,
-                previous: None,
-                new: crate::LabelValue::Tags(rack_tags),
-                source: crate::ChangeSource::PatchLoad,
-            });
+            crate::observation::stage_label(
+                world,
+                crate::LogicalTarget::Rack,
+                crate::LabelKind::Notes,
+                crate::LabelValue::Notes(rack_config.notes.clone()),
+            );
             label_count += 1;
         }
     }
@@ -840,12 +945,26 @@ pub fn apply_patch_to_world(
         crate::PatchSource::Other(name) => name.clone(),
     };
     world.write_message(crate::PatchLoaded {
-        patch_name,
-        source,
+        patch_name: patch_name.clone(),
+        source: source.clone(),
         module_count: patch.modules.len(),
         cable_count: patch.cables.len(),
         label_count,
     });
+    crate::observation::stage(
+        world,
+        crate::OwnedChange::PatchLoaded {
+            patch_name,
+            source: match &source {
+                crate::PatchSource::File(path) => crate::PatchSource::File(path.clone()),
+                crate::PatchSource::InMemory => crate::PatchSource::InMemory,
+                crate::PatchSource::Other(name) => crate::PatchSource::Other(name.clone()),
+            },
+            module_count: patch.modules.len(),
+            cable_count: patch.cables.len(),
+            label_count,
+        },
+    );
 
     Ok(PatchHandle {
         modules: module_entities,
@@ -2922,11 +3041,11 @@ mod tests {
         let collected: Vec<_> = messages.iter_current_update_messages().cloned().collect();
         assert_eq!(collected.len(), 4, "expected 4 LabelChanged for rack");
 
-        // Verify ordering: DisplayName → Description → Notes → Tags
+        // Verify ordering: DisplayName → Description → Tags → Notes
         assert!(matches!(&collected[0].kind, crate::LabelKind::DisplayName));
         assert!(matches!(&collected[1].kind, crate::LabelKind::Description));
-        assert!(matches!(&collected[2].kind, crate::LabelKind::Notes));
-        assert!(matches!(&collected[3].kind, crate::LabelKind::Tags));
+        assert!(matches!(&collected[2].kind, crate::LabelKind::Tags));
+        assert!(matches!(&collected[3].kind, crate::LabelKind::Notes));
 
         // All rack-level emissions have entity: None
         for evt in &collected {

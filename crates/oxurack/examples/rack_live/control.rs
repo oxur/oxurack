@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::fmt;
 use std::io::{self, Write};
+use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{Receiver, RecvTimeoutError, TryRecvError};
@@ -36,10 +37,11 @@ where
     let mut deadline = Instant::now() + SAMPLE_PERIOD;
     let mut pending = None;
     let mut failure = LiveFailure::default();
+    let mut watch = WatchState::default();
 
     loop {
         let mut clock = Instant::now;
-        match owner_turn(
+        match owner_turn_with_watch(
             rack,
             patch,
             &mut session,
@@ -48,6 +50,7 @@ where
             receiver,
             cancellation,
             &mut pending,
+            &mut watch,
             &mut deadline,
             &mut clock,
         ) {
@@ -85,6 +88,12 @@ where
                     boxed(diagnostic_error.to_string()),
                 );
             }
+        }
+    }
+    for _ in 0..32 {
+        if let Err(error) = flush_watch(rack, &mut watch, diagnostics) {
+            failure.push("observation shutdown flush", error);
+            break;
         }
     }
     if let Err(error) = trace.flush() {
@@ -172,6 +181,11 @@ struct CommandBatch {
     terminal_error: Option<Box<dyn Error>>,
 }
 
+#[derive(Default)]
+struct WatchState {
+    cursor: Option<oxurack::ObservationCursor>,
+}
+
 fn process_ready_commands(
     first: Option<Input>,
     receiver: &Receiver<Input>,
@@ -218,6 +232,7 @@ enum OwnerTurn {
 }
 
 #[allow(clippy::too_many_arguments)]
+#[cfg(test)]
 fn owner_turn<S, W, E, C>(
     rack: &mut Oxurack,
     patch: &Path,
@@ -227,6 +242,41 @@ fn owner_turn<S, W, E, C>(
     receiver: &Receiver<Input>,
     cancellation: &AtomicBool,
     pending: &mut Option<Input>,
+    deadline: &mut Instant,
+    now: &mut C,
+) -> Result<OwnerTurn, Box<dyn Error>>
+where
+    S: playback::MidiSender,
+    W: Write,
+    E: Write,
+    C: FnMut() -> Instant,
+{
+    owner_turn_with_watch(
+        rack,
+        patch,
+        session,
+        trace,
+        diagnostics,
+        receiver,
+        cancellation,
+        pending,
+        &mut WatchState::default(),
+        deadline,
+        now,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn owner_turn_with_watch<S, W, E, C>(
+    rack: &mut Oxurack,
+    patch: &Path,
+    session: &mut Option<&mut playback::Session<S>>,
+    trace: &mut W,
+    diagnostics: &mut E,
+    receiver: &Receiver<Input>,
+    cancellation: &AtomicBool,
+    pending: &mut Option<Input>,
+    watch: &mut WatchState,
     deadline: &mut Instant,
     now: &mut C,
 ) -> Result<OwnerTurn, Box<dyn Error>>
@@ -252,7 +302,8 @@ where
     };
     let batch = process_ready_commands(first, receiver, |input| {
         let was_running = rack.is_running();
-        let action = handle_input(rack, patch, input, session, trace, diagnostics)?;
+        let action =
+            handle_input_with_watch(rack, patch, input, session, trace, diagnostics, watch)?;
         if !was_running && rack.is_running() && matches!(action, InputAction::Started) {
             *deadline = now() + SAMPLE_PERIOD;
         }
@@ -268,8 +319,11 @@ where
     if rack.is_running() && now() >= *deadline {
         tick_once(rack, session, trace)?;
         *deadline = now() + SAMPLE_PERIOD;
+        flush_watch(rack, watch, diagnostics)?;
         return Ok(OwnerTurn::Continue);
     }
+
+    flush_watch(rack, watch, diagnostics)?;
 
     let wait = if rack.is_running() {
         deadline.saturating_duration_since(now())
@@ -279,6 +333,7 @@ where
     Ok(OwnerTurn::Wait(wait))
 }
 
+#[cfg(test)]
 fn handle_input<S, W, E>(
     rack: &mut Oxurack,
     patch: &Path,
@@ -286,6 +341,31 @@ fn handle_input<S, W, E>(
     session: &mut Option<&mut playback::Session<S>>,
     trace: &mut W,
     diagnostics: &mut E,
+) -> Result<InputAction, Box<dyn Error>>
+where
+    S: playback::MidiSender,
+    W: Write,
+    E: Write,
+{
+    handle_input_with_watch(
+        rack,
+        patch,
+        input,
+        session,
+        trace,
+        diagnostics,
+        &mut WatchState::default(),
+    )
+}
+
+fn handle_input_with_watch<S, W, E>(
+    rack: &mut Oxurack,
+    patch: &Path,
+    input: Input,
+    session: &mut Option<&mut playback::Session<S>>,
+    trace: &mut W,
+    diagnostics: &mut E,
+    watch: &mut WatchState,
 ) -> Result<InputAction, Box<dyn Error>>
 where
     S: playback::MidiSender,
@@ -316,12 +396,17 @@ where
         "help" if rest.is_empty() => {
             writeln!(
                 diagnostics,
-                "help | play | pause | reset | get MODULE PARAM | set MODULE PARAM VALUE | status | scope | save PATH | scope-save PATH | quit\n\
+                "help | play | pause | reset | load PATH | unload | restart | remove MODULE | patch SM SP TM TP [TRANSFORM] | unpatch SM SP TM TP OCC | cables | label get|set|clear TARGET FIELD [VALUE] | find any|all TAG... | watch on|off | get MODULE PARAM | set MODULE PARAM VALUE | status | scope | save PATH | scope-save PATH | quit\n\
                  examples: get clock_main bpm; set clock_main bpm 90; save /tmp/live-patch.ron\n\
                  pause stops and silences at the current sample without rewinding; reset silences while preserving running state"
             )?;
         }
         "play" if rest.is_empty() => {
+            if !rack.has_patch() {
+                writeln!(diagnostics, "rack-live: play rejected; no patch is loaded")?;
+                diagnostics.flush()?;
+                return Ok(InputAction::Continue);
+            }
             let was_running = rack.is_running();
             rack.start();
             writeln!(
@@ -337,7 +422,7 @@ where
         "pause" if rest.is_empty() => {
             if rack.is_running() {
                 rack.stop();
-                rack.reset()
+                rack.execute_command(&CoreCommand::Panic)
                     .map_err(|error| boxed(format!("pause reset failed: {error}")))?;
                 deliver_drained(rack, session, trace)?;
                 writeln!(
@@ -423,6 +508,23 @@ where
             }
             None => writeln!(diagnostics, "rack-live: Scope capture is unavailable")?,
         },
+        "scope-select" => {
+            let capacity = rack.scope().map_or(100_000, |capture| capture.capacity());
+            let selectors = if rest == "none" || rest.is_empty() {
+                Vec::new()
+            } else {
+                let mut parsed = Vec::new();
+                for raw in rest.split_whitespace() {
+                    let selector = super::scope_selector(raw).map_err(boxed)?;
+                    parsed.push(selector);
+                }
+                parsed
+            };
+            match rack.configure_scope(&selectors, capacity) {
+                Ok(_) => writeln!(diagnostics, "rack-live: Scope selectors updated")?,
+                Err(error) => writeln!(diagnostics, "rack-live: Scope selection failed: {error}")?,
+            }
+        }
         "save" => match one_path(rest) {
             Ok(path) => match rack.execute_command(&CoreCommand::SavePatch(path.clone())) {
                 Ok(()) => writeln!(
@@ -444,6 +546,156 @@ where
                 Err(error) => writeln!(diagnostics, "rack-live: Scope save failed: {error}")?,
             },
             Err(message) => writeln!(diagnostics, "rack-live: {message}")?,
+        },
+        "watch" => match rest {
+            "on" => {
+                if watch.cursor.is_none() {
+                    watch.cursor = Some(
+                        rack.observe(oxurack::ObservationStart::Now)
+                            .map_err(|error| boxed(error.to_string()))?,
+                    );
+                }
+                writeln!(diagnostics, "rack-live: observation watch on")?;
+            }
+            "off" => {
+                watch.cursor = None;
+                writeln!(diagnostics, "rack-live: observation watch off")?;
+            }
+            _ => writeln!(diagnostics, "rack-live: usage: watch on|off")?,
+        },
+        "load" => match one_path(rest) {
+            Ok(path) => {
+                let selectors = rack
+                    .scope()
+                    .map(|capture| capture.selectors().to_vec())
+                    .unwrap_or_default();
+                let capacity = rack.scope().map_or(100_000, |capture| capture.capacity());
+                match rack.execute_command(&CoreCommand::LoadPatch(path.clone())) {
+                    Err(error) => writeln!(diagnostics, "rack-live: load failed: {error}")?,
+                    Ok(()) => {
+                        deliver_drained(rack, session, trace)?;
+                        reconfigure_scope(rack, &selectors, capacity, diagnostics)?;
+                        writeln!(diagnostics, "rack-live: loaded {}", path.display())?;
+                    }
+                }
+            }
+            Err(message) => writeln!(diagnostics, "rack-live: {message}")?,
+        },
+        "restart" if rest.is_empty() => {
+            let selectors = rack
+                .scope()
+                .map(|capture| capture.selectors().to_vec())
+                .unwrap_or_default();
+            let capacity = rack.scope().map_or(100_000, |capture| capture.capacity());
+            match rack.restart().map_err(|error| boxed(error.to_string())) {
+                Ok(()) => {
+                    deliver_drained(rack, session, trace)?;
+                    reconfigure_scope(rack, &selectors, capacity, diagnostics)?;
+                    writeln!(diagnostics, "rack-live: restarted at sample 0")?;
+                }
+                Err(error) => writeln!(diagnostics, "rack-live: restart failed: {error}")?,
+            }
+        }
+        "unload" if rest.is_empty() => {
+            match rack
+                .unload_patch()
+                .map_err(|error| boxed(error.to_string()))
+            {
+                Ok(()) => {
+                    deliver_drained(rack, session, trace)?;
+                    writeln!(diagnostics, "rack-live: unloaded")?
+                }
+                Err(error) => writeln!(diagnostics, "rack-live: unload failed: {error}")?,
+            }
+        }
+        "remove" => match one_word(rest) {
+            Some(module) => {
+                let selectors = rack
+                    .scope()
+                    .map(|capture| capture.selectors().to_vec())
+                    .unwrap_or_default();
+                let capacity = rack.scope().map_or(100_000, |capture| capture.capacity());
+                match rack
+                    .remove_module(module)
+                    .map_err(|error| boxed(error.to_string()))
+                {
+                    Ok(()) => {
+                        deliver_drained(rack, session, trace)?;
+                        if selectors.iter().any(|selector| selector.module == module) {
+                            let remaining: Vec<_> = selectors
+                                .into_iter()
+                                .filter(|selector| selector.module != module)
+                                .collect();
+                            reconfigure_scope(rack, &remaining, capacity, diagnostics)?;
+                        }
+                        writeln!(diagnostics, "rack-live: removed {module}")?;
+                    }
+                    Err(error) => writeln!(diagnostics, "rack-live: remove failed: {error}")?,
+                }
+            }
+            None => writeln!(diagnostics, "rack-live: usage: remove MODULE")?,
+        },
+        "cables" if rest.is_empty() => match rack.cables() {
+            Ok(cables) => {
+                for cable in cables {
+                    writeln!(
+                        diagnostics,
+                        "cable={} {}.{} -> {}.{} occurrence={} transform={:?}",
+                        cable.cable.id.get(),
+                        cable.cable.source.0,
+                        cable.cable.source.1,
+                        cable.cable.target.0,
+                        cable.cable.target.1,
+                        cable.cable.occurrence,
+                        cable.cable.transform
+                    )?;
+                }
+            }
+            Err(error) => writeln!(diagnostics, "rack-live: cables unavailable: {error}")?,
+        },
+        "patch" => match parse_patch(rest) {
+            Ok((route, transform)) => match rack.patch_with_source(
+                route.0,
+                route.1,
+                transform,
+                oxurack::ChangeSource::Command,
+            ) {
+                Ok(occurrence) => {
+                    writeln!(diagnostics, "rack-live: connected occurrence {occurrence}")?
+                }
+                Err(error) => writeln!(diagnostics, "rack-live: patch failed: {error}")?,
+            },
+            Err(message) => writeln!(diagnostics, "rack-live: {message}")?,
+        },
+        "unpatch" => match parse_unpatch(rest) {
+            Ok((route, occurrence)) => match rack.unpatch_with_source(
+                route.0,
+                route.1,
+                occurrence,
+                oxurack::ChangeSource::Command,
+            ) {
+                Ok(()) => writeln!(
+                    diagnostics,
+                    "rack-live: disconnected occurrence {occurrence}"
+                )?,
+                Err(error) => writeln!(diagnostics, "rack-live: unpatch failed: {error}")?,
+            },
+            Err(message) => writeln!(diagnostics, "rack-live: {message}")?,
+        },
+        "find" => match parse_find(rest) {
+            Ok((mode, tags)) => match rack.find_tags(mode, &tags) {
+                Ok(targets) => {
+                    for target in targets {
+                        writeln!(diagnostics, "{:?}", target.target)?;
+                    }
+                }
+                Err(error) => writeln!(diagnostics, "rack-live: find failed: {error:?}")?,
+            },
+            Err(message) => writeln!(diagnostics, "rack-live: {message}")?,
+        },
+        "label" => match handle_label(rack, rest) {
+            Ok(reply) => writeln!(diagnostics, "{reply}")?,
+            Err(error) => writeln!(diagnostics, "rack-live: label failed: {error}")?,
         },
         "quit" if rest.is_empty() => return Ok(InputAction::Exit),
         _ => writeln!(
@@ -490,6 +742,68 @@ where
     } else {
         Err(Box::new(failure))
     }
+}
+
+fn flush_watch<E: Write>(
+    rack: &Oxurack,
+    watch: &mut WatchState,
+    diagnostics: &mut E,
+) -> Result<(), Box<dyn Error>> {
+    let Some(cursor) = watch.cursor.as_mut() else {
+        return Ok(());
+    };
+    let page = match rack.read_observations(cursor, NonZeroUsize::new(32).unwrap()) {
+        Ok(page) => page,
+        Err(error) => {
+            writeln!(diagnostics, "rack-live: observation watch stopped: {error}")?;
+            watch.cursor = None;
+            return Ok(());
+        }
+    };
+    if let Some(gap) = page.gap {
+        writeln!(
+            diagnostics,
+            "watch gap=[{},{}); use watch off then watch on to resume at now",
+            gap.from.get(),
+            gap.to.get()
+        )?;
+    }
+    for record in page.records {
+        let source = observation_source(&record.change);
+        writeln!(
+            diagnostics,
+            "seq={} batch={} last={} lifetime={} sample={} source={} change={:?}",
+            record.sequence.get(),
+            record.batch.get(),
+            record.last_in_batch,
+            record.lifetime.get(),
+            record.sample,
+            source,
+            record.change
+        )?;
+    }
+    diagnostics.flush()?;
+    Ok(())
+}
+
+fn observation_source(change: &oxurack::ObservationChange) -> String {
+    let source = match change {
+        oxurack::ObservationChange::Core(
+            oxurack_core::OwnedChange::CableConnected { source, .. }
+            | oxurack_core::OwnedChange::CableDisconnected { source, .. }
+            | oxurack_core::OwnedChange::ParameterChanged { source, .. }
+            | oxurack_core::OwnedChange::LabelChanged { source, .. },
+        ) => Some(format!("{source:?}")),
+        oxurack::ObservationChange::Core(oxurack_core::OwnedChange::PatchLoaded {
+            source, ..
+        }) => Some(format!("{source:?}")),
+        oxurack::ObservationChange::Reset { source }
+        | oxurack::ObservationChange::GlobalBpmChanged { source, .. } => {
+            Some(format!("{source:?}"))
+        }
+        _ => None,
+    };
+    source.unwrap_or_else(|| "-".to_owned())
 }
 
 fn tick_once<S, W>(
@@ -547,6 +861,181 @@ fn parse_set(raw: &str) -> Result<(&str, &str, &str), &'static str> {
         return Err("usage: set MODULE PARAM VALUE");
     }
     Ok((module, parameter, value))
+}
+
+type CableRoute<'a> = ((&'a str, &'a str), (&'a str, &'a str));
+
+fn parse_patch(
+    raw: &str,
+) -> Result<(CableRoute<'_>, Option<oxurack::CableTransform>), &'static str> {
+    let parts: Vec<_> = raw.split_whitespace().collect();
+    if !(4..=5).contains(&parts.len()) {
+        return Err(
+            "usage: patch SOURCE_MODULE SOURCE_PORT TARGET_MODULE TARGET_PORT [none|invert|affine:FACTOR:OFFSET]",
+        );
+    }
+    let transform = match parts.get(4).copied() {
+        None | Some("none") => None,
+        Some("invert") => Some(oxurack::CableTransform::Invert),
+        Some("unipolar") => Some(oxurack::CableTransform::Unipolar),
+        Some("bipolarize") => Some(oxurack::CableTransform::Bipolarize),
+        Some("gate-to-float") => Some(oxurack::CableTransform::GateToFloat),
+        Some(value) if value.starts_with("affine:") => {
+            let mut values = value.split(':').skip(1);
+            let factor = values
+                .next()
+                .ok_or("invalid affine transform")?
+                .parse::<f32>()
+                .map_err(|_| "invalid affine factor")?;
+            let offset = values
+                .next()
+                .ok_or("invalid affine transform")?
+                .parse::<f32>()
+                .map_err(|_| "invalid affine offset")?;
+            if values.next().is_some() || !factor.is_finite() || !offset.is_finite() {
+                return Err("invalid affine transform; expected finite FACTOR and OFFSET");
+            }
+            Some(oxurack::CableTransform::Affine { factor, offset })
+        }
+        Some(value) if value.starts_with("threshold:") => {
+            let threshold = value[10..]
+                .parse::<f32>()
+                .map_err(|_| "invalid threshold")?;
+            if !threshold.is_finite() {
+                return Err("threshold must be finite");
+            }
+            Some(oxurack::CableTransform::Threshold { threshold })
+        }
+        Some(value) if value.starts_with("clamp:") => {
+            let mut values = value.split(':').skip(1);
+            let min = values
+                .next()
+                .ok_or("invalid clamp transform")?
+                .parse::<f32>()
+                .map_err(|_| "invalid clamp minimum")?;
+            let max = values
+                .next()
+                .ok_or("invalid clamp transform")?
+                .parse::<f32>()
+                .map_err(|_| "invalid clamp maximum")?;
+            if values.next().is_some() || !min.is_finite() || !max.is_finite() || min > max {
+                return Err("clamp requires finite MIN <= MAX");
+            }
+            Some(oxurack::CableTransform::Clamp { min, max })
+        }
+        Some(_) => {
+            return Err("unsupported transform; expected none, invert, or affine:FACTOR:OFFSET");
+        }
+    };
+    Ok((((parts[0], parts[1]), (parts[2], parts[3])), transform))
+}
+
+fn parse_unpatch(raw: &str) -> Result<(CableRoute<'_>, usize), &'static str> {
+    let parts: Vec<_> = raw.split_whitespace().collect();
+    if parts.len() != 5 {
+        return Err(
+            "usage: unpatch SOURCE_MODULE SOURCE_PORT TARGET_MODULE TARGET_PORT OCCURRENCE",
+        );
+    }
+    let occurrence = parts[4]
+        .parse::<usize>()
+        .map_err(|_| "occurrence must be a nonnegative integer")?;
+    Ok((((parts[0], parts[1]), (parts[2], parts[3])), occurrence))
+}
+
+fn handle_label(rack: &mut Oxurack, raw: &str) -> Result<String, Box<dyn Error>> {
+    let words: Vec<_> = raw.split_whitespace().collect();
+    let operation = *words
+        .first()
+        .ok_or("usage: label get|set|clear TARGET FIELD [VALUE]")?;
+    let (target, field_index, prefix_words) = match words.get(1).copied() {
+        Some("rack") => (oxurack::LabelTarget::Rack, 2, 2),
+        Some("module") if words.len() >= 4 => {
+            (oxurack::LabelTarget::Module(words[2].to_owned()), 3, 3)
+        }
+        Some("cable") if words.len() >= 8 => {
+            let occurrence = words[6].parse::<usize>()?;
+            (
+                oxurack::LabelTarget::Cable {
+                    source: (words[2].to_owned(), words[3].to_owned()),
+                    target: (words[4].to_owned(), words[5].to_owned()),
+                    occurrence,
+                },
+                7,
+                7,
+            )
+        }
+        _ => {
+            return Err(boxed(
+                "usage: label get|set|clear rack|module NAME|cable SM SP TM TP OCC FIELD [VALUE]",
+            ));
+        }
+    };
+    let kind = match words.get(field_index).copied() {
+        Some("display_name") => oxurack::LabelKind::DisplayName,
+        Some("description") => oxurack::LabelKind::Description,
+        Some("tags") => oxurack::LabelKind::Tags,
+        Some("notes") => oxurack::LabelKind::Notes,
+        _ => {
+            return Err(boxed(
+                "label field must be display_name, description, tags, or notes",
+            ));
+        }
+    };
+    match operation {
+        "get" if words.len() == prefix_words + 1 => Ok(format!("{:?}", rack.label(&target, kind)?)),
+        "clear" if words.len() == prefix_words + 1 => {
+            let value = match kind {
+                oxurack::LabelKind::Tags => oxurack::LabelValue::Tags(Default::default()),
+                oxurack::LabelKind::Notes => oxurack::LabelValue::Notes(Vec::new()),
+                _ => oxurack::LabelValue::Text(String::new()),
+            };
+            rack.execute_command(&CoreCommand::SetLabel {
+                target,
+                kind,
+                value,
+            })?;
+            Ok("rack-live: label cleared".to_owned())
+        }
+        "set" => {
+            let start = word_end(raw, prefix_words + 1).ok_or("label value is required")?;
+            let value_text = raw[start..].trim_start();
+            if value_text.is_empty() {
+                return Err(boxed("label value is required"));
+            }
+            let value = match kind {
+                oxurack::LabelKind::DisplayName | oxurack::LabelKind::Description => {
+                    oxurack::LabelValue::Text(value_text.to_owned())
+                }
+                oxurack::LabelKind::Tags => {
+                    let mut tags = std::collections::BTreeSet::new();
+                    for tag in value_text.split(',') {
+                        tags.insert(oxurack::Tag::new(tag.to_owned())?);
+                    }
+                    oxurack::LabelValue::Tags(tags)
+                }
+                oxurack::LabelKind::Notes => {
+                    oxurack::LabelValue::Notes(value_text.split(';').map(str::to_owned).collect())
+                }
+                _ => return Err(boxed("unsupported label field")),
+            };
+            rack.execute_command(&CoreCommand::SetLabel {
+                target,
+                kind,
+                value,
+            })?;
+            Ok("rack-live: label updated".to_owned())
+        }
+        _ => Err(boxed("usage: label get|set|clear TARGET FIELD [VALUE]")),
+    }
+}
+
+fn word_end(input: &str, count: usize) -> Option<usize> {
+    input
+        .match_indices(char::is_whitespace)
+        .filter(|(index, _)| *index > 0)
+        .nth(count.saturating_sub(1))
+        .map(|(index, ch)| index + ch.len())
 }
 
 fn set_live_parameter(
@@ -608,6 +1097,50 @@ fn one_path(raw: &str) -> Result<PathBuf, &'static str> {
         return Err("usage: command PATH");
     }
     Ok(PathBuf::from(raw))
+}
+
+fn one_word(raw: &str) -> Option<&str> {
+    let mut words = raw.split_whitespace();
+    let word = words.next()?;
+    words.next().is_none().then_some(word)
+}
+
+fn parse_find(raw: &str) -> Result<(oxurack::TagMatch, Vec<&str>), &'static str> {
+    let mut words = raw.split_whitespace();
+    let mode = match words.next() {
+        Some("any") => oxurack::TagMatch::Any,
+        Some("all") => oxurack::TagMatch::All,
+        _ => return Err("usage: find any|all TAG..."),
+    };
+    let tags: Vec<_> = words.collect();
+    if tags.is_empty() {
+        return Err("usage: find any|all TAG...");
+    }
+    Ok((mode, tags))
+}
+
+fn reconfigure_scope<E: Write>(
+    rack: &mut Oxurack,
+    selectors: &[oxurack::ScopeSelector],
+    capacity: usize,
+    diagnostics: &mut E,
+) -> io::Result<()> {
+    match rack.configure_scope(selectors, capacity) {
+        Ok(_) => Ok(()),
+        Err(error) => {
+            writeln!(
+                diagnostics,
+                "rack-live: load succeeded; Scope unavailable for prior selectors: {error}"
+            )?;
+            if let Err(fallback) = rack.configure_scope(&[], capacity) {
+                writeln!(
+                    diagnostics,
+                    "rack-live: load succeeded; MIDI-only Scope capture unavailable: {fallback}"
+                )?;
+            }
+            Ok(())
+        }
+    }
 }
 
 fn save_scope(rack: &Oxurack, path: &Path) -> io::Result<()> {
@@ -873,6 +1406,24 @@ mod tests {
         }
     }
 
+    struct AdvancingBuffer {
+        clock: FakeClock,
+        step: Duration,
+        bytes: Vec<u8>,
+    }
+
+    impl Write for AdvancingBuffer {
+        fn write(&mut self, buffer: &[u8]) -> io::Result<usize> {
+            self.bytes.extend_from_slice(buffer);
+            Ok(buffer.len())
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            self.clock.advance(self.step);
+            Ok(())
+        }
+    }
+
     #[test]
     fn command_grammars_preserve_string_tail_and_reject_extras() {
         assert_eq!(parse_pair("clock_main bpm").unwrap(), ("clock_main", "bpm"));
@@ -906,7 +1457,7 @@ mod tests {
             step: SAMPLE_PERIOD * 2,
         };
         let cancellation = AtomicBool::new(false);
-        let mut session = None;
+        let mut session: Option<&mut playback::Session<RecordingSender>> = None;
         let mut pending = None;
         let mut now = || clock.now();
         let turn = owner_turn::<RecordingSender, _, _, _>(
@@ -1052,6 +1603,80 @@ mod tests {
         assert_eq!(rack.sample_time().completed_samples(), 1);
         assert_eq!(deadline, clock.now() + SAMPLE_PERIOD);
         drop(sender);
+    }
+
+    #[test]
+    fn production_turn_bounds_watch_backlog_after_one_due_sample() {
+        let fixture = patch_path("turing-machine-lfo.ron");
+        let mut rack = build_rack(&fixture, false);
+        let mut watch = WatchState {
+            cursor: Some(rack.observe(oxurack::ObservationStart::Now).unwrap()),
+        };
+        for index in 0..40 {
+            rack.set_bpm(100.0 + index as f32).unwrap();
+        }
+        rack.start();
+
+        let base = Instant::now();
+        let clock = FakeClock(Arc::new(Mutex::new(base)));
+        let mut deadline = base;
+        let (_sender, receiver) = mpsc::sync_channel(1);
+        let cancellation = AtomicBool::new(false);
+        let mut session: Option<&mut playback::Session<RecordingSender>> = None;
+        let mut trace = Vec::new();
+        let mut diagnostics = AdvancingBuffer {
+            clock: clock.clone(),
+            step: SAMPLE_PERIOD * 100,
+            bytes: Vec::new(),
+        };
+        let mut pending = None;
+        let mut now = || clock.now();
+
+        let first = owner_turn_with_watch::<RecordingSender, _, _, _>(
+            &mut rack,
+            &fixture,
+            &mut session,
+            &mut trace,
+            &mut diagnostics,
+            &receiver,
+            &cancellation,
+            &mut pending,
+            &mut watch,
+            &mut deadline,
+            &mut now,
+        )
+        .unwrap();
+        assert_eq!(first, OwnerTurn::Continue);
+        assert_eq!(rack.sample_time().completed_samples(), 1);
+        assert_eq!(
+            String::from_utf8_lossy(&diagnostics.bytes)
+                .matches("seq=")
+                .count(),
+            32
+        );
+
+        let second = owner_turn_with_watch::<RecordingSender, _, _, _>(
+            &mut rack,
+            &fixture,
+            &mut session,
+            &mut trace,
+            &mut diagnostics,
+            &receiver,
+            &cancellation,
+            &mut pending,
+            &mut watch,
+            &mut deadline,
+            &mut now,
+        )
+        .unwrap();
+        assert_eq!(second, OwnerTurn::Continue);
+        assert_eq!(rack.sample_time().completed_samples(), 2);
+        assert_eq!(
+            String::from_utf8_lossy(&diagnostics.bytes)
+                .matches("seq=")
+                .count(),
+            41
+        );
     }
 
     #[test]
@@ -2084,5 +2709,170 @@ mod tests {
                 .contains("disconnected without sending EOF")
         );
         assert!(!rack.is_running());
+    }
+
+    #[test]
+    fn watch_cursor_starts_now_and_off_releases_it() {
+        let fixture = patch_path("turing-machine-lfo.ron");
+        let mut rack = build_rack(&fixture, false);
+        let mut watch = WatchState::default();
+        let mut session: Option<&mut playback::Session<RecordingSender>> = None;
+        let mut trace = Vec::new();
+        let mut diagnostics = Vec::new();
+        handle_input_with_watch(
+            &mut rack,
+            &fixture,
+            Input::Line("watch on".into()),
+            &mut session,
+            &mut trace,
+            &mut diagnostics,
+            &mut watch,
+        )
+        .unwrap();
+        handle_input_with_watch(
+            &mut rack,
+            &fixture,
+            Input::Line("set clock_main bpm 90".into()),
+            &mut session,
+            &mut trace,
+            &mut diagnostics,
+            &mut watch,
+        )
+        .unwrap();
+        flush_watch(&rack, &mut watch, &mut diagnostics).unwrap();
+        let first = String::from_utf8(diagnostics.clone()).unwrap();
+        assert!(first.contains("ParameterChanged"));
+        handle_input_with_watch(
+            &mut rack,
+            &fixture,
+            Input::Line("watch off".into()),
+            &mut session,
+            &mut trace,
+            &mut diagnostics,
+            &mut watch,
+        )
+        .unwrap();
+        handle_input_with_watch(
+            &mut rack,
+            &fixture,
+            Input::Line("set clock_main bpm 91".into()),
+            &mut session,
+            &mut trace,
+            &mut diagnostics,
+            &mut watch,
+        )
+        .unwrap();
+        let before = diagnostics.len();
+        flush_watch(&rack, &mut watch, &mut diagnostics).unwrap();
+        assert_eq!(diagnostics.len(), before);
+    }
+
+    #[test]
+    fn failed_load_preserves_the_paused_owner_and_observation_position() {
+        let fixture = patch_path("turing-machine-lfo.ron");
+        let mut rack = build_rack(&fixture, false);
+        rack.execute_command(&CoreCommand::SetParameter {
+            module: "clock_main".into(),
+            param: "bpm".into(),
+            value: ParameterValue::Float(91.0),
+        })
+        .unwrap();
+        let before_sample = rack.sample_time().completed_samples();
+        let before_parameter = rack.parameter("clock_main", "bpm").unwrap();
+        let mut cursor = rack.observe(oxurack::ObservationStart::Now).unwrap();
+        let mut watch = WatchState::default();
+        let mut session: Option<&mut playback::Session<RecordingSender>> = None;
+        let mut trace = Vec::new();
+        let mut diagnostics = Vec::new();
+
+        handle_input_with_watch(
+            &mut rack,
+            &fixture,
+            Input::Line("load /definitely/missing/session-observation.ron".into()),
+            &mut session,
+            &mut trace,
+            &mut diagnostics,
+            &mut watch,
+        )
+        .unwrap();
+
+        assert!(rack.has_patch());
+        assert_eq!(rack.sample_time().completed_samples(), before_sample);
+        assert_eq!(
+            rack.parameter("clock_main", "bpm").unwrap(),
+            before_parameter
+        );
+        assert!(
+            rack.read_observations(&mut cursor, NonZeroUsize::new(8).unwrap())
+                .unwrap()
+                .records
+                .is_empty()
+        );
+        assert!(
+            String::from_utf8(diagnostics)
+                .unwrap()
+                .contains("load failed")
+        );
+    }
+
+    #[test]
+    fn restart_and_unload_drain_through_the_same_live_sender_session() {
+        let fixture = patch_path("turing-machine-lfo.ron");
+        let mut rack = build_rack(&fixture, true);
+        let sent = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let mut session = playback::Session::new(RecordingSender {
+            sent: Arc::clone(&sent),
+        });
+        let mut session_option = Some(&mut session);
+        let mut trace = Vec::new();
+        let mut diagnostics = Vec::new();
+        let mut watch = WatchState::default();
+
+        rack.start();
+        for _ in 0..252 {
+            tick_once(&mut rack, &mut session_option, &mut trace).unwrap();
+        }
+        rack.stop();
+        let before_restart = sent.lock().unwrap().len();
+        assert!(before_restart > 0);
+        assert!(
+            sent.lock()
+                .unwrap()
+                .iter()
+                .any(|bytes| bytes[0] & 0xf0 == 0x90)
+        );
+
+        handle_input_with_watch(
+            &mut rack,
+            &fixture,
+            Input::Line("restart".into()),
+            &mut session_option,
+            &mut trace,
+            &mut diagnostics,
+            &mut watch,
+        )
+        .unwrap();
+        assert!(sent.lock().unwrap().len() > before_restart);
+        assert!(rack.scope().unwrap().records().next().is_none());
+
+        rack.start();
+        for _ in 0..252 {
+            tick_once(&mut rack, &mut session_option, &mut trace).unwrap();
+        }
+        rack.stop();
+        let before_unload = sent.lock().unwrap().len();
+        handle_input_with_watch(
+            &mut rack,
+            &fixture,
+            Input::Line("unload".into()),
+            &mut session_option,
+            &mut trace,
+            &mut diagnostics,
+            &mut watch,
+        )
+        .unwrap();
+        assert!(!rack.has_patch());
+        assert!(sent.lock().unwrap().len() > before_unload);
+        assert!(session_option.is_some());
     }
 }

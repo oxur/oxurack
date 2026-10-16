@@ -80,8 +80,20 @@ pub fn connect_cable(
         source_port,
         target_port,
         transform,
-        source: source_of_change,
+        source: source_of_change.clone(),
     });
+    if let Some(mut staging) = world.get_resource_mut::<crate::ObservationStaging>() {
+        let _ = staging.allocate_cable(cable_entity);
+    }
+    if let Some(cable) = crate::observation::describe_cable(world, cable_entity) {
+        crate::observation::stage(
+            world,
+            crate::OwnedChange::CableConnected {
+                cable,
+                source: source_of_change.clone(),
+            },
+        );
+    }
     Ok(prepared.occurrence)
 }
 
@@ -303,9 +315,16 @@ pub fn commit_module_removal(
     debug_assert!(despawned);
     world.write_message(ModuleRemoved {
         entity: removal.entity,
-        instance_name: removal.name,
-        kind: removal.kind,
+        instance_name: removal.name.clone(),
+        kind: removal.kind.clone(),
     });
+    crate::observation::stage(
+        world,
+        crate::OwnedChange::ModuleRemoved {
+            module: removal.name,
+            kind: removal.kind,
+        },
+    );
     mark_propagation_order_dirty(world);
 }
 
@@ -315,6 +334,7 @@ fn commit_disconnect_cable(
     cable: Cable,
     source: ChangeSource,
 ) {
+    let observed = crate::observation::describe_cable(world, cable_entity);
     world
         .resource_mut::<CableIndex>()
         .remove_cable(cable_entity, &cable);
@@ -325,8 +345,17 @@ fn commit_disconnect_cable(
         cable_entity,
         source_port: cable.source_port,
         target_port: cable.target_port,
-        source,
+        source: source.clone(),
     });
+    if let Some(cable) = observed {
+        crate::observation::stage(
+            world,
+            crate::OwnedChange::CableDisconnected { cable, source },
+        );
+    }
+    if let Some(mut staging) = world.get_resource_mut::<crate::ObservationStaging>() {
+        staging.retire_cable(cable_entity);
+    }
 }
 
 fn invalid_ownership(module: &str, reason: &str) -> CoreError {

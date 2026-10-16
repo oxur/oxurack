@@ -29,7 +29,9 @@ impl super::Oxurack {
             &kind,
             &value,
             ChangeSource::DirectApi,
-        )
+        )?;
+        self.flush_staging();
+        Ok(())
     }
 }
 

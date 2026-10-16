@@ -14,13 +14,25 @@ impl Oxurack {
         target: (&str, &str),
         transform: Option<CableTransform>,
     ) -> Result<usize, CoreError> {
+        self.patch_with_source(source, target, transform, ChangeSource::DirectApi)
+    }
+
+    /// Adds a cable while retaining the supplied provenance.
+    pub fn patch_with_source(
+        &mut self,
+        source: (&str, &str),
+        target: (&str, &str),
+        transform: Option<CableTransform>,
+        change_source: ChangeSource,
+    ) -> Result<usize, CoreError> {
         let result = oxurack_core::connect_cable(
             self.app.world_mut(),
             source,
             target,
             transform,
-            ChangeSource::DirectApi,
+            change_source,
         )?;
+        self.flush_staging();
         #[cfg(feature = "graph")]
         self.app
             .world_mut()
@@ -39,13 +51,25 @@ impl Oxurack {
         target: (&str, &str),
         occurrence: usize,
     ) -> Result<(), CoreError> {
+        self.unpatch_with_source(source, target, occurrence, ChangeSource::DirectApi)
+    }
+
+    /// Removes a cable occurrence while retaining the supplied provenance.
+    pub fn unpatch_with_source(
+        &mut self,
+        source: (&str, &str),
+        target: (&str, &str),
+        occurrence: usize,
+        change_source: ChangeSource,
+    ) -> Result<(), CoreError> {
         oxurack_core::disconnect_cable(
             self.app.world_mut(),
             source,
             target,
             occurrence,
-            ChangeSource::DirectApi,
+            change_source,
         )?;
+        self.flush_staging();
         #[cfg(feature = "graph")]
         self.app
             .world_mut()

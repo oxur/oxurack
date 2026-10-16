@@ -40,6 +40,7 @@ pub mod error;
 pub mod event;
 pub mod label;
 pub mod module;
+pub mod observation;
 pub mod parameter;
 pub mod port;
 pub mod rng;
@@ -59,6 +60,9 @@ pub mod bridge;
 pub use cable::{Cable, CableIndex, CableOrder, CableTransform};
 pub use error::{CoreError, PatchError, TickError};
 pub use module::{Module, ModuleId, ModuleKind, spawn_module_entity};
+pub use observation::{
+    LogicalTarget, ObservationCableId, ObservationStaging, ObservedCable, OwnedChange, StagedChange,
+};
 pub use port::{CurrentValue, MergePolicy, Port, PortDirection, PortName, spawn_port_on_module};
 pub use value::{MidiMessage, Value, ValueKind};
 

@@ -346,10 +346,29 @@ pub fn set_label_value(
         entity,
         instance_name,
         kind: kind.clone(),
-        previous,
+        previous: previous.clone(),
         new: value.clone(),
-        source,
+        source: source.clone(),
     });
+    let logical_target = match target {
+        LabelTarget::Rack => Some(crate::LogicalTarget::Rack),
+        LabelTarget::Module(name) => Some(crate::LogicalTarget::Module(name.clone())),
+        LabelTarget::Cable { .. } => entity
+            .and_then(|entity| crate::observation::describe_cable(world, entity))
+            .map(crate::LogicalTarget::Cable),
+    };
+    if let Some(target) = logical_target {
+        crate::observation::stage(
+            world,
+            crate::OwnedChange::LabelChanged {
+                target,
+                kind: kind.clone(),
+                previous,
+                new: value.clone(),
+                source,
+            },
+        );
+    }
     Ok(())
 }
 

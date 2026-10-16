@@ -55,6 +55,7 @@ impl Oxurack {
             removal,
             oxurack_core::ChangeSource::DirectApi,
         );
+        self.flush_staging();
         self.instance_tokens.remove(name);
         #[cfg(feature = "graph")]
         self.app
@@ -73,8 +74,20 @@ impl Oxurack {
     /// Returns an output capacity/invariant error before changing events or
     /// voice state when the complete silence batch cannot be prepared.
     pub fn reset(&mut self) -> Result<(), CoreError> {
+        self.reset_with_source(oxurack_core::ChangeSource::DirectApi)
+    }
+
+    pub(super) fn reset_with_source(
+        &mut self,
+        source: oxurack_core::ChangeSource,
+    ) -> Result<(), CoreError> {
         silence_outputs(self.app.world_mut()).map_err(CoreError::Tick)?;
         self.command_queue.cancel_pending();
+        self.observation.publish(
+            self.observation.lifetime,
+            self.sample_time().completed_samples(),
+            vec![crate::ObservationChange::Reset { source }],
+        );
         Ok(())
     }
 
@@ -92,7 +105,18 @@ impl Oxurack {
     pub fn restart(&mut self) -> Result<(), CoreError> {
         self.require_stopped_and_drained()?;
         let patch = self.snapshot_patch()?;
-        self.replace_configuration(&patch, PatchSource::InMemory)
+        let origin = self
+            .observation
+            .current
+            .as_ref()
+            .map(|info| info.origin.clone())
+            .unwrap_or(crate::PatchOrigin::InMemory);
+        self.replace_configuration(
+            &patch,
+            PatchSource::InMemory,
+            crate::UnloadReason::Restart,
+            origin,
+        )
     }
 
     /// Replaces the current patch with an empty, stopped rack lifetime.
@@ -116,7 +140,7 @@ impl Oxurack {
         next.world_mut()
             .resource_mut::<MidiOutputBuffer>()
             .append_silence(&cleanup)?;
-        self.commit(next, None);
+        self.commit(next, None, Some(crate::UnloadReason::ExplicitUnload));
         Ok(())
     }
 
@@ -146,9 +170,11 @@ impl Oxurack {
         &mut self,
         patch: &Patch,
         source: PatchSource,
+        reason: crate::UnloadReason,
+        origin: crate::PatchOrigin,
     ) -> Result<(), CoreError> {
         self.require_stopped_and_drained()?;
-        let identity = super::persistence::LoadedIdentity::from_patch(patch);
+        let identity = super::persistence::LoadedIdentity::from_patch(patch, origin);
         let cleanup = prepare_silence(self.app.world())?;
         let mut next = build_base_app()?;
         self.replay_installations(&mut next);
@@ -158,15 +184,37 @@ impl Oxurack {
         next.world_mut()
             .resource_mut::<MidiOutputBuffer>()
             .append_silence(&cleanup)?;
-        self.commit(next, Some(identity));
+        self.commit(next, Some(identity), Some(reason));
         Ok(())
     }
 
     fn commit(
         &mut self,
-        next: bevy_app::App,
+        mut next: bevy_app::App,
         identity: Option<super::persistence::LoadedIdentity>,
+        old_reason: Option<crate::UnloadReason>,
     ) {
+        let old_info = self.observation.current.clone();
+        if let Some(lifetime) = self.observation.next_lifetime() {
+            let (emitted, staged, unavailable) = next
+                .world_mut()
+                .resource_mut::<oxurack_core::ObservationStaging>()
+                .take_packet();
+            let prefix = if let (Some(old), Some(reason)) = (old_info, old_reason) {
+                Some(crate::ObservationChange::PatchUnloaded {
+                    old,
+                    successor: lifetime,
+                    reason,
+                })
+            } else {
+                None
+            };
+            self.observation
+                .publish_staged(lifetime, 0, prefix, staged, emitted, unavailable);
+            self.observation.current = identity
+                .as_ref()
+                .map(|loaded| loaded.observation_info(lifetime));
+        }
         let instance_tokens = next
             .world()
             .get_resource::<oxurack_core::PatchHandle>()
@@ -198,7 +246,12 @@ pub(super) fn load_patch_with_source(
 ) -> Result<(), CoreError> {
     rack.require_stopped_and_drained()?;
     let patch = oxurack_core::load_patch_from_file(path)?;
-    rack.replace_configuration(&patch, source)
+    rack.replace_configuration(
+        &patch,
+        source,
+        crate::UnloadReason::Replace,
+        crate::PatchOrigin::File(path.to_path_buf()),
+    )
 }
 
 fn apply_in_candidate(

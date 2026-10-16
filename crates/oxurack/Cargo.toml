@@ -20,6 +20,7 @@ bevy_time     = { version = "0.18", default-features = false, features = ["std"]
 
 [dev-dependencies]
 pretty_assertions = "1"
+ron = "0.12"
 oxurack-mod-clock = { version = "0.1.0", path = "../oxurack-mod-clock", features = ["rack"] }
 oxurack-mod-turingmachine = { version = "0.1.0", path = "../oxurack-mod-turingmachine", features = ["rack"] }
 oxurack-mod-lfo = { version = "0.1.0", path = "../oxurack-mod-lfo", features = ["rack"] }

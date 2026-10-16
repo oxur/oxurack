@@ -174,7 +174,7 @@ impl Oxurack {
     /// A `CoreCommand` variant without a facade implementation returns
     /// [`CoreError::NotImplemented`].
     pub fn execute_command(&mut self, command: &CoreCommand) -> Result<(), CoreError> {
-        match command {
+        let result = match command {
             CoreCommand::LoadPatch(path) => crate::lifecycle::load_patch_with_source(
                 self,
                 path,
@@ -233,10 +233,16 @@ impl Oxurack {
                 }
                 result
             }
-            CoreCommand::SetBpm(bpm) => self.set_bpm(*bpm),
-            CoreCommand::Panic => self.reset(),
+            CoreCommand::SetBpm(bpm) => {
+                self.set_bpm_with_source(*bpm, oxurack_core::ChangeSource::Command)
+            }
+            CoreCommand::Panic => self.reset_with_source(oxurack_core::ChangeSource::Command),
             _ => Err(CoreError::NotImplemented("unknown CoreCommand")),
+        };
+        if result.is_ok() {
+            self.flush_staging();
         }
+        result
     }
 
     /// Returns the loaded patch's global beats-per-minute value.
@@ -265,13 +271,35 @@ impl Oxurack {
     /// [`CoreError::Patch`] wrapping [`oxurack_core::PatchError::InvalidBpm`]
     /// unless `bpm` is finite and greater than zero.
     pub fn set_bpm(&mut self, bpm: f32) -> Result<(), CoreError> {
+        self.set_bpm_with_source(bpm, oxurack_core::ChangeSource::DirectApi)
+    }
+
+    fn set_bpm_with_source(
+        &mut self,
+        bpm: f32,
+        source: oxurack_core::ChangeSource,
+    ) -> Result<(), CoreError> {
         if !(bpm > 0.0 && bpm.is_finite()) {
             return Err(CoreError::Patch(oxurack_core::PatchError::InvalidBpm(bpm)));
         }
-        self.loaded_identity
+        let identity = self
+            .loaded_identity
             .as_mut()
-            .ok_or(CoreError::NoPatchLoaded)?
-            .set_bpm(bpm);
+            .ok_or(CoreError::NoPatchLoaded)?;
+        let previous = identity.bpm();
+        identity.set_bpm(bpm);
+        if let Some(info) = self.observation.current.as_mut() {
+            info.bpm = bpm;
+        }
+        self.observation.publish(
+            self.observation.lifetime,
+            self.sample_time().completed_samples(),
+            vec![crate::ObservationChange::GlobalBpmChanged {
+                previous,
+                bpm,
+                source,
+            }],
+        );
         Ok(())
     }
 

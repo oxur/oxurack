@@ -1106,6 +1106,7 @@ dependencies = [
  "oxurack-mod-midiout",
  "oxurack-mod-turingmachine",
  "pretty_assertions",
+ "ron",
 ]
 
 [[package]]
