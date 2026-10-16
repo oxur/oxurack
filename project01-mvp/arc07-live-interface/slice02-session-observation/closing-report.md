@@ -55,7 +55,9 @@ corrective intake iteration. This does not close or waive any criterion.
   `e582aed6e87c234799921cc66a5dd55214f76afd`.
 - Planning branch/base: `planning` /
   `fd3129fb22e014fd4759ae52f2dea5d72dbfeb3a`.
-- Source commit: pending. Planning commit: pending.
+- Source commit: `10270f9595c960702ab90c578e0cbce1e2f826d3`.
+- Planning record commit: its final hash is returned by CC with this report;
+  the record is committed separately from the source.
 
 Scope stayed within the prompt allowlist. No graph implementation, Scope or
 playback source, note schema, terminal editor, external endpoint or future slice

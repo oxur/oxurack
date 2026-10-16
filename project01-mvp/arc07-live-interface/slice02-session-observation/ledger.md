@@ -41,9 +41,11 @@ Initial implementation gate commands and row evidence are appended below; all SO
 
 ### CC execution pass — 2026-10-15
 
-Source remained at pinned base `e582aed6e87c234799921cc66a5dd55214f76afd`
-until the authorized scoped commit. Planning remained at
-`fd3129fb22e014fd4759ae52f2dea5d72dbfeb3a` until its separate record commit.
+Source began at pinned base `e582aed6e87c234799921cc66a5dd55214f76afd` and
+was committed as `10270f9595c960702ab90c578e0cbce1e2f826d3` using the explicit
+source allowlist. Planning began at `fd3129fb22e014fd4759ae52f2dea5d72dbfeb3a`
+and its execution records were committed separately; the final planning tip is
+returned with this report.
 The source and planning worktrees were clean before implementation. The named
 manifest/prompt and contract readback above informed the work; targeted Rust
 guidance sections API-02/03, TD-02/03, EH-01, CA-01/02/07 and CLI-27 were applied.
